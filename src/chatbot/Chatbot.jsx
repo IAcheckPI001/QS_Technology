@@ -1,138 +1,159 @@
-import styles from './Chatbot.module.css'
-import { useState } from 'react';
-import useEffectChatBot from '../hooks/useEffectChatBot.jsx'
-import useEffectScroll from '../hooks/useEffectScroll.jsx';
+import { useEffect, useRef, useState } from 'react';
+import { LoaderCircle, Send, X } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import { useTranslation } from 'react-i18next';
+import { streamChatbotResponse } from '../services/chatbot.service.js';
+import styles from './Chatbot.module.css';
 
-import fileAttached from '../assets/icon/file_attached.png'
-import expandIcon from '../assets/icon/expand.png'
+const MAX_REQUEST_LENGTH = 1500;
 
-import arrowIcon from '../assets/icon/arrow-234.png'
-
-function Chatbot({ closeWinChatbot }){
-
-    const fileAttached = () => console.log("choose file!")
-
-    const [text, setText] = useState("");
-    const [trigger, setTrigger] = useState("");
-    const {messages, updateScrollChatbot, setMessages} = useEffectScroll(trigger);
-
-    const handleKey = (e) =>{
-        if (e.key === "Enter" && text.trim() !== ""){
-            setTrigger(text);
-            sendMessage(text);
-            setText("");
-        }
-    };
-
-    const sendMessage = async (message) =>{
-        try {
-            const responses = await requestMessage(message);
-            const reader = responses.body.getReader();
-            const decoder = new TextDecoder();
-            let fullResponse = "";
-
-            // First, add an empty chatbot message to update later
-            setMessages(prev => [...prev, { role: "responses", content: "" }]);
-
-            let done = false;
-            while (!done) {
-                const { value, done: readerDone } = await reader.read();
-
-                done = readerDone;
-                if (value) {
-                    const chunk = decoder.decode(value, { stream: true });
-                    fullResponse += chunk;
-
-                    // Update the last chatbot message with new chunk
-                    setMessages(prev => {
-                    const lastMessage = prev[prev.length - 1];
-                    if (lastMessage.role === "responses") {
-                        const updatedLast = { ...lastMessage, content: fullResponse };
-                        return [...prev.slice(0, prev.length - 1), updatedLast];
-                    }
-                    return prev;
-                    });
-                }
-            }
-        } catch (err) {
-            console.log("Error sending message: ", err);
-        }
-    };
-
-
-    const { chats, loading, error, endOfMessagesRef } = useEffectChatBot();
-
-    return (
-        <div id= {styles.chatbot} className="flex flex-column">
-            <div id={styles.titleChatbot} className= "flex jc-space-between margin-5-0">
-                <p>Chatbot</p>
-                
-                <div className="flex">
-                    <div className= {styles.arrowCloseChatbot} style={{padding:"5px", height: "15px", borderRadius: "100%"}}>
-                        <img style={{width: "15px"}} src={expandIcon} alt="" />
-                    </div>
-                    <div onClick={closeWinChatbot} className= {styles.arrowCloseChatbot} style={{padding:"5px", height: "15px", borderRadius: "100%"}}>
-                        <img style={{width: "15px"}} src={arrowIcon} alt="" />
-                    </div>
-                </div>
-            </div>
-            <div className={styles.contentChatbot}>
-                {chats && chats.length > 0 ? (
-                    chats.map((chat) => (
-                        <div className={styles.contentUser} key={chat.id_chatbot}>
-                            <div className="flex jc-end margin-5-0" style={{paddingLeft:"10%"}}>
-                                <div className={styles.textStyle}>
-                                    <p className={styles.id_users}>{chat.inputs_user}</p>
-                                </div>
-                            </div>
-                            <div className="flex jc-start margin-5-0" style={{paddingRight:"10%"}}>
-                                <p className={styles.responses}>
-                                    {chat.responses_chatbot}
-                                </p>
-                            </div>
-                            
-                        </div>
-                        
-                    ))
-                ):(
-                    <div></div>
-                )}
-                <div ref={endOfMessagesRef}/>
-                {error !== "" && (
-                    <p>{loading}</p>
-                )
-
-                }
-                {messages.length > 0 && messages.map((message, idx) => (
-                    <div className={styles.contentUser} key={idx}>
-                    {message.role === "id_users" ? (
-                        <div className="flex jc-end margin-5-0" style={{paddingLeft:"10%"}}>
-                            <p className={styles.id_users}>{message.content}</p>
-                        </div>
-                    ):(
-                        <div className="flex jc-start margin-0-5" style={{paddingRight:"10%"}}>
-                            <p className={styles.responses}>{message.content}</p>
-                        </div>
-                    )}
-                    </div>
-                ))}
-                <div ref={updateScrollChatbot}/>
-            </div>
-            <div style={{padding: "5px 0"}}>
-                <div className={styles.inputsChatbot}>
-                    <div onClick={fileAttached} style={{padding:"5px 5px"}}>
-                        <img className = {styles.fileAttached} src={fileAttached} alt="" />
-                    </div>
-                    <input className={styles.inputTextCb} placeholder="Ask anything" type="text" 
-                        value={text} 
-                        onKeyDown={handleKey} 
-                        onChange={(e) => setText(e.target.value)}/>
-                </div>
-            </div>
-        </div>
-    )
+function makeMessageId() {
+    return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
 }
 
-export default Chatbot
+function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
+    const { t } = useTranslation();
+    const [messages, setMessages] = useState([]);
+    const [text, setText] = useState('');
+    const [isSending, setIsSending] = useState(false);
+    const [requestError, setRequestError] = useState('');
+    const messageListRef = useRef(null);
+    const activeControllerRef = useRef(null);
+    const endOfMessagesRef = useRef(null);
 
+    useEffect(() => {
+        const container = messageListRef.current;
+        if (container) container.scrollTop = container.scrollHeight;
+        endOfMessagesRef.current?.scrollIntoView({ block: 'end' });
+    }, [messages]);
 
+    useEffect(() => {
+        onSendingChange?.(isSending);
+    }, [isSending, onSendingChange]);
+
+    useEffect(() => () => activeControllerRef.current?.abort(), []);
+
+    const sendMessage = async (event) => {
+        event.preventDefault();
+        const message = text.trim();
+        if (!message || isSending || message.length > MAX_REQUEST_LENGTH) return;
+
+        setRequestError('');
+        setText('');
+        setIsSending(true);
+
+        const assistantId = makeMessageId();
+        setMessages((current) => [
+            ...current,
+            { id: makeMessageId(), role: 'user', content: message },
+            { id: assistantId, role: 'assistant', content: '' },
+        ]);
+
+        const controller = new AbortController();
+        activeControllerRef.current = controller;
+
+        try {
+            await streamChatbotResponse(message, {
+                signal: controller.signal,
+                onChunk: (chunk) => {
+                    setMessages((current) => current.map((item) => (
+                        item.id === assistantId
+                            ? { ...item, content: item.content + chunk }
+                            : item
+                    )));
+                },
+            });
+        } catch {
+            if (!controller.signal.aborted) {
+                setRequestError(t('chatbot.sendError'));
+                setMessages((current) => current.filter((item) => (
+                    item.id !== assistantId || item.content
+                )));
+                setText(message);
+            }
+        } finally {
+            if (!controller.signal.aborted) setIsSending(false);
+            if (activeControllerRef.current === controller) activeControllerRef.current = null;
+        }
+    };
+
+    return (
+        <section
+            id="home-chatbot-panel"
+            className={styles.chatPanel}
+            role="dialog"
+            aria-label={t('chatbot.titleContent')}
+            aria-hidden={hidden}
+            hidden={hidden}
+        >
+            <header className={styles.panelHeader}>
+                <div className={styles.headerIdentity}>
+                    <span className={styles.statusDot} aria-hidden="true" />
+                    <div>
+                        <h2>{t('chatbot.titleChatbot')}</h2>
+                        <p>{t('chatbot.online')}</p>
+                    </div>
+                </div>
+                <button
+                    className={styles.iconButton}
+                    type="button"
+                    aria-label={t('chatbot.close')}
+                    onClick={closeWinChatbot}
+                >
+                    <X size={20} aria-hidden="true" />
+                </button>
+            </header>
+
+            <div className={styles.messageList} ref={messageListRef} aria-live="polite">
+                {messages.length === 0 && (
+                    <div className={styles.welcomeMessage}>
+                        <span className={styles.QSName} aria-hidden="true">QS</span>
+                        <p>{t('chatbot.description')}</p>
+                    </div>
+                )}
+
+                {messages.map((message) => (
+                    <article
+                        className={message.role === 'user' ? styles.userMessage : styles.assistantMessage}
+                        key={message.id}
+                    >
+                        {message.role === 'assistant' ? (
+                            message.content
+                                ? <ReactMarkdown>{message.content}</ReactMarkdown>
+                                : isSending && <span className={styles.typingIndicator}>{t('chatbot.thinking')}</span>
+                        ) : message.content}
+                    </article>
+                ))}
+                {requestError && <p className={styles.errorMessage} role="alert">{requestError}</p>}
+                <div ref={endOfMessagesRef} />
+            </div>
+
+            <form className={styles.composer} onSubmit={sendMessage}>
+                <label className={styles.visuallyHidden} htmlFor="home-chatbot-input">
+                    {t('chatbot.messageLabel')}
+                </label>
+                <input
+                    id="home-chatbot-input"
+                    className={styles.messageInput}
+                    type="text"
+                    maxLength={MAX_REQUEST_LENGTH}
+                    placeholder={t('chatbot.placeholder')}
+                    value={text}
+                    onChange={(event) => setText(event.target.value)}
+                    disabled={isSending}
+                />
+                <button
+                    className={styles.sendButton}
+                    type="submit"
+                    aria-label={t('chatbot.send')}
+                    disabled={!text.trim() || isSending}
+                >
+                    {isSending ? <LoaderCircle className={styles.spinningIcon} size={18} aria-hidden="true" /> : <Send size={18} aria-hidden="true" />}
+                </button>
+            </form>
+            <p className={styles.footerNote}>{t('chatbot.footerNote')}</p>
+        </section>
+    );
+}
+
+export default Chatbot;

@@ -6,15 +6,17 @@ services:
       - "5173:5173"
     depends_on:
       - backend
-    env_file:
-      - ./.env
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
 
   db:
     image: postgres:17
     restart: unless-stopped
     container_name: postgres_db
-    env_file:
-      - ./backend/.env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-qs_chatbot}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -38,8 +40,11 @@ services:
       - ./backend:/app
     ports:
       - "8000:8000"
-    env_file:
-      - ./backend/.env
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
       - db
       - elasticsearch

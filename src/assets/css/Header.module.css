@@ -7,10 +7,11 @@
     width: 100%;
     transition: top 0.3s; /* smooth hide/show */
     z-index: 1000;
+    padding-inline: calc(var(--spacing) * 6);
 }
 
 .logo_ico {
-    max-width: 26px;
+    max-width: 32px;
     border-radius: 100%;
     height: auto;
 }
@@ -19,7 +20,7 @@
     font-size: 14px;
     font-family: Arial, Helvetica, sans-serif;
     margin-left: 8px;
-    color: whitesmoke;
+    color: rgb(0, 0, 0);
 }
 
 

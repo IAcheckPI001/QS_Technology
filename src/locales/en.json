@@ -8,10 +8,20 @@
     "contact": "Contact"
   },
   "chatbot": {
-    "titleContent": "Welcome to AI Furture",
-    "description": "We are working hard to bring you a great experience. Stay tuned!",
+    "titleContent": "Welcome to QS Technology",
+    "titleChatbot": "QS Knowledge",
+    "description": "Bạn cần tra cứu thông tin gì? Tôi có thể giúp bạn!  ",
     "question": "What can I help for you?",
-    "placeholder": "Chat with AI Furture"
+    "placeholder": "Chat with QS Technology",
+    "open": "Chat with us",
+    "close": "Close chat",
+    "online": "Ready to help",
+    "thinking": "Preparing a reply…",
+    "send": "Send message",
+    "messageLabel": "Your message",
+    "sendError": "Your message could not be sent. Please try again.",
+    "historyUnavailable": "Chat history could not be loaded. You can still start a new conversation.",
+    "footerNote": "Responses may not always be accurate."
   },
   "service_home":{
     "titleContent": "Our service",

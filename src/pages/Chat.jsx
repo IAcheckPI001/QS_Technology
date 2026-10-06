@@ -143,9 +143,9 @@ function Chat() {
                                         
                                     </div>
                                 </div>
-                                <div id={stylesChat.chat_img} style={{backgroundColor: "white", height: "235px", width: "266px", borderRadius: "15px"}} 
+                                <div id={stylesChat.chat_img} style={{ height: "235px", width: "266px", borderRadius: "15px"}} 
                                     className="flex jc-center items-center">
-                                    <img style={{height:"68%", borderRadius:"15px"}} src="https://res.cloudinary.com/dhbcyrfmw/image/upload/v1758627288/chatbot_cvoces.png" alt="" />
+                                    <img style={{height:"68%", borderRadius:"15px"}} src="/_logo_QS.svg" alt="" />
                                 </div>
                             </div>
                         </div>

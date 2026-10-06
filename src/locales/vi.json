@@ -11,7 +11,16 @@
     "titleContent": "Chào mừng đến với AI Furture",
     "description": "Chúng tôi đang nỗ lực để mang đến cho bạn trải nghiệm tuyệt vời. Hãy theo dõi nhé!",
     "question": "Tôi có thể giúp gì cho bạn?",
-    "placeholder": "Chat với AI Furture"
+    "placeholder": "Chat với AI Furture",
+    "open": "Trò chuyện",
+    "close": "Đóng chat",
+    "online": "Sẵn sàng hỗ trợ bạn",
+    "thinking": "Đang soạn câu trả lời…",
+    "send": "Gửi tin nhắn",
+    "messageLabel": "Tin nhắn của bạn",
+    "sendError": "Không gửi được tin nhắn. Vui lòng thử lại.",
+    "historyUnavailable": "Không tải được lịch sử chat. Bạn vẫn có thể bắt đầu cuộc trò chuyện mới.",
+    "footerNote": "Câu trả lời có thể chưa hoàn toàn chính xác."
   },
   "service_home":{
     "titleContent": "Dịch vụ của chúng tôi",

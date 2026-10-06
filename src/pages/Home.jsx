@@ -1,70 +1,15 @@
 
-import Chatbot from "./Chat.jsx";
-import serivceImg from "../assets/image/service-back.png";
+import Chat from "./Chat.jsx";
+import ChatbotWidget from "../components/ChatbotWidget.jsx";
 import styles from "../assets/css/Home.module.css"
-import LimitText from "../components/LimitText.jsx";
-import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import useEffectGetBlogs from "../hooks/useEffectGetBlogs.jsx";
 
-function Home (){
-
-    const { t } = useTranslation();
-
-    const { data: blogs, loading, error } = useEffectGetBlogs();
-
+function Home () {
     return (
         <div className="container">
             <section id = {styles.section0} className="flex jc-space-around width-100">
-                <Chatbot/>
+                <Chat />
             </section>
-
-            <section id = {styles.section1} className="flex flex-column width-100">
-                <div id={styles.frameSection1} className="flex jc-center" style={{width:"64vw", marginTop: "8px", height: "78%", paddingTop: "37px"}}>
-                    <div id={styles.service_img} className="flex items-center" style={{marginRight: "58px", marginBottom:"50px"}}>
-                        <img src="https://res.cloudinary.com/dhbcyrfmw/image/upload/v1758627288/service-back_pdu5kr.png" className={styles.serivceImg} alt="/other-services" />
-                    </div>
-                    <div id={styles.service_content} className="flex flex-column">
-                        <h4 className={styles.sectionName}>{t("service_home.titleContent")}</h4>
-                        <h2 className={styles.title}>{t("service_home.target")}</h2>
-                        <div className="flex items-center width-100" style={{marginTop:"18px"}}>
-                            <p style={{fontSize:"20px"}}>{t("service_home.description")}</p>
-                        </div>
-                        <div id={styles.btnService} style={{marginTop:"30px"}}>
-                            <Link to="/services">
-                                <button className={styles.buttonService}>{t("service_home.btn")}</button>
-                            </Link>
-                        </div>
-                    </div>
-                    
-                </div>
-            </section>
-            <section id={styles.section3}>
-                <div className="flex flex-column items-center" style={{marginBottom: "35px"}}>
-                    <span className={styles.sectionName}>{t("blog_home.titleContent")}</span>
-                    <span style={{border: "1px solid #afababad", width: "15vw"}}/>
-                    <p style={{marginTop: "15px", fontSize:"16px", color:"#434343", marginBottom:"0px"}}>{t("blog_home.description")}</p>
-                </div>
-                <div className= {styles.container}>
-                    {blogs
-                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                    .slice(0, 3)
-                    .map((blog) => (
-                        <Link style={{paddingBottom:"32px"}} className="flex flex-column flex-col-3 relative" key={blog.public_id} to={`/blogs/${blog.public_id}`}>
-                            <div style={{marginBottom:"8px"}} className="flex items-center" >
-                                <img className="img_user" src={blog.avatar_img} alt={blog.title} />
-                                <span className={styles.idBlog}>{blog.nickname}</span>
-                            </div>
-                            <h3 style={{margin:".3em 0!important"}}>{blog.title}</h3>
-                            <span style={{fontSize:"14px", fontWeight:600}}>{new Date(blog.created_at).toLocaleString()}</span>
-                            <p style={{margin:"8px 0",fontSize:"16px"}} className={styles.description}>
-                                <LimitText text = {blog.blog_content} limit = {150} />
-                            </p>
-                            <span style={{fontSize:"14px",marginTop:"8px", position:"absolute", bottom:"10px"}}>Likes - comments</span>
-                        </Link>
-                    ))}
-                </div>
-            </section>
+            <ChatbotWidget />
         </div>
     );
 }

@@ -2,7 +2,7 @@
 
 :root{
   --color-primary: hsl(189.31deg 100% 95.42%);
-  --color-header: black;
+  --color-header: #fbffff;
   --color-border: #dfdfdf;
 }
 
@@ -16,6 +16,7 @@ body{
   line-height: 1.4;
   font-family: var(--font-main);
   font-size: 18px;
+  background-color: #f6fbff;
 }
 
 section{
@@ -233,7 +234,7 @@ video:focus {
   font-size: 18px;
 }
 
-.ql-editor h1, h2, h3, h4, h5 {
+.ql-editor h1, h3, h4, h5 {
   margin: 0.83em 0 !important;
 }
 

@@ -1,7 +1,7 @@
 
 
 import { useState, useEffect, useRef} from 'react';
-import { getChats } from '../services/chatbot.service';
+import { checkSession, getChats } from '../services/chatbot.service';
 
 function useEffectChatBot() {
 
@@ -11,15 +11,26 @@ function useEffectChatBot() {
     const endOfMessagesRef = useRef(null);
 
     useEffect(() => {
-    getChats()
-        .then((data) => {
-            setChats(data);
-            setLoading(false);
-        })
-        .catch((err) => {
-            setError(err);
-            setLoading(false);
-        });
+        const controller = new AbortController();
+
+        const loadHistory = async () => {
+            try {
+                const session = await checkSession();
+                if (controller.signal.aborted) return;
+
+                if (session?.authenticated) {
+                    const history = await getChats({ signal: controller.signal });
+                    if (!controller.signal.aborted) setChats(Array.isArray(history) ? history : []);
+                }
+            } catch (err) {
+                if (!controller.signal.aborted) setError(err);
+            } finally {
+                if (!controller.signal.aborted) setLoading(false);
+            }
+        };
+
+        loadHistory();
+        return () => controller.abort();
     }, []);
 
 
