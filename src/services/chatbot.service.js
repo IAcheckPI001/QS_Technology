@@ -2,6 +2,11 @@
 
 import {apiFetch} from './api.service.js'
 
+import {getClientContext} from '../utils/client-context.js';
+import {newMessageId} from '../utils/generate-message-id.js';
+
+const VISITOR_TOKEN_KEY = "visitor_token";
+const SESSION_ID_KEY = "chatbot_session_id";
 
 export const getChats = async (config = {}) => {
     const res = await apiFetch.get("/chats", config);
@@ -19,11 +24,35 @@ export class ChatStreamError extends Error {
 // POST requires fetch (EventSource only supports GET). The backend uses SSE framing.
 export const streamChatbotResponse = async (message, { signal, onChunk } = {}) => {
     const baseURL = (apiFetch.defaults.baseURL || '').replace(/\/$/, '');
+    const visitorToken = localStorage.getItem(VISITOR_TOKEN_KEY);
+    const sessionId = localStorage.getItem(SESSION_ID_KEY);
+
+    const payload = {
+        schema_version: "1.0",
+
+        session_id: sessionId || null,
+
+        message: {
+            message_id: newMessageId(),
+            text: message,
+        },
+
+        client_context: getClientContext(),
+    };
+
+    console.log("Sending chat request with payload:", payload);
+    
     const response = await fetch(`${baseURL}/chatbot`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-        body: JSON.stringify({ message }),
+        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream',
+            ...(visitorToken
+          ? {
+              Authorization: `Bearer ${visitorToken}`,
+            }
+          : {}),
+        },
+        body: JSON.stringify(payload),
         signal,
     });
 

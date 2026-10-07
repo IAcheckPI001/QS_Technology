@@ -6,7 +6,8 @@ from uuid import uuid4
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from app.modules.chatbot.schemas import ChatRequest
+from app.modules.chatbot.schemas.channels import WebsiteChatIn
+from app.modules.chatbot.schemas.system import ChatRequest
 from app.modules.chatbot.service import ChatbotService
 
 
@@ -19,8 +20,9 @@ def _sse_event(name: str, payload: dict[str, str]) -> str:
 
 
 @router.post("/chatbot", response_model=None)
-async def chat(payload: ChatRequest, request: Request) -> StreamingResponse | JSONResponse:
+async def chat(payload: WebsiteChatIn, request: Request) -> StreamingResponse | JSONResponse:
     request_id = str(uuid4())
+    print(f"Received chat request: {payload}")
     service: ChatbotService | None = request.app.state.chatbot_service
     if service is None:
         return JSONResponse(
@@ -37,7 +39,7 @@ async def chat(payload: ChatRequest, request: Request) -> StreamingResponse | JS
 
     async def event_stream() -> AsyncIterator[str]:
         try:
-            async for chunk in service.stream_reply(payload.message):
+            async for chunk in service.stream_reply(payload.message.text):
                 yield _sse_event("delta", {"text": chunk})
             yield _sse_event("done", {"request_id": request_id})
         except Exception:
