@@ -86,7 +86,12 @@ export const streamChatbotResponse = async (message, { signal, onChunk } = {}) =
         try {
             const payload = JSON.parse(rawData);
             if (eventName === 'delta' && typeof payload.text === 'string') onChunk?.(payload.text);
-            if (eventName === 'done') receivedDone = true;
+            if (eventName === 'done') {
+                receivedDone = true;
+                if (typeof payload.session_id === 'string' && payload.session_id) {
+                    localStorage.setItem(SESSION_ID_KEY, payload.session_id);
+                }
+            }
             if (eventName === 'error') throw new ChatStreamError(payload.message || 'Chat service failed.', payload.code);
         } catch (error) {
             if (error instanceof ChatStreamError) throw error;
@@ -165,4 +170,3 @@ export const getTagsUser = () => {
 export const getListNickname = () => {
     return apiFetch.get("/get_nickname");
 };
-

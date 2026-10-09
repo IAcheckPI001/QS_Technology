@@ -1,0 +1,4 @@
+
+---
+applyTo: "**/prisma/**,**/migrations/**"
+---

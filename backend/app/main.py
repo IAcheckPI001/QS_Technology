@@ -8,7 +8,6 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.modules.chatbot.providers.openai import OpenAIProvider
-from app.modules.chatbot.service import ChatbotService
 
 
 @asynccontextmanager
@@ -20,9 +19,7 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
             api_key=settings.openai_api_key,
             model=settings.openai_model,
         )
-    application.state.chatbot_service = (
-        ChatbotService(provider) if provider is not None else None
-    )
+    application.state.chatbot_provider = provider
     try:
         yield
     finally:

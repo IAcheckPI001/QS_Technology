@@ -9,6 +9,7 @@ from .analysis import Analysis
 from .retrieval import Candidate, RetrievalTrace
 from .run_context import RunContext
 from .run_stats import RunStats
+from .security import SecurityDecision
 
 
 
@@ -19,6 +20,7 @@ class RunState(SystemModel):
     retrieval_traces: list[RetrievalTrace] = Field(default_factory=list)  # Tool stage
     stats: RunStats = Field(default_factory=RunStats)
     iteration: NonNegInt = 0
+    security: SecurityDecision | None = None
 
     # --- Source registry: suy ra từ trace, không lưu trùng ---------------
     def sources(self) -> dict[str, Candidate]:

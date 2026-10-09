@@ -9,6 +9,10 @@ class OpenAIProvider:
         self._client = AsyncOpenAI(api_key=api_key)
         self._model = model
 
+    @property
+    def model(self) -> str:
+        return self._model
+
     async def stream_chat(self, messages: list[dict[str, str]]) -> AsyncIterator[str]:
         stream: Any = await self._client.chat.completions.create(
             model=self._model,

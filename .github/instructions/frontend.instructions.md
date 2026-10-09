@@ -1,0 +1,4 @@
+
+---
+applyTo: "frontend/**/*.{ts,tsx}"
+---

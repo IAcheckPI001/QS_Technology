@@ -63,13 +63,20 @@ function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
                     )));
                 },
             });
-        } catch {
+        } catch (error) {
             if (!controller.signal.aborted) {
-                setRequestError(t('chatbot.sendError'));
-                setMessages((current) => current.filter((item) => (
-                    item.id !== assistantId || item.content
-                )));
-                setText(message);
+                if (error?.code === 'request_blocked' && error.message) {
+                    setMessages((current) => current.map((item) => (
+                        item.id === assistantId
+                            ? { ...item, content: error.message }
+                            : item
+                    )));
+                } else {
+                    setRequestError(t('chatbot.sendError'));
+                    setMessages((current) => current.filter((item) => (
+                        item.id !== assistantId || item.content
+                    )));
+                }
             }
         } finally {
             if (!controller.signal.aborted) setIsSending(false);
