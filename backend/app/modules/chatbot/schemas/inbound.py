@@ -18,7 +18,7 @@ class Branch(StrEnum):
 
 
 class RequestInfo(InboundModel):
-    request_id: Identifier
+    request_id: str | None = None
     ticket_id: str | None = None # Chỉ tin khi đến từ kết nối server-to-server đã xác thực.
     user_id: str | None = None 
     received_at: AwareDatetime | None = None
@@ -36,7 +36,7 @@ class ChannelInfo(InboundModel):
 
 class InboundRequest(InboundModel):
     schema_version: Literal["1.0"] = SCHEMA_VERSION
-    request: RequestInfo
+    request: RequestInfo | None = None
     message: MessageUser
     session: SessionInfo
     channel: ChannelInfo

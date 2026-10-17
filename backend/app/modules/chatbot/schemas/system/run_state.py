@@ -1,6 +1,8 @@
 
 """RunState – object duy nhất đi xuyên qua các stage của một request."""
 
+from typing import Literal
+
 from pydantic import Field
 
 from ..default import SystemModel, NonNegInt
@@ -15,7 +17,9 @@ from .security import SecurityDecision
 
 class RunState(SystemModel):
     input: InboundRequest
-    context: RunContext | None = None          # Context stage
+    context_input: RunContext | None = None   # ContextLoader output
+    context: RunContext | None = None         # Prune output
+    context_status: Literal["pending", "loaded", "pruned"] = "pending"
     analysis: Analysis | None = None           # Context stage
     retrieval_traces: list[RetrievalTrace] = Field(default_factory=list)  # Tool stage
     stats: RunStats = Field(default_factory=RunStats)

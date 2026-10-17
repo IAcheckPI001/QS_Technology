@@ -468,7 +468,18 @@ response contract riêng.
    errors không làm sai semantics history đã mô tả trong
    [current-state.md](./current-state.md).
 
-## 13. Tiêu chí hoàn thành triển khai
+## 13. Context/RAG sau SecurityStage
+
+Sau khi request được cho phép, `ContextLoader` tạo `RunContext` từ các lượt
+history `completed`, câu hỏi hiện tại và retrieval scope do backend ánh xạ.
+Với `website`, scope mặc định gồm `crm-technical` và `crm-sale`.
+
+`Prune` chạy trước retrieval/provider, giữ summary và query hiện tại, loại
+history cũ nhất theo `CONTEXT_TOKEN_BUDGET`. Budget sai là lỗi cấu hình; payload
+bắt buộc vẫn vượt budget là lỗi context-budget/domain. Hai lỗi này không được
+coi là security block hay provider error.
+
+## 14. Tiêu chí hoàn thành triển khai
 
 - Có stage protocol/executor và decision typed.
 - SecurityStage chạy sau schema/session authorization, trước context/provider.

@@ -22,7 +22,7 @@ export class ChatStreamError extends Error {
 }
 
 // POST requires fetch (EventSource only supports GET). The backend uses SSE framing.
-export const streamChatbotResponse = async (message, { signal, onChunk } = {}) => {
+export const streamChatbotResponse = async (message, channel, { signal, onChunk } = {}) => {
     const baseURL = (apiFetch.defaults.baseURL || '').replace(/\/$/, '');
     const visitorToken = localStorage.getItem(VISITOR_TOKEN_KEY);
     const sessionId = localStorage.getItem(SESSION_ID_KEY);
@@ -36,6 +36,8 @@ export const streamChatbotResponse = async (message, { signal, onChunk } = {}) =
             message_id: newMessageId(),
             text: message,
         },
+
+        channel: channel,
 
         client_context: getClientContext(),
     };

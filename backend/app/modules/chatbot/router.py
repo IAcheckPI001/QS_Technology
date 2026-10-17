@@ -13,12 +13,12 @@ from app.modules.chatbot.stages.security import (
     get_response_message,
     normalize_locale,
 )
+from app.modules.chatbot.stages.context_loader import ContextBudgetError, ContextConfigurationError
 from app.api.v1.dependencies import get_chatbot_service
 
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["chatbot"])
-
 
 def _sse_event(name: str, payload: dict[str, object]) -> str:
     return f"event: {name}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
@@ -89,6 +89,20 @@ async def chat(
                         "request_blocked",
                         normalize_locale(error.locale),
                     ),
+                    "request_id": request_id,
+                },
+            )
+        except (ContextBudgetError, ContextConfigurationError):
+            logger.exception(
+                "Chat context preparation failed (request_id=%s session_id=%s)",
+                request_id,
+                session_id,
+            )
+            yield _sse_event(
+                "error",
+                {
+                    "code": "context_error",
+                    "message": "Chat context could not be prepared. Please try again.",
                     "request_id": request_id,
                 },
             )

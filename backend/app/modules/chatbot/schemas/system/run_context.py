@@ -5,8 +5,9 @@
 
 from enum import StrEnum
 from typing import Literal
-
-from pydantic import Field, model_validator
+from dataclasses import asdict
+from dataclasses import dataclass
+from pydantic import Field, model_validator, ConfigDict
 
 from ..default import (
     SystemModel,
@@ -16,6 +17,40 @@ from ..default import (
     SourceId,
     SourceMetadata,
 )
+
+MAX_LAST_MODELS = 4
+
+
+class _Model(SystemModel):
+    # TODO: thay bằng SystemModel của dự án
+    model_config = ConfigDict(extra="forbid")
+
+
+class Mode(StrEnum):
+    BOT = "bot"
+    AWAITING_AGENT = "awaiting_agent"
+    WITH_AGENT = "with_agent"
+
+
+class PendingClarification(_Model):
+    focus: str = Field(min_length=1)                  # mention đang hỏi lại, VD "F58"
+    question_type: Literal["confirm", "choose", "open"]
+    candidates: list[str] = Field(default_factory=list)
+    llm_raw: dict                                     # sub_query gốc để nối lại
+    ttl: int = Field(ge=0)
+
+
+class ConversationState(_Model):
+    mode: Mode = Mode.BOT
+    last_models: list[str] = Field(default_factory=list, max_length=MAX_LAST_MODELS)
+    last_intent: str | None = None
+    pending: PendingClarification | None = None
+    clarify_attempts: int = Field(default=0, ge=0)
+    miss_streak: int = Field(default=0, ge=0)       # lượt liên tiếp không trả lời được
+    ticket_id: str | None = None
+
+    def for_llm(self) -> dict:
+        return {"last_models": self.last_models} if self.last_models else {}
 
 
 class HistoryCitation(SystemModel):
@@ -39,6 +74,9 @@ class ConversationMessage(SystemModel):
 
 class Conversation(SystemModel):
     summary: str | None = None
+    state: ConversationState = Field(
+        default_factory=ConversationState,
+    )
     history: list[ConversationMessage] = Field(default_factory=list)
 
 
@@ -68,9 +106,9 @@ class RewriteInfo(SystemModel):
 
 class QueryInfo(SystemModel):
     origin: NonEmptyStr
-    standalone: NonEmptyStr
+    standalone: NonEmptyStr | None = None
     language: LanguageCode = "vi"
-    rewrite: RewriteInfo
+    rewrite: RewriteInfo | None = None
 
 
 class RetrievalScope(SystemModel):

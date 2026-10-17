@@ -1,5 +1,5 @@
 from functools import lru_cache
-
+from pathlib import Path
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -19,6 +19,7 @@ class Settings(BaseSettings):
 
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
+    context_token_budget: int = Field(default=2048, alias="CONTEXT_TOKEN_BUDGET",)
     cors_origins: list[str] = Field(
         default_factory=lambda: [
             "http://localhost:5173",
@@ -38,6 +39,13 @@ class Settings(BaseSettings):
     @classmethod
     def _strip(cls, value: str) -> str:
         return value.strip()
+
+    @field_validator("context_token_budget")
+    @classmethod
+    def _validate_context_budget(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("CONTEXT_TOKEN_BUDGET must be greater than zero")
+        return value
 
     @field_validator("log_level", mode="before")
     @classmethod
@@ -59,7 +67,6 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
-
 
 def get_db_settings() -> Settings:
     return get_settings()

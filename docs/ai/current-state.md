@@ -196,3 +196,16 @@ The implemented write path follows the documented boundaries:
 - ORM model: database table mapping.
 
 The remaining ownership and history-read work must preserve these boundaries.
+
+## Context/RAG pipeline
+
+`ContextLoader` now runs after the security stage and reads model context only
+through `HistoryRepository.list_for_context()`, which filters to completed
+turns. A persisted turn is converted to deterministic `user` and `assistant`
+message identifiers derived from its history ID. Summary loading is not
+implemented yet, so `Conversation.summary` remains `None`.
+
+`Prune` applies `CONTEXT_TOKEN_BUDGET` before provider execution. It removes
+the oldest history turns first and never truncates the current query. Invalid
+configuration is an application/configuration error; an unfit mandatory
+payload is a context-budget/domain error. Neither is a security block.
