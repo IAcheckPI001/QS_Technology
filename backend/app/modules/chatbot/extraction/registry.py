@@ -16,8 +16,6 @@ NO_TARGET_ROUTES = ("handoff", "chitchat", "out_of_scope")
  
 _CATALOG = [{"domain": "product_catalog"}]
 _COMPANY = [{"domain": "company_info"}]
- 
- 
 def _docs(scope: str) -> list[dict]:
     return [{"domain": "technical_docs", "scopes": [scope]}]
  

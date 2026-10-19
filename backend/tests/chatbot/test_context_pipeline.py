@@ -5,13 +5,12 @@ import pytest
 
 from app.modules.chatbot.schemas.inbound import InboundRequest
 from app.modules.chatbot.schemas.system import RunState
-from app.modules.chatbot.stages.context import (
+from app.modules.chatbot.stages.context_loader import (
     ContextBudgetError,
     ContextConfigurationError,
-    ContextLoader,
-    Prune,
-    resolve_retrieval_scope,
+    ContextLoader
 )
+from app.modules.chatbot.stages.prune_stage import Prune
 
 
 def request(session_id: str) -> InboundRequest:
@@ -91,6 +90,6 @@ def test_prune_reports_invalid_budget_and_mandatory_overflow():
 
 
 def test_legacy_branch_maps_to_backend_collection():
-    assert resolve_retrieval_scope(request(str(uuid4()))).collections == [
+    assert ContextLoader.resolve_retrieval_scope(request(str(uuid4()))).collections == [
         "crm-technical", "crm-sale"
     ]

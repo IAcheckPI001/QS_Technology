@@ -6,23 +6,28 @@ This document is the current status of the database, configuration, and chat
 history work. It supersedes the original findings-only review and distinguishes
 completed work from remaining validation, deferred scope, and open risks.
 
-The current architecture is:
+The current request architecture is:
 
 ```text
-Client
-  -> API router / SSE transport
+Frontend
+  -> FastAPI route / dependency
   -> ChatbotService
   -> SecurityStage
-  -> OpenAI provider
-  -> HistoryRepository
-  -> Supabase public.chat_history
+  -> ContextLoader
+  -> Prune
+  -> AnalysisStage -> QueryAnalyzer -> OpenAIProvider
+  -> execution-plan scaffold
+  -> sample response chunks
+  -> HistoryRepository -> Supabase public.chat_history
+  -> SSE response
 ```
 
-`SecurityStage` is implemented as a pre-provider guard. It normalizes the
-message, runs the injection detector and configured content policy, and blocks
-before provider/history side effects when a finding is present. The stage does
-not log raw message text. Its typed decision is internal; the client receives a
-generic `request_blocked` error.
+`SecurityStage` is implemented as a pre-context and pre-provider guard. It
+normalizes the message, runs the injection detector and configured content
+policy, and blocks context loading and provider calls when a finding is
+present. A blocked request is still persisted as an audit record through an
+independent database session. The stage does not log raw message text. Its typed
+decision is internal; the client receives a generic `request_blocked` error.
 
 Blocked requests are persisted in `public.chat_history` with
 `status='blocked'`, the catalog response in `answer`, and no provider model or
@@ -31,8 +36,9 @@ query only `status='completed'`. Blocked persistence uses an independent
 database session so provider/request transaction rollback cannot remove the
 audit record.
 
-FastAPI routes perform transport and dependency wiring. Provider calls remain
-in the provider layer, and database access remains in the repository layer.
+FastAPI routes perform transport, dependency wiring and error mapping. The
+service coordinates the stages, provider-specific calls remain behind the
+provider layer, and database access remains in the repository layer.
 
 ## Completion summary
 
@@ -43,6 +49,8 @@ in the provider layer, and database access remains in the repository layer.
 | P2 configuration normalization | Resolved in implementation | One cached `pydantic-settings` model is used and model defaults are aligned. Pytest validation remains outstanding. |
 | P3 history reads and ownership | Deferred | No history-read endpoint or ownership boundary is enabled. This is intentionally not production-ready. |
 | P4 health/readiness semantics | Open | Connectivity check exists, but readiness status/error semantics and schema checks are incomplete. |
+| P5 active chatbot pipeline | Partially implemented | Security, context loading, pruning and analysis/execution-plan construction run. Retrieval/tool execution and final provider answer streaming remain incomplete; the service currently emits sample chunks. |
+| P6 knowledge learning pipeline (`learning_ai`) | Domain core designed, not wired | Pure domain logic (record schema, post-LLM validation, rule conflicts, review lifecycle, chunking, indexer sync) exists and is unit-tested. No entrypoint runs it: ingestion, LLM segment/extract calls, persistence, outbox, embedding and vector index are missing. The router is not included and returns 501. |
 
 ## Finding status
 
@@ -76,12 +84,14 @@ historical database records. Deletion is not currently implemented.
 
 ### Chat history writes
 
-- A completed provider stream writes `status='completed'`.
-- A provider exception attempts to write `status='error'` with any partial
-  answer.
+- The current service writes `status='completed'` after emitting its response
+  chunks. Those chunks are currently sample output, not a completed RAG/provider
+  answer stream.
+- A provider or pipeline exception attempts to write `status='error'` with any
+  partial answer.
 - `input_tokens`, `output_tokens`, `cost_usd`, `normalized_query`, and
-  `retrieved_chunk_ids` are not produced by the current provider flow; they
-  remain defaults or `null`.
+  `retrieved_chunk_ids` are not produced by the current active flow; they remain
+  defaults or `null`.
 - Synthetic UUIDs and metrics are permitted only in local/test fixtures, never
   as fabricated production measurements.
 
@@ -101,9 +111,10 @@ historical database records. Deletion is not currently implemented.
    - No verified insert/select against `public.chat_history` has been recorded.
    - The ORM definition has not been compared automatically with the live table.
 
-3. **Backend test environment unavailable**
-   - Focused tests exist under `backend/tests/`.
-   - `pytest` was unavailable on the shell `PATH`, so the tests have not run.
+3. **Backend test suite partially failing**
+   - Tests run with `backend\venv\Scripts\python.exe -m pytest` from `backend/`.
+   - 5 chatbot tests fail because they lag the in-progress chatbot refactor.
+     See the validation record.
 
 ### Medium priority
 
@@ -130,10 +141,16 @@ historical database records. Deletion is not currently implemented.
 
 8. **Provider usage metadata is incomplete**
    - Token counts and cost are not collected.
-   - Retrieval is not wired into the active stream, so
+   - Retrieval/tool execution is not wired into the active stream, so
      `retrieved_chunk_ids` remains empty/null.
 
-9. **Frontend lint baseline**
+9. **Final answer flow is incomplete**
+   - `AnalysisStage` calls the provider through `QueryAnalyzer`, and an
+     execution plan is built, but the plan is not yet executed.
+   - The service currently emits sample chunks instead of a provider-generated
+     final answer stream.
+
+10. **Frontend lint baseline**
    - `npm run lint` still fails on existing unrelated frontend errors.
    - `npm run build` passes with an existing CSS syntax warning.
 
@@ -147,8 +164,9 @@ historical database records. Deletion is not currently implemented.
 2. Install/restore the backend test environment and run the focused tests.
 3. Run the backend with the configured runtime environment.
 4. Verify `/health/db` against Supabase.
-5. Execute a real chat request and verify the inserted row and generated
-   `total_tokens` in `public.chat_history`.
+5. Execute a real chat request and verify the inserted row in
+   `public.chat_history`. Token/cost fields should remain unset until usage
+   extraction is implemented; do not treat them as currently generated.
 
 ### P2 — Required before enabling history reads
 
@@ -174,6 +192,24 @@ historical database records. Deletion is not currently implemented.
 17. Add schema compatibility checks for required `chat_history` columns.
 18. Resolve or separately baseline the existing frontend lint failures.
 
+### P5 — Knowledge learning pipeline (`learning_ai`)
+
+Design and per-step status are in `docs/ai/architecture.md`. Remaining work, in order:
+
+19. Add the missing registry keys (`topics`, `connectors`, `parameters`,
+    `alarm_codes`) and build one `RegistrySnapshot` source shared with query extraction.
+20. Ingestion: load completed `chat_history` turns or documents into an anonymized
+    SourceDocument with `locator -> role` units, with real PII redaction. Set
+    `redaction_applied` from that result instead of hard-coding it.
+21. Segmenter/Extractor prompts and calls behind the provider layer, driven by a
+    learning service, not the router.
+22. Supabase tables for source documents, knowledge records/revisions, extraction jobs,
+    outbox and chunks/vectors. This needs a schema decision before implementation.
+23. Learning service ordering: extract -> assemble -> validate -> conflicts ->
+    `pending_review`. Approval must run the gate after validation and conflicts.
+24. Review API/UI, semantic conflict comparison, `Embedder`/`SearchIndex`
+    implementations, outbox worker, and chatbot retrieval using `ChunkFilters`.
+
 ## Validation record
 
 - Python syntax validation for changed backend modules: **passed**.
@@ -182,16 +218,23 @@ historical database records. Deletion is not currently implemented.
   `Unexpected ";"`.
 - `npm run lint`: **failed** on pre-existing frontend unused-variable and
   undefined-symbol errors.
-- Backend pytest: **not run** because `pytest` was unavailable on `PATH`.
+- Backend pytest via `backend\venv\Scripts\python.exe -m pytest` (2026-10-19):
+  **86 passed, 5 failed**. All 38 `tests/learning_ai` tests pass. The 5 failures are
+  in `tests/chatbot/test_chat_history.py` and `test_context_pipeline.py`: the tests
+  are out of sync with the in-progress chatbot refactor (`Prune.execute` signature,
+  `ContextLoader.resolve_retrieval_scope`, `FakeProvider.chat_complete_json`,
+  undefined `ContextConfigurationError`).
 - Live Supabase connectivity/insert: **not verified**.
 
 ## Architectural impact
 
-The implemented write path follows the documented boundaries:
+The implemented request/write path follows the documented boundaries:
 
 - API route: request validation, dependency wiring, and SSE transport.
-- Chatbot service: session resolution and application behavior.
-- Provider: OpenAI-specific streaming.
+- Chatbot service: session resolution, stage coordination and application
+  behavior.
+- Provider: OpenAI-specific analysis call; final answer streaming is not yet
+  connected.
 - Repository: SQLAlchemy persistence.
 - ORM model: database table mapping.
 
@@ -199,13 +242,17 @@ The remaining ownership and history-read work must preserve these boundaries.
 
 ## Context/RAG pipeline
 
-`ContextLoader` now runs after the security stage and reads model context only
+`ContextLoader` runs after the security stage and reads model context only
 through `HistoryRepository.list_for_context()`, which filters to completed
 turns. A persisted turn is converted to deterministic `user` and `assistant`
 message identifiers derived from its history ID. Summary loading is not
 implemented yet, so `Conversation.summary` remains `None`.
 
-`Prune` applies `CONTEXT_TOKEN_BUDGET` before provider execution. It removes
-the oldest history turns first and never truncates the current query. Invalid
-configuration is an application/configuration error; an unfit mandatory
-payload is a context-budget/domain error. Neither is a security block.
+`Prune` applies `CONTEXT_TOKEN_BUDGET` after context loading and before
+analysis/provider work. It removes the oldest history turns first and never
+truncates the current query. `AnalysisStage` then builds the analysis context,
+calls `QueryAnalyzer` through `OpenAIProvider`, and creates an execution plan.
+The plan is currently a scaffold: retrieval, tools and final answer generation
+are not yet executed. Invalid configuration is an application/configuration
+error; an unfit mandatory payload is a context-budget/domain error. Neither is
+a security block.

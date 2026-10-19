@@ -2,7 +2,7 @@
 
 """RetrievalTrace – ghi lại mỗi lần search_doc được gọi."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
@@ -65,3 +65,41 @@ class RetrievalTrace(SystemModel):
     @property
     def selected(self) -> list[Candidate]:
         return [c for c in self.candidates if c.selected]
+
+
+class RetrievalQuery(SystemModel):
+    sub_query_id: NonEmptyStr
+    query: NonEmptyStr
+    answer_mode: Literal["full", "overview"]
+
+
+class RetrievalRequest(SystemModel):
+    task_id: NonEmptyStr
+    domain: NonEmptyStr
+    scopes: list[NonEmptyStr] = Field(default_factory=list)
+    model_filter: list[NonEmptyStr] | None = None
+    queries: list[RetrievalQuery] = Field(min_length=1)
+
+
+class RetrievalSubQueryResult(SystemModel):
+    sub_query_id: NonEmptyStr
+    traces: list[RetrievalTrace] = Field(default_factory=list)
+    metadata: dict[str, str] = Field(default_factory=dict)
+
+
+class RetrievalResult(SystemModel):
+    task_id: NonEmptyStr
+    results: list[RetrievalSubQueryResult] = Field(min_length=1)
+    missing_sub_query_ids: list[NonEmptyStr] = Field(default_factory=list)
+    metadata: dict[str, str] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def result_ids_are_unique(self) -> "RetrievalResult":
+        ids = [result.sub_query_id for result in self.results]
+        if len(ids) != len(set(ids)):
+            raise ValueError("retrieval result sub-query ids must be unique")
+        if len(self.missing_sub_query_ids) != len(set(self.missing_sub_query_ids)):
+            raise ValueError("missing retrieval sub-query ids must be unique")
+        if set(ids) & set(self.missing_sub_query_ids):
+            raise ValueError("retrieval sub-query cannot be both completed and missing")
+        return self

@@ -1,8 +1,8 @@
 
 
-from app.modules.chatbot.schemas.system import RunContext
+from app.modules.chatbot.schemas.system import RunState, RunContext
 from app.modules.chatbot.providers.openai import OpenAIProvider
-from app.modules.chatbot.analysis.analyzer import QueryAnalyzer
+from app.modules.chatbot.analysis.analyzer import AnalysisError, QueryAnalyzer
 from app.modules.chatbot.analysis.prompt.registry_render import _j
 
 class AnalysisStage:
@@ -30,8 +30,10 @@ class AnalysisStage:
         parts.append(f"<query>{query}</query>")
         return "\n".join(parts)
 
-    async def execute(self, context: RunContext) -> dict:
+    async def execute(self, state: RunState) -> RunState:
+        if state.context is None:
+            raise AnalysisError("analysis_context_missing", "Analysis requires a loaded context.")
 
-        context_analysis = self.build_context_analysis(context)
-
-        return await self.analyzer.analyze_raw(context_analysis)
+        context_analysis = self.build_context_analysis(state.context)
+        state.analysis = await self.analyzer.analyze(context_analysis)
+        return state

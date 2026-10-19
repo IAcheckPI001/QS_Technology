@@ -14,12 +14,14 @@ from app.modules.chatbot.schemas.inbound import (
     SessionInfo
 )
 from app.modules.chatbot.schemas.system import RunState, RetrievalScope
+from app.modules.chatbot.schemas.system.orchestration import TaskKind
 from app.modules.chatbot.stages.prune_stage import Prune
 from app.modules.chatbot.stages.context_loader import ContextLoader
 from app.modules.chatbot.stages.security import SecurityBlockedError, SecurityStage
 from app.modules.chatbot.stages.security import get_response_message, normalize_locale
 from app.modules.chatbot.stages.analysis_stage import AnalysisStage
 from app.modules.chatbot.schemas.system.security import SecurityAction
+from app.modules.chatbot.orchestration import build_execution_plan
 from app.util.uuid_generate import generate_session_id
 
 
@@ -85,11 +87,13 @@ class ChatbotService:
 
         analysis_time = perf_counter()
 
-        analysis_result = await self._analysis_stage.execute(context)
+        await self._analysis_stage.execute(state)
+        plan = build_execution_plan(state.analysis)
+        print(state.analysis)
+        # retrieve_tasks = [task for task in plan.tasks if task.kind is TaskKind.RETRIEVE]
+        # print(f"Retrieval tasks: {len(retrieve_tasks)}")
         print(f"Analysis time: {perf_counter() - analysis_time:.2f} s")
         print(f"Total time: {perf_counter() - started_at:.2f} s")
-
-        print(analysis_result)
 
         answer_parts: list[str] = []
         try:
@@ -118,4 +122,3 @@ class ChatbotService:
             model=self._provider.model,
             latency_ms=round((perf_counter() - started_at) * 1000),
         )
-
