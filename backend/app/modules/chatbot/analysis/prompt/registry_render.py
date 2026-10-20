@@ -41,7 +41,7 @@ def _sq(q, intent, models=(), unresolved=(), ci=(), spec=(), handoff=None, confl
 EXAMPLES = [
     # 1. [P2][P3] So sánh + hỏi đặc điểm model trong so sánh = MỘT câu so sánh;
     #    model lạ vẫn giữ intent compare, ghi vào unresolved_mentions
-    {"query": "So sánh F20 với F86, F86 hoạt động ra sao?",
+    {"query": "Xin chào, so sánh F20 với F86, F86 hoạt động ra sao?",
      "sub_queries": [_sq("So sánh bộ điều khiển F20 với F86, gồm cách hoạt động của F86",
                          "compare.product_models", ["F86"], unresolved=["F20"])]},
     # 2. [P1] Đặc điểm/nguyên lý (product_info) khác thao tác từng bước (guide.operation) -> tách

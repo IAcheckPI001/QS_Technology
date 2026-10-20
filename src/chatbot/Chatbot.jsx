@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { LoaderCircle, Send, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
-import { streamChatbotResponse } from '../services/chatbot.service.js';
+import { getChatHistory, streamChatbotResponse } from '../services/chatbot.service.js';
 import styles from './Chatbot.module.css';
 
 const MAX_REQUEST_LENGTH = 1500;
+const SESSION_ID_KEY = 'chatbot_session_id';
 
 function makeMessageId() {
     return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -20,6 +21,36 @@ function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
     const messageListRef = useRef(null);
     const activeControllerRef = useRef(null);
     const endOfMessagesRef = useRef(null);
+
+    useEffect(() => {
+        const sessionId = localStorage.getItem(SESSION_ID_KEY);
+        if (!sessionId) return undefined;
+
+        const controller = new AbortController();
+        getChatHistory(sessionId, { signal: controller.signal })
+            .then((history) => {
+                if (controller.signal.aborted) return;
+                const restoredMessages = history.messages.flatMap((item) => {
+                    const entries = [{ id: `${item.id}-query`, role: 'user', content: item.query_origin }];
+                    if (item.answer) {
+                        entries.push({ id: `${item.id}-answer`, role: 'assistant', content: item.answer });
+                    }
+                    return entries;
+                });
+                setMessages(restoredMessages);
+            })
+            .catch((error) => {
+                if (controller.signal.aborted) return;
+                if (error?.response?.status === 404) {
+                    localStorage.removeItem(SESSION_ID_KEY);
+                    setMessages([]);
+                    return;
+                }
+                setRequestError(t('chatbot.historyError', { defaultValue: 'Không thể tải lịch sử hội thoại.' }));
+            });
+
+        return () => controller.abort();
+    }, [t]);
 
     useEffect(() => {
         const container = messageListRef.current;

@@ -4,7 +4,6 @@ from uuid import UUID
 
 from app.core.config import settings
 from app.util.token_counter import count_tokens
-from app.modules.chatbot.prompts import SYSTEM_PROMPT
 from app.modules.chatbot.providers.openai import OpenAIProvider
 from app.modules.chatbot.repositories.history_repository import HistoryRepository
 from app.modules.chatbot.schemas.inbound import (
@@ -14,14 +13,14 @@ from app.modules.chatbot.schemas.inbound import (
     SessionInfo
 )
 from app.modules.chatbot.schemas.system import RunState, RetrievalScope
-from app.modules.chatbot.schemas.system.orchestration import TaskKind
 from app.modules.chatbot.stages.prune_stage import Prune
 from app.modules.chatbot.stages.context_loader import ContextLoader
 from app.modules.chatbot.stages.security import SecurityBlockedError, SecurityStage
 from app.modules.chatbot.stages.security import get_response_message, normalize_locale
 from app.modules.chatbot.stages.analysis_stage import AnalysisStage
 from app.modules.chatbot.schemas.system.security import SecurityAction
-from app.modules.chatbot.orchestration import build_execution_plan
+from app.modules.chatbot.stages.execution_stage import ExecutionStage
+from app.modules.chatbot.stages.answer_composer import AnswerComposer
 from app.util.uuid_generate import generate_session_id
 
 
@@ -33,7 +32,9 @@ class ChatbotService:
         security_stage: SecurityStage | None = None,
         context_loader: ContextLoader | None = None,
         prune: Prune | None = None,
-        analysis_stage: AnalysisStage | None = None
+        analysis_stage: AnalysisStage | None = None,
+        execution_stage: ExecutionStage | None = None,
+        answer_composer: AnswerComposer | None = None,
     ) -> None:
         self._provider = provider
         self._history_repository = history_repository
@@ -41,6 +42,9 @@ class ChatbotService:
         self._context_loader = context_loader or ContextLoader(history_repository)
         self._prune = prune or Prune(settings.context_token_budget)
         self._analysis_stage = analysis_stage or AnalysisStage(provider)
+        self._execution_stage = execution_stage or ExecutionStage()
+        self._answer_composer = answer_composer or AnswerComposer(provider)
+
     async def resolve_session_id(self, session_id: str | None) -> UUID:
         if session_id:
             try:
@@ -88,19 +92,14 @@ class ChatbotService:
         analysis_time = perf_counter()
 
         await self._analysis_stage.execute(state)
-        plan = build_execution_plan(state.analysis)
-        print(state.analysis)
-        # retrieve_tasks = [task for task in plan.tasks if task.kind is TaskKind.RETRIEVE]
-        # print(f"Retrieval tasks: {len(retrieve_tasks)}")
-        print(f"Analysis time: {perf_counter() - analysis_time:.2f} s")
-        print(f"Total time: {perf_counter() - started_at:.2f} s")
+        await self._execution_stage.execute(state)
+        print(f"_analysis_stage: {state.analysis}")
+        print(f"_execution_stage: {state.plan}")
+        print(f"Analysis + execution time: {perf_counter() - analysis_time:.2f} s")
 
         answer_parts: list[str] = []
         try:
-            # async for chunk in self._provider.stream_chat(messages):
-            #     answer_parts.append(chunk)
-            #     yield chunk
-            for chunk in ["Với chatbot hỗ trợ kỹ thuật CNC có RAG như hệ thống của bạn, tôi khuyến nghị bắt đầu với 4096 token cho context hội thoại động, sau đó tăng lên 8192 nếu kết quả kiểm thử cho thấy việc giữ lịch sử dài hơn giúp xử lý tốt các câu hỏi nối tiếp và quy trình chẩn đoán nhiều bước.", "Với chatbot hỗ trợ kỹ thuật CNC có RAG như hệ thống của bạn, tôi khuyến nghị bắt đầu với 4096 token cho context hội thoại động, sau đó tăng lên 8192 nếu kết quả kiểm thử cho thấy việc giữ lịch sử dài hơn giúp xử lý tốt các câu hỏi nối tiếp và quy trình chẩn đoán nhiều bước.", "Với chatbot hỗ trợ kỹ thuật CNC có RAG như hệ thống của bạn, tôi khuyến nghị bắt đầu với 4096 token cho context hội thoại động, sau đó tăng lên 8192 nếu kết quả kiểm thử cho thấy việc giữ lịch sử dài hơn giúp xử lý tốt các câu hỏi nối tiếp và quy trình chẩn đoán nhiều bước."]:
+            async for chunk in self._answer_composer.stream(state):
                 answer_parts.append(chunk)
                 yield chunk
         except Exception:

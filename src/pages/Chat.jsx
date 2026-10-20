@@ -1,172 +1,180 @@
+import { useEffect, useRef, useState } from 'react';
+import { BookOpen, LoaderCircle, MessageSquarePlus } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import { useTranslation } from 'react-i18next';
+import {
+    createSupportChatSession,
+    getSupportChatMessages,
+    listSupportChatSessions,
+    prepareLearning,
+} from '../services/chatbot.service.js';
+import stylesChat from '../assets/css/Chat.module.css';
 
-import { useState ,useEffect, useRef } from 'react';
-import useEffectScroll from '../hooks/useEffectScroll.jsx';
-import chatbotStyles from '../chatbot/Chatbot.module.css'
-import AutoResizeTextarea from '../hooks/AutoResizeTextarea.jsx';
-import ReactMarkdown from "react-markdown";
-import { useTranslation } from "react-i18next";
-import stylesChat from "../assets/css/Chat.module.css"
-const API_URL = import.meta.env.VITE_API_URL;
+const MAX_REQUEST_LENGTH = 1500;
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 function Chat() {
-    const MAX_REQUEST_LENGTH = 1500;
-
-    const [text, setText] = useState("");
-    const [contentIntro, setContent] = useState("");
-    const [trigger, setTrigger] = useState("");
-    const chatRef = useRef(null);
-    const lastMessageRef = useRef(null);
     const { t } = useTranslation();
-    
-    const {messages, setMessages} = useEffectScroll(trigger);
-    
-    const handleKey = (e) =>{
-        if (e.key === "Enter" && !e.shiftKey){
-            e.preventDefault();
-            if (text.trim() !== ""){
-                setTrigger(text);
-                sendMessage(text);
-                setText("");
-            }
-        }
-    };
-
-
-
-    const sendMessage = async (message) =>{
-        try {
-            const response = await fetch(`${API_URL}/chatbot`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({message}),
-            });
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let fullResponse = "";
-
-            // First, add an empty chatbot message to update later
-            setMessages(prev => [...prev, { role: "responses", content: "" }]);
-
-            let done = false;
-            while (!done) {
-                const { value, done: readerDone } = await reader.read();
-
-                done = readerDone;
-                if (value) {
-                    const chunk = decoder.decode(value, { stream: true });
-                    fullResponse += chunk;
-
-                    // Update the last chatbot message with new chunk
-                    setMessages(prev => {
-                        const lastMessage = prev[prev.length - 1];
-                        if (lastMessage.role === "responses") {
-                            const updatedLast = { ...lastMessage, content: fullResponse };
-                            return [...prev.slice(0, prev.length - 1), updatedLast];
-                        }
-                        return prev;
-                    });
-                }
-            }
-            setTrigger("");
-        } catch (err) {
-            console.log("Error sending message: ", err);
-        }
-    };
+    const [sessions, setSessions] = useState([]);
+    const [selectedSessionId, setSelectedSessionId] = useState('');
+    const [messages, setMessages] = useState([]);
+    const [contentIntro, setContentIntro] = useState('');
+    const [text, setText] = useState('');
+    const [isLoadingSessions, setIsLoadingSessions] = useState(true);
+    const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+    const [isLearning, setIsLearning] = useState(false);
+    const [error, setError] = useState('');
+    const [learningStatus, setLearningStatus] = useState('');
+    const lastMessageRef = useRef(null);
 
     useEffect(() => {
-        const es = new EventSource(`${API_URL}/intro-stream`);
-        setContent("");
-
-        es.onmessage = (e) => {
-            if (e.data === "[DONE]") {
-                es.close();
-            } else {
-                setContent((prev) => prev +" "+ e.data);
+        const controller = new AbortController();
+        const loadSessions = async () => {
+            try {
+                const loaded = await listSupportChatSessions({ signal: controller.signal });
+                console.log('Loaded sessions:', loaded);
+                if (controller.signal.aborted) return;
+                setSessions(Array.isArray(loaded) ? loaded : []);
+                if (loaded?.length) setSelectedSessionId(loaded[0].session_id);
+            } catch (requestError) {
+                if (!controller.signal.aborted) setError(requestError?.response?.data?.detail?.message || t('chat.historyError', { defaultValue: 'Không thể tải lịch sử hội thoại.' }));
+            } finally {
+                if (!controller.signal.aborted) setIsLoadingSessions(false);
             }
         };
-        return () => es.close();
-    }, []);
+        loadSessions();
+        return () => controller.abort();
+    }, [t]);
 
     useEffect(() => {
-        if (lastMessageRef.current) {
-            lastMessageRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        if (!selectedSessionId) {
+            setMessages([]);
+            return undefined;
         }
+        const controller = new AbortController();
+        setIsLoadingMessages(true);
+        setError('');
+        getSupportChatMessages(selectedSessionId, { signal: controller.signal })
+            .then((result) => {
+                if (!controller.signal.aborted) setMessages(result.messages || []);
+            })
+            .catch((requestError) => {
+                if (!controller.signal.aborted) setError(requestError?.response?.data?.detail?.message || t('chat.historyError', { defaultValue: 'Không thể tải lịch sử hội thoại.' }));
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) setIsLoadingMessages(false);
+            });
+        return () => controller.abort();
+    }, [selectedSessionId, t]);
+
+    useEffect(() => {
+        lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, [messages]);
 
+    useEffect(() => {
+        const eventSource = new EventSource(`${API_URL}/intro-stream`);
+        setContentIntro('');
+        eventSource.onmessage = (event) => {
+            if (event.data === '[DONE]') eventSource.close();
+            else setContentIntro((current) => `${current} ${event.data}`);
+        };
+        eventSource.onerror = () => eventSource.close();
+        return () => eventSource.close();
+    }, []);
+
+    const createSession = async () => {
+        setError('');
+        try {
+            const session = await createSupportChatSession();
+            setSessions((current) => [session, ...current]);
+            setSelectedSessionId(session.session_id);
+        } catch (requestError) {
+            setError(requestError?.response?.data?.detail?.message || t('chat.sessionError', { defaultValue: 'Không thể tạo hội thoại mới.' }));
+        }
+    };
+
+    const runLearning = async () => {
+        if (!selectedSessionId || isLearning) return;
+        setIsLearning(true);
+        setLearningStatus('');
+        setError('');
+        try {
+            const result = await prepareLearning(selectedSessionId);
+            setLearningStatus(result.status === 'ready'
+                ? t('chat.learningReady', { defaultValue: 'Đã kiểm tra và che dữ liệu nhạy cảm thành công.' })
+                : t('chat.learningSkipped', { defaultValue: `Hội thoại chưa được nạp: ${result.reason || 'không đủ dữ liệu'}.` }));
+        } catch (requestError) {
+            setError(requestError?.response?.data?.detail?.message || t('chat.learningError', { defaultValue: 'Không thể nạp hội thoại vào kho tri thức.' }));
+        } finally {
+            setIsLearning(false);
+        }
+    };
 
     return (
-       <div id={stylesChat.frameSection}>
-            <div className= "flex flex-column height-100 jc-space-around">
-                <div ref={chatRef} className={stylesChat.frameChat} style={{alignItems:"center"}}> 
-                    {messages.length > 0 ? (
-                        messages.map((message, idx) => (
-                            <div className={chatbotStyles.contentUser} ref={idx === messages.length - 1 ? lastMessageRef : null} key={idx}>
-                            {message.role === "id_users" ? (
-                                <div className="flex jc-end margin-5-0" style={{paddingLeft:"25%", margin:"18px 0"}}>
-                                    <div style={{whiteSpace:"normal", borderRadius:"18px", padding:"5px 14px"}} className={chatbotStyles.id_users}>
-                                        {message.content}
-                                    </div>
-                                </div>
-                            ):(
-                                <div id  className="flex jc-start margin-0-5">
-                                    <div style={{whiteSpace:"normal", padding: "0px 8px", background:"none"}} className={chatbotStyles.responses}>
-                                        <ReactMarkdown>{message.content}</ReactMarkdown>
-                                    </div>
-                                </div>
-                            )}
-                            </div>
-                        ))
-                    ):(
-                        <div className={chatbotStyles.contentUser} style={{height:"100%", width:"88%", justifyContent:"flex-start", marginTop:"150px"}}>
-                            <div className="flex jc-space-between">
-                                <div id={stylesChat.framePage} className="flex flex-column margin-0-5">
-                                    <h1>{t("chatbot.titleContent")}</h1>
-                                    <div className="flex jc-space-between" style={{height: "150px", marginTop:"20px"}}>
-                                        <div className="flex flex-column" style={{width: "88%"}}>
-                                            <div style={{whiteSpace: "pre-wrap"}}>
-                                                <p style={{fontSize:"20px", marginLeft:"0"}}>
-                                                    <ReactMarkdown
-                                                        components={{
-                                                            p: ({node, ...props}) => (
-                                                                <p style={{fontSize:"19px", marginBottom:"10px"}} {...props} />
-                                                            ),
-                                                        }}>
-                                                        {contentIntro}
-                                                    </ReactMarkdown>
-                                                </p>
-                                                <div className="flex items-center">
-                                                    <p style={{fontSize:"19px"}}>{t("chatbot.question")} </p>
-                                                    <span className={chatbotStyles.point_request}></span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                    </div>
-                                </div>
-                                <div id={stylesChat.chat_img} style={{ height: "235px", width: "266px", borderRadius: "15px"}} 
-                                    className="flex jc-center items-center">
-                                    <img style={{height:"68%", borderRadius:"15px"}} src="/_logo_QS.svg" alt="" />
-                                </div>
-                            </div>
+        <div className={stylesChat.chatLayout}>
+            <aside className={stylesChat.chatSidebar} aria-label={t('chat.history', { defaultValue: 'Hội thoại' })}>
+                <div className={stylesChat.sidebarHeader}>
+                    <h2>{t('chat.history', { defaultValue: 'Hội thoại' })}</h2>
+                    <button type="button" className={stylesChat.newChatButton} onClick={createSession} aria-label={t('chat.new', { defaultValue: 'Tạo hội thoại mới' })}>
+                        <MessageSquarePlus size={18} aria-hidden="true" />
+                    </button>
+                </div>
+                {isLoadingSessions ? (
+                    <LoaderCircle className={stylesChat.loadingIcon} size={20} aria-label={t('chat.loading', { defaultValue: 'Đang tải' })} />
+                ) : (
+                    <div className={stylesChat.sessionList}>
+                        {sessions.map((session) => (
+                            <button
+                                type="button"
+                                key={session.session_id}
+                                className={`${stylesChat.sessionItem} ${selectedSessionId === session.session_id ? stylesChat.selectedSession : ''}`}
+                                onClick={() => setSelectedSessionId(session.session_id)}
+                            >
+                                <span>{session.product_models?.join(', ') || t('chat.untitled', { defaultValue: 'Hội thoại hỗ trợ' })}</span>
+                                <small>{new Date(session.created_at).toLocaleDateString()}</small>
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </aside>
+
+            <main className={stylesChat.chatMain}>
+                <div className={stylesChat.frameChat}>
+                    {isLoadingMessages && <LoaderCircle className={stylesChat.loadingIcon} size={24} aria-label={t('chat.loading', { defaultValue: 'Đang tải' })} />}
+                    {!isLoadingMessages && messages.length === 0 && (
+                        <div className={stylesChat.emptyChat}>
+                            <h1>{t('chatbot.titleContent')}</h1>
+                            <ReactMarkdown>{contentIntro}</ReactMarkdown>
                         </div>
                     )}
+                    {messages.map((message, index) => (
+                        <div
+                            className={message.sender_role === 'user' ? stylesChat.userBubble : stylesChat.staffBubble}
+                            ref={index === messages.length - 1 ? lastMessageRef : null}
+                            key={message.id}
+                            style={{ fontSize: '16px' }}
+                        >
+                            {message.sender_role === 'staff' ? <ReactMarkdown>{message.message_text}</ReactMarkdown> : message.message_text}
+                        </div>
+                    ))}
                 </div>
-                <div id={stylesChat.frameInput} style={{marginLeft:"20px"}}>
-                    <AutoResizeTextarea 
+
+                {(error || learningStatus) && <p className={error ? stylesChat.errorMessage : stylesChat.statusMessage} role={error ? 'alert' : 'status'}>{error || learningStatus}</p>}
+                <div className={stylesChat.chatComposer}>
+                    <textarea
                         value={text}
-                        placeholder= {t("chatbot.placeholder")}
-                        handleKey = {handleKey}
+                        placeholder={t('chatbot.placeholder')}
                         maxLength={MAX_REQUEST_LENGTH}
-                        onChange={(e) => {
-                            if (e.target.value.length <= MAX_REQUEST_LENGTH) {
-                                setText(e.target.value)
-                            }
-                        }}
+                        onChange={(event) => setText(event.target.value)}
+                        aria-label={t('chatbot.messageLabel', { defaultValue: 'Tin nhắn' })}
                     />
+                    <button type="button" onClick={runLearning} disabled={!selectedSessionId || isLearning} aria-label={t('chat.learning', { defaultValue: 'Nạp vào kho tri thức' })}>
+                        {isLearning ? <LoaderCircle className={stylesChat.loadingIcon} size={18} /> : <BookOpen size={18} />}
+                    </button>
                 </div>
-            </div>
-       </div>
+            </main>
+        </div>
     );
 }
 
-export default Chat
+export default Chat;

@@ -13,6 +13,35 @@ export const getChats = async (config = {}) => {
     return res.data;
 };
 
+export const getChatHistory = async (sessionId, config = {}) => {
+    const res = await apiFetch.get(`/chatbot/sessions/${sessionId}/history`, config);
+    return res.data;
+};
+
+export const listSupportChatSessions = async (config = {}) => {
+    const res = await apiFetch.get("/support-chat/sessions", config);
+    return res.data;
+};
+
+export const createSupportChatSession = async (productModels = [], config = {}) => {
+    const res = await apiFetch.post("/support-chat/sessions", { product_models: productModels }, config);
+    return res.data;
+};
+
+export const getSupportChatMessages = async (sessionId, config = {}) => {
+    const res = await apiFetch.get(`/support-chat/sessions/${sessionId}/messages`, config);
+    return res.data;
+};
+
+export const prepareLearning = async (sessionId, config = {}) => {
+    const res = await apiFetch.post("/learning-knowledge", {
+        schema_version: "1.0",
+        session_id: sessionId,
+        retry_failed: false,
+    }, config);
+    return res.data;
+};
+
 export class ChatStreamError extends Error {
     constructor(message, code = 'chat_stream_error') {
         super(message);
@@ -42,7 +71,7 @@ export const streamChatbotResponse = async (message, channel, { signal, onChunk 
         client_context: getClientContext(),
     };
 
-    console.log("Sending chat request with payload:", payload);
+    console.log(baseURL);
     
     const response = await fetch(`${baseURL}/chatbot`, {
         method: 'POST',

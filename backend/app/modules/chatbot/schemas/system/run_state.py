@@ -8,6 +8,7 @@ from pydantic import Field
 from ..default import SystemModel, NonNegInt
 from ..inbound import InboundRequest
 from .analysis import Analysis
+from .orchestration import ExecutionPlan
 from .retrieval import Candidate, RetrievalTrace
 from .run_context import RunContext
 from .run_stats import RunStats
@@ -21,6 +22,7 @@ class RunState(SystemModel):
     context: RunContext | None = None         # Prune output
     context_status: Literal["pending", "loaded", "pruned"] = "pending"
     analysis: Analysis | None = None           # Context stage
+    plan: ExecutionPlan | None = None          # Execution stage
     retrieval_traces: list[RetrievalTrace] = Field(default_factory=list)  # Tool stage
     stats: RunStats = Field(default_factory=RunStats)
     iteration: NonNegInt = 0

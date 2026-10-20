@@ -50,13 +50,17 @@ class ExecutionScheduler:
             ]
 
             for task in blocked:
-                if task.status is not TaskStatus.BLOCKED:
-                    task.status = TaskStatus.BLOCKED
+                reason = (
+                    "task_blocked"
+                    if task.status is TaskStatus.BLOCKED
+                    else "dependency_not_completed"
+                )
+                task.status = TaskStatus.BLOCKED
                 if task.result is None:
                     task.result = NormalizedTaskResult(
                         task_id=task.task_id,
                         status=TaskStatus.BLOCKED,
-                        metadata={"reason": "dependency_not_completed"},
+                        metadata={"reason": reason},
                     )
                 remaining.remove(task.task_id)
 

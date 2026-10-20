@@ -5,8 +5,12 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse, StreamingResponse
+from sqlalchemy.exc import SQLAlchemyError
+from uuid import UUID
 
 from app.modules.chatbot.schemas.channels import WebsiteChatIn
+from app.modules.chatbot.schemas.history import ChatHistoryResponse
+from app.modules.chatbot.repositories.history_repository import HistoryRepository
 from app.modules.chatbot.service import ChatbotService
 from app.modules.chatbot.stages.security import (
     SecurityBlockedError,
@@ -14,11 +18,52 @@ from app.modules.chatbot.stages.security import (
     normalize_locale,
 )
 from app.modules.chatbot.stages.context_loader import ContextBudgetError, ContextConfigurationError
-from app.api.v1.dependencies import get_chatbot_service
+from app.api.v1.dependencies import get_chatbot_service, get_history_repository
 
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["chatbot"])
+
+
+@router.get("/chatbot/sessions/{session_id}/history", response_model=ChatHistoryResponse)
+async def get_chat_history(
+    session_id: UUID,
+    repository: HistoryRepository = Depends(get_history_repository),
+) -> ChatHistoryResponse | JSONResponse:
+    try:
+        history = await repository.list_for_history(session_id=session_id)
+    except SQLAlchemyError:
+        request_id = str(uuid4())
+        logger.exception(
+            "Chat history load failed (request_id=%s session_id=%s)",
+            request_id,
+            session_id,
+        )
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": {
+                    "code": "database_unavailable",
+                    "message": "Chat history could not be loaded. Please try again.",
+                    "request_id": request_id,
+                }
+            },
+            headers={"X-Request-ID": request_id},
+        )
+
+    if not history:
+        return JSONResponse(
+            status_code=404,
+            content={
+                "detail": {
+                    "code": "session_not_found",
+                    "message": "No chat history found for this session.",
+                }
+            },
+        )
+
+    return ChatHistoryResponse(session_id=session_id, messages=history)
+
 
 def _sse_event(name: str, payload: dict[str, object]) -> str:
     return f"event: {name}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"

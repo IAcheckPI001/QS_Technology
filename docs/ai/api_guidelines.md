@@ -12,12 +12,109 @@ Các route hiện được include từ `backend/app/api/v1/router.py`:
 - `GET /health`: kiểm tra process đang chạy, trả `{"status": "ok"}`.
 - `GET /health/db`: chạy database connectivity check, trả trạng thái database.
 - `POST /chatbot`: nhận request website và trả `text/event-stream`.
+- `GET /chatbot/sessions/{session_id}/history`: tải lịch sử chatbot của một
+  session đã lưu.
+- `POST /learning-knowledge`: chỉ khi `LEARNING_API_ENABLED=true` (xem bên dưới).
+- `GET/POST /support-chat/sessions` và
+  `GET /support-chat/sessions/{session_id}/messages`: đọc/tạo hội thoại CRM
+  cho giao diện học tri thức, cùng feature flag.
 
-`backend/app/modules/learning_ai/router.py` hiện chưa được include, vì vậy
-không được coi là public API đang hoạt động. Route scaffold
-`POST /learning-knowledge` trả HTTP 501 cho tới khi ingestion, learning service
-và persistence được triển khai. Khi include, phải bổ sung schema version và
-response contract theo hướng dẫn này.
+## Support chat history
+
+Các endpoint này dùng `public.support_chat_test_sessions` và
+`public.history_support_chat`. History được lưu một message mỗi row với
+`message_no`, `sender_role` (`user` hoặc `staff`) và `message_text`; backend
+luôn trả theo thứ tự `message_no`.
+
+- `GET /support-chat/sessions` trả danh sách session mới nhất trước.
+- `POST /support-chat/sessions` nhận `{ "product_models": ["F86"] }` và trả
+  session vừa tạo (`201`).
+- `GET /support-chat/sessions/{session_id}/messages` trả `{session_id,
+  messages}` hoặc `404 session_not_found`.
+
+Các endpoint chưa có authentication/ownership và chỉ được bật rõ ràng bằng
+`LEARNING_API_ENABLED=true`.
+
+`GET /chatbot/sessions/{session_id}/history` trả:
+
+```json
+{
+  "session_id": "…",
+  "messages": [
+    {
+      "id": "…",
+      "session_id": "…",
+      "query_origin": "Câu hỏi",
+      "answer": "Câu trả lời",
+      "status": "completed",
+      "created_at": "…"
+    }
+  ]
+}
+```
+
+Endpoint này đọc các trạng thái đã lưu (`completed`, `blocked`, `error`) để
+phục hồi lịch sử UI. Session không có history trả `404 session_not_found`;
+database lỗi trả `503 database_unavailable`.
+
+Khi chạy local, đặt `LEARNING_API_ENABLED=true` trong `backend/.env` rồi khởi
+động lại backend. Khi chạy Docker Compose, đặt biến này trong file `.env` ở
+repository root; Compose sẽ truyền biến vào container backend. Nếu không bật
+flag, FastAPI không đăng ký các route support-chat và trả `404`.
+
+`POST /learning-knowledge` (`backend/app/modules/learning_ai/router.py`) chỉ
+được include khi `LEARNING_API_ENABLED=true` (mặc định tắt) vì chưa có xác thực.
+
+## `POST /learning-knowledge`
+
+Chạy bước nạp hội thoại CRM từ `public.history_support_chat` → prefilter →
+privacy (regex + Ollama). Segmenter/Extractor và lưu job **chưa** được nối; response
+là kết quả chuẩn bị, không phải tri thức đã tạo.
+
+Request (schema version `"1.0"`, field lạ bị từ chối):
+
+```json
+{"schema_version": "1.0", "session_id": "uuid", "retry_failed": false}
+```
+
+`retry_failed` được nhận nhưng chưa có tác dụng cho tới khi có bảng job.
+
+Response `200` (`application/json`, header `X-Request-ID`). Chỉ có text **đã che**,
+text gốc không bao giờ được trả về:
+
+```json
+{
+  "schema_version": "1.0",
+  "request_id": "…",
+  "session_id": "…",
+  "status": "ready",
+  "reason": null,
+  "source_id": "…",
+  "checker_model": "qwen2.5:7b-instruct",
+  "redaction_applied": true,
+  "pii_types_detected": ["person_name", "phone"],
+  "flags_by_locator": {"m4": ["pricing"]},
+  "unverified_findings": 0,
+  "residual_redactions": 0,
+  "units": [{"locator": "m1", "role": "customer", "text": "Em là [PERSON_1], gọi em [PHONE_1]"}]
+}
+```
+
+`status="skipped"` kèm `reason` (`no_customer_message`, `no_staff_message`,
+`greeting_only`, `too_short`) và các trường privacy rỗng.
+
+Lỗi trả `{"detail": {"code", "message", "request_id"}}` với message tổng quát:
+
+| HTTP | `code` | Khi nào |
+|---|---|---|
+| 404 | `session_not_found` | Session không có row nào |
+| 422 | (FastAPI) | `session_id` không phải UUID, sai `schema_version`, field lạ |
+| 503 | `privacy_provider_not_configured` | Bật route nhưng thiếu `OLLAMA_BASE_URL`/`OLLAMA_MODEL` |
+| 503 | `privacy_check_unavailable` | Ollama lỗi, sai schema hoặc không xác nhận đọc đủ message |
+| 503 | `database_unavailable` | Không đọc được hội thoại |
+| 500 | `internal_error` | Lỗi không mong đợi |
+
+Lý do chi tiết (cửa sổ nào lỗi, loại exception) chỉ ghi log server, không trả client.
 
 ## `POST /chatbot`
 
@@ -101,9 +198,10 @@ secret hoặc nội dung log nội bộ.
   `backend/app/main.py`.
 - History được ghi vào Supabase `public.chat_history`: `completed`, `error`
   (nếu error transaction được commit) hoặc `blocked`.
-- Không có history-read endpoint đang được enable; client legacy `/chats` không
-  phải contract backend hiện tại.
+- Support-chat history endpoints chỉ được enable cùng `LEARNING_API_ENABLED` và
+  chưa có ownership; client legacy `/chats` không phải contract backend hiện tại.
 - Retrieval/tools chưa được nối vào active response flow.
-- Provider final answer streaming hiện chưa chạy end-to-end; service đang trả
-  các chunk mẫu sau bước analysis. Không viết tài liệu hoặc test như thể RAG
-  và provider answer streaming đã hoàn thiện.
+- Câu trả lời cuối được stream từ provider qua `AnswerComposer`, dựa trên kết
+  quả task của execution plan. Task `retrieve` chưa có handler nên luôn `failed`
+  (`handler_not_configured`). Không viết tài liệu hoặc test như thể RAG đã hoàn
+  thiện.

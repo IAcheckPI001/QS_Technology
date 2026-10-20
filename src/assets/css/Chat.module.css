@@ -4,6 +4,96 @@
     padding-bottom: 88px;
 }
 
+.chatLayout {
+    display: flex;
+    width: min(1100px, 96vw);
+    height: calc(100vh - 120px);
+    min-height: 520px;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid #e2e8ed;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 12px 35px rgb(24 53 70 / 10%);
+}
+
+.chatSidebar {
+    width: 250px;
+    flex: 0 0 250px;
+    padding: 16px 10px;
+    border-right: 1px solid #e5ebef;
+    background: #f7fafb;
+}
+
+.sidebarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px 12px;
+}
+
+.sidebarHeader h2 {
+    margin: 0;
+    color: #193348;
+    font-size: 18px;
+}
+
+.newChatButton,
+.chatComposer button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    color: #fff;
+    background: #147e8e;
+}
+
+.newChatButton {
+    width: 34px;
+    height: 34px;
+}
+
+.sessionList {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow-y: auto;
+}
+
+.sessionItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    padding: 10px;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    color: #243744;
+    background: transparent;
+}
+
+.sessionItem:hover,
+.selectedSession {
+    background: #e2f4f5;
+}
+
+.sessionItem small {
+    color: #71818c;
+    font-size: 11px;
+}
+
+.chatMain {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    padding: 18px;
+}
+
 .frameChat {
     display: flex;
     flex-direction: column;
@@ -15,8 +105,96 @@
     scrollbar-width: thin;
     scrollbar-color: #545e5903;
     scroll-behavior: smooth;
-    margin-top: 10px
-};
+    margin-top: 10px;
+}
+
+.emptyChat {
+    max-width: 620px;
+    margin: auto;
+    color: #526774;
+    text-align: center;
+}
+
+.emptyChat h1 {
+    color: #193348;
+}
+
+.userBubble,
+.staffBubble {
+    max-width: 78%;
+    margin: 7px 0;
+    padding: 8px 14px;
+    border-radius: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.userBubble {
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+    color: #fff;
+    background: #147e8e;
+}
+
+.staffBubble {
+    align-self: flex-start;
+    border: 1px solid #e5ebef;
+    border-bottom-left-radius: 4px;
+    color: #243744;
+    background: #f8fafc;
+}
+
+.chatComposer {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+    padding: 8px;
+    border: 1px solid #dfe7ed;
+    border-radius: 14px;
+}
+
+.chatComposer textarea {
+    min-height: 42px;
+    flex: 1;
+    resize: vertical;
+    border: 0;
+    outline: 0;
+    font: inherit;
+}
+
+.chatComposer button {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+}
+
+.chatComposer button:disabled {
+    cursor: default;
+    opacity: .55;
+}
+
+.statusMessage,
+.errorMessage {
+    margin: 8px 0;
+    font-size: 13px;
+}
+
+.statusMessage {
+    color: #147e8e;
+}
+
+.errorMessage {
+    color: #a33d2f;
+}
+
+.loadingIcon {
+    align-self: center;
+    animation: chatSpin 900ms linear infinite;
+}
+
+@keyframes chatSpin {
+    to { transform: rotate(360deg); }
+}
 
 .contentIntro {
     line-height: 1.5; 
@@ -39,6 +217,18 @@
 
 
 @media (max-width: 768px) {
+
+    .chatLayout {
+        width: 100%;
+        height: calc(100vh - 90px);
+        border: 0;
+        border-radius: 0;
+    }
+
+    .chatSidebar {
+        width: 190px;
+        flex-basis: 190px;
+    }
 
     #frameSection{
         width: 72vw !important;

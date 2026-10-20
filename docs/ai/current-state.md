@@ -16,8 +16,8 @@ Frontend
   -> ContextLoader
   -> Prune
   -> AnalysisStage -> QueryAnalyzer -> OpenAIProvider
-  -> execution-plan scaffold
-  -> sample response chunks
+  -> ExecutionStage -> ExecutionScheduler -> deterministic task handlers
+  -> AnswerComposer -> OpenAIProvider.stream_chat
   -> HistoryRepository -> Supabase public.chat_history
   -> SSE response
 ```
@@ -47,10 +47,10 @@ provider layer, and database access remains in the repository layer.
 | P0 importability and deployment configuration | Resolved in code/config | `Depends` is imported, `DATABASE_URL` is documented and passed through Compose. Clean-runtime and live-Supabase validation remain outstanding. |
 | P1 ChatHistory persistence | Implemented, not production-verified | `ChatHistory`, repository, session UUID propagation, and completed/error persistence are wired. Error-transaction behavior and live insert validation remain open. |
 | P2 configuration normalization | Resolved in implementation | One cached `pydantic-settings` model is used and model defaults are aligned. Pytest validation remains outstanding. |
-| P3 history reads and ownership | Deferred | No history-read endpoint or ownership boundary is enabled. This is intentionally not production-ready. |
+| P3 history reads and ownership | Partially implemented | Support-chat session/message reads and session creation are available behind `LEARNING_API_ENABLED`; authentication and ownership are still deferred. |
 | P4 health/readiness semantics | Open | Connectivity check exists, but readiness status/error semantics and schema checks are incomplete. |
-| P5 active chatbot pipeline | Partially implemented | Security, context loading, pruning and analysis/execution-plan construction run. Retrieval/tool execution and final provider answer streaming remain incomplete; the service currently emits sample chunks. |
-| P6 knowledge learning pipeline (`learning_ai`) | Domain core designed, not wired | Pure domain logic (record schema, post-LLM validation, rule conflicts, review lifecycle, chunking, indexer sync) exists and is unit-tested. No entrypoint runs it: ingestion, LLM segment/extract calls, persistence, outbox, embedding and vector index are missing. The router is not included and returns 501. |
+| P5 active chatbot pipeline | Partially implemented | Security, context loading, pruning, analysis, execution-plan execution (chitchat/out_of_scope/no_docs/handoff handlers, blocked clarify) and provider final-answer streaming run. Retrieval has no handler, so retrieve tasks always fail with `handler_not_configured`; handoff does not create tickets or change conversation mode. |
+| P6 knowledge learning pipeline (`learning_ai`) | Ingestion + privacy wired behind a flag | Pure domain logic (record schema, post-LLM validation, rule conflicts, review lifecycle, chunking, indexer sync) plus CRM ingestion, prefilter and the Ollama-backed privacy pipeline exist and are unit-tested with fake providers. `POST /learning-knowledge` runs ingestion + privacy when `LEARNING_API_ENABLED=true` (no authentication yet). LLM segment/extract calls, job persistence, outbox, embedding and vector index are missing. Not verified against live Supabase/Ollama. |
 
 ## Finding status
 
@@ -84,9 +84,9 @@ historical database records. Deletion is not currently implemented.
 
 ### Chat history writes
 
-- The current service writes `status='completed'` after emitting its response
-  chunks. Those chunks are currently sample output, not a completed RAG/provider
-  answer stream.
+- The current service writes `status='completed'` after streaming the
+  provider-generated answer. Without retrieval the answer is not grounded in
+  documents; technical questions are answered as "documents not yet available".
 - A provider or pipeline exception attempts to write `status='error'` with any
   partial answer.
 - `input_tokens`, `output_tokens`, `cost_usd`, `normalized_query`, and
@@ -144,11 +144,12 @@ historical database records. Deletion is not currently implemented.
    - Retrieval/tool execution is not wired into the active stream, so
      `retrieved_chunk_ids` remains empty/null.
 
-9. **Final answer flow is incomplete**
-   - `AnalysisStage` calls the provider through `QueryAnalyzer`, and an
-     execution plan is built, but the plan is not yet executed.
-   - The service currently emits sample chunks instead of a provider-generated
-     final answer stream.
+9. **Final answer flow lacks retrieval and side effects**
+   - `ExecutionStage` runs the plan and `AnswerComposer` streams one provider
+     answer per turn, but retrieve tasks have no handler and fail with
+     `handler_not_configured`.
+   - Handoff does not create a ticket or set `ConversationState.mode`;
+     clarification is not persisted as `PendingClarification`.
 
 10. **Frontend lint baseline**
    - `npm run lint` still fails on existing unrelated frontend errors.
@@ -196,15 +197,23 @@ historical database records. Deletion is not currently implemented.
 
 Design and per-step status are in `docs/ai/architecture.md`. Remaining work, in order:
 
+Done: CRM ingestion from `public.history_support_chat`, prefilter, privacy
+pipeline (regex A/D, Ollama B, redactor C, fail-closed) and `LearningIngestionService`.
+`assemble_draft` now takes `redaction_applied` from the caller. The table is
+Supabase-managed and must have `created_at timestamptz not null default now()`. The
+ORM expects that column, and it has not been verified against the live table.
+
 19. Add the missing registry keys (`topics`, `connectors`, `parameters`,
     `alarm_codes`) and build one `RegistrySnapshot` source shared with query extraction.
-20. Ingestion: load completed `chat_history` turns or documents into an anonymized
-    SourceDocument with `locator -> role` units, with real PII redaction. Set
-    `redaction_applied` from that result instead of hard-coding it.
+20. Build a labeled Vietnamese CRM evaluation set and measure Ollama recall per finding
+    type before trusting a model. The `.env.example` default `qwen3:1.7b` is likely too
+    small; `qwen2.5:7b-instruct` or newer is recommended as a starting point.
 21. Segmenter/Extractor prompts and calls behind the provider layer, driven by a
-    learning service, not the router.
-22. Supabase tables for source documents, knowledge records/revisions, extraction jobs,
-    outbox and chunks/vectors. This needs a schema decision before implementation.
+    learning service, not the router. Segments whose main topic is pricing must use
+    `skip_reason="pricing"`; official prices come from catalog documents.
+22. Supabase tables for extraction jobs (with `source_content_hash` so unchanged
+    conversations are not reprocessed), knowledge records/revisions, outbox and
+    chunks/vectors. This needs a schema decision before implementation.
 23. Learning service ordering: extract -> assemble -> validate -> conflicts ->
     `pending_review`. Approval must run the gate after validation and conflicts.
 24. Review API/UI, semantic conflict comparison, `Embedder`/`SearchIndex`
@@ -219,11 +228,13 @@ Design and per-step status are in `docs/ai/architecture.md`. Remaining work, in 
 - `npm run lint`: **failed** on pre-existing frontend unused-variable and
   undefined-symbol errors.
 - Backend pytest via `backend\venv\Scripts\python.exe -m pytest` (2026-10-19):
-  **86 passed, 5 failed**. All 38 `tests/learning_ai` tests pass. The 5 failures are
+  **152 passed, 5 failed**. All 104 `tests/learning_ai` tests pass. The 5 failures are
   in `tests/chatbot/test_chat_history.py` and `test_context_pipeline.py`: the tests
   are out of sync with the in-progress chatbot refactor (`Prune.execute` signature,
   `ContextLoader.resolve_retrieval_scope`, `FakeProvider.chat_complete_json`,
   undefined `ContextConfigurationError`).
+- Backend pytest after wiring execution + answer composition (2026-10-20):
+  **164 passed, 5 failed**; the same 5 pre-existing chatbot failures.
 - Live Supabase connectivity/insert: **not verified**.
 
 ## Architectural impact
@@ -233,8 +244,7 @@ The implemented request/write path follows the documented boundaries:
 - API route: request validation, dependency wiring, and SSE transport.
 - Chatbot service: session resolution, stage coordination and application
   behavior.
-- Provider: OpenAI-specific analysis call; final answer streaming is not yet
-  connected.
+- Provider: OpenAI-specific analysis call and final answer streaming.
 - Repository: SQLAlchemy persistence.
 - ORM model: database table mapping.
 
@@ -251,8 +261,8 @@ implemented yet, so `Conversation.summary` remains `None`.
 `Prune` applies `CONTEXT_TOKEN_BUDGET` after context loading and before
 analysis/provider work. It removes the oldest history turns first and never
 truncates the current query. `AnalysisStage` then builds the analysis context,
-calls `QueryAnalyzer` through `OpenAIProvider`, and creates an execution plan.
-The plan is currently a scaffold: retrieval, tools and final answer generation
-are not yet executed. Invalid configuration is an application/configuration
+calls `QueryAnalyzer` through `OpenAIProvider`. `ExecutionStage` builds and runs
+the execution plan with deterministic handlers, and `AnswerComposer` streams the
+final answer from the task results. Retrieval and tools are not yet executed. Invalid configuration is an application/configuration
 error; an unfit mandatory payload is a context-budget/domain error. Neither is
 a security block.

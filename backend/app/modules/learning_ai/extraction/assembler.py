@@ -17,7 +17,8 @@ class ExtractionRun:
 
 
 def assemble_draft(dto: ExtractedRecord, *, source_id: str, run: ExtractionRun,
-                   pii_types_detected: list[str]) -> KnowledgeRecord:
+                   pii_types_detected: list[str], redaction_applied: bool) -> KnowledgeRecord:
+    """redaction_applied và pii_types_detected lấy từ PrivacyResult, không được giả định."""
     data = dto.model_dump(mode="python")
     record = KnowledgeRecord(
         title=data["title"],
@@ -29,7 +30,7 @@ def assemble_draft(dto: ExtractedRecord, *, source_id: str, run: ExtractionRun,
                               extractor_model=run.extractor_model, prompt_version=run.prompt_version,
                               registry_version=run.registry_version),
         privacy=PrivacyInfo(
-            redaction_applied=True,
+            redaction_applied=redaction_applied,
             pii_types_detected=pii_types_detected,
             contains_customer_specific=dto.contains_customer_specific,
             visibility=Visibility.RESTRICTED if dto.contains_customer_specific else Visibility.INTERNAL,

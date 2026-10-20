@@ -1,6 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,7 +11,7 @@ def _parse_origins(value: str | list[str]) -> list[str]:
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=Path(__file__).resolve().parents[2] / ".env",
         env_file_encoding="utf-8",
         enable_decoding=False,
         extra="ignore",
@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
     context_token_budget: int = Field(default=2048, alias="CONTEXT_TOKEN_BUDGET",)
+    ollama_base_url: str = Field(default="", alias="OLLAMA_BASE_URL")
+    ollama_model: str = Field(default="", alias="OLLAMA_MODEL")
+    ollama_timeout_seconds: float = Field(default=180.0, alias="OLLAMA_TIMEOUT_SECONDS")
+    ollama_num_ctx: int = Field(default=8192, alias="OLLAMA_NUM_CTX")
+    ollama_window_tokens: int = Field(default=2500, alias="OLLAMA_WINDOW_TOKENS")
+    # Endpoint học tri thức chưa có xác thực: chỉ bật khi kiểm thử nội bộ.
+    learning_api_enabled: bool = Field(default=False, alias="LEARNING_API_ENABLED")
     cors_origins: list[str] = Field(
         default_factory=lambda: [
             "http://localhost:5173",
@@ -35,10 +42,23 @@ class Settings(BaseSettings):
     database_pool_recycle: int = Field(default=1800, alias="DATABASE_POOL_RECYCLE")
     database_pool_mode: str = Field(default="session", alias="DATABASE_POOL_MODE")
 
-    @field_validator("openai_api_key", "openai_model", mode="before")
+    @field_validator("openai_api_key", "openai_model", "ollama_base_url", "ollama_model", mode="before")
     @classmethod
     def _strip(cls, value: str) -> str:
         return value.strip()
+
+    @field_validator("ollama_timeout_seconds", "ollama_num_ctx", "ollama_window_tokens")
+    @classmethod
+    def _validate_positive(cls, value: float) -> float:
+        if value <= 0:
+            raise ValueError("Ollama timeout, num_ctx and window tokens must be greater than zero")
+        return value
+
+    @model_validator(mode="after")
+    def _window_fits_context(self) -> "Settings":
+        if self.ollama_window_tokens >= self.ollama_num_ctx:
+            raise ValueError("OLLAMA_WINDOW_TOKENS must be smaller than OLLAMA_NUM_CTX")
+        return self
 
     @field_validator("context_token_budget")
     @classmethod

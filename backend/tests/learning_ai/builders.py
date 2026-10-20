@@ -1,4 +1,9 @@
-"""Dữ liệu dựng sẵn cho test learning_ai: registry nhỏ và factory record."""
+"""Dữ liệu dựng sẵn cho test learning_ai: registry nhỏ, factory record và fake provider/repository."""
+import json
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
+
 from app.modules.learning_ai.schemas.common import (Applicability, ApplicabilityScope, AssertionBasis,
                                                     Classification, EvidenceRef)
 from app.modules.learning_ai.schemas.content import (ParameterConfigContent, ParameterSetting, ProcedureContent,
@@ -82,3 +87,52 @@ def procedure_record(*, status: RecordStatus = RecordStatus.DRAFT) -> KnowledgeR
         lifecycle=Lifecycle(status=status),
         privacy=PrivacyInfo(redaction_applied=True),
     )
+
+
+# ---------------- ingestion / privacy ----------------
+Responder = Callable[[dict[str, Any]], dict[str, Any]]
+
+
+@dataclass
+class Row:
+    user_message: str | None
+    staff_message: str | None
+
+
+class FakeProvider:
+    model = "fake-ollama"
+
+    def __init__(self, responder: Responder) -> None:
+        self.calls: list[dict[str, Any]] = []
+        self._responder = responder
+
+    async def chat_complete_json(self, messages, response_format=None):
+        payload = json.loads(messages[-1]["content"])
+        self.calls.append(payload)
+        return self._responder(payload)
+
+
+def finding(locator: str, category: str, kind: str, text: str) -> dict[str, str]:
+    return {"locator": locator, "category": category, "type": kind, "text": text}
+
+
+def reviewing(*findings: dict[str, str]) -> Responder:
+    """Responder hợp lệ: xác nhận đã đọc mọi target, trả finding thuộc cửa sổ này."""
+    def respond(payload: dict[str, Any]) -> dict[str, Any]:
+        locators = [t["locator"] for t in payload["targets"]]
+        texts = {t["locator"]: t["text"] for t in payload["targets"]}
+        own = [f for f in findings if f["locator"] in locators and f["text"] in texts[f["locator"]]]
+        return {"reviewed_locators": locators, "findings": own}
+    return respond
+
+
+def word_count(text: str) -> int:
+    return len(text.split())
+
+
+class FakeRepository:
+    def __init__(self, rows):
+        self.rows = rows
+
+    async def list_for_session(self, *, session_id):
+        return self.rows

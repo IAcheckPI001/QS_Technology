@@ -13,7 +13,7 @@ from __future__ import annotations
 import copy
 from typing import Any, Generic, TypeVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from .common import Applicability, Classification, StrictModel
 from .content import CONTENT_MODEL_BY_TYPE, KnowledgeType
@@ -30,12 +30,21 @@ _UNSUPPORTED_KEYS = {"default", "title", "minItems", "maxItems", "minimum", "max
 # ---------------- Pass 1 ----------------
 class Segment(StrictModel):
     segment_id: str
-    knowledge_type: KnowledgeType
+    knowledge_type: KnowledgeType | None = Field(
+        description="Bắt buộc khi skip_reason null; null khi segment bị bỏ qua")
     problem_statement: str = Field(description="Một câu mô tả vấn đề đã ẩn danh")
     message_ids: list[str] = Field(description="Tất cả tin nhắn thuộc vấn đề này, kể cả tin nhắn điều kiện/ngữ cảnh")
     resolved: bool = Field(description="Có lời giải được nhân viên đưa ra rõ ràng hay không")
     skip_reason: str | None = Field(
-        default=None, description="Lý do không nên tạo tri thức: chỉ chào hỏi, chỉ chuyển tiếp, cấu hình riêng...")
+        default=None,
+        description="Lý do không nên tạo tri thức: chỉ chào hỏi, hỏi giá (pricing), ngoài phạm vi kỹ thuật, "
+                    "cấu hình riêng...")
+
+    @model_validator(mode="after")
+    def _type_required_when_kept(self):
+        if self.skip_reason is None and self.knowledge_type is None:
+            raise ValueError("segment không bị bỏ qua phải có knowledge_type")
+        return self
 
 
 class SegmentationOutput(StrictModel):

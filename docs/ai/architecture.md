@@ -14,8 +14,8 @@ Frontend
   -> ContextLoader
   -> Prune
   -> AnalysisStage -> OpenAIProvider
-  -> execution-plan scaffold
-  -> response chunks hiện tại
+  -> ExecutionStage -> ExecutionScheduler -> deterministic handlers (chưa có retrieve)
+  -> AnswerComposer -> OpenAIProvider.stream_chat
   -> HistoryRepository -> Supabase public.chat_history
   -> SSE về frontend
 ```
@@ -47,13 +47,28 @@ và `ChatbotService`. Router không tự khởi tạo provider hoặc repository
 6. `Prune` áp dụng context token budget, giữ query/summary và bỏ các history
    turn cũ trước; lỗi budget/config là domain error, không phải security block.
 7. `AnalysisStage` dựng context analysis và gọi `QueryAnalyzer` qua
-   `OpenAIProvider`; sau đó tạo execution plan từ analysis.
-8. Retrieval/tool execution và provider final-answer stream chưa được nối vào
-   flow hoạt động. Service hiện phát các chunk mẫu, sau đó ghi history
-   `status='completed'`. Đây là giới hạn quan trọng của trạng thái hiện tại.
-9. Router phát event `done` với `request_id` và authoritative `session_id`.
-   Frontend lưu session ID trong localStorage cho request sau.
-10. Context/domain/provider exception được log server-side và ánh xạ thành SSE
+   `OpenAIProvider`.
+8. `ExecutionStage` tạo execution plan từ analysis và chạy plan qua
+   `ExecutionScheduler` với các handler deterministic trong
+   `orchestration/handlers.py`. Các handler này không gọi LLM:
+   - `chitchat` và `out_of_scope` trả về `completed`.
+   - `no_docs` trả về `completed`, kèm `unsupported_models`.
+   - `handoff` trả về `handed_off`, kèm `handoff_reason`.
+   - Clarify có blocking bị planner đặt `blocked` ngay từ đầu (`reason=task_blocked`).
+   - `retrieve` **chưa có handler**, nên luôn `failed` với
+     `handler_not_configured`.
+
+   Handoff chưa tạo ticket hay đổi `ConversationState.mode`. Clarify chưa lưu
+   `PendingClarification`.
+9. `AnswerComposer` gom kết quả bằng `collect_results`, dựng messages gồm
+   system prompt, history, `<query>`, `<task_results>` và `<clarification>`
+   (nếu có), rồi stream câu trả lời qua `provider.stream_chat`. Mỗi lượt chỉ
+   gọi LLM một lần cho câu trả lời cuối. Sau khi stream xong, service ghi
+   history `status='completed'`. Vì chưa có retrieval, câu hỏi kỹ thuật sẽ được
+   trả lời là chưa tra cứu được tài liệu.
+10. Router phát event `done` với `request_id` và authoritative `session_id`.
+    Frontend lưu session ID trong localStorage cho request sau.
+11. Context/domain/provider exception được log server-side và ánh xạ thành SSE
     `context_error` hoặc `provider_error`.
 
 ## Persistence và session
@@ -63,7 +78,8 @@ và `ChatbotService`. Router không tự khởi tạo provider hoặc repository
 - History thành công (completed) được dùng lại cho context; blocked/error không được đưa
   vào context.
 - `session_id` do client gửi chỉ là conversation identifier, chưa phải
-  ownership boundary. Chưa có history-read endpoint hoặc authorization đầy đủ.
+  ownership boundary. `GET /chatbot/sessions/{session_id}/history` phục vụ
+  khôi phục history UI nhưng chưa có authorization/ownership đầy đủ.
 - `message_id` chưa được lưu để idempotency; concurrent request cùng session
   chưa có ordering guarantee.
 
@@ -81,10 +97,12 @@ và `ChatbotService`. Router không tự khởi tạo provider hoặc repository
 
 ## API surface hiện tại
 
-Đang public: `GET /health`, `GET /health/db`, `POST /chatbot`. Module
-`learning_ai` chưa được include (xem mục dưới). Retrieval,
-tools, history reads, authentication/ownership, idempotency và production
-readiness/schema checks là phạm vi chưa hoàn thiện.
+Đang public: `GET /health`, `GET /health/db`, `POST /chatbot`, và
+`GET /chatbot/sessions/{session_id}/history`. Module
+`learning_ai` cung cấp `POST /learning-knowledge` và các endpoint support-chat
+khi `LEARNING_API_ENABLED=true` (xem mục dưới). Retrieval, chatbot history
+authentication/ownership, idempotency và production readiness/schema checks là
+phạm vi chưa hoàn thiện; chatbot history chưa có ownership.
 
 ## Luồng học tri thức (`learning_ai`): thiết kế và trạng thái
 
@@ -99,9 +117,9 @@ Chưa có API thật, ingestion, lời gọi LLM, persistence Supabase, outbox, 
 hay vector index.
 
 ```text
-[0] POST /learning-knowledge          scaffold: trả 501, chưa include
-[1] Ingestion -> SourceDocument       CHƯA CÓ (ingestion/ rỗng, chưa có PII redaction)
-      (ẩn danh, units locator->role)
+[0] POST /learning-knowledge          chạy [1]; chỉ include khi LEARNING_API_ENABLED=true, chưa có auth
+[1] Ingestion -> SourceDocument       có logic + service (chưa có bảng job, chưa nối route)
+      prefilter -> privacy A..D       Ollama bắt buộc, fail-closed (xem mục Privacy bên dưới)
 [2] Pass 1 Segmenter (LLM)            chỉ có schema Segment/SegmentationOutput
 [3] Pass 2 Extractor (LLM, strict)    có schema + to_strict_schema (inject enum registry);
                                       chưa có prompt/provider call
@@ -124,6 +142,55 @@ hay vector index.
 | `extraction/assembler.py`, `validators.py` | Ghép DTO thành draft, kiểm tra deterministic hậu-LLM |
 | `review/conflict_detector.py`, `lifecycle.py` | Xung đột theo luật, state machine, approval gate, revision bất biến |
 | `chunking/*`, `indexing/indexer.py` | Chunk theo loại tri thức, embedding text, đồng bộ index idempotent |
+| `repositories/support_chat_repository.py` | Đọc session và message từ `public.support_chat_test_sessions` / `public.history_support_chat` theo `message_no` |
+| `ingestion/source_document.py`, `prefilter.py`, `service.py` | Dựng document có locator, lọc hội thoại vô giá trị, điều phối nạp → lọc → privacy |
+| `privacy/*` | Regex PII/giá, chia cửa sổ, kiểm tra bằng Ollama, thay placeholder |
+
+### Nguồn và ingestion
+
+Nguồn là hội thoại CRM giữa nhân viên thật và khách trong
+`public.history_support_chat` (`id`, `session_id`, `message_no`, `sender_role`,
+`message_text`, `created_at`) tham chiếu `public.support_chat_test_sessions`.
+Bảng do Supabase quản lý; ứng dụng đọc qua repository. Mỗi row là một message;
+locator `m1..mN` liên tục theo `message_no`, message rỗng bị bỏ. `source_id` là UUIDv5 của
+`session_id` + hash nội dung, nên ổn định khi nội dung không đổi.
+
+Prefilter chạy trước mọi lời gọi model và chỉ skip khi chắc chắn: thiếu tin nhắn
+khách, thiếu tin nhắn nhân viên, mọi message chỉ gồm từ chào hỏi/cảm ơn/xác nhận/đại
+từ, hoặc nội dung có nghĩa dưới 40 ký tự. Một message có bất kỳ từ khác, chữ số hoặc mã
+registry thì không bị coi là chào hỏi ("xin chào, tôi cần giới thiệu về F86" được giữ).
+
+`LearningIngestionService.prepare(session_id)` trả `IngestionResult` với status
+`ready | skipped | privacy_unavailable`. Kết quả chưa được lưu lại vì chưa có bảng job.
+
+### Privacy (bắt buộc trước khi dữ liệu rời server)
+
+```text
+A  regex       email, SĐT, IPv4, CCCD/CMND/MST/STK (chỉ khi có từ khoá), giá
+B  Ollama      theo cửa sổ: PII phi cấu trúc + pricing / policy / customer_specific
+C  redactor    kiểm span có thật, thay placeholder; thực thể PII thay ở MỌI message
+D  regex lại   trên kết quả cuối, che nốt nếu còn sót
+```
+
+- Ollama nhận text đã che ở tầng A. Model chỉ báo cáo
+  `{reviewed_locators, findings[{locator, category, type, text}]}`; hệ thống quyết
+  định hành động: `pii` và `pricing` bị thay placeholder (`[PERSON_1]`, `[PRICE_1]`),
+  `policy` và `customer_specific` giữ text, gắn cờ trong `flags_by_locator`.
+- Fail-closed: provider lỗi, output sai schema, hoặc `reviewed_locators` thiếu message
+  mục tiêu → cả document `privacy_unavailable`, không có kết quả một phần.
+- Finding có `text` không phải chuỗi con nguyên văn, hoặc locator ngoài cửa sổ, bị loại
+  và đếm vào `unverified_findings`.
+- Hội thoại dài: gom message nguyên vẹn tới `OLLAMA_WINDOW_TOKENS` (tiktoken × 1,5), kèm
+  2 message trước làm ngữ cảnh, và gửi danh sách thực thể đã tìm thấy sang cửa sổ sau.
+  Endpoint OpenAI-compatible của Ollama không đặt được `num_ctx` theo request: phải
+  đặt `PARAMETER num_ctx` trong Modelfile và khai báo `OLLAMA_NUM_CTX` khớp. Provider
+  coi prompt chạm 95% `num_ctx` là đã bị cắt. Kiểm tra `reviewed_locators` là chốt
+  chặn cuối khi giá trị cấu hình lệch với Modelfile.
+- Regex giá phân biệt đơn vị tiền rõ nghĩa (đ, đồng, vnđ, usd, $), đơn vị số lượng
+  (ngàn, nghìn, triệu, tỷ, củ — bỏ qua khi theo sau là danh từ kỹ thuật như "xung",
+  "vòng"), đơn vị mơ hồ (k, tr) và tiếng lóng (lít, xị — cần từ khoá giá).
+- Thay thế toàn document không phân biệt hoa/thường, ưu tiên không lọt hơn chính xác.
+  Giá trị gốc của placeholder không được lưu.
 
 Giới hạn đã biết của thiết kế hiện tại:
 
@@ -131,7 +198,6 @@ Giới hạn đã biết của thiết kế hiện tại:
   `parameters`, `alarm_codes` mà `FIELD_TO_REGISTRY_KEY` cần, nên với registry thật
   `validate_registry` sẽ báo `unknown_code` cho các trường này.
   `learning_ai/extraction/registry.py` đang là file rỗng.
-- `assemble_draft` luôn ghi `redaction_applied=True`, dù chưa có bước redaction.
 - `approval_gate` không tự chạy `validate_record` / conflict detection; service
   điều phối (chưa có) phải bảo đảm thứ tự đó.
 

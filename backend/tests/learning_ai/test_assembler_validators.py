@@ -30,7 +30,8 @@ def _codes(report) -> set[str]:
 
 
 def test_assemble_draft_binds_source_and_strips_reviewer_basis():
-    record = assemble_draft(_dto(), source_id=SOURCE_ID, run=RUN, pii_types_detected=["phone"])
+    record = assemble_draft(_dto(), source_id=SOURCE_ID, run=RUN, pii_types_detected=["phone"],
+                            redaction_applied=True)
 
     assert record.lifecycle.status == RecordStatus.DRAFT
     assert record.provenance.source_ids == [SOURCE_ID]
@@ -41,7 +42,8 @@ def test_assemble_draft_binds_source_and_strips_reviewer_basis():
 
 
 def test_assemble_draft_restricts_customer_specific_content():
-    record = assemble_draft(_dto(customer_specific=True), source_id=SOURCE_ID, run=RUN, pii_types_detected=[])
+    record = assemble_draft(_dto(customer_specific=True), source_id=SOURCE_ID, run=RUN, pii_types_detected=[],
+                            redaction_applied=False)
 
     assert record.privacy.visibility == Visibility.RESTRICTED
 

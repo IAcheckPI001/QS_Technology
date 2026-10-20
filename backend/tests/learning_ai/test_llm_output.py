@@ -1,9 +1,10 @@
 from typing import Any, Iterator
 
 import pytest
+from pydantic import ValidationError
 
 from app.modules.learning_ai.schemas.content import KnowledgeType
-from app.modules.learning_ai.schemas.llm_output import (SegmentationOutput, extraction_model_for,
+from app.modules.learning_ai.schemas.llm_output import (Segment, SegmentationOutput, extraction_model_for,
                                                         to_strict_schema)
 
 
@@ -49,3 +50,16 @@ def test_segmentation_schema_is_strict(reg):
     for obj in (n for n in _nodes(schema) if n.get("type") == "object" and "properties" in n):
         assert obj["additionalProperties"] is False
         assert set(obj["required"]) == set(obj["properties"])
+
+
+def test_skipped_segment_may_omit_knowledge_type():
+    seg = Segment(segment_id="S2", knowledge_type=None, problem_statement="Hỏi tình trạng giao hàng",
+                  message_ids=["m5", "m6"], resolved=False, skip_reason="ngoài phạm vi kỹ thuật")
+
+    assert seg.knowledge_type is None
+
+
+def test_kept_segment_requires_knowledge_type():
+    with pytest.raises(ValidationError):
+        Segment(segment_id="S1", knowledge_type=None, problem_statement="F86 lệch xung",
+                message_ids=["m1"], resolved=True, skip_reason=None)
