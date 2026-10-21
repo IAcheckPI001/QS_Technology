@@ -3,7 +3,7 @@ from app.modules.chatbot.extraction.registry import REGISTRY as R
 
 
 def build_output_schema() -> dict:
-    """Schema strict (OpenAI Structured Outputs). Không đổi so với v3.0."""
+    """Schema strict (OpenAI Structured Outputs). v3.1: thêm pending_answer."""
  
     def arr(enum=None) -> dict:
         items: dict = {"type": "string"}
@@ -29,7 +29,10 @@ def build_output_schema() -> dict:
     }
     return {
         "type": "object",
-        "properties": {"sub_queries": {"type": "array", "items": sub_query}},
-        "required": ["sub_queries"],
+        "properties": {
+            "sub_queries": {"type": "array", "items": sub_query},
+            "pending_answer": {"type": ["string", "null"]},
+        },
+        "required": ["sub_queries", "pending_answer"],
         "additionalProperties": False,
     }

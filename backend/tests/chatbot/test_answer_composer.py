@@ -145,20 +145,34 @@ class FakeHistoryRepository:
 
 
 class FakeAnalysisStage:
+    def __init__(self, *sub_queries):
+        self.sub_queries = sub_queries
+
     async def execute(self, state):
-        state.analysis = _analysis(_sub_query("Xin chào", "other.chitchat"))
+        state.analysis = _analysis(*self.sub_queries)
         return state
 
 
-def test_service_streams_composed_answer_and_saves_history():
-    provider = FakeProvider(["Xin chào, ", "tôi có thể giúp gì?"])
-    repository = FakeHistoryRepository()
-    service = ChatbotService(provider, repository, analysis_stage=FakeAnalysisStage())
+def _collect(service, message):
     session_id = UUID("00000000-0000-0000-0000-000000000001")
 
     async def collect():
-        return [chunk async for chunk in service.stream_reply("Xin chào", session_id)]
+        return [chunk async for chunk in service.stream_reply(message, session_id)]
 
-    assert asyncio.run(collect()) == ["Xin chào, ", "tôi có thể giúp gì?"]
+    return asyncio.run(collect())
+
+
+def test_service_streams_composed_answer_and_saves_history():
+    provider = FakeProvider(["Hiện chưa tra cứu ", "được tài liệu."])
+    repository = FakeHistoryRepository()
+    service = ChatbotService(provider, repository, analysis_stage=FakeAnalysisStage(
+        _sub_query("Xin chào", "other.chitchat"),
+        _sub_query("Hướng dẫn đấu nguồn F54", "guide.installation", ["F54"]),
+    ))
+
+    assert _collect(service, "Xin chào, đấu nguồn F54 thế nào?") == [
+        "Hiện chưa tra cứu ", "được tài liệu.",
+    ]
     assert repository.created[0]["status"] == "completed"
-    assert repository.created[0]["answer"] == "Xin chào, tôi có thể giúp gì?"
+    assert repository.created[0]["answer"] == "Hiện chưa tra cứu được tài liệu."
+    assert repository.created[0]["conversation_state"]["pending"] is None

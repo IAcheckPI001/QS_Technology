@@ -49,7 +49,7 @@ provider layer, and database access remains in the repository layer.
 | P2 configuration normalization | Resolved in implementation | One cached `pydantic-settings` model is used and model defaults are aligned. Pytest validation remains outstanding. |
 | P3 history reads and ownership | Partially implemented | Support-chat session/message reads and session creation are available behind `LEARNING_API_ENABLED`; authentication and ownership are still deferred. |
 | P4 health/readiness semantics | Open | Connectivity check exists, but readiness status/error semantics and schema checks are incomplete. |
-| P5 active chatbot pipeline | Partially implemented | Security, context loading, pruning, analysis, execution-plan execution (chitchat/out_of_scope/no_docs/handoff handlers, blocked clarify) and provider final-answer streaming run. Retrieval has no handler, so retrieve tasks always fail with `handler_not_configured`; handoff does not create tickets or change conversation mode. |
+| P5 active chatbot pipeline | Partially implemented | Security, context loading (with persisted `ConversationState`), pruning, the clarification loop (deterministic resume, `pending_answer`, held sub-queries, 2-attempt limit), analysis, execution-plan execution, fixed replies for chitchat/out_of_scope/handoff-only turns and provider final-answer streaming run. Retrieval has no handler, so retrieve tasks always fail with `handler_not_configured`. Handoff is a scaffold: `DisabledHandoffProvider` creates no ticket, so `mode` stays `bot`. Requires the `conversation_state` column migration (not verified live). |
 | P6 knowledge learning pipeline (`learning_ai`) | Ingestion + privacy wired behind a flag | Pure domain logic (record schema, post-LLM validation, rule conflicts, review lifecycle, chunking, indexer sync) plus CRM ingestion, prefilter and the Ollama-backed privacy pipeline exist and are unit-tested with fake providers. `POST /learning-knowledge` runs ingestion + privacy when `LEARNING_API_ENABLED=true` (no authentication yet). LLM segment/extract calls, job persistence, outbox, embedding and vector index are missing. Not verified against live Supabase/Ollama. |
 
 ## Finding status
@@ -148,8 +148,13 @@ historical database records. Deletion is not currently implemented.
    - `ExecutionStage` runs the plan and `AnswerComposer` streams one provider
      answer per turn, but retrieve tasks have no handler and fail with
      `handler_not_configured`.
-   - Handoff does not create a ticket or set `ConversationState.mode`;
-     clarification is not persisted as `PendingClarification`.
+   - Handoff uses `DisabledHandoffProvider`: no ticket, no forwarding to an
+     agent platform, no way back to `mode=bot`. Agent-mode short-circuit exists
+     but is only reachable when a real provider returns a ticket.
+   - `ConversationState` is persisted in `public.chat_history.conversation_state`
+     (jsonb, nullable). The column must be added manually in Supabase:
+     `alter table public.chat_history add column conversation_state jsonb null;`
+     Not verified against the live table.
 
 10. **Frontend lint baseline**
    - `npm run lint` still fails on existing unrelated frontend errors.
@@ -235,6 +240,8 @@ ORM expects that column, and it has not been verified against the live table.
   undefined `ContextConfigurationError`).
 - Backend pytest after wiring execution + answer composition (2026-10-20):
   **164 passed, 5 failed**; the same 5 pre-existing chatbot failures.
+- Backend pytest after fixed replies + clarification loop + handoff scaffold
+  (2026-10-20): **182 passed, 5 failed**; the same 5 pre-existing failures.
 - Live Supabase connectivity/insert: **not verified**.
 
 ## Architectural impact

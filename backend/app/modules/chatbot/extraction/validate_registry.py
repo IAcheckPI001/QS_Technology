@@ -265,16 +265,23 @@ def _unclear(query: str, idx: int = 0) -> dict:
     }
  
  
-def resolve(raw: dict | None) -> list[dict]:
-    """Đầu vào: JSON của LLM (hoặc None nếu parse lỗi). Đầu ra: list sub_query hoàn chỉnh."""
-    out, seen = [], set()
+def resolve_with_raw(raw: dict | None) -> tuple[list[dict], dict[str, dict]]:
+    """Như resolve(), kèm sub_query thô của LLM theo id đã cấp (dùng để vá khi làm rõ)."""
+    out, raws, seen = [], {}, set()
     for sq in ((raw or {}).get("sub_queries") or [])[:MAX_SUB_QUERIES]:
         key = (sq.get("intent"), _norm(sq.get("standalone_query", "")))
         if key in seen:
             continue
         seen.add(key)
-        out.append(resolve_sub_query(sq, len(out)))
-    return out or [_unclear("")]
+        resolved = resolve_sub_query(sq, len(out))
+        raws[resolved["id"]] = sq
+        out.append(resolved)
+    return (out or [_unclear("")]), raws
+
+
+def resolve(raw: dict | None) -> list[dict]:
+    """Đầu vào: JSON của LLM (hoặc None nếu parse lỗi). Đầu ra: list sub_query hoàn chỉnh."""
+    return resolve_with_raw(raw)[0]
 
 
 

@@ -51,6 +51,13 @@ Chọn đúng một intent theo mục tiêu thực sự của người dùng, kh
 4. Lịch sử chỉ giúp hiểu câu nối tiếp; intent luôn chọn theo mục tiêu của câu hiện tại.
 </history_rules>
  
+<pending_rules>
+1. <pending> (nếu có) là câu hỏi làm rõ hệ thống vừa gửi: focus là cụm cần làm rõ, candidates là gợi ý, held_queries là các ý đang chờ.
+2. Nếu <query> trả lời câu hỏi đó (xác nhận, chọn một gợi ý, hoặc gõ tên model khác) -> pending_answer = tên model người dùng chọn, ghi đúng chuỗi người dùng gõ hoặc mã candidate được xác nhận; kể cả khi tên đó không có trong <models>. Không lặp lại held_queries trong sub_queries.
+3. Phần còn lại của <query> (nếu có câu hỏi mới) mới tách thành sub_queries; chỉ có xác nhận thì sub_queries = [].
+4. Không có <pending>, hoặc <query> không trả lời câu hỏi làm rõ -> pending_answer = null.
+</pending_rules>
+
 <output_rules>
 1. Xuất đúng một JSON theo schema; mọi trường đều có mặt, dùng [] / null / false khi không có giá trị. Không giải thích, không Markdown.
 2. Chỉ dùng giá trị enum cho phép.

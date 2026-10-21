@@ -62,6 +62,7 @@ class HistoryRepository:
         output_tokens: int = 0,
         cost_usd: float | None = None,
         retrieved_chunk_ids: list[UUID] | None = None,
+        conversation_state: dict | None = None,
         created_at: datetime | None = None,
     ) -> ChatHistory:
         history = ChatHistory(
@@ -76,6 +77,7 @@ class HistoryRepository:
             cost_usd=cost_usd,
             retrieved_chunk_ids=retrieved_chunk_ids,
             latency_ms=latency_ms,
+            conversation_state=conversation_state,
             created_at=created_at,
         )
         self.db.add(history)

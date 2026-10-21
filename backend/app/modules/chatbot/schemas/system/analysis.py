@@ -97,6 +97,12 @@ class Analysis(SystemModel):
     clarification: ClarificationPlan | None = None
     batches: list[RetrievalBatch] = Field(default_factory=list)
     sub_queries: list[SubQueryAnalysis] = Field(min_length=1)
+    # Clarification loop: raw LLM sub-queries by id (internal, re-resolved after
+    # the user confirms), the confirmed answer, and whether this turn resumed a
+    # pending clarification.
+    raw_sub_queries: dict[str, dict] = Field(default_factory=dict, exclude=True)
+    pending_answer: NonEmptyStr | None = None
+    resumed: bool = False
 
     @classmethod
     def from_plan(cls, plan: dict) -> "Analysis":

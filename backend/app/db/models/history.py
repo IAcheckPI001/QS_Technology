@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import Computed, DateTime, Integer, Numeric, String, Text, func
-from sqlalchemy.dialects.postgresql import ARRAY, UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -57,6 +57,8 @@ class ChatHistory(Base):
         nullable=True,
     )
     latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # ConversationState after this turn (pending clarification, mode, last models).
+    conversation_state: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

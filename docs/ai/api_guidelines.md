@@ -201,7 +201,9 @@ secret hoặc nội dung log nội bộ.
 - Support-chat history endpoints chỉ được enable cùng `LEARNING_API_ENABLED` và
   chưa có ownership; client legacy `/chats` không phải contract backend hiện tại.
 - Retrieval/tools chưa được nối vào active response flow.
-- Câu trả lời cuối được stream từ provider qua `AnswerComposer`, dựa trên kết
-  quả task của execution plan. Task `retrieve` chưa có handler nên luôn `failed`
+- Lượt chỉ có chitchat/out_of_scope/handoff trả câu cố định (một chunk SSE)
+  không qua LLM; các lượt khác stream từ provider qua `AnswerComposer`, dựa trên
+  kết quả task của execution plan. SSE contract không đổi. Output strict của
+  analyzer có thêm `pending_answer` (v3.1, nội bộ). Task `retrieve` chưa có handler nên luôn `failed`
   (`handler_not_configured`). Không viết tài liệu hoặc test như thể RAG đã hoàn
   thiện.

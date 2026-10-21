@@ -16,7 +16,7 @@ class Settings(BaseSettings):
         enable_decoding=False,
         extra="ignore",
     )
-
+    embedding_model: str = Field(default="text-embedding-3-small", alias="EMBEDDING_MODEL")
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
     context_token_budget: int = Field(default=2048, alias="CONTEXT_TOKEN_BUDGET",)

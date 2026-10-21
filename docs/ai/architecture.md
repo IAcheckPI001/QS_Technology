@@ -11,11 +11,14 @@ Frontend
   -> FastAPI route/dependency
   -> ChatbotService
   -> SecurityStage
-  -> ContextLoader
+  -> ContextLoader (history + ConversationState)
+  -> [mode ≠ bot] câu cố định agent.*, dừng
   -> Prune
-  -> AnalysisStage -> OpenAIProvider
+  -> ClarificationResumeStage (deterministic, không LLM)
+  -> AnalysisStage -> OpenAIProvider (bỏ qua nếu đã resume)
   -> ExecutionStage -> ExecutionScheduler -> deterministic handlers (chưa có retrieve)
-  -> AnswerComposer -> OpenAIProvider.stream_chat
+  -> câu cố định (chitchat/out_of_scope/handoff-only) | AnswerComposer -> OpenAIProvider.stream_chat
+  -> HandoffProvider (disabled) + update_conversation_state
   -> HistoryRepository -> Supabase public.chat_history
   -> SSE về frontend
 ```
@@ -43,29 +46,54 @@ và `ChatbotService`. Router không tự khởi tạo provider hoặc repository
    không chạy context/provider, rồi router phát SSE `error`.
 5. `ContextLoader` đọc history `status='completed'`, tạo `RunContext` gồm
    conversation, query và retrieval scope. Website hiện map tới cả
-   `crm-technical` và `crm-sale`.
+   `crm-technical` và `crm-sale`. `ConversationState` (pending clarification,
+   `clarify_attempts`, `last_models`, `mode`, `ticket_id`) được đọc từ cột
+   `conversation_state` của row completed gần nhất; dữ liệu sai schema thì dùng
+   state mặc định. Nếu `mode ≠ bot` (đã chuyển nhân viên), service trả câu cố
+   định `agent.awaiting`/`agent.active`, ghi history và **không** chạy
+   analysis/LLM.
 6. `Prune` áp dụng context token budget, giữ query/summary và bỏ các history
    turn cũ trước; lỗi budget/config là domain error, không phải security block.
-7. `AnalysisStage` dựng context analysis và gọi `QueryAnalyzer` qua
-   `OpenAIProvider`.
+7. Vòng làm rõ (`clarification/`):
+   - `ClarificationResumeStage` chạy trước analysis. Nếu có pending và câu trả
+     lời ngắn khớp chắc chắn (alias model, số thứ tự, "đúng/vâng" khi chỉ có
+     một gợi ý, hoặc một mã giống model như "A10"), nó vá raw sub-query đang
+     bị giữ (`patch_pending`) và dựng lại analysis bằng `resolve` +
+     `plan_turn`, **không gọi LLM**.
+   - Nếu không khớp, `AnalysisStage` gọi `QueryAnalyzer` với `<pending>` trong
+     context. Output strict có thêm `pending_answer`; khi có giá trị, các ý bị
+     giữ đã vá được ghép trước các sub-query mới.
+   - Sau `clarify_attempts >= 2` lần hỏi mà vẫn chưa rõ, các ý bị giữ chuyển
+     sang `no_docs` (`clarification_exhausted`) và pending bị xóa.
+   - Câu trả lời là câu hỏi mới: pending giữ lại với `ttl` giảm dần (mặc định 2).
 8. `ExecutionStage` tạo execution plan từ analysis và chạy plan qua
    `ExecutionScheduler` với các handler deterministic trong
    `orchestration/handlers.py`. Các handler này không gọi LLM:
    - `chitchat` và `out_of_scope` trả về `completed`.
    - `no_docs` trả về `completed`, kèm `unsupported_models`.
    - `handoff` trả về `handed_off`, kèm `handoff_reason`.
-   - Clarify có blocking bị planner đặt `blocked` ngay từ đầu (`reason=task_blocked`).
+   - Planner **giữ** (`held_sub_query_ids`) các sub-query có clarification
+     chặn hoặc có chung mention với clarification của lượt (vd. "F84 khác gì
+     F54" khi F84 đang chờ làm rõ). Chúng thành task `clarify` `blocked`
+     (`reason=task_blocked`) và không vào retrieval batch; các ý đã rõ vẫn
+     chạy ngay.
    - `retrieve` **chưa có handler**, nên luôn `failed` với
      `handler_not_configured`.
 
-   Handoff chưa tạo ticket hay đổi `ConversationState.mode`. Clarify chưa lưu
-   `PendingClarification`.
-9. `AnswerComposer` gom kết quả bằng `collect_results`, dựng messages gồm
+9. Lượt chỉ gồm `chitchat`/`out_of_scope`, hoặc chỉ gồm `handoff`, trả câu cố
+   định từ `prompts/direct_responses.py` (theo `handoff_reason`, locale; không
+   có locale thì theo `query.language`) và không gọi `AnswerComposer`.
+   Các lượt khác: `AnswerComposer` gom kết quả bằng `collect_results`, dựng messages gồm
    system prompt, history, `<query>`, `<task_results>` và `<clarification>`
    (nếu có), rồi stream câu trả lời qua `provider.stream_chat`. Mỗi lượt chỉ
    gọi LLM một lần cho câu trả lời cuối. Sau khi stream xong, service ghi
    history `status='completed'`. Vì chưa có retrieval, câu hỏi kỹ thuật sẽ được
    trả lời là chưa tra cứu được tài liệu.
+   Sau khi trả lời, nếu có task `handed_off` thì gọi `HandoffProvider`. Hiện chỉ
+   có `DisabledHandoffProvider` (không ticket, giữ `mode=bot`); chưa nối API
+   bên ngoài, chưa chuyển tiếp tin nhắn cho nhân viên và chưa có cơ chế trả về
+   `mode=bot`. `update_conversation_state` tính state mới và lưu vào cột
+   `conversation_state` của row `completed`.
 10. Router phát event `done` với `request_id` và authoritative `session_id`.
     Frontend lưu session ID trong localStorage cho request sau.
 11. Context/domain/provider exception được log server-side và ánh xạ thành SSE
