@@ -121,6 +121,7 @@ class ChatbotService:
                 model=None,
                 latency_ms=round((perf_counter() - started_at) * 1000),
                 conversation_state=conversation_state.model_dump(mode="json"),
+                channel=context.query.channel.dict() if context.query.channel else None,
             )
             return
 
@@ -130,8 +131,8 @@ class ChatbotService:
         await self._analysis_stage.execute(state)
         self._clarification_stage.apply_attempt_limit(state)
         await self._execution_stage.execute(state)
-        print(f"_analysis_stage: {state.analysis}")
-        print(f"_execution_stage: {state.plan}")
+        # print(f"_analysis_stage: {state.analysis}")
+        # print(f"_execution_stage: {state.plan}")
         print(f"Analysis + execution time: {perf_counter() - analysis_time:.2f} s")
 
         assert state.plan is not None

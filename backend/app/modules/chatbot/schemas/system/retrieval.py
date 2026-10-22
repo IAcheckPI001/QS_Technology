@@ -4,7 +4,7 @@
 
 from typing import Annotated, Literal
 
-from pydantic import Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from ..default import (
     SystemModel,
@@ -38,8 +38,14 @@ class Candidate(SystemModel):
         return self
 
 class RetrievalFilters(SystemModel):
-    collections: list[NonEmptyStr] = Field(min_length=1)
+    # collections: khái niệm cũ theo kênh; doc_chunks lọc theo domain/scopes/models.
+    collections: list[NonEmptyStr] = Field(default_factory=list)
     doc_ids: list[Identifier] = Field(default_factory=list)
+    domain: NonEmptyStr | None = None
+    scopes: list[NonEmptyStr] = Field(default_factory=list)
+    product_models: list[NonEmptyStr] | None = None
+    control_interface: list[NonEmptyStr] = Field(default_factory=list)
+    spec_attributes: list[NonEmptyStr] = Field(default_factory=list)
 
 
 class RetrievalParams(SystemModel):
@@ -74,15 +80,69 @@ class RetrievalQuery(SystemModel):
 
 
 class RetrievalRequest(SystemModel):
+    """Một lần tra cứu cho một target (domain + scopes) của sub-query."""
+
     task_id: NonEmptyStr
     domain: NonEmptyStr
     scopes: list[NonEmptyStr] = Field(default_factory=list)
     model_filter: list[NonEmptyStr] | None = None
+    product_scope_mode: NonEmptyStr = "unspecified"
+    control_interface: list[NonEmptyStr] = Field(default_factory=list)
+    spec_attributes: list[NonEmptyStr] = Field(default_factory=list)
     queries: list[RetrievalQuery] = Field(min_length=1)
+
+
+class ChunkAsset(SystemModel):
+    # assets là jsonb do pipeline ingest ghi: bỏ qua khóa lạ thay vì làm hỏng retrieval.
+    model_config = ConfigDict(extra="ignore")
+
+    bucket: NonEmptyStr
+    path: NonEmptyStr
+    page: int | None = None
+    printed_page: int | None = None
+
+
+class ChunkRecord(SystemModel):
+    """Một dòng doc_chunks dùng làm context."""
+
+    id: int
+    parent_id: int | None = None
+    doc_id: NonEmptyStr
+    section_title: NonEmptyStr
+    section_path: list[str] = Field(default_factory=list)
+    page_start: int | None = None
+    page_end: int | None = None
+    content: NonEmptyStr
+    assets: list[ChunkAsset] = Field(default_factory=list)
+
+
+class ChunkMatch(ChunkRecord):
+    """Dòng trả về từ match_doc_chunks kèm điểm xếp hạng."""
+
+    vector_score: float
+    keyword_score: float | None = None
+    fused_score: float
+
+
+class ChunkHit(SystemModel):
+    """Chunk context đã chọn cho sub-query (chunk cha nếu được mở rộng)."""
+
+    chunk_id: Identifier
+    matched_chunk_ids: list[Identifier] = Field(min_length=1)
+    doc_id: NonEmptyStr
+    section_title: NonEmptyStr
+    section_path: list[str] = Field(default_factory=list)
+    page_start: int | None = None
+    page_end: int | None = None
+    content: NonEmptyStr
+    assets: list[ChunkAsset] = Field(default_factory=list)
+    score: float
+    source_id: SourceId | None = None   # ExecutionStage gán sau khi mọi task chạy xong
 
 
 class RetrievalSubQueryResult(SystemModel):
     sub_query_id: NonEmptyStr
+    hits: list[ChunkHit] = Field(default_factory=list)
     traces: list[RetrievalTrace] = Field(default_factory=list)
     metadata: dict[str, str] = Field(default_factory=dict)
 

@@ -49,7 +49,6 @@ class AnalysisStage:
             return state
 
         data = await self.analyzer.analyze_raw(self.build_context_analysis(state.context))
-        print(f"AnalysisStage.execute: data={data}")
         raw_sub_queries = list(data["sub_queries"])
         pending = state.context.conversation.state.pending
         answer = data.get("pending_answer") if pending else None

@@ -59,7 +59,6 @@ class QueryAnalyzer:
                                                   response_format=RESPONSE_FORMAT),
                 timeout=self._timeout,
             )
-            print(f"QueryAnalyzer.analyze_raw: resp={resp}")
         except asyncio.TimeoutError:
             log.warning("query_analysis timeout")
             raise AnalysisError("analysis_timeout", "Query analysis timed out.")

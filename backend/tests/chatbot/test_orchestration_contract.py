@@ -58,7 +58,7 @@ def test_execution_plan_preserves_independent_mixed_routes():
     assert all(task.status is TaskStatus.PENDING for task in plan.tasks)
 
 
-def test_execution_plan_groups_retrieval_sub_queries_by_batch():
+def test_execution_plan_searches_each_retrieval_sub_query_separately():
     analysis = _analysis({
         "sub_queries": [
             {
@@ -86,9 +86,11 @@ def test_execution_plan_groups_retrieval_sub_queries_by_batch():
 
     plan = build_execution_plan(analysis)
 
+    # Cùng batch (domain, model_filter) vẫn tách task: mỗi sub-query tra cứu bằng
+    # target của chính nó; scheduler chạy các task song song.
     retrieve_tasks = [task for task in plan.tasks if task.kind is TaskKind.RETRIEVE]
-    assert len(retrieve_tasks) == 1
-    assert retrieve_tasks[0].sub_query_ids == ["q1", "q2"]
+    assert [task.task_id for task in retrieve_tasks] == ["task-retrieve-q1", "task-retrieve-q2"]
+    assert [task.sub_query_ids for task in retrieve_tasks] == [["q1"], ["q2"]]
 
 
 def test_blocking_clarification_blocks_only_related_task():

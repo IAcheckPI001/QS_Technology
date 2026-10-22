@@ -14,10 +14,15 @@ import tiktoken
 from openai import OpenAI
 from supabase import create_client
 
+from dotenv import load_dotenv
+load_dotenv()
+
 MODEL = "text-embedding-3-small"
 BATCH = 50
-
-sb = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
+sb = create_client(
+    os.environ["SUPABASE_URL"],
+    os.environ["SUPABASE_SERVICE_ROLE_KEY"],
+)
 oa = OpenAI()
 enc = tiktoken.get_encoding("cl100k_base")   # tokenizer của text-embedding-3-*
 
@@ -37,6 +42,6 @@ while True:
     done += len(rows)
     print(f"đã embed {done} dòng", flush=True)
 
-left = sb.table("doc_chunks").select("id", count="exact").is_("embedding", "null").execute().count
+left = sb.table("doc_chunks").select("id", count="exact ").is_("embedding", "null").execute().count
 print("hoàn tất; còn thiếu embedding:", left)
 sys.exit(0 if left == 0 else 1)

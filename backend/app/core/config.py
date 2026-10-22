@@ -17,6 +17,17 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     embedding_model: str = Field(default="text-embedding-3-small", alias="EMBEDDING_MODEL")
+    embedding_dimensions: int = Field(default=1536, alias="EMBEDDING_DIMENSIONS")
+    # Tham số retrieval khởi đầu để thử nghiệm, chưa tối ưu cho dữ liệu QS Technology:
+    # điều chỉnh theo Recall@k, số parent trùng và độ dài context thực tế.
+    retrieval_vector_candidate_k: int = Field(default=20, alias="RETRIEVAL_VECTOR_CANDIDATE_K")
+    retrieval_fts_candidate_k: int = Field(default=20, alias="RETRIEVAL_FTS_CANDIDATE_K")
+    retrieval_rrf_k: int = Field(default=60, alias="RETRIEVAL_RRF_K")
+    retrieval_final_chunk_top_k: int = Field(default=6, alias="RETRIEVAL_FINAL_CHUNK_TOP_K")
+    retrieval_max_context_parents: int = Field(default=5, alias="RETRIEVAL_MAX_CONTEXT_PARENTS")
+    # Cosine similarity tối thiểu để chunk được coi là liên quan; cần đo lại trên dữ liệu thật.
+    retrieval_min_similarity: float = Field(default=0.25, alias="RETRIEVAL_MIN_SIMILARITY")
+    retrieval_spec_boost: float = Field(default=0.005, alias="RETRIEVAL_SPEC_BOOST")
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
     context_token_budget: int = Field(default=2048, alias="CONTEXT_TOKEN_BUDGET",)
@@ -66,6 +77,28 @@ class Settings(BaseSettings):
         if value <= 0:
             raise ValueError("CONTEXT_TOKEN_BUDGET must be greater than zero")
         return value
+
+    @field_validator(
+        "embedding_dimensions",
+        "retrieval_vector_candidate_k",
+        "retrieval_fts_candidate_k",
+        "retrieval_rrf_k",
+        "retrieval_final_chunk_top_k",
+        "retrieval_max_context_parents",
+    )
+    @classmethod
+    def _validate_retrieval_positive(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("Embedding and retrieval sizes must be greater than zero")
+        return value
+
+    @model_validator(mode="after")
+    def _final_top_k_within_candidates(self) -> "Settings":
+        if self.retrieval_final_chunk_top_k > self.retrieval_vector_candidate_k:
+            raise ValueError(
+                "RETRIEVAL_FINAL_CHUNK_TOP_K must not exceed RETRIEVAL_VECTOR_CANDIDATE_K"
+            )
+        return self
 
     @field_validator("log_level", mode="before")
     @classmethod

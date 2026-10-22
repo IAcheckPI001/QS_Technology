@@ -20,13 +20,21 @@ def _j(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
+def _pages(start: int | None, end: int | None) -> str | None:
+    if start is None:
+        return None
+    return str(start) if end is None or end == start else f"{start}-{end}"
+
+
 class AnswerComposer:
     """Turn executed task results into one streamed provider answer per turn."""
 
     name = "answer_composer"
 
-    def __init__(self, provider: OpenAIProvider) -> None:
+    def __init__(self, provider: OpenAIProvider, source_char_limit: int = 3000) -> None:
         self._provider = provider
+        # Chặn một chunk cha quá dài chiếm hết context của câu trả lời.
+        self._source_char_limit = source_char_limit
 
     def build_messages(self, state: RunState) -> list[dict[str, str]]:
         if state.context is None or state.analysis is None or state.plan is None:
@@ -37,6 +45,7 @@ class AnswerComposer:
 
         sub_queries = {sub_query.id: sub_query for sub_query in state.analysis.sub_queries}
         task_results = []
+        sources = []
         for task, result in zip(state.plan.tasks, collect_results(state.plan)):
             item: dict[str, Any] = {
                 "task_id": task.task_id,
@@ -54,10 +63,37 @@ class AnswerComposer:
                 item["error"] = result.error.code
             task_results.append(item)
 
+            if result.retrieval is None:
+                continue
+            for sub_result in result.retrieval.results:
+                sub_query = sub_queries.get(sub_result.sub_query_id)
+                if sub_query is None:
+                    continue
+                answer_mode = (
+                    sub_query.retrieval_scope.answer_mode
+                    if sub_query.retrieval_scope is not None
+                    else "full"
+                )
+                sources.append({
+                    "query": sub_query.standalone_query,
+                    "answer_mode": answer_mode,
+                    "sources": [
+                        {
+                            "source_id": hit.source_id,
+                            "section": " › ".join(hit.section_path) or hit.section_title,
+                            "pages": _pages(hit.page_start, hit.page_end),
+                            "content": hit.content[: self._source_char_limit],
+                        }
+                        for hit in sub_result.hits
+                    ],
+                })
+
         parts = [
             f"<query>{state.context.query.origin}</query>",
             f"<task_results>{_j(task_results)}</task_results>",
         ]
+        if sources:
+            parts.append(f"<sources>{_j(sources)}</sources>")
         clarification = state.analysis.clarification
         if clarification is not None:
             parts.append(
@@ -66,7 +102,7 @@ class AnswerComposer:
 
         history = [
             {"role": message.role, "content": message.content}
-            for message in state.context.conversation.history
+            for message in state.context.conversation.history[-2:]
         ]
         print([
             {"role": "system", "content": SYSTEM_PROMPT},

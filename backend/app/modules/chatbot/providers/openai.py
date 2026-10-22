@@ -7,9 +7,15 @@ from openai import AsyncOpenAI
 
 
 class OpenAIProvider:
-    def __init__(self, api_key: str, model: str) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        embedding_model: str = "text-embedding-3-small",
+    ) -> None:
         self._client = AsyncOpenAI(api_key=api_key)
         self._model = model
+        self._embedding_model = embedding_model
 
     @property
     def model(self) -> str:
@@ -66,6 +72,14 @@ class OpenAIProvider:
             raise RuntimeError("Ollama returned no text content.")
 
         return content
+
+    async def embed(self, texts: list[str]) -> list[list[float]]:
+        response = await self._client.embeddings.create(
+            model=self._embedding_model,
+            input=texts,
+        )
+        ordered = sorted(response.data, key=lambda item: item.index)
+        return [list(item.embedding) for item in ordered]
 
     async def close(self) -> None:
         await self._client.close()

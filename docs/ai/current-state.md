@@ -49,7 +49,7 @@ provider layer, and database access remains in the repository layer.
 | P2 configuration normalization | Resolved in implementation | One cached `pydantic-settings` model is used and model defaults are aligned. Pytest validation remains outstanding. |
 | P3 history reads and ownership | Partially implemented | Support-chat session/message reads and session creation are available behind `LEARNING_API_ENABLED`; authentication and ownership are still deferred. |
 | P4 health/readiness semantics | Open | Connectivity check exists, but readiness status/error semantics and schema checks are incomplete. |
-| P5 active chatbot pipeline | Partially implemented | Security, context loading (with persisted `ConversationState`), pruning, the clarification loop (deterministic resume, `pending_answer`, held sub-queries, 2-attempt limit), analysis, execution-plan execution, fixed replies for chitchat/out_of_scope/handoff-only turns and provider final-answer streaming run. Retrieval has no handler, so retrieve tasks always fail with `handler_not_configured`. Handoff is a scaffold: `DisabledHandoffProvider` creates no ticket, so `mode` stays `bot`. Requires the `conversation_state` column migration (not verified live). |
+| P5 active chatbot pipeline | Partially implemented | Security, context loading (with persisted `ConversationState`), pruning, the clarification loop (deterministic resume, `pending_answer`, held sub-queries, 2-attempt limit), analysis, execution-plan execution, fixed replies for chitchat/out_of_scope/handoff-only turns and provider final-answer streaming run. Retrieval is wired at test level: one retrieve task per sub-query, filtered hybrid search (vector + FTS, RRF, parent expansion) over `doc_chunks` via `match_doc_chunks` (`backend/sql/doc_chunks.sql`, applied manually), sources rendered into the answer prompt. Not verified against live Supabase; retrieval parameters are untuned starting values. Handoff is a scaffold: `DisabledHandoffProvider` creates no ticket, so `mode` stays `bot`. Requires the `conversation_state` column migration (not verified live). |
 | P6 knowledge learning pipeline (`learning_ai`) | Ingestion + privacy wired behind a flag | Pure domain logic (record schema, post-LLM validation, rule conflicts, review lifecycle, chunking, indexer sync) plus CRM ingestion, prefilter and the Ollama-backed privacy pipeline exist and are unit-tested with fake providers. `POST /learning-knowledge` runs ingestion + privacy when `LEARNING_API_ENABLED=true` (no authentication yet). LLM segment/extract calls, job persistence, outbox, embedding and vector index are missing. Not verified against live Supabase/Ollama. |
 
 ## Finding status
@@ -85,8 +85,8 @@ historical database records. Deletion is not currently implemented.
 ### Chat history writes
 
 - The current service writes `status='completed'` after streaming the
-  provider-generated answer. Without retrieval the answer is not grounded in
-  documents; technical questions are answered as "documents not yet available".
+  provider-generated answer. Retrieve tasks ground the answer in `doc_chunks`
+  sources (`[S#]` citations in the text only).
 - A provider or pipeline exception attempts to write `status='error'` with any
   partial answer.
 - `input_tokens`, `output_tokens`, `cost_usd`, `normalized_query`, and
@@ -141,13 +141,15 @@ historical database records. Deletion is not currently implemented.
 
 8. **Provider usage metadata is incomplete**
    - Token counts and cost are not collected.
-   - Retrieval/tool execution is not wired into the active stream, so
-     `retrieved_chunk_ids` remains empty/null.
+   - `retrieved_chunk_ids` remains empty/null: the column is `UUID[]` while
+     `doc_chunks.id` is `bigint`, so it needs a schema decision.
 
-9. **Final answer flow lacks retrieval and side effects**
-   - `ExecutionStage` runs the plan and `AnswerComposer` streams one provider
-     answer per turn, but retrieve tasks have no handler and fail with
-     `handler_not_configured`.
+9. **Retrieval is test-level and final answer lacks side effects**
+   - Retrieve runs per sub-query against `doc_chunks`, but there is no rerank,
+     no SSE event for sources/assets (images), no `unaccent` on FTS, and
+     `RETRIEVAL_MIN_SIMILARITY` / top-k values are untuned. AnalysisStage only
+     extracts `domain`, `scopes`, `product_models`, `control_interface`,
+     `spec_attributes`; `chunk_type`, `doc_type`, `keywords` are not used yet.
    - Handoff uses `DisabledHandoffProvider`: no ticket, no forwarding to an
      agent platform, no way back to `mode=bot`. Agent-mode short-circuit exists
      but is only reachable when a real provider returns a ticket.
@@ -189,7 +191,7 @@ historical database records. Deletion is not currently implemented.
 11. Persist or otherwise enforce an idempotency key based on `message_id`.
 12. Define ordering/concurrency behavior for one session.
 13. Add provider usage extraction for token counts and cost.
-14. Wire retrieval metadata only when real UUID chunk IDs are available.
+14. Decide `retrieved_chunk_ids` type (`UUID[]` vs `doc_chunks.id bigint`) before persisting retrieval metadata.
 
 ### P4 — Operational hardening
 
@@ -270,6 +272,6 @@ analysis/provider work. It removes the oldest history turns first and never
 truncates the current query. `AnalysisStage` then builds the analysis context,
 calls `QueryAnalyzer` through `OpenAIProvider`. `ExecutionStage` builds and runs
 the execution plan with deterministic handlers, and `AnswerComposer` streams the
-final answer from the task results. Retrieval and tools are not yet executed. Invalid configuration is an application/configuration
+final answer from the task results, including retrieved `<sources>`. Tools are not executed. Invalid configuration is an application/configuration
 error; an unfit mandatory payload is a context-budget/domain error. Neither is
 a security block.

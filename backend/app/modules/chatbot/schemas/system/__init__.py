@@ -17,6 +17,10 @@ from .analysis import (
 )
 from .retrieval import (
     Candidate,
+    ChunkAsset,
+    ChunkHit,
+    ChunkMatch,
+    ChunkRecord,
     RetrievalFilters,
     RetrievalParams,
     RetrievalQuery,
@@ -46,7 +50,7 @@ from .orchestration import (
 __all__ = [
     "Analysis", "ClarificationPlan", "Entity", "ExtractedEntities", "Intent", "RetrievalBatch",
     "RetrievalPlan", "RetrievalTarget", "Route", "SubQueryClarification", "SubQueryAnalysis",
-    "Candidate", "RetrievalFilters", "RetrievalParams", "RetrievalQuery",
+    "Candidate", "ChunkAsset", "ChunkHit", "ChunkMatch", "ChunkRecord", "RetrievalFilters", "RetrievalParams", "RetrievalQuery",
     "RetrievalRequest", "RetrievalResult", "RetrievalSubQueryResult",
     "RetrievalTrace", "Scores",
     "Conversation", "ConversationMessage", "ConversationState", "Mode", "PendingClarification",

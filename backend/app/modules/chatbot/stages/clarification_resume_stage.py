@@ -22,7 +22,6 @@ class ClarificationResumeStage:
         if state.context is None or state.analysis is not None:
             return state
         pending = state.context.conversation.state.pending
-        print(f"ClarificationResumeStage: pending={pending}")
         if pending is None:
             return state
 

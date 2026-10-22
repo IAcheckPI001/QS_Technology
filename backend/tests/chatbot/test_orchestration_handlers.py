@@ -76,7 +76,7 @@ def test_blocking_clarification_is_blocked_without_handler():
     assert task.result.metadata == {"reason": "task_blocked"}
 
 
-def test_retrieve_task_fails_until_retrieval_handler_exists():
+def test_retrieve_task_fails_without_configured_retriever():
     plan = _run(_sub_query("Hướng dẫn đấu nguồn F54", "guide.installation", ["F54"]))
 
     task = plan.tasks[0]

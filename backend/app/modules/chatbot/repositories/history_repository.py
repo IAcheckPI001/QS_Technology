@@ -64,6 +64,8 @@ class HistoryRepository:
         retrieved_chunk_ids: list[UUID] | None = None,
         conversation_state: dict | None = None,
         created_at: datetime | None = None,
+        updated_at: datetime | None = None,
+        channel: str | None = None,
     ) -> ChatHistory:
         history = ChatHistory(
             session_id=session_id,
@@ -79,6 +81,8 @@ class HistoryRepository:
             latency_ms=latency_ms,
             conversation_state=conversation_state,
             created_at=created_at,
+            updated_at=updated_at,
+            channel=channel,
         )
         self.db.add(history)
         await self.db.flush()

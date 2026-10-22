@@ -9,6 +9,8 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.modules.chatbot.providers.openai import OpenAIProvider
+from app.modules.chatbot.repositories.doc_chunk_repository import DocChunkRepository
+from app.modules.chatbot.retrieval import Retriever, RetrieverConfig
 from app.modules.learning_ai.ingestion.service import PrivacyConfigurationError, create_privacy_pipeline
 
 logger = logging.getLogger(__name__)
@@ -18,12 +20,20 @@ logger = logging.getLogger(__name__)
 async def lifespan(application: FastAPI) -> AsyncIterator[None]:
     configure_logging(settings.log_level)
     provider = None
+    retriever = None
     if settings.openai_api_key:
         provider = OpenAIProvider(
             api_key=settings.openai_api_key,
             model=settings.openai_model,
+            embedding_model=settings.embedding_model,
+        )
+        retriever = Retriever(
+            provider,
+            DocChunkRepository(),
+            RetrieverConfig.from_settings(settings),
         )
     application.state.chatbot_provider = provider
+    application.state.chatbot_retriever = retriever
 
     privacy_provider = None
     application.state.learning_privacy_pipeline = None

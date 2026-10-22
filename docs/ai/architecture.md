@@ -16,7 +16,7 @@ Frontend
   -> Prune
   -> ClarificationResumeStage (deterministic, không LLM)
   -> AnalysisStage -> OpenAIProvider (bỏ qua nếu đã resume)
-  -> ExecutionStage -> ExecutionScheduler -> deterministic handlers (chưa có retrieve)
+  -> ExecutionStage -> ExecutionScheduler -> handlers (retrieve -> Retriever -> match_doc_chunks)
   -> câu cố định (chitchat/out_of_scope/handoff-only) | AnswerComposer -> OpenAIProvider.stream_chat
   -> HandoffProvider (disabled) + update_conversation_state
   -> HistoryRepository -> Supabase public.chat_history
@@ -75,10 +75,28 @@ và `ChatbotService`. Router không tự khởi tạo provider hoặc repository
    - Planner **giữ** (`held_sub_query_ids`) các sub-query có clarification
      chặn hoặc có chung mention với clarification của lượt (vd. "F84 khác gì
      F54" khi F84 đang chờ làm rõ). Chúng thành task `clarify` `blocked`
-     (`reason=task_blocked`) và không vào retrieval batch; các ý đã rõ vẫn
+     (`reason=task_blocked`) và không được tra cứu; các ý đã rõ vẫn
      chạy ngay.
-   - `retrieve` **chưa có handler**, nên luôn `failed` với
-     `handler_not_configured`.
+   - `retrieve` (mức kiểm thử): planner tạo **một task cho mỗi sub-query**
+     (`task-retrieve-{id}`), không gom theo `analysis.batches`, để các intent
+     khác nhau không dùng chung scopes hợp nhất; scheduler chạy song song.
+     Khi `Retriever` được inject (`main.py` → `app.state.chatbot_retriever`),
+     `handle_retrieve` dựng `RetrievalRequest` cho từng target/fallback target
+     và gọi `Retriever.search`. Không có retriever thì task `failed` với
+     `handler_not_configured`; lỗi embedding/DB thì `failed` với
+     `retrieval_error`; không có chunk liên quan thì `completed` kèm
+     `metadata.no_hits`.
+
+   Ranh giới trách nhiệm của tầng retrieve (filtered hybrid retrieval):
+
+   | Thành phần | Trách nhiệm |
+   |---|---|
+   | `handle_retrieve` (`orchestration/handlers.py`) | Task → `RetrievalRequest`, trạng thái và lỗi task |
+   | `Retriever.search` (`retrieval/retriever.py`) | Embedding câu hỏi, lặp targets, fallback khi không có chunk vượt `RETRIEVAL_MIN_SIMILARITY`, tách từng model khi `comparison`, gộp/dedupe, cắt `RETRIEVAL_FINAL_CHUNK_TOP_K`, mở rộng sang chunk cha (tối đa `RETRIEVAL_MAX_CONTEXT_PARENTS`), dựng `RetrievalTrace` |
+   | `DocChunkRepository` | Session riêng cho mỗi lời gọi (task chạy song song), gọi SQL function |
+   | `match_doc_chunks` (`backend/sql/doc_chunks.sql`) | Lọc `is_active`, `domain`, `scopes &&`, `product_models &&`, `control_interface` (rỗng = áp dụng chung); vector top-k + FTS (`embed_text`, OR) top-k; RRF; `spec_attributes` chỉ cộng điểm |
+   | `ExecutionStage.assign_source_ids` | Gán `S#` theo thứ tự task sau khi mọi task xong; chunk trùng giữa sub-query dùng chung `S#`; đánh `selected` cho candidate và ghi trace vào `RunState` |
+   | `AnswerComposer` | Block `<sources>` theo từng sub-query; prompt yêu cầu trích `[S#]` |
 
 9. Lượt chỉ gồm `chitchat`/`out_of_scope`, hoặc chỉ gồm `handoff`, trả câu cố
    định từ `prompts/direct_responses.py` (theo `handoff_reason`, locale; không
@@ -86,9 +104,10 @@ và `ChatbotService`. Router không tự khởi tạo provider hoặc repository
    Các lượt khác: `AnswerComposer` gom kết quả bằng `collect_results`, dựng messages gồm
    system prompt, history, `<query>`, `<task_results>` và `<clarification>`
    (nếu có), rồi stream câu trả lời qua `provider.stream_chat`. Mỗi lượt chỉ
-   gọi LLM một lần cho câu trả lời cuối. Sau khi stream xong, service ghi
-   history `status='completed'`. Vì chưa có retrieval, câu hỏi kỹ thuật sẽ được
-   trả lời là chưa tra cứu được tài liệu.
+   gọi LLM một lần cho câu trả lời cuối. Nếu có task retrieve, messages có thêm
+   `<sources>` (nội dung chunk cắt theo `source_char_limit`). Sau khi stream xong,
+   service ghi history `status='completed'`. Sources/assets chưa được gửi về
+   frontend qua SSE và `retrieved_chunk_ids` chưa được ghi.
    Sau khi trả lời, nếu có task `handed_off` thì gọi `HandoffProvider`. Hiện chỉ
    có `DisabledHandoffProvider` (không ticket, giữ `mode=bot`); chưa nối API
    bên ngoài, chưa chuyển tiếp tin nhắn cho nhân viên và chưa có cơ chế trả về

@@ -200,10 +200,14 @@ secret hoặc nội dung log nội bộ.
   (nếu error transaction được commit) hoặc `blocked`.
 - Support-chat history endpoints chỉ được enable cùng `LEARNING_API_ENABLED` và
   chưa có ownership; client legacy `/chats` không phải contract backend hiện tại.
-- Retrieval/tools chưa được nối vào active response flow.
+- Retrieval đã nối ở mức kiểm thử (xem architecture.md bước 8); tools chưa có.
 - Lượt chỉ có chitchat/out_of_scope/handoff trả câu cố định (một chunk SSE)
   không qua LLM; các lượt khác stream từ provider qua `AnswerComposer`, dựa trên
   kết quả task của execution plan. SSE contract không đổi. Output strict của
-  analyzer có thêm `pending_answer` (v3.1, nội bộ). Task `retrieve` chưa có handler nên luôn `failed`
-  (`handler_not_configured`). Không viết tài liệu hoặc test như thể RAG đã hoàn
-  thiện.
+  analyzer có thêm `pending_answer` (v3.1, nội bộ). Task `retrieve` chạy hybrid
+  search trên `doc_chunks`; lỗi task nội bộ mới là `retrieval_error` (không lộ ra
+  SSE). Schema nội bộ `RetrievalRequest` có thêm `product_scope_mode`,
+  `control_interface`, `spec_attributes`; `RetrievalSubQueryResult` có `hits`
+  (`ChunkHit`, gồm `assets`); `RetrievalFilters.collections` không còn bắt buộc.
+  SSE chưa có event sources/assets. Không viết tài liệu hoặc test như thể RAG đã
+  hoàn thiện (chưa rerank, tham số chưa tối ưu, chưa kiểm thử với Supabase thật).
