@@ -5,7 +5,6 @@ import re
 from app.modules.chatbot.extraction.validate_registry import plan_turn, resolve
 from app.modules.chatbot.orchestration import build_execution_plan
 from app.modules.chatbot.retrieval import Retriever, RetrieverConfig
-from app.modules.chatbot.schemas.inbound import ChannelType, InboundRequest, MessageUser, SessionInfo
 from app.modules.chatbot.schemas.system import (
     Analysis,
     ChunkMatch,
@@ -22,6 +21,7 @@ from app.modules.chatbot.schemas.system import (
 )
 from app.modules.chatbot.stages.answer_composer import AnswerComposer
 from app.modules.chatbot.stages.execution_stage import ExecutionStage
+from tests.chatbot.builders import make_run_state
 
 
 class FakeEmbedder:
@@ -96,7 +96,7 @@ def _sub_query(query, intent, models=(), spec=()):
         "product_models": list(models),
         "unresolved_mentions": [],
         "control_interface": [],
-        "spec_attribute": list(spec),
+        "spec_attributes": list(spec),
         "handoff_reason": None,
         "history_conflict": False,
     }
@@ -107,11 +107,7 @@ def _analysis(*sub_queries) -> Analysis:
 
 
 def _state(query, analysis) -> RunState:
-    state = RunState(input=InboundRequest(
-        message=MessageUser(message_id="request-1", text=query),
-        session=SessionInfo(session_id="00000000-0000-0000-0000-000000000001"),
-        channel={"type": ChannelType.WEBSITE, "branch": "support-technical"},
-    ))
+    state = make_run_state(query, message_id="request-1")
     state.context = RunContext(
         conversation=Conversation(history=[]),
         query=QueryInfo(origin=query),
@@ -216,6 +212,38 @@ def test_children_expand_to_parent_and_respect_limits():
         "11": None, "12": None, "21": None,
         "31": "context_limit", "41": "below_top_k",
     }
+
+
+def test_hits_carry_chunk_metadata_from_doc_chunks():
+    parent = _parent(10).model_copy(update={
+        "domain": "technical_docs",
+        "scopes": ["installation", "maintenance"],
+        "control_interface": ["pulse_train", "EtherCAT"],
+        "spec_attributes": ["io", "max_axis"],
+    })
+    standalone = ChunkRecord(
+        id=21,
+        doc_id="f86_installation",
+        section_title="Section 21",
+        content="content 21",
+        domain="technical_docs",
+        scopes=["operation"],
+    )
+    repository = FakeRepository(
+        {("technical_docs", ("installation",), ("F86",)): [
+            _match(11, fused=0.050, parent_id=10),
+            _match(21, fused=0.030),
+        ]},
+        parents=[parent, standalone],
+    )
+
+    result = asyncio.run(_retriever(repository).search([_request()]))
+
+    # Metadata lấy từ chính chunk, không phải từ filter của request.
+    assert result.hits[0].scopes == ["installation", "maintenance"]
+    assert result.hits[0].control_interface == ["pulse_train", "EtherCAT"]
+    assert result.hits[1].scopes == ["operation"]
+    assert result.metadata == {}
 
 
 def test_inactive_parent_falls_back_to_child():

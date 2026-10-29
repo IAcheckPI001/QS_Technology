@@ -24,7 +24,7 @@ class ChunkFilters(StrictModel):
     product_models: list[str]          # đã mở rộng từ model_family nếu có
     excluded_models: list[str]
     control_interface: list[str]
-    spec_attribute: list[str]
+    spec_attributes: list[str]
     connector_ids: list[str]
     parameter_ids: list[str]
     alarm_codes: list[str]

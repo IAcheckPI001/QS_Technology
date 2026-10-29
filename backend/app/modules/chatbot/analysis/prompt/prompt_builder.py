@@ -34,11 +34,13 @@ Chọn đúng một intent theo mục tiêu thực sự của người dùng, kh
 1. product_models: chỉ ghi model có trong <models> (mã canonical hoặc alias), chuẩn hóa về mã canonical, không phân biệt hoa/thường, khoảng trắng, gạch. Không suy diễn model không được nhắc.
 2. Cụm trông như tên model nhưng KHÔNG khớp <models> (ví dụ "Astro 6A", "Astro 10", "F20", "6AHE") -> ghi nguyên văn vào unresolved_mentions; KHÔNG đoán, KHÔNG đưa vào product_models, KHÔNG đổi intent vì có model lạ.
 3. control_interface: {_render_hints(R['control_interface'])}.
-4. spec_attribute: {_render_hints(R['spec_attributes'])}. Chỉ ghi thuộc tính người dùng thực sự hỏi.
+4. spec_attributes: {_render_hints(R['spec_attributes'])}. Chỉ ghi thuộc tính người dùng thực sự hỏi.
 5. handoff_reason: chỉ khi intent = handoff.human, chọn một mã; nhiều lý do thì lấy lý do được nhắc đầu tiên. Intent khác -> null. Mã hợp lệ: {", ".join(R["handoff_reasons"])}.
+6. model_dependency: "model_specific" khi câu trả lời đúng hay sai tùy model: thông số, chân/tín hiệu connector, đấu dây, các bước cấu hình/thao tác, tham số, mã lỗi/alarm. "general" khi chỉ hỏi nguyên lý, khái niệm, công dụng chung, hoặc intent không cần model (company_info, product_catalog, chitchat, out_of_scope, handoff). Không tự thêm model để đổi câu hỏi chung thành câu hỏi cụ thể. Quy tắc áp dụng như nhau cho câu hỏi bằng mọi ngôn ngữ (tiếng Anh "wire", "pin", "connector", "parameter", "alarm" đều là model_specific).
 </entity_rules>
  
 <query_rules>
+0. standalone_query LUÔN viết bằng tiếng Việt, kể cả khi <query> bằng ngôn ngữ khác (tài liệu tra cứu là tiếng Việt). Dịch sát nghĩa, giữ nguyên mã model, mã connector/tham số/lỗi và thuật ngữ kỹ thuật.
 1. Mỗi standalone_query phải tự đủ nghĩa: thay đại từ/ellipsis ("nó", "máy này", "còn cổng USB?") bằng chủ thể cụ thể lấy từ <state>/<history>. Giữ nguyên thuật ngữ và mã (CN5, X40, #4130, M100).
 2. Chỉ tách sub_query khi các phần có intent KHÁC nhau hoặc cần miền tri thức khác nhau. KHÔNG tách vì nhiều model, nhiều thuộc tính, hoặc vì một phần chỉ là điều kiện hay chi tiết của phần kia. Khi gộp, standalone_query phải nêu đủ các ý đã gộp.
 3. Tối đa {MAX_SUB_QUERIES} sub_query; không lặp cùng intent và cùng nội dung.
@@ -46,8 +48,8 @@ Chọn đúng một intent theo mục tiêu thực sự của người dùng, kh
  
 <history_rules>
 1. Model nêu trong <query> luôn được ưu tiên; khác với lịch sử không phải là xung đột.
-2. Chỉ kế thừa model từ <state>.last_models/<history> khi <query> không nêu model và mang tính nối tiếp (đại từ, "còn...", "thế..."). Model kế thừa vẫn ghi vào product_models.
-3. history_conflict = true CHỈ khi <query> không nêu model, mang tính nối tiếp, và state/lịch sử gần nhất nhắc từ 2 model khác nhau mà không thể biết ám chỉ model nào. Còn lại = false.
+2. Chỉ kế thừa model khi <query> không nêu model và mang tính nối tiếp (đại từ, "còn...", "thế..."). <state>.active_model là model đang được bàn: "nó", "máy này", "còn..." -> active_model. <state>.last_models là các model đã nhắc (cũ -> mới): "các model trên/trước/vừa rồi" -> các model trong last_models khác active_model. Model kế thừa vẫn ghi vào product_models.
+3. history_conflict = true CHỈ khi <query> không nêu model, mang tính nối tiếp, KHÔNG có <state>.active_model, và last_models/lịch sử gần nhất nhắc từ 2 model khác nhau mà không thể biết ám chỉ model nào. Còn lại = false.
 4. Lịch sử chỉ giúp hiểu câu nối tiếp; intent luôn chọn theo mục tiêu của câu hiện tại.
 </history_rules>
  
@@ -61,7 +63,8 @@ Chọn đúng một intent theo mục tiêu thực sự của người dùng, kh
 <output_rules>
 1. Xuất đúng một JSON theo schema; mọi trường đều có mặt, dùng [] / null / false khi không có giá trị. Không giải thích, không Markdown.
 2. Chỉ dùng giá trị enum cho phép.
-3. KHÔNG xuất phạm vi truy xuất, miền/scope, clarification hay định tuyến: hệ thống tự tính.
+3. language: mã ISO 639-1 viết thường của ngôn ngữ người dùng dùng trong <query> (vd. "vi", "en", "ja"). Nếu <query> chỉ gồm mã model, số hoặc từ xác nhận ngắn ("ok", "F86", "2") thì dùng <state>.language nếu có, không có thì "vi".
+4. KHÔNG xuất phạm vi truy xuất, miền/scope, clarification hay định tuyến: hệ thống tự tính.
 </output_rules>
  
 <examples>

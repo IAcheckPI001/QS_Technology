@@ -1,98 +1,154 @@
+from datetime import datetime, timezone
+
 import pytest
 from pydantic import ValidationError
- 
+
+from app.modules.chatbot.schemas import InboundRequest, OutboundResponse
+from app.modules.chatbot.schemas.channels import CRMChatIn, WebsiteChatIn
+from app.modules.chatbot.schemas.security.principal import PrincipalContext, RequestContext
 from app.modules.chatbot.schemas.system import (
     Candidate, LLMCall, RetrievalTrace, RunContext, RunState,
 )
-from app.modules.chatbot.schemas import InboundRequest, OutboundResponse
- 
+from tests.chatbot.builders import make_principal, make_request_context, make_service_principal
+
 INBOUND = {
     "schema_version": "1.0",
-    "request": {"request_id": "req_1", "ticket_id": "TK-1029", "user_id": "u_123"},
     "message": {"message_id": "m3", "text": "  còn điều khoản 5 thì sao?  "},
     "session": {"session_id": "sess_abc"},
-    "channel": {"type": "crm", "branch": "support-technical"},
-    "crm_extra_field": "bị bỏ qua",
+    "channel": {"type": "crm", "branch": None},
+    "resources": {"ticket_id": "TK-1029"},
 }
- 
+
 META = {"doc_id": "d_42", "version": 3, "title": "Hợp đồng lao động mẫu 2026",
         "page": 8, "section": "Điều 5", "url": None}
- 
-def test_inbound_ignores_unknown_fields():
-    req = InboundRequest.model_validate(INBOUND)
 
-    assert not hasattr(req, "crm_extra_field")
-    assert "crm_extra_field" not in req.model_dump()
+WEBSITE_BODY = {
+    "schema_version": "1.0",
+    "session_id": None,
+    "message": {"text": "  Địa chỉ công ty?  "},
+    "client_context": {"locale": "vi", "timezone": "Asia/Ho_Chi_Minh",
+                       "page_url": "https://example.com/san-pham"},
+}
 
-def test_outbound_rejects_unknown_field():
-    data = {
-        **OUT,
-        "internal_trace": "secret"
-    }
 
-    with pytest.raises(ValidationError):
-        OutboundResponse.model_validate(data)
-def test_request_id_is_stripped():
-    req = InboundRequest.model_validate({
-        **INBOUND,
-        "request": {
-            **INBOUND["request"],
-            "request_id": "  req_1  ",
-        },
+# --- Hợp đồng public theo kênh -------------------------------------------------
+
+def test_channel_body_ignores_unknown_fields_and_client_ids():
+    body = WebsiteChatIn.model_validate({
+        **WEBSITE_BODY,
+        "channel": "crm",                           # channel do endpoint quyết định
+        "message": {"message_id": "client-id", "text": "hi"},
+        "crm_extra_field": "bị bỏ qua",
     })
 
-    assert req.request.request_id == "req_1"
+    dumped = body.model_dump()
+    assert "channel" not in dumped and "crm_extra_field" not in dumped
+    assert "message_id" not in dumped["message"]
+
+
+def test_channel_body_strips_text():
+    assert WebsiteChatIn.model_validate(WEBSITE_BODY).message.text == "Địa chỉ công ty?"
+
+
+@pytest.mark.parametrize("patch", [
+    {"message": {"text": "   "}},                                         # text rỗng
+    {"message": {"text": "x" * 4001}},                                    # quá dài
+    {"session_id": "sess_abc"},                                           # không phải UUID
+    {"schema_version": "2.0"},
+    {"client_context": {"timezone": "Asia/Ho Chi Minh"}},                 # không phải tên IANA
+    {"client_context": {"locale": "vietnamese"}},
+    {"client_context": {"page_url": "https://example.com/" + "a" * 2048}},
+])
+def test_website_body_rejects(patch):
+    with pytest.raises(ValidationError):
+        WebsiteChatIn.model_validate({**WEBSITE_BODY, **patch})
+
+
+def test_crm_body_requires_user_id_and_ignores_website_fields():
+    body = CRMChatIn.model_validate({
+        "user_id": " employee_456 ",
+        "message": {"text": "Lỗi CNC F86"},
+        "client_context": {"locale": "vi"},
+        "context_refs": {"ticket_id": "TK-1"},
+    })
+    assert body.user_id == "employee_456" and body.session_id is None
+    assert set(body.model_dump()) == {"schema_version", "user_id", "session_id", "message"}
+    for missing in ({"message": {"text": "hi"}}, {"user_id": "   ", "message": {"text": "hi"}}):
+        with pytest.raises(ValidationError):
+            CRMChatIn.model_validate(missing)
+
+
+# --- InboundRequest nội bộ (strict) --------------------------------------------
 
 def test_inbound_ok_and_strips_text():
     req = InboundRequest.model_validate(INBOUND)
     assert req.message.text == "còn điều khoản 5 thì sao?"
+    assert req.message.idempotency_key is None
+
+
+def test_inbound_rejects_unknown_fields():
+    with pytest.raises(ValidationError):
+        InboundRequest.model_validate({**INBOUND, "request": {"request_id": "r"}})
+
 
 @pytest.mark.parametrize("patch", [
     {"message": {"message_id": "m3", "text": "   "}},                       # text rỗng
-    {"channel": {"type": "zalo", "branch": "support-technical"}},          # kênh lạ
-    {"request": {"request_id": "req_1"}},                                  # crm thiếu ticket
+    {"channel": {"type": "zalo"}},                                         # kênh lạ
     {"schema_version": "2.0"},
+    {"channel": {"type": "website"}},                                      # website có resources
 ])
-
 def test_inbound_rejects(patch):
     with pytest.raises(ValidationError):
         InboundRequest.model_validate({**INBOUND, **patch})
- 
 
-from datetime import datetime, timezone
 
-def test_received_at_accepts_aware_datetime():
-    data = {
-        **INBOUND,
-        "request": {
-            **INBOUND["request"],
-            "received_at": datetime.now(timezone.utc),
-        },
-    }
+def test_website_without_resources_ok():
+    data = {**INBOUND, "channel": {"type": "website"}, "resources": {}}
+    assert InboundRequest.model_validate(data).resources.ticket_id is None
 
-    req = InboundRequest.model_validate(data)
 
-    assert req.request.received_at is not None
+# --- Principal / RequestContext ------------------------------------------------
 
-def test_received_at_rejects_naive_datetime():
-    data = {
-        **INBOUND,
-        "request": {
-            **INBOUND["request"],
-            "received_at": datetime.now(),
-        },
-    }
-
+def test_guest_principal_cannot_carry_tenant_or_roles():
     with pytest.raises(ValidationError):
-        InboundRequest.model_validate(data)
+        PrincipalContext(subject_id="g", principal_type="guest",
+                         authn_method="guest_token", tenant_id="t1")
+    with pytest.raises(ValidationError):
+        PrincipalContext(subject_id="g", principal_type="guest",
+                         authn_method="guest_token", roles=frozenset({"admin"}))
 
- 
-def test_website_without_ticket_ok():
-    data = {**INBOUND, "request": {"request_id": "r"},
-            "channel": {"type": "website", "branch": "support-sale"}}
-    assert InboundRequest.model_validate(data).request.ticket_id is None
- 
- 
+
+def test_service_principal_requires_tenant_and_credential():
+    base = {"subject_id": "crm_sales", "principal_type": "service",
+            "authn_method": "service_key"}
+    for patch in ({}, {"tenant_id": "t1"}, {"credential_id": "k1"},
+                  {"tenant_id": "t1", "credential_id": "k1", "roles": frozenset({"admin"})}):
+        with pytest.raises(ValidationError):
+            PrincipalContext(**base, **patch)
+    assert PrincipalContext(**base, tenant_id="t1", credential_id="k1").tenant_id == "t1"
+
+
+def test_acting_for_revalidates_and_only_applies_to_service():
+    service = make_service_principal(None)
+
+    assert service.acting_for("employee_456").acting_user_id == "employee_456"
+    assert service.acting_user_id is None
+    with pytest.raises(ValidationError):
+        service.acting_for("   ")
+    with pytest.raises(ValueError):
+        make_principal().acting_for("employee_456")
+    with pytest.raises(ValidationError):
+        PrincipalContext(subject_id="g", principal_type="guest",
+                         authn_method="guest_token", acting_user_id="employee_456")
+
+
+def test_request_context_requires_aware_datetime():
+    with pytest.raises(ValidationError):
+        RequestContext(request_id="req-00001", channel="website", received_at=datetime.now())
+    assert RequestContext(request_id="req-00001", channel="website",
+                          received_at=datetime.now(timezone.utc)).branch is None
+
+
 def test_run_context_and_state():
     ctx = RunContext.model_validate({
         "conversation": {"summary": None, "history": [
@@ -107,7 +163,12 @@ def test_run_context_and_state():
                   "rewrite": {"method": "llm", "provider": "self_host", "model": "qwen2.5-7b"}},
         "retrieval_scope": {"collections": ["technical-knowledge"]},
     })
-    state = RunState(input=InboundRequest.model_validate(INBOUND), context=ctx)
+    state = RunState(
+        input=InboundRequest.model_validate(INBOUND),
+        principal=make_principal(),
+        request_context=make_request_context(),
+        context=ctx,
+    )
     sid = state.next_source_id()
     assert sid == "S2"  # tiếp nối S1 trong history
  
@@ -178,3 +239,7 @@ def test_outbound_not_found_handoff():
                     "summary_for_agent": "Khách hỏi điều 5 HĐLĐ 2026, KB chưa có."},
     })
     assert res.handoff.reason == "not_found"
+
+def test_outbound_rejects_unknown_field():
+    with pytest.raises(ValidationError):
+        OutboundResponse.model_validate({**OUT, "internal_trace": "secret"})

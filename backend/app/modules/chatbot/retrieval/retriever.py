@@ -231,21 +231,21 @@ class Retriever:
                 continue
             groups.setdefault(context_id, []).append(match)
 
-        parent_ids = [
-            context_id
-            for context_id, matches in groups.items()
-            if context_id != matches[0].id
-        ]
-        parents = {
+        # Fetch cả chunk context không có cha: match_doc_chunks không trả
+        # domain/scopes/control_interface/spec_attributes của chunk.
+        fetch_ids = list(dict.fromkeys(
+            [*groups.keys(), *(matches[0].id for matches in groups.values())]
+        ))
+        records = {
             record.id: record
-            for record in await self._repository.fetch_by_ids(parent_ids)
+            for record in await self._repository.fetch_by_ids(fetch_ids)
         }
 
         hits: list[ChunkHit] = []
         for context_id, matches in groups.items():
             best = matches[0]
             # Chunk cha không còn active: dùng chính chunk con tốt nhất.
-            record: ChunkRecord = parents.get(context_id, best)
+            record: ChunkRecord = records.get(context_id) or records.get(best.id, best)
             hits.append(ChunkHit(
                 chunk_id=str(record.id),
                 matched_chunk_ids=[str(match.id) for match in matches],
@@ -256,6 +256,10 @@ class Retriever:
                 page_end=record.page_end,
                 content=record.content,
                 assets=record.assets,
+                domain=record.domain,
+                scopes=record.scopes,
+                control_interface=record.control_interface,
+                spec_attributes=record.spec_attributes,
                 score=best.fused_score,
             ))
         return hits

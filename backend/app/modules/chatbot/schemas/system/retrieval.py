@@ -7,6 +7,7 @@ from typing import Annotated, Literal
 from pydantic import ConfigDict, Field, model_validator
 
 from ..default import (
+    AnswerMode,
     SystemModel,
     Identifier,
     NonEmptyStr,
@@ -76,7 +77,7 @@ class RetrievalTrace(SystemModel):
 class RetrievalQuery(SystemModel):
     sub_query_id: NonEmptyStr
     query: NonEmptyStr
-    answer_mode: Literal["full", "overview"]
+    answer_mode: AnswerMode
 
 
 class RetrievalRequest(SystemModel):
@@ -114,6 +115,11 @@ class ChunkRecord(SystemModel):
     page_end: int | None = None
     content: NonEmptyStr
     assets: list[ChunkAsset] = Field(default_factory=list)
+    # Metadata của chính chunk; match_doc_chunks không trả nên chỉ có khi fetch_by_ids.
+    domain: str | None = None
+    scopes: list[str] = Field(default_factory=list)
+    control_interface: list[str] = Field(default_factory=list)
+    spec_attributes: list[str] = Field(default_factory=list)
 
 
 class ChunkMatch(ChunkRecord):
@@ -136,6 +142,10 @@ class ChunkHit(SystemModel):
     page_end: int | None = None
     content: NonEmptyStr
     assets: list[ChunkAsset] = Field(default_factory=list)
+    domain: str | None = None
+    scopes: list[str] = Field(default_factory=list)
+    control_interface: list[str] = Field(default_factory=list)
+    spec_attributes: list[str] = Field(default_factory=list)
     score: float
     source_id: SourceId | None = None   # ExecutionStage gán sau khi mọi task chạy xong
 

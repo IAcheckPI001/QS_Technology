@@ -1,15 +1,8 @@
 import asyncio
 import json
 import re
-from uuid import UUID
 
 from app.modules.chatbot.extraction.validate_registry import plan_turn, resolve
-from app.modules.chatbot.schemas.inbound import (
-    ChannelType,
-    InboundRequest,
-    MessageUser,
-    SessionInfo,
-)
 from app.modules.chatbot.schemas.system import (
     Analysis,
     Conversation,
@@ -19,9 +12,10 @@ from app.modules.chatbot.schemas.system import (
     RunContext,
     RunState,
 )
-from app.modules.chatbot.service import ChatbotService
+from app.modules.chatbot.services import ChatbotService
 from app.modules.chatbot.stages.answer_composer import AnswerComposer
 from app.modules.chatbot.stages.execution_stage import ExecutionStage
+from tests.chatbot.builders import collect_reply, make_run_state
 
 
 class FakeProvider:
@@ -44,7 +38,7 @@ def _sub_query(query, intent, models=(), handoff_reason=None, unresolved=()):
         "product_models": list(models),
         "unresolved_mentions": list(unresolved),
         "control_interface": [],
-        "spec_attribute": [],
+        "spec_attributes": [],
         "handoff_reason": handoff_reason,
         "history_conflict": False,
     }
@@ -55,11 +49,7 @@ def _analysis(*sub_queries) -> Analysis:
 
 
 def _state(query, analysis, history=()) -> RunState:
-    state = RunState(input=InboundRequest(
-        message=MessageUser(message_id="request-1", text=query),
-        session=SessionInfo(session_id="00000000-0000-0000-0000-000000000001"),
-        channel={"type": ChannelType.WEBSITE, "branch": "support-technical"},
-    ))
+    state = make_run_state(query, message_id="request-1")
     state.context = RunContext(
         conversation=Conversation(history=list(history)),
         query=QueryInfo(origin=query),
@@ -154,12 +144,7 @@ class FakeAnalysisStage:
 
 
 def _collect(service, message):
-    session_id = UUID("00000000-0000-0000-0000-000000000001")
-
-    async def collect():
-        return [chunk async for chunk in service.stream_reply(message, session_id)]
-
-    return asyncio.run(collect())
+    return collect_reply(service, message)
 
 
 def test_service_streams_composed_answer_and_saves_history():

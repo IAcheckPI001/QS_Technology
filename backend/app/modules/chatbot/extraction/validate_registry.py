@@ -3,7 +3,7 @@ import re
 from typing import Any
 import difflib
 
-from app.modules.chatbot.extraction.registry import (MAX_SUB_QUERIES, MAX_CANDIDATES, DOMAINS, FUZZY_CUTOFF, MODEL_POLICIES, NO_TARGET_ROUTES, SCOPES, REGISTRY as R)
+from app.modules.chatbot.extraction.registry import (MAX_SUB_QUERIES, MAX_CANDIDATES, DOMAINS, FUZZY_CUTOFF, MODEL_POLICIES, MODEL_SPECIFIC_PATTERN, NO_TARGET_ROUTES, SCOPES, REGISTRY as R)
 
 def _norm(s: Any) -> str:
     """Không phân biệt hoa/thường, khoảng trắng, gạch ngang/gạch dưới."""
@@ -43,6 +43,7 @@ def validate_registry() -> None:
     models = set(R["product_models"])
     for name, spec in R["intents"].items():
         check(spec["model_policy"] in MODEL_POLICIES, f"{name}: model_policy sai")
+        check(isinstance(spec.get("allow_general", True), bool), f"{name}: allow_general phải là bool")
         all_t = spec["targets"] + spec.get("fallback_targets", []) + spec.get("degrade_to", [])
         for t in all_t:
             check(t["domain"] in DOMAINS, f"{name}: domain lạ {t}")
@@ -121,6 +122,39 @@ def resolve_models(names: list[str]) -> tuple[list[str], list[str], list[str]]:
     return models, ambiguous, unknown
  
  
+def _covered_models(targets: list[dict]) -> list[str]:
+    """Model có tài liệu ở ít nhất một domain đích, theo thứ tự registry (gợi ý khi thiếu model)."""
+    covered: set[str] = set()
+    for t in targets:
+        cov = _covered(t["domain"])
+        if cov is None:
+            return list(R["product_models"])
+        covered |= cov
+    return [m for m in R["product_models"] if m in covered]
+
+
+def _model_keys(model: str) -> set[str]:
+    return {_norm(model)} | {_norm(a) for a, m in R["aliases"].items() if m == model}
+
+
+def guard_extracted_models(raw_sub_queries: list[dict], evidence_text: str) -> list[dict]:
+    """[C10] Không để LLM âm thầm đổi model (vd. người dùng gõ F84, LLM ghi F86).
+
+    product_models là enum trong schema strict nên LLM có thể chọn model hợp lệ
+    gần giống. Chỉ giữ model có mã hoặc alias xuất hiện trong câu hỏi, lịch sử
+    hay last_models; model bị loại được ghi vào `dropped_models`.
+    """
+    evidence = _norm(evidence_text)
+    guarded: list[dict] = []
+    for sq in raw_sub_queries:
+        kept, dropped = [], []
+        for model in sq.get("product_models") or []:
+            ok = model not in R["product_models"] or any(k in evidence for k in _model_keys(model))
+            (kept if ok else dropped).append(model)
+        guarded.append({**sq, "product_models": kept, "dropped_models": dropped} if dropped else sq)
+    return guarded
+
+
 def _supported(models: list[str], targets: list[dict]) -> tuple[list[str], list[str]]:
     """Chia model theo coverage của các domain đích."""
     if not targets:
@@ -133,20 +167,48 @@ def _supported(models: list[str], targets: list[dict]) -> tuple[list[str], list[
 
 
 # ----------------------------------------------------- resolve sub_query (code)
-def resolve_sub_query(sq: dict, idx: int = 0) -> dict:
+def resolve_sub_query(
+    sq: dict,
+    idx: int = 0,
+    *,
+    last_models: list[str] | tuple = (),
+    active_model: str | None = None,
+) -> dict:
     intent = sq.get("intent")
     if intent not in R["intents"]:
         return _unclear(sq.get("standalone_query") or "", idx)
     spec = R["intents"][intent]
     policy = spec["model_policy"]
     need = spec.get("min_models", 1)
- 
+    warnings: list[str] = [f"model_not_in_text:{m}" for m in sq.get("dropped_models") or []]
+
     # 1. Chuẩn hóa model (LLM có thể đặt alias/chuỗi lạ ở cả hai trường)
     names = list(sq.get("product_models") or []) + list(sq.get("unresolved_mentions") or [])
     models, ambiguous, unknown = resolve_models(names)
     candidates = {m: _AMBIG[_norm(m)] for m in ambiguous}
     candidates.update({m: suggest_models(m) for m in unknown})          # [C1]
- 
+
+    # 1b. Thiếu model ở câu cần đúng một model [C11]:
+    #   câu hỏi chung (nguyên lý, khái niệm) -> trả lời tổng quan rồi hỏi model ở cuối;
+    #   câu phụ thuộc model: có active_model (model của lượt gần nhất) -> kế thừa;
+    #   last_models có đúng 1 model -> kế thừa model đó;
+    #   last_models có >= 2 model -> xung đột ngữ cảnh, hỏi chọn trong last_models.
+    # Cờ "general" của LLM chỉ được nhận khi intent cho phép và câu không nhắc mã
+    # cụ thể (CN1, #4130...): LLM có thể phân loại sai, nhất là câu không phải tiếng Việt.
+    general = False
+    single_model_needed = policy == "required" and need == 1 and not (models or ambiguous or unknown)
+    if single_model_needed:
+        if (
+            sq.get("model_dependency") == "general"
+            and spec.get("allow_general", True)
+            and not MODEL_SPECIFIC_PATTERN.search(sq.get("standalone_query") or "")
+        ):
+            general = True
+        elif active_model or len(last_models) == 1:
+            inherited = active_model or last_models[0]
+            models = [inherited]
+            warnings.append(f"inherited_model:{inherited}")
+
     # 2. product_scope_mode
     if intent == "compare.product_models":
         mode = "comparison"
@@ -162,16 +224,30 @@ def resolve_sub_query(sq: dict, idx: int = 0) -> dict:
     # 3. Clarification
     reason = None
     if policy != "none":
+        conflict = bool(sq.get("history_conflict")) or (
+            single_model_needed and not general and len(last_models) >= 2
+        )
         checks = {
             "ambiguous_product_model": bool(ambiguous),
             "unknown_product_model": bool(unknown),
-            "context_conflict": bool(sq.get("history_conflict")) and not models,
+            "context_conflict": conflict and not models,
             "insufficient_models_for_comparison": policy == "required" and need > 1 and len(models) < need,
             "missing_product_model": policy == "required" and need == 1 and not models,
         }
         reason = next((r for r in R["clarification_order"] if checks[r]), None)
-    # [C4] Không chặn nếu vẫn còn model đã resolve để trả lời một phần
-    blocking = reason is not None and not models
+    # Gợi ý cho các lý do không gắn với mention; key = reason khớp `focus` của pending.
+    if reason == "context_conflict" and last_models:
+        candidates[reason] = list(last_models)
+    elif reason == "insufficient_models_for_comparison":
+        # Ưu tiên model đã nhắc trong phiên (mới nhất trước), rồi tới model có tài liệu.
+        recent = [m for m in reversed(list(last_models)) if m not in models]
+        covered = [m for m in _covered_models(spec["targets"]) if m not in models and m not in recent]
+        candidates[reason] = recent + covered
+    elif reason == "missing_product_model":
+        candidates[reason] = [m for m in _covered_models(spec["targets"]) if m not in models]
+    # [C4] Không chặn nếu vẫn còn model đã resolve để trả lời một phần;
+    # câu hỏi chung vẫn trả lời được, câu hỏi lại đặt ở cuối.
+    blocking = reason is not None and not models and not general
  
     # 4. Coverage + degrade  [C2]
     targets = spec["targets"]
@@ -193,7 +269,6 @@ def resolve_sub_query(sq: dict, idx: int = 0) -> dict:
         route = "retrieve"                 # có thể kèm clarification không chặn
  
     # 6. Warnings  [C7]
-    warnings: list[str] = []
     if degraded:
         warnings.append("degraded_to_overview")
     if unsupported and supported:
@@ -216,7 +291,7 @@ def resolve_sub_query(sq: dict, idx: int = 0) -> dict:
             "fallback_targets": [] if degraded else spec.get("fallback_targets", []),
             "model_filter": supported or None,          # None = cố ý không lọc
             "unsupported_models": unsupported,
-            "answer_mode": "overview" if degraded else "full",
+            "answer_mode": "general" if general else "overview" if degraded else "full",
         }
  
     handoff = None
@@ -231,7 +306,7 @@ def resolve_sub_query(sq: dict, idx: int = 0) -> dict:
             "product_models": models,
             "unresolved_mentions": ambiguous + unknown,
             "control_interface": list(sq.get("control_interface") or []),
-            "spec_attribute": list(sq.get("spec_attribute") or []),
+            "spec_attributes": list(sq.get("spec_attributes") or []),
         },
         "retrieval_scope": retrieval,
         "clarification": None if reason is None else {
@@ -254,7 +329,7 @@ def _unclear(query: str, idx: int = 0) -> dict:
         "standalone_query": query.strip(),
         "intent": None,
         "entities": {"product_models": [], "unresolved_mentions": [],
-                     "control_interface": [], "spec_attribute": []},
+                     "control_interface": [], "spec_attributes": []},
         "retrieval_scope": None,
         "clarification": {"reason": "unclear_query", "blocking": True,
                           "mentions": [], "candidates": {}},
@@ -265,7 +340,12 @@ def _unclear(query: str, idx: int = 0) -> dict:
     }
  
  
-def resolve_with_raw(raw: dict | None) -> tuple[list[dict], dict[str, dict]]:
+def resolve_with_raw(
+    raw: dict | None,
+    *,
+    last_models: list[str] | tuple = (),
+    active_model: str | None = None,
+) -> tuple[list[dict], dict[str, dict]]:
     """Như resolve(), kèm sub_query thô của LLM theo id đã cấp (dùng để vá khi làm rõ)."""
     out, raws, seen = [], {}, set()
     for sq in ((raw or {}).get("sub_queries") or [])[:MAX_SUB_QUERIES]:
@@ -273,7 +353,9 @@ def resolve_with_raw(raw: dict | None) -> tuple[list[dict], dict[str, dict]]:
         if key in seen:
             continue
         seen.add(key)
-        resolved = resolve_sub_query(sq, len(out))
+        resolved = resolve_sub_query(
+            sq, len(out), last_models=last_models, active_model=active_model,
+        )
         raws[resolved["id"]] = sq
         out.append(resolved)
     return (out or [_unclear("")]), raws

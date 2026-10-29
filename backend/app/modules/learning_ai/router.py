@@ -40,7 +40,7 @@ async def list_support_chat_sessions(
 ) -> list[SupportChatSession] | JSONResponse:
     try:
         sessions = await repository.list_sessions()
-        print(f"Retrieved {len(sessions)} support chat sessions")
+        logger.debug("support chat sessions listed count=%d", len(sessions))
     except SQLAlchemyError:
         request_id = str(uuid4())
         logger.exception("support chat session list failed request_id=%s", request_id)
@@ -83,7 +83,7 @@ async def list_support_chat_messages(
     try:
         messages = await repository.list_for_session(session_id=session_id)
         session = await repository.get_session(session_id=session_id)
-        print(f"Retrieved {len(messages)} messages for session {session_id}")
+        logger.debug("support chat messages listed session_id=%s count=%d", session_id, len(messages))
     except SQLAlchemyError:
         logger.exception("support chat message list failed request_id=%s session_id=%s", request_id, session_id)
         return _error(503, "database_unavailable", "Conversation messages could not be loaded.", request_id)
@@ -105,7 +105,7 @@ async def list_support_chat_messages(
     )
 
 
-@router.post("/learning-knowledge", response_model=LearnResponse)
+@router.post("/ai/learning", response_model=LearnResponse)
 async def submit_learning(
     payload: LearnRequest,
     service: LearningIngestionService | None = Depends(get_learning_service),
@@ -134,5 +134,4 @@ async def submit_learning(
                       "Privacy check could not be completed. The conversation was not processed.", request_id)
 
     response = LearnResponse.from_result(result, request_id)
-    print(response.model_dump(mode="json"))
     return JSONResponse(content=response.model_dump(mode="json"), headers={"X-Request-ID": request_id})

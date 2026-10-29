@@ -338,11 +338,6 @@ async def insert_chunks(
 
                 inserted_total += affected
 
-        print(
-            f"Đã insert {inserted_total} bản ghi mới "
-            f"(đã xử lý {min(start + len(batch), total)}/{total})",
-            flush=True,
-        )
 
     return inserted_total
 
@@ -350,14 +345,12 @@ async def insert_chunks(
 async def main() -> None:
     chunks = load_csv_chunks("documents/doc_chunks_f86.csv")
 
-    print(f"Tổng số chunk hợp lệ: {len(chunks)}")
 
     if not chunks:
         return
 
     inserted = await insert_chunks(chunks, batch_size=50)
 
-    print(f"Hoàn tất. Số chunk mới được insert: {inserted}")
 
 
 if __name__ == "__main__":
@@ -369,5 +362,4 @@ if __name__ == "__main__":
             ),
         )
     except Exception as exc:
-        print(f"Lỗi ingestion: {exc}")
         sys.exit(1)

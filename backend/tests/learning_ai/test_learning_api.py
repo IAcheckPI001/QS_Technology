@@ -33,7 +33,7 @@ def _service(rows, responder=None) -> LearningIngestionService:
 
 
 def _post(client: TestClient, body: dict):
-    return client.post("/learning-knowledge", json=body)
+    return client.post("/ai/learning", json=body)
 
 
 def test_ready_returns_redacted_units_only():
@@ -121,12 +121,9 @@ def test_route_is_included_only_when_enabled(enabled, status_code):
 
 
 def test_support_chat_routes_are_included_when_learning_api_is_enabled():
-    api_router = build_api_router(settings.model_copy(update={"learning_api_enabled": True}))
-    paths = {
-        route.path
-        for included_router in api_router.routes
-        for route in included_router.original_router.routes
-    }
+    app = FastAPI()
+    app.include_router(build_api_router(settings.model_copy(update={"learning_api_enabled": True})))
+    paths = set(app.openapi()["paths"])
 
     assert "/support-chat/sessions" in paths
     assert "/support-chat/sessions/{session_id}/messages" in paths

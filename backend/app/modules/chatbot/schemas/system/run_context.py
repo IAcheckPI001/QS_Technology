@@ -38,11 +38,19 @@ class PendingClarification(_Model):
     candidates: list[str] = Field(default_factory=list)
     llm_raw: dict                                     # sub_query gốc để nối lại
     ttl: int = Field(ge=0)
+    # False: câu hỏi model ở cuối câu trả lời chung; chỉ nhận mã/alias/số thứ tự,
+    # không nhận "ok/đúng" để tránh kích hoạt tra cứu ngoài ý muốn.
+    blocking: bool = True
 
 
 class ConversationState(_Model):
     mode: Mode = Mode.BOT
+    # Các model đã nhắc trong phiên, cũ -> mới (tham chiếu "các model trên", gợi ý).
     last_models: list[str] = Field(default_factory=list, max_length=MAX_LAST_MODELS)
+    # Model đang được bàn: model duy nhất của lượt gần nhất; None sau lượt có >= 2 model.
+    active_model: str | None = None
+    # Ngôn ngữ của người dùng trong phiên (ISO 639-1), do analysis phát hiện.
+    language: LanguageCode | None = None
     last_intent: str | None = None
     pending: PendingClarification | None = None
     clarify_attempts: int = Field(default=0, ge=0)
@@ -50,7 +58,14 @@ class ConversationState(_Model):
     ticket_id: str | None = None
 
     def for_llm(self) -> dict:
-        return {"last_models": self.last_models} if self.last_models else {}
+        data: dict = {}
+        if self.last_models:
+            data["last_models"] = self.last_models
+        if self.active_model:
+            data["active_model"] = self.active_model
+        if self.language:
+            data["language"] = self.language
+        return data
 
 
 class HistoryCitation(SystemModel):

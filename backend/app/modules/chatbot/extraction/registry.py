@@ -14,6 +14,10 @@ SCOPES = ("installation", "operation", "configuration", "maintenance")
 MODEL_POLICIES = ("none", "optional", "required")
 NO_TARGET_ROUTES = ("handoff", "chitchat", "out_of_scope")
  
+# [C11] Câu nhắc mã cụ thể (connector CN1/X40, tham số #4130, alarm AL12/E05) luôn
+# phụ thuộc model, bất kể LLM đánh dấu model_dependency thế nào.
+MODEL_SPECIFIC_PATTERN = re.compile(r"(?<![a-z0-9])(?:cn\d+|x\d+|#\d+|al\d+|e\d{2,})(?![a-z0-9])", re.I)
+
 _CATALOG = [{"domain": "product_catalog"}]
 _COMPANY = [{"domain": "company_info"}]
 def _docs(scope: str) -> list[dict]:
@@ -30,6 +34,8 @@ REGISTRY: dict[str, Any] = {
     #                    chưa có hướng dẫn chi tiết). Chỉ khai báo khi miền thay thế
     #                    thực sự có nội dung hữu ích cho intent đó.
     # route            : [C6] chỉ cho intent không có targets.
+    # allow_general    : [C11] mặc định True; False = không chấp nhận model_dependency
+    #                    "general" của LLM, thiếu model thì luôn kế thừa/hỏi lại.
     "intents": {
         "lookup.product_info": {
             "desc": "Giới thiệu, thông số, tính năng, đặc điểm, nguyên lý hoạt động, cổng/giao tiếp "
@@ -56,6 +62,7 @@ REGISTRY: dict[str, Any] = {
             "targets": _docs("installation"),
             "degrade_to": _CATALOG,        # catalog có thông tin cổng/nguồn ở mức tổng quan
             "model_policy": "required",
+            "allow_general": False,        # đấu dây/chân connector luôn phụ thuộc model
         },
         "guide.operation": {
             "desc": "Các BƯỚC thao tác trên giao diện máy: tọa độ, offset, chạy chương trình, "
@@ -74,6 +81,7 @@ REGISTRY: dict[str, Any] = {
             "targets": _docs("maintenance"),
             "fallback_targets": [{"domain": "technical_docs"}],
             "model_policy": "required",
+            "allow_general": False,        # mã lỗi/alarm luôn phụ thuộc model
         },
         "lookup.company_info": {
             "desc": "Công ty: địa chỉ, liên hệ, lịch sử, mảng kinh doanh, nâng cấp máy cũ, "
@@ -143,7 +151,7 @@ REGISTRY: dict[str, Any] = {
     # dict[model, ifs]: [C7] model có dữ liệu, chỉ cho các control_interface liệt kê
     "coverage": {
         "product_catalog": ["F54", "F86", "F10T", "ASTRO_10S", "ASTRO_6AH", "ASTRO_6AV", "ASTRO_10I"],
-        "technical_docs": {"F86": ["pulse_train"]},
+        "technical_docs": {"F86": ["pulse_train", "ethercat"]},
         "company_info": None,
     },
  

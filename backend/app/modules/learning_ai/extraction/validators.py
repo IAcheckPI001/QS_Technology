@@ -88,7 +88,7 @@ def validate_registry(record: KnowledgeRecord, reg: RegistrySnapshot, report: Va
         ("classification.intents", "intents", c.intents),
         ("classification.topic", "topic", [c.topic]),
         ("classification.control_interface", "control_interface", c.control_interface),
-        ("classification.spec_attribute", "spec_attribute", c.spec_attribute),
+        ("classification.spec_attributes", "spec_attributes", c.spec_attributes),
         ("classification.connector_ids", "connector_ids", c.connector_ids),
         ("classification.parameter_ids", "parameter_ids", c.parameter_ids),
         ("classification.alarm_codes", "alarm_codes", c.alarm_codes),

@@ -1,10 +1,10 @@
+"""Hợp đồng public theo kênh; adapter chuyển về InboundRequest nội bộ."""
 
+from .crm import CRMChatIn
+from .website import ChatMessageIn, WebsiteChatIn
 
-"""Mô hình nội bộ pipeline – có thể sửa tự do, không ảnh hưởng hợp đồng với CRM."""
- 
-from .website import WebsiteChatIn
- 
 __all__ = [
-    "WebsiteChatIn"
+    "CRMChatIn",
+    "ChatMessageIn",
+    "WebsiteChatIn",
 ]
- 

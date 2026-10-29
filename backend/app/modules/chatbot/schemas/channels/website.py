@@ -1,18 +1,18 @@
-
+"""Hợp đồng public của POST /chat/website."""
 
 from typing import Literal
-from pydantic import HttpUrl
- 
-from ..default import SCHEMA_VERSION, Identifier, InboundModel, LanguageCode
-from ..inbound import MessageUser
+from uuid import UUID
 
-class ClientContext(InboundModel):
-    locale: LanguageCode | None = None
-    timezone: str | None = None
-    page_url: HttpUrl | None = None
+from ..default import SCHEMA_VERSION, ClientContext, InboundModel, MessageText
+
+
+class ChatMessageIn(InboundModel):
+    # message_id do server sinh; client chống gửi trùng bằng header Idempotency-Key.
+    text: MessageText
+
 
 class WebsiteChatIn(InboundModel):
     schema_version: Literal["1.0"] = SCHEMA_VERSION
-    session_id: Identifier | None = None
-    message: MessageUser
+    session_id: UUID | None = None
+    message: ChatMessageIn
     client_context: ClientContext | None = None

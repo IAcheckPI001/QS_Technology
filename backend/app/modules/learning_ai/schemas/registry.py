@@ -15,7 +15,7 @@ FIELD_TO_REGISTRY_KEY: dict[str, str] = {
     "product_models": "product_models",
     "excluded_models": "product_models",
     "control_interface": "control_interface",
-    "spec_attribute": "spec_attributes",
+    "spec_attributes": "spec_attributes",
     # bổ sung mới
     "topic": "topics",
     "connector_ids": "connectors",

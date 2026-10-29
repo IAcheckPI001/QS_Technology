@@ -44,6 +44,10 @@ def match_confirmation(reply: str, pending: PendingClarification) -> str | None:
 
     words = [word for word in text.split() if word not in _FILLERS]
     if words and all(word in _CONFIRM_TOKENS for word in words):
+        # Pending không chặn (câu hỏi model ở cuối câu trả lời chung): "ok"
+        # thường chỉ là đáp lễ, không phải chọn model.
+        if not pending.blocking:
+            return None
         return candidates[0] if len(candidates) == 1 else None
 
     rest = [word for word in words if word not in _CONFIRM_TOKENS]

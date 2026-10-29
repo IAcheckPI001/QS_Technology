@@ -59,8 +59,26 @@ class ChatHistory(Base):
     latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # ConversationState after this turn (pending clarification, mode, last models).
     conversation_state: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    retrieval_snapshot: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    channel: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        default="website",
+        server_default="website",
+    )
+    # Header Idempotency-Key của client; hiện chỉ lưu, chưa chống xử lý trùng.
+    idempotency_key: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
+    )
+    updated_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
     )

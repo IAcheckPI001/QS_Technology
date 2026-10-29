@@ -7,6 +7,7 @@ from app.modules.chatbot.schemas.system import (
     Conversation,
     RunContext
 )
+from app.modules.chatbot.stages.errors import ContextBudgetError, ContextConfigurationError
 
 class Prune:
     name = "prune"
@@ -14,7 +15,8 @@ class Prune:
     def __init__(
         self,
         token_budget: int,
-        token_counter: Callable[[RunContext], int] | None = None,
+        # (context, model) -> số token; model quyết định bảng mã tiktoken.
+        token_counter: Callable[[RunContext, str], int] | None = None,
     ) -> None:
         if token_budget <= 0:
             raise ContextConfigurationError("context token budget must be positive")
@@ -30,7 +32,6 @@ class Prune:
         return count_tokens(text, model)
 
     def execute(self, context: RunContext, model: str) -> RunContext:
-        print(f"token budget: {self._token_budget}, token count: {self._token_counter(context, model)}")
         if self._token_counter(context, model) <= self._token_budget:
             return context
         history = list(context.conversation.history)

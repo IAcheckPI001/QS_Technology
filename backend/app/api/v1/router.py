@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1.health import router as health_router
 from app.core.config import Settings, settings
-from app.modules.chatbot.router import router as chatbot_router
+from app.modules.chatbot.routers import router as chatbot_router
 from app.modules.learning_ai.router import router as learning_router
 
 

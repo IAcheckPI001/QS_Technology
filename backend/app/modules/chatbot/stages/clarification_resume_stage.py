@@ -32,6 +32,8 @@ class ClarificationResumeStage:
             patch_pending(pending, answer),
             pending_answer=answer,
             resumed=True,
+            last_models=state.context.conversation.state.last_models,
+            active_model=state.context.conversation.state.active_model,
         )
         return state
 

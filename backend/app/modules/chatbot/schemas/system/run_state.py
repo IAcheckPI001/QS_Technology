@@ -7,6 +7,7 @@ from pydantic import Field
 
 from ..default import SystemModel, NonNegInt
 from ..inbound import InboundRequest
+from ..security.principal import PrincipalContext, RequestContext
 from .analysis import Analysis
 from .orchestration import ExecutionPlan
 from .retrieval import Candidate, RetrievalTrace
@@ -18,6 +19,8 @@ from .security import SecurityDecision
 
 class RunState(SystemModel):
     input: InboundRequest
+    principal: PrincipalContext                # auth dependency, không lấy từ body
+    request_context: RequestContext
     context_input: RunContext | None = None   # ContextLoader output
     context: RunContext | None = None         # Prune output
     context_status: Literal["pending", "loaded", "pruned"] = "pending"

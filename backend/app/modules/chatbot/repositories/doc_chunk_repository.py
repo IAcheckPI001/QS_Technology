@@ -25,7 +25,8 @@ _MATCH_SQL = text("""
 
 _FETCH_SQL = text("""
     select id, parent_id, doc_id, section_title, section_path,
-           page_start, page_end, content, assets
+           page_start, page_end, content, assets,
+           domain, scopes, control_interface, spec_attributes
     from doc_chunks
     where id = any(cast(:ids as bigint[])) and is_active
 """)

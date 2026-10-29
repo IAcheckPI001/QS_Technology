@@ -80,7 +80,7 @@ class Classification(StrictModel):
     intents: list[str] = Field(min_length=1, description="Các intent truy vấn mà record này trả lời được")
     topic: str
     control_interface: list[str] = Field(default_factory=list)
-    spec_attribute: list[str] = Field(default_factory=list)
+    spec_attributes: list[str] = Field(default_factory=list)
     connector_ids: list[str] = Field(default_factory=list)
     parameter_ids: list[str] = Field(default_factory=list)
     alarm_codes: list[str] = Field(default_factory=list)

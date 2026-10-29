@@ -17,7 +17,7 @@ def _sub_query(query, intent, models=(), handoff_reason=None, unresolved=()):
         "product_models": list(models),
         "unresolved_mentions": list(unresolved),
         "control_interface": [],
-        "spec_attribute": [],
+        "spec_attributes": [],
         "handoff_reason": handoff_reason,
         "history_conflict": False,
     }
@@ -97,3 +97,18 @@ def test_mixed_turn_collects_results_in_plan_order():
         TaskStatus.COMPLETED,
         TaskStatus.HANDED_OFF,
     ]
+
+
+def test_retrieval_request_accepts_general_answer_mode():
+    from app.modules.chatbot.orchestration.handlers import build_retrieval_requests
+
+    raw = _sub_query("Macro dùng để làm gì", "guide.configuration")
+    raw["model_dependency"] = "general"
+    analysis = Analysis.from_plan(plan_turn(resolve({"sub_queries": [raw]})))
+    sub_query = analysis.sub_queries[0]
+
+    targets, _ = build_retrieval_requests("task-retrieve-q1", sub_query)
+
+    assert sub_query.retrieval_scope.answer_mode == "general"
+    assert targets[0].queries[0].answer_mode == "general"
+    assert targets[0].model_filter is None

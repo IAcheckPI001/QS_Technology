@@ -2,6 +2,7 @@ import json
 from collections.abc import AsyncIterator
 from typing import Any
 
+from app.modules.chatbot.extraction.validate_registry import display_name
 from app.modules.chatbot.orchestration import collect_results
 from app.modules.chatbot.prompts import SYSTEM_PROMPT
 from app.modules.chatbot.providers.openai import OpenAIProvider
@@ -59,6 +60,15 @@ class AnswerComposer:
             }
             if result.metadata:
                 item["metadata"] = result.metadata
+            inherited = [
+                warning.split(":", 1)[1]
+                for sub_query_id in task.sub_query_ids
+                if sub_query_id in sub_queries
+                for warning in sub_queries[sub_query_id].warnings
+                if warning.startswith("inherited_model:")
+            ]
+            if inherited:
+                item["context_model"] = display_name(inherited[0])
             if result.error is not None:
                 item["error"] = result.error.code
             task_results.append(item)
@@ -89,6 +99,7 @@ class AnswerComposer:
                 })
 
         parts = [
+            f"<language>{state.context.query.language}</language>",
             f"<query>{state.context.query.origin}</query>",
             f"<task_results>{_j(task_results)}</task_results>",
         ]
@@ -96,19 +107,17 @@ class AnswerComposer:
             parts.append(f"<sources>{_j(sources)}</sources>")
         clarification = state.analysis.clarification
         if clarification is not None:
-            parts.append(
-                f"<clarification>{_j(clarification.model_dump(mode='json'))}</clarification>"
-            )
+            payload = clarification.model_dump(mode="json")
+            payload["display_candidates"] = {
+                key: [display_name(model) for model in models]
+                for key, models in clarification.candidates.items()
+            }
+            parts.append(f"<clarification>{_j(payload)}</clarification>")
 
         history = [
             {"role": message.role, "content": message.content}
             for message in state.context.conversation.history[-2:]
         ]
-        print([
-            {"role": "system", "content": SYSTEM_PROMPT},
-            *history,
-            {"role": "user", "content": "\n".join(parts)},
-        ])
         return [
             {"role": "system", "content": SYSTEM_PROMPT},
             *history,

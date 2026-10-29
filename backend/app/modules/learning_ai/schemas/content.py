@@ -130,7 +130,7 @@ class TroubleshootingContent(_BaseContent):
 
 # ---------- Thông số kỹ thuật ----------
 class SpecFact(Claim):
-    spec_attribute: str
+    spec_attributes: str
     value: str
     unit: str | None = None
     condition: str | None = None

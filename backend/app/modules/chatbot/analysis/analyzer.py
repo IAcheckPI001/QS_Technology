@@ -82,12 +82,18 @@ def build_analysis(
     *,
     pending_answer: str | None = None,
     resumed: bool = False,
+    last_models: list[str] | tuple = (),
+    active_model: str | None = None,
 ) -> Analysis:
     """Resolve raw LLM sub-queries into a typed turn plan without calling the LLM."""
     if not raw_sub_queries:
         raise AnalysisError("analysis_invalid_output", "Query analysis returned no sub-query.")
     try:
-        sub_queries, raws = resolve_with_raw({"sub_queries": raw_sub_queries})
+        sub_queries, raws = resolve_with_raw(
+            {"sub_queries": raw_sub_queries},
+            last_models=last_models,
+            active_model=active_model,
+        )
         analysis = Analysis.from_plan(plan_turn(sub_queries))
     except (TypeError, ValueError, KeyError) as exc:
         log.warning("query_analysis plan validation failed")

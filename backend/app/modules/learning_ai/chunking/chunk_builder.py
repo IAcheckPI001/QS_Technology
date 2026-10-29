@@ -68,7 +68,7 @@ def _full_body(ct) -> str:
     if isinstance(ct, TroubleshootingContent):
         return "\n".join(_render_cause(i, c) for i, c in enumerate(ct.causes))
     if isinstance(ct, SpecFactContent):
-        return "\n".join(f"- {f.spec_attribute}: {f.value}{' ' + f.unit if f.unit else ''}"
+        return "\n".join(f"- {f.spec_attributes}: {f.value}{' ' + f.unit if f.unit else ''}"
                          f"{f' ({f.condition})' if f.condition else ''}" for f in ct.facts)
     raise TypeError(type(ct))
 
@@ -194,7 +194,7 @@ def build_chunks(record: KnowledgeRecord, reg: RegistrySnapshot,
     filters = ChunkFilters(
         knowledge_type=ct.kind, intents=c.intents, topic=c.topic, scope=a.scope, product_models=models,
         excluded_models=a.excluded_models, control_interface=c.control_interface,
-        spec_attribute=c.spec_attribute, connector_ids=c.connector_ids, parameter_ids=c.parameter_ids,
+        spec_attributes=c.spec_attributes, connector_ids=c.connector_ids, parameter_ids=c.parameter_ids,
         alarm_codes=c.alarm_codes, registry_version=record.provenance.registry_version)
 
     n, chash = len(drafts), record.content_hash()

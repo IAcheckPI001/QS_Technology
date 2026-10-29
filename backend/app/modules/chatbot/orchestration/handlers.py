@@ -50,7 +50,7 @@ def build_retrieval_requests(
             model_filter=plan.model_filter,
             product_scope_mode=plan.product_scope_mode,
             control_interface=sub_query.entities.control_interface,
-            spec_attributes=sub_query.entities.spec_attribute,
+            spec_attributes=sub_query.entities.spec_attributes,
             queries=[query],
         )
 

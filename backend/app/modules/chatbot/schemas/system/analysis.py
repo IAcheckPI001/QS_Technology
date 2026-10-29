@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import Literal
 from pydantic import Field
 
-from ..default import SystemModel, NonEmptyStr
+from ..default import AnswerMode, LanguageCode, SystemModel, NonEmptyStr
 
 
 class Route(StrEnum):
@@ -30,7 +30,7 @@ class ExtractedEntities(SystemModel):
     product_models: list[NonEmptyStr] = Field(default_factory=list)
     unresolved_mentions: list[NonEmptyStr] = Field(default_factory=list)
     control_interface: list[NonEmptyStr] = Field(default_factory=list)
-    spec_attribute: list[NonEmptyStr] = Field(default_factory=list)
+    spec_attributes: list[NonEmptyStr] = Field(default_factory=list)
 
 
 class RetrievalTarget(SystemModel):
@@ -44,7 +44,7 @@ class RetrievalPlan(SystemModel):
     fallback_targets: list[RetrievalTarget] = Field(default_factory=list)
     model_filter: list[NonEmptyStr] | None = None
     unsupported_models: list[NonEmptyStr] = Field(default_factory=list)
-    answer_mode: Literal["full", "overview"]
+    answer_mode: AnswerMode
 
 
 class SubQueryClarification(SystemModel):
@@ -103,6 +103,8 @@ class Analysis(SystemModel):
     raw_sub_queries: dict[str, dict] = Field(default_factory=dict, exclude=True)
     pending_answer: NonEmptyStr | None = None
     resumed: bool = False
+    # Ngôn ngữ câu hỏi gốc do LLM phát hiện; None khi lượt không gọi LLM (resume).
+    language: LanguageCode | None = None
 
     @classmethod
     def from_plan(cls, plan: dict) -> "Analysis":

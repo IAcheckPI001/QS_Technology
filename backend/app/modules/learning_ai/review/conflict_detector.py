@@ -42,7 +42,7 @@ def _keyed(record: KnowledgeRecord) -> dict[tuple, tuple]:
     if isinstance(ct, ParameterConfigContent):
         return {("param", s.parameter_id, _norm(s.condition)): (_norm(s.value), _norm(s.unit)) for s in ct.settings}
     if isinstance(ct, SpecFactContent):
-        return {("spec", f.spec_attribute, _norm(f.condition)): (_norm(f.value), _norm(f.unit)) for f in ct.facts}
+        return {("spec", f.spec_attributes, _norm(f.condition)): (_norm(f.value), _norm(f.unit)) for f in ct.facts}
     if isinstance(ct, WiringContent):
         return {("wire", w.from_connector, _norm(w.from_pin)): (_norm(w.to_target), _norm(w.to_pin))
                 for w in ct.connections}

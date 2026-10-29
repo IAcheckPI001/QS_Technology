@@ -110,7 +110,10 @@ as $$
     where c.is_active
       and c.domain = p_domain
       and (coalesce(cardinality(p_scopes), 0) = 0 or c.scopes && p_scopes)
-      and (p_models is null or c.product_models && p_models)
+      and (
+        coalesce(cardinality(p_models), 0) = 0
+        or c.product_models && p_models
+      )
       and (coalesce(cardinality(p_control_interface), 0) = 0
            or cardinality(c.control_interface) = 0
            or c.control_interface && p_control_interface)

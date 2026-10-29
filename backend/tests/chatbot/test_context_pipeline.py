@@ -3,22 +3,19 @@ from uuid import uuid4
 
 import pytest
 
+from app.modules.chatbot.schemas.default import ChannelType
 from app.modules.chatbot.schemas.inbound import InboundRequest
-from app.modules.chatbot.schemas.system import RunState
 from app.modules.chatbot.stages.context_loader import (
     ContextBudgetError,
     ContextConfigurationError,
     ContextLoader
 )
 from app.modules.chatbot.stages.prune_stage import Prune
+from tests.chatbot.builders import make_inbound, make_run_state
 
 
 def request(session_id: str) -> InboundRequest:
-    return InboundRequest.model_validate({
-        "message": {"message_id": "current", "text": "Câu hỏi hiện tại"},
-        "session": {"session_id": session_id},
-        "channel": {"type": "website", "branch": "support-technical"},
-    })
+    return make_inbound(session_id=session_id, message_id="current")
 
 
 @pytest.mark.anyio
@@ -34,7 +31,7 @@ async def test_context_loader_emits_stable_turn_messages_and_filters_repository_
                 answer="Câu trả lời cũ",
             )]
 
-    state = RunState(input=request(str(uuid4())))
+    state = make_run_state(session_id=str(uuid4()), message_id="current")
     context = await ContextLoader(Repository()).execute(state)
 
     assert [message.role for message in context.conversation.history] == [
@@ -67,8 +64,8 @@ def test_prune_removes_oldest_turn_and_preserves_current_query():
     )
     pruned = Prune(
         1,
-        token_counter=lambda value: 2 if len(value.conversation.history) > 2 else 1,
-    ).execute(context)
+        token_counter=lambda value, model: 2 if len(value.conversation.history) > 2 else 1,
+    ).execute(context, "gpt-4o-mini")
     assert [message.content for message in pruned.conversation.history] == [
         "new", "new answer"
     ]
@@ -86,10 +83,22 @@ def test_prune_reports_invalid_budget_and_mandatory_overflow():
         retrieval_scope=RetrievalScope(collections=["crm-technical"]),
     )
     with pytest.raises(ContextBudgetError):
-        Prune(1, token_counter=lambda _: 2).execute(context)
+        Prune(1, token_counter=lambda _context, _model: 2).execute(context, "gpt-4o-mini")
 
 
-def test_legacy_branch_maps_to_backend_collection():
+def test_website_searches_every_collection():
     assert ContextLoader.resolve_retrieval_scope(request(str(uuid4()))).collections == [
         "crm-technical", "crm-sale"
     ]
+
+
+def test_crm_without_branch_searches_every_collection():
+    crm = make_inbound(channel=ChannelType.CRM)
+    assert ContextLoader.resolve_retrieval_scope(crm).collections == [
+        "crm-technical", "crm-sale"
+    ]
+
+
+def test_crm_branch_maps_to_single_collection():
+    crm = make_inbound(channel=ChannelType.CRM, branch="support-sale")
+    assert ContextLoader.resolve_retrieval_scope(crm).collections == ["crm-sale"]

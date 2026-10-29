@@ -1,4 +1,4 @@
-"""Contract HTTP của `POST /learning-knowledge`, schema version 1.0.
+"""Contract HTTP của `POST /ai/learning`, schema version 1.0.
 
 Response chỉ chứa text ĐÃ CHE; text gốc không bao giờ rời khỏi service.
 """

@@ -43,5 +43,4 @@ while True:
     print(f"đã embed {done} dòng", flush=True)
 
 left = sb.table("doc_chunks").select("id", count="exact ").is_("embedding", "null").execute().count
-print("hoàn tất; còn thiếu embedding:", left)
 sys.exit(0 if left == 0 else 1)

@@ -64,3 +64,24 @@ def normalize_for_detection(text: str) -> NormalizedInput:
         casefolded_text=casefolded_text,
         accent_folded_text=accent_folded_text,
     )
+
+# Dấu chỉ tiếng Việt dùng (hỏi, nặng, móc, trăng) và chữ đ; dấu sắc/huyền/ngã/mũ
+# cũng có trong tiếng Pháp, Bồ Đào Nha... nên không dùng để phân biệt.
+_VIETNAMESE_MARKS = frozenset({"̉", "̣", "̛", "̆"})
+# Từ có dấu thường gặp nhưng không mang dấu đặc trưng ở trên ("Có ai không?").
+_VIETNAMESE_WORDS = frozenset({
+    "có", "không", "là", "gì", "và", "cho", "này", "nào", "với", "máy", "cần",
+    "tôi", "bạn", "anh", "chị", "em", "thế", "như", "nhé", "ạ", "ơi",
+})
+
+
+def guess_reply_language(text: str) -> str:
+    """Đoán ngôn ngữ trả lời khi chưa có nguồn nào khác: 'vi' nếu có dấu đặc trưng
+    hoặc từ thông dụng tiếng Việt, ngược lại 'en'. Không dùng thay cho ngôn ngữ do
+    analysis phát hiện."""
+    folded = unicodedata.normalize("NFC", text.casefold())
+    decomposed = unicodedata.normalize("NFD", folded)
+    if "đ" in folded or any(char in _VIETNAMESE_MARKS for char in decomposed):
+        return "vi"
+    words = "".join(char if char.isalpha() else " " for char in folded).split()
+    return "vi" if any(word in _VIETNAMESE_WORDS for word in words) else "en"

@@ -51,10 +51,14 @@ DIRECT_RESPONSES: Final = {
 }
 
 
-def get_direct_response(code: str, locale: str | None, language: str = "vi") -> str:
-    """Use the client locale when sent, otherwise the detected query language."""
+def has_direct_response(language: str) -> bool:
+    """Whether fixed replies exist for this language; others go through AnswerComposer."""
+    return language.split("-", 1)[0].lower() in SUPPORTED_LOCALES
+
+
+def get_direct_response(code: str, language: str) -> str:
+    """Fixed reply in the already resolved reply language (falls back to English)."""
     messages = DIRECT_RESPONSES.get(code)
     if messages is None:
         raise KeyError(f"Unknown direct response code: {code}")
-    resolved = normalize_locale(locale) if locale else language.split("-", 1)[0]
-    return messages[resolved if resolved in SUPPORTED_LOCALES else "vi"]
+    return messages[normalize_locale(language)]
