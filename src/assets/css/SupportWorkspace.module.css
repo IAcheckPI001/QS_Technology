@@ -1,0 +1,376 @@
+.workspace {
+    display: flex;
+    min-height: calc(100vh - 120px);
+    height: 100vh;
+    color: #193348;
+    background: #f4f9fb;
+}
+
+/* Sidebar */
+.sidebar {
+    display: flex;
+    flex: 0 0 244px;
+    flex-direction: column;
+    gap: 8px;
+    width: 244px;
+    padding: 22px 20px;
+    border-right: 1px solid #e1ebef;
+    background: #fff;
+}
+
+.brand {
+    margin-bottom: 18px;
+    color: #8799a4;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.sidebar button {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 12px 14px;
+    border: 0;
+    border-radius: 10px;
+    color: #38556a;
+    background: transparent;
+    text-align: left;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.sidebar button:hover,
+.sidebar .activeItem {
+    color: #0f6d79;
+    background: #e1f2f4;
+}
+
+.sidebarFooter {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: auto;
+    padding-top: 18px;
+    border-top: 1px solid #e6eef1;
+    font-size: 12px;
+}
+
+.sidebarFooter small {
+    color: #78909e;
+}
+
+/* Content */
+.content {
+    flex: 1;
+    min-width: 0;
+    padding: 30px 34px;
+    overflow: hidden;
+}
+
+.viewHeading {
+    margin-bottom: 18px;
+}
+
+.viewHeading h1 {
+    margin: 0 0 5px;
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.viewHeading p,
+.tableCard > p {
+    margin: 0;
+    color: #79909e;
+    font-size: 13px;
+}
+
+/* Chat.jsx tự đặt kích thước; trong workspace cho nó lấp đầy khung. */
+.ticketPanel > div {
+    width: 100%;
+    height: calc(108vh - 250px);
+    min-height: 480px;
+}
+
+.queryCard,
+.metrics > div,
+.tableCard {
+    border: 1px solid #dfe9ed;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgb(36 67 84 / 3%);
+}
+
+.queryCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 13px;
+    padding: 17px;
+}
+
+.queryCard div {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.queryCard small {
+    color: #8aa0ab;
+    font-size: 13px;
+}
+
+.queryCard strong {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.modelBadge {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    border-radius: 14px;
+    color: #0f6d79;
+    background: #e1f2f4;
+    font-size: 13px;
+}
+
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 13px;
+}
+
+.metrics > div {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 5px 14px;
+    padding: 16px;
+}
+
+.metrics small {
+    grid-column: 1 / -1;
+    color: #8aa0ab;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.metrics strong {
+    color: #193348;
+    font-size: 27px;
+}
+
+.metrics strong.accent {
+    color: #138090;
+}
+
+.metrics strong.cost {
+    color: #996a12;
+}
+
+.metrics span {
+    align-self: end;
+    padding-bottom: 5px;
+    color: #8aa0ab;
+    font-size: 12px;
+}
+
+/* Tables */
+.tableCard {
+    padding: 18px;
+    overflow: hidden;
+}
+
+.tableCard h2 {
+    margin: 0 0 4px;
+    font-size: 16px;
+}
+
+.tableCard > p {
+    margin-bottom: 14px;
+}
+
+.tableHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: -18px -18px 0;
+    padding: 14px 18px;
+}
+
+.tableHeader h2 {
+    margin: 0 auto 0 0;
+}
+
+.tableHeader label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 9px;
+    border: 1px solid #dbe6ea;
+    border-radius: 8px;
+    color: #78909e;
+    font-size: 12px;
+}
+
+.tableHeader input,
+.tableHeader select {
+    border: 0;
+    outline: 0;
+    color: #526b79;
+    background: transparent;
+    font: inherit;
+}
+
+.tableScroll {
+    max-height: 50vh;
+    overflow: auto;
+}
+
+.tableScroll table {
+    width: 100%;
+    min-width: 940px;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.tableScroll th {
+    position: sticky;
+    top: 0;
+    padding: 12px 10px;
+    color: #79909e;
+    background: #f5f9fa;
+    text-align: left;
+    font-size: 13px;
+}
+
+.tableScroll td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #edf2f4;
+    vertical-align: top;
+    font-size: 14px;
+}
+
+.tableScroll tbody tr:hover {
+    background: #f7fbfc;
+    cursor: pointer;
+}
+
+.tableScroll td strong,
+.tableScroll td small {
+    display: block;
+}
+
+.tableScroll td small {
+    margin-top: 5px;
+    color: #79909e;
+}
+
+.rank {
+    color: #0f7885;
+    font-weight: 700;
+}
+
+.score {
+    color: #0f7885;
+    font-weight: 700;
+}
+
+.chunkContent {
+    max-width: 380px;
+    line-height: 1.5;
+}
+
+.chevron {
+    color: #79909e;
+    vertical-align: middle !important;
+}
+
+.status {
+    display: inline-block;
+    min-width: 94px;
+    padding: 5px 10px;
+    border-radius: 25px;
+    text-align: center;
+    font-size: 11px;
+}
+
+.status-completed {
+    color: #18784f;
+    background: #e8f6ee;
+}
+
+.status-blocked {
+    color: #996a12;
+    background: #fff4d8;
+}
+
+.status-error {
+    color: #f4e1e3;
+    background: #790f1d;
+}
+
+.status-cancelled {
+    color: #4f5966;
+    background: #eceef2;
+}
+
+.emptyState,
+.error {
+    padding: 30px;
+    text-align: center;
+}
+
+.emptyState {
+    color: #8599a4;
+}
+
+.error {
+    color: #a33d2f;
+}
+
+.spin {
+    display: block;
+    margin: 20px auto;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 800px) {
+    .workspace {
+        display: block;
+    }
+
+    .sidebar {
+        flex-direction: row;
+        align-items: center;
+        width: auto;
+        overflow: auto;
+    }
+
+    .sidebarFooter {
+        display: none;
+    }
+
+    .content {
+        padding: 20px 14px;
+    }
+
+    .metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .tableHeader {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .queryCard {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

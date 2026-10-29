@@ -25,22 +25,38 @@ Frontend
 
 ## Startup và dependency
 
-`backend/app/main.py` tạo FastAPI app, đăng ký CORS và include
-`backend/app/api/v1/router.py`. Lifespan cấu hình logging, tạo
-`OpenAIProvider` khi có `OPENAI_API_KEY`, lưu provider vào `app.state` và đóng
-provider khi shutdown.
+`backend/app/main.py` cấu hình logging, tạo FastAPI app, đăng ký CORS, include
+`backend/app/api/v1/router.py` và bọc ngoài cùng bằng `RequestContextMiddleware`
+(request ID, access log có `outcome`). Lifespan tạo `OpenAIProvider` khi có
+`OPENAI_API_KEY`, lưu provider vào `app.state` và đóng provider khi shutdown.
 
-`backend/app/api/v1/dependencies.py` tạo `AsyncSession`, `HistoryRepository`
-và `ChatbotService`. Router không tự khởi tạo provider hoặc repository.
+Module chatbot (`backend/app/modules/chatbot/`):
 
-## Luồng `POST /chatbot`
+```text
+routers/      chat.py (POST /chat/*), workspace.py (GET /chatbot/*), sse.py (SSE + map lỗi)
+dependencies.py  service/repository, RequestContext, auth theo kênh, Idempotency-Key
+services/     chat_service.py (ChatbotService), session_access.py, visitor_identity.py
+adapters/     website.py, crm.py: schema kênh -> InboundRequest
+repositories/ history_repository.py, chat_session_repository.py, doc_chunk_repository.py
+```
 
-1. Router parse `WebsiteChatIn`; Pydantic kiểm tra schema version, message,
-   giới hạn text và client context.
-2. Router tạo `request_id`. Dependency lấy provider từ application state.
-   Nếu chưa cấu hình provider, trả HTTP 503.
-3. Service kiểm tra `session_id`: UUID hợp lệ có history được dùng lại; các
-   trường hợp còn lại nhận UUID mới.
+Router không tự khởi tạo provider hoặc repository.
+
+## Luồng `POST /chat/website` (và `POST /chat/crm`)
+
+1. Middleware chốt `request_id`. Dependency dựng `RequestContext` (channel do
+   endpoint quyết định), xác thực principal (website: visitor token HS256 →
+   `guest`; CRM: service key qua `ServiceAuthService` → `service`) và đọc
+   `Idempotency-Key`. Với CRM, router gắn `user_id` của body vào principal bằng
+   `PrincipalContext.acting_for()`.
+2. Router parse schema kênh (`WebsiteChatIn`/`CRMChatIn`); Pydantic kiểm tra
+   schema version, `session_id` UUID, giới hạn text và client context. Nếu chưa
+   cấu hình provider, trả HTTP 503.
+3. `SessionAccessService` tạo session mới thuộc principal (`chat_sessions`)
+   hoặc chỉ dùng lại session cùng chủ, cùng kênh, chưa revoked/expired; còn lại
+   trả 404 `session_not_found`. Server sinh `message_id`; adapter dựng
+   `InboundRequest` nội bộ (strict), service nhận kèm `PrincipalContext` và
+   `RequestContext` trong `RunState`.
 4. `SecurityStage` normalize nội dung, chạy `InjectionGuard` và `ContentPolicy`.
    Nếu block, service ghi audit `status='blocked'` bằng session database riêng,
    không chạy context/provider, rồi router phát SSE `error`.
@@ -54,7 +70,12 @@ và `ChatbotService`. Router không tự khởi tạo provider hoặc repository
    analysis/LLM.
 6. `Prune` áp dụng context token budget, giữ query/summary và bỏ các history
    turn cũ trước; lỗi budget/config là domain error, không phải security block.
-7. Vòng làm rõ (`clarification/`):
+7. `ConversationState` mang `last_models` (cộng dồn, cũ → mới, tối đa 4) và
+   `active_model` (model duy nhất của lượt gần nhất; `None` sau lượt có ≥ 2 model;
+   giữ nguyên sau lượt không nhắc model). Câu thiếu model kế thừa
+   `active_model` trước, rồi mới xét `last_models`. `<state>` gửi LLM gồm cả hai
+   để hiểu "nó" (active) và "các model trên" (last_models).
+   Vòng làm rõ (`clarification/`):
    - `ClarificationResumeStage` chạy trước analysis. Nếu có pending và câu trả
      lời ngắn khớp chắc chắn (alias model, số thứ tự, "đúng/vâng" khi chỉ có
      một gợi ý, hoặc một mã giống model như "A10"), nó vá raw sub-query đang
@@ -66,6 +87,27 @@ và `ChatbotService`. Router không tự khởi tạo provider hoặc repository
    - Sau `clarify_attempts >= 2` lần hỏi mà vẫn chưa rõ, các ý bị giữ chuyển
      sang `no_docs` (`clarification_exhausted`) và pending bị xóa.
    - Câu trả lời là câu hỏi mới: pending giữ lại với `ttl` giảm dần (mặc định 2).
+   - Câu trả lời không trích được gì (LLM trả `sub_queries=[]`, không có
+     `pending_answer`, vd. "ok" khi có nhiều gợi ý): giữ lại các ý đang chờ và
+     hỏi lại, tính một lần thử.
+   - Câu cần đúng một model mà chưa có model (`resolve_sub_query`, có
+     `last_models`): `model_dependency=general` → retrieve không lọc model,
+     `answer_mode=general`, hỏi model ở cuối (không chặn); `last_models` có 1
+     model → kế thừa (warning `inherited_model:X`); ≥ 2 model →
+     `context_conflict` với candidates = `last_models`; không có →
+     `missing_product_model` với candidates = model có tài liệu cho domain đích.
+     Câu trả lời chung kết thúc bằng câu hỏi model tạo pending **không chặn**
+     (`blocking=false`): trả lời mã/alias/số thứ tự sẽ tra cứu lại theo model đó;
+     "ok/đúng" không kích hoạt (xử lý như chitchat).
+     Model nêu ở lượt hiện tại luôn được ưu tiên. Cờ `general` của LLM chỉ được
+     nhận khi intent có `allow_general` (mặc định có; `guide.installation` và
+     `troubleshoot.error` thì không) và `standalone_query` không nhắc mã cụ thể
+     (`MODEL_SPECIFIC_PATTERN`: CN1, X40, #4130, AL12, E05).
+   - `guard_extracted_models` loại model LLM trả về mà mã/alias không có trong
+     câu hỏi, lịch sử hay `last_models` (warning `model_not_in_text:X`), để không
+     âm thầm đổi F84 thành F86.
+   - Lỗi analysis/execution/compose được ghi history `error` và trả SSE
+     `analysis_error`.
 8. `ExecutionStage` tạo execution plan từ analysis và chạy plan qua
    `ExecutionScheduler` với các handler deterministic trong
    `orchestration/handlers.py`. Các handler này không gọi LLM:
@@ -99,8 +141,18 @@ và `ChatbotService`. Router không tự khởi tạo provider hoặc repository
    | `AnswerComposer` | Block `<sources>` theo từng sub-query; prompt yêu cầu trích `[S#]` |
 
 9. Lượt chỉ gồm `chitchat`/`out_of_scope`, hoặc chỉ gồm `handoff`, trả câu cố
-   định từ `prompts/direct_responses.py` (theo `handoff_reason`, locale; không
-   có locale thì theo `query.language`) và không gọi `AnswerComposer`.
+   định từ `prompts/direct_responses.py` (theo `handoff_reason`) và không gọi
+   `AnswerComposer`, **nếu** ngôn ngữ trả lời có bản soạn sẵn (vi, en). Ngôn ngữ
+   khác đi qua `AnswerComposer`.
+
+   Đa ngôn ngữ: analysis trả `language` (ISO 639-1) và `standalone_query` luôn
+   bằng tiếng Việt (embedding/FTS chạy trên `embed_text` tiếng Việt). Ngôn ngữ
+   trả lời = `analysis.language` → `ConversationState.language` (lượt resume
+   không gọi LLM) → locale client → `vi`; được gán vào `query.language`, gửi cho
+   `AnswerComposer` qua `<language>` và lưu vào `ConversationState.language`.
+   Câu trả lời trước analysis (bị chặn, `agent.*`) dùng ngôn ngữ của phiên →
+   locale → `guess_reply_language` (heuristic dấu/từ tiếng Việt, mặc định `en`).
+   `chat_history.normalized_query` lưu các `standalone_query`.
    Các lượt khác: `AnswerComposer` gom kết quả bằng `collect_results`, dựng messages gồm
    system prompt, history, `<query>`, `<task_results>` và `<clarification>`
    (nếu có), rồi stream câu trả lời qua `provider.stream_chat`. Mỗi lượt chỉ
@@ -122,13 +174,22 @@ và `ChatbotService`. Router không tự khởi tạo provider hoặc repository
 
 - `HistoryRepository` là ranh giới database và ánh xạ
   `public.chat_history`.
-- History thành công (completed) được dùng lại cho context; blocked/error không được đưa
-  vào context.
-- `session_id` do client gửi chỉ là conversation identifier, chưa phải
-  ownership boundary. `GET /chatbot/sessions/{session_id}/history` phục vụ
-  khôi phục history UI nhưng chưa có authorization/ownership đầy đủ.
-- `message_id` chưa được lưu để idempotency; concurrent request cùng session
-  chưa có ordering guarantee.
+- History thành công (completed) được dùng lại cho context; blocked/error/cancelled
+  không được đưa vào context. `blocked` và `cancelled` (client ngắt kết nối giữa
+  lượt) được ghi bằng `create_audit` với session DB riêng, commit ngay.
+- `conversation_state` đọc từ lượt completed gần nhất qua
+  `load_conversation_state`: bỏ field không còn trong schema, rồi bỏ từng field
+  không hợp lệ (giữ `mode`, `ticket_id`… nếu đọc được) thay vì reset toàn bộ;
+  log WARNING kèm `session_id` và tên field bị bỏ.
+- `retrieval_snapshot` ghi thêm `retrieval_status` và `retrieval_tasks` để truy vết
+  lỗi tra cứu (khách không nhận mã lỗi cho trường hợp này).
+- `ChatSessionRepository` ánh xạ `public.chat_sessions` (chủ sở hữu session).
+  `POST /chat/*` chỉ dùng lại session cùng principal và kênh. Các GET
+  `/chatbot/sessions/{session_id}/...` và `/chatbot/conversations` (Support
+  Workspace) **chưa** kiểm ownership.
+- `message_id` do server sinh là `chat_history.id`; `Idempotency-Key` được lưu
+  vào `chat_history.idempotency_key` nhưng chưa chống xử lý trùng. Concurrent
+  request cùng session chưa có ordering guarantee.
 
 ## Các lớp và trách nhiệm
 
@@ -144,12 +205,13 @@ và `ChatbotService`. Router không tự khởi tạo provider hoặc repository
 
 ## API surface hiện tại
 
-Đang public: `GET /health`, `GET /health/db`, `POST /chatbot`, và
-`GET /chatbot/sessions/{session_id}/history`. Module
-`learning_ai` cung cấp `POST /learning-knowledge` và các endpoint support-chat
-khi `LEARNING_API_ENABLED=true` (xem mục dưới). Retrieval, chatbot history
-authentication/ownership, idempotency và production readiness/schema checks là
-phạm vi chưa hoàn thiện; chatbot history chưa có ownership.
+Đang public: `GET /health`, `GET /health/db`, `POST /chat/website/visitor`,
+`POST /chat/website`, `POST /chat/crm` (service key server-to-server)
+và các GET `/chatbot/...` của Support Workspace. Module `learning_ai` cung cấp
+`POST /ai/learning` và các endpoint support-chat khi `LEARNING_API_ENABLED=true`
+(xem mục dưới). Quyền nhân viên CRM theo `user_id`, ownership cho các GET history, chống xử lý trùng
+theo `Idempotency-Key` và production readiness/schema checks là phạm vi chưa
+hoàn thiện.
 
 ## Luồng học tri thức (`learning_ai`): thiết kế và trạng thái
 
@@ -164,7 +226,7 @@ Chưa có API thật, ingestion, lời gọi LLM, persistence Supabase, outbox, 
 hay vector index.
 
 ```text
-[0] POST /learning-knowledge          chạy [1]; chỉ include khi LEARNING_API_ENABLED=true, chưa có auth
+[0] POST /ai/learning                 chạy [1]; chỉ include khi LEARNING_API_ENABLED=true, chưa có auth
 [1] Ingestion -> SourceDocument       có logic + service (chưa có bảng job, chưa nối route)
       prefilter -> privacy A..D       Ollama bắt buộc, fail-closed (xem mục Privacy bên dưới)
 [2] Pass 1 Segmenter (LLM)            chỉ có schema Segment/SegmentationOutput

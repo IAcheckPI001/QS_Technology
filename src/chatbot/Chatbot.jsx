@@ -67,7 +67,6 @@ function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
     const sendMessage = async (event) => {
         event.preventDefault();
         const message = text.trim();
-        const channel = 'web';
         if (!message || isSending || message.length > MAX_REQUEST_LENGTH) return;
 
         setRequestError('');
@@ -85,7 +84,7 @@ function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
         activeControllerRef.current = controller;
 
         try {
-            await streamChatbotResponse(message, channel, {
+            await streamChatbotResponse(message, {
                 signal: controller.signal,
                 onChunk: (chunk) => {
                     setMessages((current) => current.map((item) => (

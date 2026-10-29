@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Luồng xử lý request chatbot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --surface-2: #f0f2f5;
+    --text: #1a1e24;
+    --muted: #5a6370;
+    --border: #dce0e6;
+    --accent: #1d5bb8;
+    --ok: #1c7444;      --ok-bg: #e5f4ea;
+    --partial: #8f5a00; --partial-bg: #fff2d6;
+    --issue: #b0261b;   --issue-bg: #fde7e5;
+    --missing: #545d69; --missing-bg: #eceef2;
+    --code-bg: #eef1f5;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #13161b; --surface: #1b1f26; --surface-2: #232832; --text: #e6e9ee;
+      --muted: #9aa3af; --border: #313844; --accent: #7aa7ec;
+      --ok: #7fd1a0; --ok-bg: #173324; --partial: #f0c36b; --partial-bg: #3a2c10;
+      --issue: #f3958c; --issue-bg: #3d1a17; --missing: #b4bcc7; --missing-bg: #2a303a;
+      --code-bg: #262c36; --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #13161b; --surface: #1b1f26; --surface-2: #232832; --text: #e6e9ee;
+    --muted: #9aa3af; --border: #313844; --accent: #7aa7ec;
+    --ok: #7fd1a0; --ok-bg: #173324; --partial: #f0c36b; --partial-bg: #3a2c10;
+    --issue: #f3958c; --issue-bg: #3d1a17; --missing: #b4bcc7; --missing-bg: #2a303a;
+    --code-bg: #262c36; --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.65 "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .page { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
+  header.cover { padding: 8px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+  .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-size: 30px; line-height: 1.25; margin: 6px 0 10px; letter-spacing: -.01em; }
+  h2 { font-size: 21px; margin: 44px 0 12px; padding-top: 4px; letter-spacing: -.005em; }
+  h3 { font-size: 16.5px; margin: 26px 0 8px; }
+  h4 { font-size: 14.5px; margin: 18px 0 6px; color: var(--muted); }
+  p { margin: 8px 0 12px; }
+  .lead { color: var(--muted); font-size: 16px; max-width: 800px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 13px; color: var(--muted); margin-top: 14px; }
+  .meta b { color: var(--text); font-weight: 600; }
+  code, .mono { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: 12.5px; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; word-break: break-word; }
+  pre.json { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: 12px; line-height: 1.55; margin: 8px 0 14px; }
+  a { color: var(--accent); }
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; box-shadow: var(--shadow); }
+  nav.toc ol { margin: 4px 0 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  nav.toc li { margin: 2px 0; break-inside: avoid; }
+  nav.toc a { text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow); margin: 12px 0; }
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 14px 0 18px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .tile .n { font-size: 28px; font-weight: 700; line-height: 1.1; }
+  .tile .l { font-size: 13px; color: var(--muted); }
+  .tile.ok .n { color: var(--ok); } .tile.partial .n { color: var(--partial); }
+  .tile.missing .n { color: var(--missing); } .tile.issue .n { color: var(--issue); }
+  ul.tight { margin: 6px 0 12px; padding-left: 20px; }
+  ul.tight li { margin: 4px 0; }
+  .b { display: inline-block; font-size: 11.5px; font-weight: 600; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+  .b.ok { color: var(--ok); background: var(--ok-bg); }
+  .b.partial { color: var(--partial); background: var(--partial-bg); }
+  .b.issue { color: var(--issue); background: var(--issue-bg); }
+  .b.missing { color: var(--missing); background: var(--missing-bg); }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); margin: 10px 0 16px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  th { background: var(--surface-2); font-weight: 600; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  td.num { color: var(--muted); font-weight: 600; width: 34px; }
+  td .ref { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
+  .callout { border-left: 4px solid var(--accent); background: var(--surface); padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 14px 0; }
+  .callout.issue { border-left-color: var(--issue); }
+  .callout.partial { border-left-color: var(--partial); }
+  .callout.ok { border-left-color: var(--ok); }
+  .callout p:first-child { margin-top: 0; } .callout p:last-child { margin-bottom: 0; }
+  .diagram { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 16px; overflow-x: auto; margin: 10px 0 8px; color: #1a1e24; }
+  .diagram pre.mermaid { margin: 0; font-size: 13px; }
+  .diagram svg { display: block; margin: 0 auto; }
+  .diagram.full svg { max-width: none !important; }
+  .zoom { font: inherit; font-size: 12.5px; color: var(--accent); background: none; border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; cursor: pointer; margin: 4px 0 0; }
+  .caption { font-size: 12.5px; color: var(--muted); margin: 0 0 18px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12.5px; margin: 8px 0 4px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 22px; height: 14px; border-radius: 3px; border: 1.5px solid; display: inline-block; }
+  .sw.ok { background: #e5f4ea; border-color: #2f8a57; }
+  .sw.partial { background: #fff2d6; border-color: #c08a1e; }
+  .sw.issue { background: #fde7e5; border-color: #c2392d; }
+  .sw.missing { background: #f4f5f7; border-color: #8a929d; border-style: dashed; }
+  .sw.term { background: #e9eef8; border-color: #4a6fae; border-radius: 8px; }
+  .routes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 12px 0 18px; }
+  .route { background: var(--surface); border: 1px solid var(--border); border-top: 4px solid var(--accent); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+  .route b { display: block; font-size: 14px; margin-bottom: 2px; }
+  .route.r-chit { border-top-color: #4a8f6a; } .route.r-oos { border-top-color: #7a6fb0; }
+  .route.r-hand { border-top-color: #c2392d; } .route.r-clar { border-top-color: #c08a1e; }
+  .route.r-retr { border-top-color: #1d5bb8; }
+  .route .muted { color: var(--muted); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .steps { counter-reset: s; list-style: none; padding: 0; margin: 10px 0; }
+  .steps > li { position: relative; padding: 10px 14px 10px 46px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); margin: 8px 0; }
+  .steps > li::before { counter-increment: s; content: counter(s); position: absolute; left: 12px; top: 10px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; font-size: 12.5px; display: flex; align-items: center; justify-content: center; }
+  .io { display: grid; grid-template-columns: 90px 1fr; gap: 2px 10px; font-size: 13px; margin-top: 4px; }
+  .io dt { color: var(--muted); font-weight: 600; }
+  .io dd { margin: 0; }
+  .qa { counter-reset: q; padding: 0; list-style: none; }
+  .qa li { position: relative; padding: 10px 14px 10px 46px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); margin: 8px 0; }
+  .qa li::before { counter-increment: q; content: "Q" counter(q); position: absolute; left: 12px; top: 10px; font-weight: 700; color: var(--accent); font-size: 13px; }
+  footer { margin-top: 48px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--muted); }
+  @media (max-width: 900px) {
+    .routes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 720px) {
+    h1 { font-size: 24px; } h2 { font-size: 19px; }
+    .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    nav.toc ol { columns: 1; }
+    .grid2 { grid-template-columns: 1fr; }
+    .routes { grid-template-columns: 1fr; }
+    .io { grid-template-columns: 1fr; }
+  }
+  @media print {
+    body { background: #fff; font-size: 12px; }
+    .page { max-width: none; padding: 0; }
+    nav.toc, .zoom { display: none; }
+    .diagram { overflow: visible; break-inside: avoid; }
+    h2 { break-after: avoid; }
+    tr, .callout, .tile, .steps > li { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="cover">
+  <div class="eyebrow">QS Technology · Chatbot AI · Báo cáo kỹ thuật</div>
+  <h1>Luồng xử lý một lượt chat: dữ liệu đi qua từng bước cho 5 trường hợp</h1>
+  <p class="lead">Mô tả request đầu vào được xử lý thế nào từ gateway tới SSE trả về, input/output của từng bước, cách mỗi trường hợp <strong>chitchat · out_of_scope · handoff · clarify · retrieve</strong> rẽ nhánh, cách lỗi được báo cho client, và các điểm rủi ro cần xử lý.</p>
+  <div class="meta">
+    <span><b>Ngày lập:</b> 29/10/2026</span>
+    <span><b>Cơ sở đối chiếu:</b> nhánh <code>master</code> cùng các thay đổi chưa commit trong working tree</span>
+    <span><b>Phạm vi:</b> <code>POST /chat/website</code>, <code>POST /chat/crm</code>, module <code>backend/app/modules/chatbot</code></span>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Mục lục">
+  <strong>Mục lục</strong>
+  <ol>
+    <li><a href="#tom-tat">Tóm tắt</a></li>
+    <li><a href="#luong-chung">Luồng chung của mọi request</a></li>
+    <li><a href="#chi-tiet-buoc">Input / output từng bước</a></li>
+    <li><a href="#dinh-tuyen">Analysis quyết định route thế nào</a></li>
+    <li><a href="#chitchat">Trường hợp chitchat và out_of_scope</a></li>
+    <li><a href="#handoff">Trường hợp handoff</a></li>
+    <li><a href="#clarify">Trường hợp clarify</a></li>
+    <li><a href="#retrieve">Trường hợp retrieve</a></li>
+    <li><a href="#hon-hop">Lượt hỗn hợp nhiều ý</a></li>
+    <li><a href="#loi">Bản đồ lỗi</a></li>
+    <li><a href="#rui-ro">Rủi ro và đề xuất</a></li>
+    <li><a href="#xac-nhan">Câu hỏi cần xác nhận</a></li>
+    <li><a href="#phu-luc">Phụ lục: mã nguồn và tham số</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================================ 1 -->
+<h2 id="tom-tat">1. Tóm tắt</h2>
+<p>Mọi request đi qua <strong>cùng một chuỗi bước</strong>: gateway (xác thực, session) → SecurityStage → nạp và cắt context → phân tích bằng LLM → lập kế hoạch task → thực thi → trả lời (câu cố định hoặc LLM) → cập nhật trạng thái hội thoại → ghi lịch sử → SSE. Route không được chọn một lần cho cả lượt: <strong>mỗi ý (sub-query, tối đa 3)</strong> có route riêng, rồi bộ lập kế hoạch tạo một task cho mỗi ý.</p>
+
+<div class="routes">
+  <div class="route r-chit"><b>chitchat</b><span class="muted">Chào hỏi, cảm ơn.</span><br>Task hoàn tất ngay, trả câu cố định (vi/en).</div>
+  <div class="route r-oos"><b>out_of_scope</b><span class="muted">Ngoài phạm vi CNC/công ty.</span><br>Như chitchat, câu cố định khác.</div>
+  <div class="route r-hand"><b>handoff</b><span class="muted">Giá, bảo hành, mua hàng, gặp người.</span><br>Hứa chuyển nhân viên, <strong>nhưng provider là stub</strong>.</div>
+  <div class="route r-clar"><b>clarify</b><span class="muted">Thiếu/không rõ model.</span><br>LLM sinh câu hỏi lại, lưu pending.</div>
+  <div class="route r-retr"><b>retrieve</b><span class="muted">Tra cứu tài liệu, thông tin SP.</span><br>Hybrid search <code>doc_chunks</code>, LLM trả lời có [S1]…</div>
+</div>
+
+<div class="tiles">
+  <div class="tile ok"><div class="n">5</div><div class="l">route chạy được end-to-end (handoff chỉ ở mức câu trả lời)</div></div>
+  <div class="tile partial"><div class="n">2</div><div class="l">route phụ không có ở đầu vào: <code>no_docs</code>, lượt hỗn hợp</div></div>
+  <div class="tile issue"><div class="n">6</div><div class="l">rủi ro mức cao</div></div>
+  <div class="tile missing"><div class="n">13</div><div class="l">rủi ro trung bình / thấp cần làm rõ</div></div>
+</div>
+
+<div class="card">
+<strong>Kết luận chính</strong>
+<ul class="tight">
+  <li><strong>Handoff hứa nhưng không chuyển.</strong> Bot trả "em sẽ kết nối anh/chị với nhân viên", nhưng <code>DisabledHandoffProvider.transfer</code> luôn trả <code>None</code>: không tạo ticket, hội thoại vẫn ở chế độ bot.</li>
+  <li><strong>Chỉ chitchat, out_of_scope và handoff thuần mới có câu cố định</strong>, và chỉ với tiếng Việt/Anh. Clarify, no_docs, retrieve và mọi lượt hỗn hợp đều gọi LLM lần thứ hai để sinh câu trả lời.</li>
+  <li><strong>Lỗi tra cứu bị che.</strong> Embedding hoặc database lỗi biến task thành <code>retrieval_error</code>, LLM trả lời "chưa tra cứu được", lịch sử vẫn lưu <code>completed</code>; client không nhận mã lỗi.</li>
+  <li><strong>Mã lỗi SSE gộp thô.</strong> Lỗi thực thi và dựng câu trả lời đều báo <code>analysis_error</code>; mọi lỗi khác báo <code>provider_error</code>. Lỗi khi nạp context không để lại dòng lịch sử nào.</li>
+  <li><strong>Trích dẫn [S1]… bắt đầu lại từ S1 mỗi lượt</strong> vì citations không được lưu, trong khi 2 tin gần nhất vẫn gửi cho LLM, dễ trùng số nguồn giữa các lượt.</li>
+  <li><strong>Router từng <code>print</code> toàn bộ payload</strong> (gồm nội dung tin nhắn) ra stdout — <em>đã thay bằng log metadata ngày 29/10</em>.</li>
+</ul>
+</div>
+
+<!-- ============================================================ 2 -->
+<h2 id="luong-chung">2. Luồng chung của mọi request</h2>
+<p>Sơ đồ dưới đây là đường đi của một request <code>POST /chat/website</code>. <code>/chat/crm</code> đi cùng đường nhưng dừng ở bước xác thực (stub trả 503). Nhánh rẽ theo route xảy ra ở bước <em>Execution</em> và <em>Trả lời</em>.</p>
+
+<div class="legend" aria-label="Chú giải">
+  <span><i class="sw ok"></i>Hoạt động</span>
+  <span><i class="sw partial"></i>Có giới hạn / cần lưu ý</span>
+  <span><i class="sw issue"></i>Stub hoặc lỗi tiềm ẩn</span>
+  <span><i class="sw term"></i>Điểm kết thúc (response)</span>
+</div>
+<div class="diagram" id="d-general">
+<pre class="mermaid">
+flowchart TD
+  FE(["Frontend<br/>POST /chat/website<br/>Bearer visitor token · Idempotency-Key"]):::term
+  subgraph GW["① Gateway (trước khi mở stream, lỗi trả JSON)"]
+    MW["RequestContextMiddleware<br/>request_id → state, log, header"]:::ok
+    DEP["Dependencies<br/>RequestContext · principal guest · Idempotency-Key"]:::ok
+    SCH["WebsiteChatIn<br/>validate body"]:::ok
+    SES["SessionAccessService<br/>tạo mới / kiểm chủ sở hữu"]:::ok
+    ADP["website_to_inbound<br/>message_id do server sinh"]:::ok
+  end
+  subgraph SV["② ChatbotService.stream_reply (trong stream SSE)"]
+    SEC["SecurityStage.inspect<br/>InjectionGuard · ContentPolicy"]:::partial
+    CTX["ContextLoader → Prune<br/>history completed · state · budget 2048"]:::ok
+    MODE{"mode = BOT?"}
+    RES["ClarificationResumeStage<br/>khớp câu trả lời làm rõ, không LLM"]:::ok
+    ANA["AnalysisStage<br/>LLM JSON strict, timeout 8s"]:::ok
+    LIM["apply_attempt_limit<br/>quá 2 lần hỏi → no_docs"]:::ok
+    EXE["ExecutionStage<br/>planner → scheduler → handlers"]:::ok
+    DIR{"Mọi task là chitchat/out_of_scope<br/>hoặc mọi task là handoff,<br/>và ngôn ngữ vi/en?"}
+    FIX["Câu cố định<br/>1 delta"]:::ok
+    LLM["AnswerComposer<br/>LLM stream nhiều delta"]:::ok
+    UPD["update_conversation_state<br/>+ _transfer_handoff"]:::partial
+    HIS["HistoryRepository.create<br/>status completed / error"]:::ok
+  end
+  OUT(["SSE delta… → done<br/>hoặc SSE error"]):::term
+  AG["Câu cố định agent.awaiting / agent.active<br/>không gọi LLM"]:::ok
+  BLK["Ghi history blocked<br/>SSE request_blocked"]:::term
+
+  FE --> MW --> DEP --> SCH --> SES --> ADP --> SEC
+  SEC -- "có finding" --> BLK
+  SEC -- "allow" --> CTX --> MODE
+  MODE -- "không" --> AG --> OUT
+  MODE -- "có" --> RES --> ANA --> LIM --> EXE --> DIR
+  DIR -- "có" --> FIX --> UPD
+  DIR -- "không" --> LLM --> UPD
+  UPD --> HIS --> OUT
+
+  classDef ok fill:#e5f4ea,stroke:#2f8a57,color:#1a1e24
+  classDef partial fill:#fff2d6,stroke:#c08a1e,color:#1a1e24
+  classDef issue fill:#fde7e5,stroke:#c2392d,color:#1a1e24
+  classDef term fill:#e9eef8,stroke:#4a6fae,color:#1a1e24
+</pre>
+</div>
+<button class="zoom" data-target="d-general">Xem cỡ thật</button>
+<p class="caption">Sơ đồ 1. Luồng chung. ResumeStage bỏ qua khi không có pending; AnalysisStage bỏ qua khi ResumeStage đã dựng analysis.</p>
+
+<!-- ============================================================ 3 -->
+<h2 id="chi-tiet-buoc">3. Input / output từng bước</h2>
+<p>Đường dẫn tính từ <code>backend/app/</code>. Cột "Lỗi" ghi exception, mã trả về client và có ghi lịch sử hay không.</p>
+
+<h3>3.1 Gateway (trước khi mở stream)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Bước</th><th>Input</th><th>Output</th><th>Lỗi → client</th></tr></thead>
+<tbody>
+<tr><td class="num">G1</td><td><strong>RequestContextMiddleware</strong><span class="ref">api/middleware/request_context.py</span></td><td>HTTP scope; header <code>X-Request-ID</code> chỉ tin khi <code>TRUST_PROXY_REQUEST_ID</code></td><td><code>request_id</code> vào <code>scope.state</code>, context var log, header response; log <code>http_request_finished … outcome=</code></td><td>Exception chưa bắt → 500 vẫn có <code>X-Request-ID</code>, log ERROR</td></tr>
+<tr><td class="num">G2</td><td><strong>get_website_principal</strong><span class="ref">modules/chatbot/dependencies.py</span></td><td><code>Authorization: Bearer &lt;visitor token&gt;</code></td><td><code>PrincipalContext{subject_id=guest_id, principal_type="guest", authn_method="guest_token"}</code></td><td>401 <code>unauthorized</code> (+ <code>WWW-Authenticate</code>); 503 <code>visitor_auth_not_configured</code></td></tr>
+<tr><td class="num">G3</td><td><strong>get_request_context</strong>, <strong>get_idempotency_key</strong></td><td>Endpoint quyết định channel; header <code>Idempotency-Key</code></td><td><code>RequestContext{request_id, channel, branch=None, received_at}</code>; <code>UUID | None</code></td><td>422 <code>invalid_idempotency_key</code></td></tr>
+<tr><td class="num">G4</td><td><strong>WebsiteChatIn</strong> / <strong>CRMChatIn</strong><span class="ref">schemas/channels/</span></td><td>Body JSON: <code>schema_version, session_id?, message.text, client_context?</code> (+ <code>context_refs</code> cho CRM)</td><td>Model đã strip, field lạ bị bỏ</td><td>422 (FastAPI): text rỗng/quá 4.000 ký tự, <code>session_id</code> không phải UUID, timezone/locale sai dạng</td></tr>
+<tr><td class="num">G5</td><td><strong>SessionAccessService.resolve_or_create</strong><span class="ref">services/session_access.py</span></td><td><code>session_id?</code>, principal, channel</td><td><code>UUID</code> session (tạo dòng <code>chat_sessions</code> nếu thiếu)</td><td>404 <code>session_not_found</code>; 503 <code>database_unavailable</code>; 503 <code>provider_not_configured</code> (kiểm trước bước này)</td></tr>
+<tr><td class="num">G6</td><td><strong>website_to_inbound</strong><span class="ref">adapters/website.py</span></td><td>Body + session_id + <code>message_id=uuid4()</code> + idempotency key</td><td><code>InboundRequest</code> strict: <code>message{message_id, text, idempotency_key}</code>, <code>session</code>, <code>channel{type, branch}</code>, <code>resources</code>, <code>client_context</code></td><td>ValidationError → 500 (không xảy ra với input đã qua G4)</td></tr>
+</tbody></table></div>
+
+<h3>3.2 Pipeline trong <code>ChatbotService.stream_reply</code></h3>
+<p><code>services/chat_service.py:62</code>. Từ đây response đã là <code>text/event-stream</code> (HTTP 200); lỗi được gửi bằng <code>event: error</code>.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Bước</th><th>Input</th><th>Output</th><th>Lỗi → SSE · history</th></tr></thead>
+<tbody>
+<tr><td class="num">1</td><td><strong>SecurityStage.inspect</strong><span class="ref">stages/security/stage.py:52 · chat_service.py:78</span></td><td><code>message.text</code> (chuẩn hóa NFC, casefold, bỏ dấu)</td><td><code>SecurityDecision{action ALLOW|BLOCK, findings, highest_severity, policy_version}</code></td><td><code>SecurityBlockedError</code> → <code>request_blocked</code> (thông điệp theo locale); history <code>blocked</code> qua session DB riêng</td></tr>
+<tr><td class="num">2</td><td><strong>ContextLoader.execute</strong><span class="ref">stages/context_loader.py:47</span></td><td><code>RunState{input, principal, request_context, security}</code></td><td><code>RunContext{conversation{history, state, summary=None}, query{origin}, retrieval_scope}</code>; state lấy từ dòng completed cuối</td><td>Lỗi DB → <code>provider_error</code>; <strong>không ghi history</strong></td></tr>
+<tr><td class="num">3</td><td><strong>Prune.execute</strong><span class="ref">stages/prune_stage.py:34</span></td><td><code>RunContext</code>, tên model</td><td><code>RunContext</code> đã bỏ các cặp hỏi–đáp cũ cho vừa 2048 token</td><td><code>ContextBudgetError</code> → <code>context_error</code>; không ghi history</td></tr>
+<tr><td class="num">4</td><td><strong>Kiểm tra mode</strong><span class="ref">chat_service.py:107</span></td><td><code>ConversationState.mode</code></td><td>Nếu không phải BOT: câu cố định <code>agent.awaiting</code>/<code>agent.active</code>, history <code>completed</code>, kết thúc</td><td>—</td></tr>
+<tr><td class="num">5</td><td><strong>ClarificationResumeStage.execute</strong><span class="ref">stages/clarification_resume_stage.py:21 · clarification/matcher.py:33</span></td><td>Câu trả lời + <code>PendingClarification</code></td><td>Khớp chắc chắn (số thứ tự, alias, "đúng" khi 1 gợi ý, mã giống model) → <code>Analysis(resumed=True)</code>, <strong>không gọi LLM</strong>; không khớp → để AnalysisStage xử lý</td><td>Exception → history <code>error</code>; SSE theo bảng lỗi</td></tr>
+<tr><td class="num">6</td><td><strong>AnalysisStage.execute</strong><span class="ref">stages/analysis_stage.py:45 · analysis/analyzer.py:46</span></td><td>Prompt: <code>&lt;state&gt;</code>, <code>&lt;history&gt;</code>, <code>&lt;pending&gt;</code>, <code>&lt;query&gt;</code></td><td>Raw JSON <code>{sub_queries[], pending_answer, language}</code> → <code>guard_extracted_models</code> → <code>resolve_sub_query</code> → <code>Analysis{sub_queries[q1..q3] có route, clarification, language}</code></td><td><code>AnalysisError</code>: <code>analysis_timeout</code>, <code>analysis_provider_error</code>, <code>analysis_invalid_output</code>, <code>analysis_invalid_plan</code> → SSE <code>analysis_error</code>; history <code>error</code></td></tr>
+<tr><td class="num">7</td><td><strong>apply_attempt_limit</strong><span class="ref">clarification_resume_stage.py:40 · clarification/resume.py:51</span></td><td><code>Analysis</code> resumed + <code>clarify_attempts</code></td><td>Từ lần thứ 3: ý bị giữ chuyển sang route <code>no_docs</code>, xóa clarification</td><td>—</td></tr>
+<tr><td class="num">8</td><td><strong>ExecutionStage.execute</strong><span class="ref">stages/execution_stage.py:35 · orchestration/</span></td><td><code>Analysis</code>, retriever</td><td><code>ExecutionPlan{tasks[kind, status, result]}</code>; gán S1…Sn cho chunk; thêm <code>retrieval_traces</code></td><td><code>ExecutionError(analysis_missing)</code> → <code>analysis_error</code>; lỗi trong handler → task <code>failed</code> (không ném lên)</td></tr>
+<tr><td class="num">9</td><td><strong>select_direct_response_code</strong> / <strong>AnswerComposer.stream</strong><span class="ref">orchestration/direct_response.py:7 · stages/answer_composer.py:40,127</span></td><td>Plan + ngôn ngữ; với LLM: 2 tin gần nhất, <code>&lt;task_results&gt;</code>, <code>&lt;sources&gt;</code>, <code>&lt;clarification&gt;</code></td><td>Chuỗi trả lời (1 delta cố định hoặc nhiều delta LLM)</td><td><code>AnswerCompositionError</code> → <code>analysis_error</code>; lỗi stream OpenAI → <code>provider_error</code>; history <code>error</code> kèm phần đã stream</td></tr>
+<tr><td class="num">10</td><td><strong>update_conversation_state</strong> + <strong>_transfer_handoff</strong><span class="ref">clarification/state_update.py:17 · chat_service.py:256</span></td><td>RunState sau khi trả lời</td><td><code>ConversationState</code> mới: <code>pending</code>, <code>clarify_attempts</code>, <code>last_models</code>, <code>active_model</code>, <code>language</code>, <code>last_intent</code>; mode/ticket nếu handoff thành công</td><td>Exception → history <code>error</code>, <code>provider_error</code></td></tr>
+<tr><td class="num">11</td><td><strong>HistoryRepository.create</strong><span class="ref">repositories/history_repository.py</span></td><td>Câu hỏi, câu trả lời, state, snapshot, token ước tính, <code>history_id=message_id</code>, <code>idempotency_key</code></td><td>Dòng <code>chat_history</code> (flush); commit sau khi response kết thúc</td><td>Lỗi commit không báo về client (stream đã xong)</td></tr>
+<tr><td class="num">12</td><td><strong>stream_chat</strong> (SSE)<span class="ref">routers/sse.py:50</span></td><td>Các chunk</td><td><code>event: delta {text}</code>… rồi <code>event: done {request_id, session_id}</code>; <code>request.state.outcome</code></td><td>Map exception → <code>event: error {code, message, request_id}</code></td></tr>
+</tbody></table></div>
+
+<!-- ============================================================ 4 -->
+<h2 id="dinh-tuyen">4. Analysis quyết định route thế nào</h2>
+<p>LLM chỉ trả <strong>intent và thực thể</strong>; route được tính bằng code trong <code>resolve_sub_query</code> (<code>extraction/validate_registry.py:170</code>) dựa trên registry. Enum <code>Route</code> có 6 giá trị: 5 route trong báo cáo cộng <code>no_docs</code> (model có thật nhưng chưa có tài liệu kỹ thuật).</p>
+
+<div class="diagram" id="d-route">
+<pre class="mermaid">
+flowchart TD
+  RAW["Raw sub_query từ LLM<br/>intent · product_models · unresolved_mentions<br/>model_dependency · handoff_reason · history_conflict"]
+  G["guard_extracted_models<br/>bỏ model không xuất hiện trong câu hỏi + history"]:::partial
+  I{"intent hợp lệ?"}
+  U["route clarify<br/>reason unclear_query"]:::cl
+  T{"intent có targets?<br/>(cần tra cứu)"}
+  D["route = route của intent<br/>chitchat · out_of_scope · handoff"]:::dr
+  M["resolve_models<br/>alias → canonical · ambiguous · unknown"]
+  MISS{"thiếu model và<br/>policy required?"}
+  GEN["general = true<br/>(model_dependency general, allow_general,<br/>không có mã kiểu CN5, X40, AL…)"]
+  INH["kế thừa active_model<br/>hoặc last_models duy nhất"]
+  R{"lý do làm rõ?<br/>ambiguous · unknown · context_conflict ·<br/>insufficient_models · missing"}
+  B{"blocking?<br/>có lý do, không model, không general"}
+  C["route clarify"]:::cl
+  COV{"model có tài liệu?<br/>technical_docs chỉ F86"}
+  DEG["degrade sang product_catalog<br/>answer_mode overview"]
+  ND["route no_docs"]:::nd
+  RT["route retrieve<br/>answer_mode full · overview · general"]:::rt
+  HOLD["planner: ý có clarification blocking<br/>hoặc chung mention chưa rõ → task CLARIFY/BLOCKED"]:::partial
+
+  RAW --> G --> I
+  I -- "không" --> U
+  I -- "có" --> T
+  T -- "không" --> D
+  T -- "có" --> M --> MISS
+  MISS -- "có" --> GEN
+  MISS -- "có, không general" --> INH
+  MISS -- "không" --> R
+  GEN --> R
+  INH --> R
+  R --> B
+  B -- "có" --> C
+  B -- "không" --> COV
+  COV -- "có" --> RT
+  COV -- "không, intent có degrade_to" --> DEG --> RT
+  COV -- "không, không degrade" --> ND
+  RT -. "vẫn có thể bị giữ" .-> HOLD
+  D -. "vẫn có thể bị giữ" .-> HOLD
+
+  classDef partial fill:#fff2d6,stroke:#c08a1e,color:#1a1e24
+  classDef cl fill:#fff2d6,stroke:#c08a1e,color:#1a1e24
+  classDef dr fill:#e5f4ea,stroke:#2f8a57,color:#1a1e24
+  classDef rt fill:#e9eef8,stroke:#4a6fae,color:#1a1e24
+  classDef nd fill:#f4f5f7,stroke:#8a929d,color:#1a1e24
+</pre>
+</div>
+<button class="zoom" data-target="d-route">Xem cỡ thật</button>
+<p class="caption">Sơ đồ 2. Quyết định route cho một sub-query. Lý do làm rõ đầu tiên khớp theo thứ tự trong khung R sẽ thắng.</p>
+
+<h3>Bảng intent → route</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Intent</th><th>Nguồn tra cứu</th><th>Chính sách model</th><th>Route có thể ra</th></tr></thead>
+<tbody>
+<tr><td><code>other.chitchat</code></td><td>—</td><td>none</td><td><span class="b ok">chitchat</span></td></tr>
+<tr><td><code>other.out_of_scope</code></td><td>—</td><td>none</td><td><span class="b ok">out_of_scope</span></td></tr>
+<tr><td><code>handoff.human</code></td><td>—</td><td>none</td><td><span class="b issue">handoff</span> (<code>handoff_reason</code>: pricing, warranty, policy, purchase, shipping, human_request)</td></tr>
+<tr><td><code>lookup.company_info</code></td><td>company_info</td><td>none</td><td>Luôn retrieve, không hỏi lại</td></tr>
+<tr><td><code>lookup.product_info</code></td><td>product_catalog</td><td>required (1), cho phép general</td><td>retrieve (full hoặc general + hỏi model không chặn) · clarify</td></tr>
+<tr><td><code>lookup.product_catalog</code></td><td>product_catalog</td><td>optional</td><td>retrieve · clarify nếu chỉ có mention lạ/mơ hồ hoặc xung đột lịch sử</td></tr>
+<tr><td><code>compare.product_models</code></td><td>product_catalog</td><td>required, tối thiểu 2</td><td>retrieve (đủ hoặc 1 model + hỏi bổ sung) · clarify (0 model)</td></tr>
+<tr><td><code>guide.installation</code></td><td>technical_docs/installation → degrade catalog</td><td>required, không general</td><td>retrieve full (F86) · retrieve overview (model khác) · clarify</td></tr>
+<tr><td><code>guide.operation</code></td><td>technical_docs/operation → degrade catalog</td><td>required, cho phép general</td><td>retrieve full / overview / general · clarify</td></tr>
+<tr><td><code>guide.configuration</code></td><td>technical_docs/configuration</td><td>required, cho phép general</td><td>retrieve (F86 hoặc general) · <strong>no_docs</strong> (model khác) · clarify</td></tr>
+<tr><td><code>troubleshoot.error</code></td><td>technical_docs/maintenance + fallback</td><td>required, không general</td><td>retrieve (F86) · <strong>no_docs</strong> · clarify</td></tr>
+<tr><td>thiếu / không có trong registry</td><td>—</td><td>—</td><td>clarify (<code>unclear_query</code>)</td></tr>
+</tbody></table></div>
+
+<h3>Ví dụ: một câu, hai ý, hai route</h3>
+<p>Khách gõ: <em>"So sánh F20 với F86, giá F86 bao nhiêu?"</em>. LLM trả (rút gọn):</p>
+<pre class="json">{"sub_queries": [
+  {"standalone_query": "So sánh bộ điều khiển F20 với F86", "intent": "compare.product_models",
+   "product_models": ["F86"], "unresolved_mentions": ["F20"], "model_dependency": "model_specific",
+   "handoff_reason": null, "history_conflict": false, "control_interface": [], "spec_attributes": []},
+  {"standalone_query": "Giá F86 bao nhiêu", "intent": "handoff.human",
+   "product_models": ["F86"], "unresolved_mentions": [], "model_dependency": "general",
+   "handoff_reason": "pricing", "history_conflict": false, "control_interface": [], "spec_attributes": []}],
+ "pending_answer": null, "language": "vi"}</pre>
+<ul class="tight">
+  <li><strong>q1</strong>: F86 hợp lệ, F20 không có trong registry → lý do <code>unknown_product_model</code>, không chặn → route <code>retrieve</code>; nhưng planner thấy mention F20 chưa rõ nên tạo task <strong>CLARIFY/BLOCKED</strong>.</li>
+  <li><strong>q2</strong>: route <code>handoff</code>, reason <code>pricing</code> → task HANDOFF/HANDED_OFF.</li>
+  <li>Lượt hỗn hợp nên không dùng câu cố định: AnswerComposer viết một câu trả lời gồm hỏi lại về F20 và báo chuyển nhân viên về giá. State mới có <code>pending{focus="F20", ttl=2}</code>, <code>clarify_attempts=1</code>.</li>
+</ul>
+
+<!-- ============================================================ 5 -->
+<h2 id="chitchat">5. Trường hợp chitchat và out_of_scope</h2>
+<p>Ví dụ: <em>"Xin chào"</em> (chitchat), <em>"Thời tiết hôm nay thế nào?"</em> (out_of_scope). Hai route đi cùng đường, chỉ khác khóa câu cố định.</p>
+<div class="diagram" id="d-chit">
+<pre class="mermaid">
+flowchart LR
+  A["AnalysisStage<br/>intent other.chitchat<br/>route chitchat"] --> P["Planner<br/>Task CHITCHAT · PENDING"]
+  P --> H["handle_direct<br/>COMPLETED<br/>content = standalone_query"]
+  H --> Q{"Mọi task chitchat/out_of_scope<br/>và ngôn ngữ vi/en?"}
+  Q -- "có" --> F["Câu cố định<br/>chitchat hoặc out_of_scope<br/>(out_of_scope thắng nếu lẫn)"]:::ok
+  Q -- "không" --> L["AnswerComposer LLM"]:::partial
+  F --> S["update_conversation_state<br/>pending ttl giảm 1 nếu đang có"]
+  L --> S
+  S --> W["history completed<br/>snapshot chunks rỗng"] --> E(["SSE: 1 delta → done"]):::term
+  classDef ok fill:#e5f4ea,stroke:#2f8a57,color:#1a1e24
+  classDef partial fill:#fff2d6,stroke:#c08a1e,color:#1a1e24
+  classDef term fill:#e9eef8,stroke:#4a6fae,color:#1a1e24
+</pre>
+</div>
+<button class="zoom" data-target="d-chit">Xem cỡ thật</button>
+<p class="caption">Sơ đồ 3. chitchat / out_of_scope. Vẫn có 1 lần gọi LLM phân tích; không gọi LLM trả lời khi ngôn ngữ là vi/en.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Chặng</th><th>Dữ liệu</th></tr></thead>
+<tbody>
+<tr><td>Sub-query</td><td><code>{intent: "other.chitchat", route: "chitchat", retrieval_scope: null}</code></td></tr>
+<tr><td>Task</td><td><code>{task_id: "task-q1", kind: "chitchat", status: "completed", result.metadata: {kind: "chitchat"}}</code></td></tr>
+<tr><td>Trả lời</td><td><code>get_direct_response("chitchat", "vi")</code> từ <code>prompts/direct_responses.py</code></td></tr>
+<tr><td>State</td><td><code>last_intent</code>, <code>language</code> cập nhật; nếu đang có pending thì <code>ttl − 1</code> (về 0 thì xóa)</td></tr>
+<tr><td>History</td><td><code>status="completed"</code>, <code>model=gpt-4o-mini</code>, <code>retrieval_snapshot.chunks=[]</code></td></tr>
+<tr><td>SSE</td><td><code>event: delta</code> (1 lần) → <code>event: done</code></td></tr>
+</tbody></table></div>
+<div class="callout partial"><p><strong>Lưu ý:</strong> câu như "ok", "vâng", hoặc một đoạn nhận xét không chứa câu hỏi có thể khiến LLM trả <code>sub_queries=[]</code>. <em>Từ 29/10</em>, <code>AnalysisStage</code> coi trường hợp này là chitchat (log INFO <code>analysis returned no sub-query</code>) thay vì ném <code>analysis_invalid_output</code>; prompt chưa được bổ sung quy tắc phân loại nhận xét → out_of_scope. Ngôn ngữ khác vi/en đi qua LLM trả lời.</p></div>
+
+<!-- ============================================================ 6 -->
+<h2 id="handoff">6. Trường hợp handoff</h2>
+<p>Ví dụ: <em>"Giá F86 bao nhiêu?"</em>, <em>"Cho tôi gặp nhân viên"</em>.</p>
+<div class="diagram" id="d-hand">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant U as Khách
+  participant S as ChatbotService
+  participant A as AnalysisStage (LLM)
+  participant X as ExecutionStage
+  participant H as HandoffProvider
+  participant DB as chat_history
+  U->>S: "Giá F86 bao nhiêu?"
+  S->>A: prompt state + history + query
+  A-->>S: intent handoff.human, handoff_reason pricing
+  S->>X: plan: Task HANDOFF
+  X-->>S: status HANDED_OFF, metadata.handoff_reason = pricing
+  S-->>U: delta "handoff.pricing" (câu cố định, hứa chuyển nhân viên)
+  S->>H: transfer(session_id, history, "pricing")
+  Note over H: DisabledHandoffProvider luôn trả None
+  H-->>S: None
+  Note over S: mode giữ BOT, không ticket_id
+  S->>DB: completed, conversation_state mode = bot
+  S-->>U: done
+</pre>
+</div>
+<button class="zoom" data-target="d-hand">Xem cỡ thật</button>
+<p class="caption">Sơ đồ 4. handoff. Câu trả lời được gửi <em>trước</em> khi gọi transfer, nên khách đã nhận lời hứa dù transfer thất bại hay không làm gì.</p>
+<div class="callout issue"><p><strong>Đây là scaffold, chưa hoàn thiện.</strong> <code>providers/handoff.py</code> chỉ có <code>DisabledHandoffProvider</code>. Hệ quả: không ai nhận hội thoại, <code>handoff_count</code> trong <code>aggregate_metrics</code> luôn 0, và nếu sau này provider thật đặt mode <code>awaiting_agent</code>/<code>with_agent</code> thì chưa có đường nào đưa hội thoại về BOT (bước 4 sẽ trả câu cố định mãi). Khi có nhiều ý handoff trong một lượt, chỉ reason của task đầu tiên được dùng.</p></div>
+
+<!-- ============================================================ 7 -->
+<h2 id="clarify">7. Trường hợp clarify</h2>
+<p>Ví dụ: <em>"Cách cài đặt máy?"</em> (thiếu model), <em>"F84 có cổng EtherCAT không?"</em> (model lạ). Clarify luôn trải qua hai lượt trở lên: lượt hỏi lại và lượt khách trả lời.</p>
+
+<h3>7.1 Lượt hỏi lại</h3>
+<ol class="steps">
+  <li><strong>Analysis</strong>: <code>resolve_sub_query</code> ra lý do (vd. <code>missing_product_model</code>), không model, không general → <code>blocking=true</code>, route <code>clarify</code>; <code>analysis.clarification</code> chứa <code>candidates</code> theo mention.
+    <dl class="io"><dt>Output</dt><dd><code>SubQueryAnalysis{route: clarify, clarification{reason, blocking, candidates}}</code></dd></dl></li>
+  <li><strong>Planner</strong>: ý bị giữ → <code>Task{kind: clarify, status: blocked}</code>; scheduler gán result <code>{reason: task_blocked}</code>, không gọi handler.</li>
+  <li><strong>Trả lời</strong>: <code>select_direct_response_code</code> trả <code>None</code> (không có câu cố định cho clarify) → <strong>AnswerComposer gọi LLM</strong> với khối <code>&lt;clarification&gt;</code> và <code>display_candidates</code> để viết câu hỏi lại.</li>
+  <li><strong>State</strong>: <code>update_conversation_state</code> tạo <code>PendingClarification{focus, question_type confirm|choose|open, candidates (đã bỏ model đã biết), llm_raw{sub_queries, mentions, reason}, ttl: 2, blocking: true}</code>; <code>clarify_attempts = 1</code> (hoặc +1 nếu lượt này là lượt trả lời).</li>
+  <li><strong>History/SSE</strong>: <code>completed</code> + state ở trên; nhiều <code>delta</code> → <code>done</code>.</li>
+</ol>
+
+<h3>7.2 Vòng đời pending qua các lượt</h3>
+<div class="diagram" id="d-clar">
+<pre class="mermaid">
+stateDiagram-v2
+  [*] --> KhongPending
+  KhongPending --> Pending: lượt có ý bị giữ, attempts = 1, ttl = 2
+  Pending --> KhopKhongLLM: ResumeStage khớp số thứ tự, alias, từ xác nhận, mã model
+  Pending --> PhanTichLLM: không khớp, AnalysisStage gửi khối pending
+  PhanTichLLM --> DaVa: LLM trả pending_answer
+  PhanTichLLM --> HoiLai: sub_queries rỗng, pending blocking
+  PhanTichLLM --> CauHoiMoi: câu hỏi không liên quan
+  KhopKhongLLM --> DaVa
+  DaVa --> KhongPending: patch_pending, chạy lại resolve, retrieve
+  HoiLai --> Pending: attempts + 1
+  CauHoiMoi --> Pending: ttl - 1
+  CauHoiMoi --> KhongPending: ttl về 0
+  Pending --> HetLuot: attempts đạt 2 và lượt trả lời vẫn không rõ
+  HetLuot --> KhongPending: ý bị giữ chuyển no_docs (clarification_exhausted)
+</pre>
+</div>
+<button class="zoom" data-target="d-clar">Xem cỡ thật</button>
+<p class="caption">Sơ đồ 5. Vòng đời PendingClarification (<code>clarification/state_update.py</code>, <code>clarification/resume.py</code>). Hằng số: <code>PENDING_TTL=2</code>, <code>MAX_CLARIFY_ATTEMPTS=2</code>.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Cách khách trả lời</th><th>Xử lý</th><th>Gọi LLM?</th></tr></thead>
+<tbody>
+<tr><td>"2", "thứ hai", "cái sau"</td><td>Chọn <code>candidates[i]</code> trong pending</td><td>Không (chỉ LLM trả lời)</td></tr>
+<tr><td>"đúng", "vâng" khi chỉ có 1 gợi ý</td><td>Chọn gợi ý đó</td><td>Không</td></tr>
+<tr><td>"F86", alias, mã giống model "A10"</td><td>Alias → model chuẩn; mã lạ → viết hoa giữ nguyên</td><td>Không</td></tr>
+<tr><td>Câu dài, có dấu "?"</td><td>AnalysisStage với khối <code>&lt;pending&gt;</code>; nếu có <code>pending_answer</code> thì vá ý bị giữ rồi ghép ý mới</td><td>Có</td></tr>
+<tr><td>Hai lần vẫn không rõ</td><td>Lượt thứ 3: ý bị giữ thành <code>no_docs</code>, LLM xin lỗi và gợi ý liên hệ</td><td>Có</td></tr>
+</tbody></table></div>
+
+<!-- ============================================================ 8 -->
+<h2 id="retrieve">8. Trường hợp retrieve</h2>
+<p>Ví dụ: <em>"Hướng dẫn đấu nguồn F86"</em>. Đây là nhánh nặng nhất: 1 LLM phân tích, 1 embedding mỗi ý, 1 hoặc nhiều lần gọi <code>match_doc_chunks</code>, 1 LLM trả lời.</p>
+<div class="diagram" id="d-retr">
+<pre class="mermaid">
+flowchart TD
+  SQ["SubQueryAnalysis<br/>route retrieve · retrieval_scope<br/>domain, scopes, model_filter, answer_mode"] --> BR["build_retrieval_requests<br/>targets + fallback_targets"]
+  BR --> EMB["OpenAIProvider.embed<br/>text-embedding-3-small"]
+  EMB --> SQL["match_doc_chunks (SQL)<br/>vector top 20 + FTS top 20 cùng filter<br/>RRF k=60 + spec_boost 0.005"]
+  SQL --> MER["_merge<br/>giữ vector_score ≥ 0.25 · sắp theo fused · bỏ trùng"]
+  MER --> E{"còn chunk?"}
+  E -- "không, có fallback" --> FB["chạy fallback_targets<br/>metadata fallback = true"]
+  FB --> E2{"còn chunk?"}
+  E -- "có" --> TOP["top 6 chunk"]
+  E2 -- "có" --> TOP
+  E2 -- "không" --> NH["COMPLETED, no_hits = true<br/>LLM nói chưa tìm thấy, gợi ý liên hệ"]:::partial
+  TOP --> PAR["_expand_parents<br/>tối đa 5 chunk cha, cắt 3.000 ký tự/nguồn khi đưa vào prompt"]
+  PAR --> SID["assign_source_ids<br/>S1, S2… theo thứ tự task"]
+  SID --> CMP["AnswerComposer LLM<br/>khối sources + answer_mode"]:::ok
+  CMP --> OUT(["SSE delta… → done<br/>history completed + retrieval_snapshot"]):::term
+  EMB -. "exception" .-> ERR["Task FAILED retrieval_error<br/>chỉ log, LLM nói chưa tra cứu được<br/>history vẫn completed"]:::issue
+  SQL -. "exception" .-> ERR
+  ERR --> CMP
+  NH --> CMP
+  classDef ok fill:#e5f4ea,stroke:#2f8a57,color:#1a1e24
+  classDef partial fill:#fff2d6,stroke:#c08a1e,color:#1a1e24
+  classDef issue fill:#fde7e5,stroke:#c2392d,color:#1a1e24
+  classDef term fill:#e9eef8,stroke:#4a6fae,color:#1a1e24
+</pre>
+</div>
+<button class="zoom" data-target="d-retr">Xem cỡ thật</button>
+<p class="caption">Sơ đồ 6. retrieve (<code>orchestration/handlers.py:96</code>, <code>retrieval/retriever.py:103</code>, <code>backend/sql/doc_chunks.sql</code>). So sánh ≥ 2 model chạy một lần tìm cho mỗi model và trộn xoay vòng.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Biến thể</th><th>Khi nào</th><th>Kết quả cho khách</th></tr></thead>
+<tbody>
+<tr><td><code>answer_mode=full</code></td><td>Model có tài liệu (kỹ thuật: chỉ F86)</td><td>Trả lời chi tiết, trích [S1]…</td></tr>
+<tr><td><code>answer_mode=overview</code></td><td>Model khác F86 với intent có <code>degrade_to</code> (installation, operation)</td><td>Trả lời tổng quan từ catalog</td></tr>
+<tr><td><code>answer_mode=general</code></td><td>Thiếu model nhưng câu hỏi chung chung và intent cho phép</td><td>Nguyên lý chung + hỏi model ở cuối; lưu pending không chặn</td></tr>
+<tr><td><code>no_hits</code></td><td>Không chunk nào vượt ngưỡng, kể cả fallback</td><td>"Chưa tìm thấy tài liệu", gợi ý liên hệ</td></tr>
+<tr><td><code>retrieval_error</code></td><td>Embedding/DB lỗi</td><td>"Chưa tra cứu được" — <strong>không có mã lỗi</strong>, history <code>completed</code>, snapshot ghi <code>retrieval_status=error</code></td></tr>
+<tr><td><code>no_docs</code> (route riêng)</td><td>Model có thật nhưng không có tài liệu và không degrade (configuration, troubleshoot)</td><td>LLM báo chưa có tài liệu cho model đó</td></tr>
+</tbody></table></div>
+
+<!-- ============================================================ 9 -->
+<h2 id="hon-hop">9. Lượt hỗn hợp nhiều ý</h2>
+<p>Mỗi lượt chỉ có <strong>một</strong> câu trả lời. Khi các task khác loại, mọi kết quả được đưa vào một lần gọi AnswerComposer (prompt yêu cầu nói phần handoff cuối cùng).</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Tổ hợp</th><th>Cách trả lời</th><th>Ghi chú</th></tr></thead>
+<tbody>
+<tr><td>chitchat + retrieve</td><td>LLM</td><td>Chào + nội dung tra cứu</td></tr>
+<tr><td>chitchat + out_of_scope</td><td>Câu cố định <code>out_of_scope</code></td><td><span class="b partial">Lời chào bị bỏ</span></td></tr>
+<tr><td>handoff + bất kỳ</td><td>LLM</td><td>Vẫn gọi transfer (stub)</td></tr>
+<tr><td>handoff + handoff</td><td>Câu cố định theo reason đầu tiên</td><td>Reason thứ hai bị bỏ</td></tr>
+<tr><td>clarify + retrieve</td><td>LLM</td><td>Trả lời phần đã rõ, hỏi lại phần chưa rõ</td></tr>
+<tr><td>Ý handoff chung mention chưa rõ với ý khác</td><td>LLM</td><td><span class="b issue">Handoff bị giữ thành clarify</span> (<code>planner.py:11</code>)</td></tr>
+</tbody></table></div>
+
+<!-- ============================================================ 10 -->
+<h2 id="loi">10. Bản đồ lỗi</h2>
+<p>Có hai thời điểm báo lỗi: <strong>trước khi mở stream</strong> (HTTP JSON <code>{"detail": {"code", "message", "request_id"}}</code>) và <strong>trong stream</strong> (HTTP 200, <code>event: error {"code", "message", "request_id"}</code>, có thể sau vài <code>delta</code>).</p>
+
+<div class="diagram" id="d-err">
+<pre class="mermaid">
+flowchart LR
+  subgraph PRE["Trước stream: HTTP JSON"]
+    E401["401 unauthorized"]
+    E404["404 session_not_found"]
+    E422["422 body sai · invalid_idempotency_key"]
+    E503["503 visitor_auth_not_configured<br/>crm_auth_not_configured<br/>provider_not_configured<br/>database_unavailable"]
+  end
+  subgraph IN["Trong stream: SSE error"]
+    S1["request_blocked<br/>history blocked"]
+    S2["context_error<br/>không ghi history"]
+    S3["analysis_error<br/>Analysis/Execution/Composition<br/>history error"]
+    S4["provider_error<br/>mọi lỗi khác<br/>history error (trừ lỗi nạp context)"]
+  end
+  subgraph SIL["Không báo cho khách"]
+    Q1["retrieval_error → completed<br/>+ retrieval_status trong snapshot"]
+    Q2["commit history thất bại sau done"]
+    Q3["client ngắt kết nối<br/>→ history cancelled"]
+  end
+  classDef x fill:#fde7e5,stroke:#c2392d,color:#1a1e24
+  classDef y fill:#fff2d6,stroke:#c08a1e,color:#1a1e24
+  class Q2 x
+  class Q1,Q3 y
+</pre>
+</div>
+<button class="zoom" data-target="d-err">Xem cỡ thật</button>
+<p class="caption">Sơ đồ 7. Ba nhóm lỗi theo thời điểm và mức hiển thị.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Nơi phát sinh</th><th>Exception / code nội bộ</th><th>Client nhận</th><th>History</th><th>Log / outcome</th></tr></thead>
+<tbody>
+<tr><td>Visitor token</td><td><code>InvalidVisitorToken</code></td><td>401 <code>unauthorized</code></td><td>—</td><td>outcome <code>-</code> (HTTPException)</td></tr>
+<tr><td>Session</td><td><code>SessionNotFound</code> / lỗi DB</td><td>404 <code>session_not_found</code> / 503 <code>database_unavailable</code></td><td>—</td><td>outcome = code</td></tr>
+<tr><td>SecurityStage</td><td><code>SecurityBlockedError</code></td><td>SSE <code>request_blocked</code> + câu theo locale</td><td><code>blocked</code> (session DB riêng)</td><td>INFO policy_version, severity</td></tr>
+<tr><td>ContextLoader</td><td>Lỗi DB/Pydantic chung</td><td>SSE <code>provider_error</code></td><td><span class="b issue">không ghi</span></td><td>ERROR stack</td></tr>
+<tr><td>Prune</td><td><code>ContextBudgetError</code></td><td>SSE <code>context_error</code></td><td><span class="b issue">không ghi</span></td><td>ERROR</td></tr>
+<tr><td>AnalysisStage</td><td><code>AnalysisError</code>: timeout / provider_error / invalid_output / invalid_plan / context_missing</td><td>SSE <code>analysis_error</code></td><td><code>error</code>, answer null</td><td>ERROR code=…</td></tr>
+<tr><td>ExecutionStage</td><td><code>ExecutionError(analysis_missing)</code></td><td>SSE <code>analysis_error</code></td><td><code>error</code></td><td>ERROR</td></tr>
+<tr><td>Handler</td><td><code>retrieval_error</code>, <code>handler_not_configured</code>, <code>task_execution_failed</code></td><td>Câu trả lời bình thường do LLM</td><td><code>completed</code> + <code>retrieval_snapshot.retrieval_status</code> (<code>error</code>/<code>partial_error</code>)</td><td>log handler + WARNING <code>retrieval failed … session_id</code></td></tr>
+<tr><td>AnswerComposer</td><td><code>AnswerCompositionError(answer_state_incomplete)</code></td><td>SSE <code>analysis_error</code></td><td><code>error</code></td><td>ERROR</td></tr>
+<tr><td>Stream OpenAI</td><td>Exception provider</td><td>Các <code>delta</code> đã gửi + SSE <code>provider_error</code></td><td><code>error</code> + phần đã stream</td><td>ERROR</td></tr>
+<tr><td>Client ngắt</td><td><code>CancelledError</code> / <code>GeneratorExit</code></td><td>—</td><td><code>cancelled</code> + phần đã stream (session riêng, không đổi state)</td><td>WARNING <code>client_disconnected</code> + <code>chat turn cancelled</code></td></tr>
+</tbody></table></div>
+
+<!-- ============================================================ 11 -->
+<h2 id="rui-ro">11. Rủi ro và đề xuất</h2>
+<div class="callout ok"><p><strong>Cập nhật 29/10/2026:</strong> đã xử lý H2 (log chỉ metadata), H3 (<code>retrieval_status</code> + <code>retrieval_tasks</code> trong <code>retrieval_snapshot</code>, trả ra ở endpoint retrieval), H4 (lượt bị ngắt ghi <code>status="cancelled"</code> bằng session DB riêng, có shield, ném lại exception) và H5 (<code>load_conversation_state</code> bỏ field lạ, cứu từng field, log kèm session_id). H1 và H6 để sau. Backend: 292 test pass. Các mục bản đồ lỗi bên trên đã cập nhật theo hành vi mới.</p></div>
+<p>Mỗi dòng gồm bằng chứng trong code, lý do có thể gây lỗi và hướng giải quyết. Các đề xuất thay đổi mã lỗi, SSE hoặc schema là <strong>thay đổi API</strong>, cần cập nhật <code>docs/ai/api_guidelines.md</code> và test kèm theo.</p>
+
+<h3>Mức cao</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Vấn đề</th><th>Lý do gây lỗi</th><th>Đề xuất</th></tr></thead>
+<tbody>
+<tr><td class="num">H1</td><td><strong>Handoff hứa nhưng không chuyển</strong> <span class="b missing">Để sau</span><span class="ref">providers/handoff.py · prompts/direct_responses.py</span></td><td>Khách chờ nhân viên không bao giờ tới; số liệu handoff luôn 0; chưa có đường về BOT khi provider thật đặt mode khác.</td><td>Khi provider disabled hoặc trả <code>None</code>: dùng câu cố định khác ("hiện chưa kết nối được nhân viên, vui lòng gọi hotline…") và ghi cờ <code>handoff_requested</code> vào state để thống kê. Khi tích hợp thật: thêm sự kiện/endpoint trả hội thoại về BOT, TTL cho <code>awaiting_agent</code>.</td></tr>
+<tr><td class="num">H2</td><td><strong><code>print</code> toàn bộ payload</strong> <span class="b ok">Đã xử lý 29/10</span><span class="ref">routers/chat.py:82-83</span></td><td>Nội dung tin nhắn (có thể chứa PII) ra stdout, không qua logging, không có request ID, không tắt được bằng LOG_LEVEL.</td><td>Xóa, hoặc thay bằng <code>logger.debug</code> chỉ ghi metadata (session_id, độ dài text, locale).</td></tr>
+<tr><td class="num">H3</td><td><strong>Lỗi tra cứu bị che</strong> <span class="b ok">Đã xử lý 29/10</span><span class="ref">orchestration/handlers.py:96-119</span></td><td>Embedding/DB sập thì mọi lượt vẫn <code>completed</code>, không cảnh báo, khó phát hiện sự cố; Support Workspace không phân biệt được.</td><td>Ghi <code>retrieval_status</code> (<code>ok</code>/<code>no_hits</code>/<code>error</code>) vào <code>retrieval_snapshot</code>; log mức ERROR kèm request_id; cân nhắc status history <code>degraded</code> và cảnh báo khi tỷ lệ lỗi tăng.</td></tr>
+<tr><td class="num">H4</td><td><strong>Khách ngắt kết nối không để lại dấu vết</strong> <span class="b ok">Đã xử lý 29/10</span><span class="ref">services/chat_service.py:170</span></td><td><code>CancelledError</code> không phải <code>Exception</code> nên khối ghi <code>error</code> không chạy; lượt đã tốn LLM nhưng không có history/chi phí.</td><td>Bắt <code>asyncio.CancelledError</code> riêng, ghi history <code>status="cancelled"</code> bằng session DB độc lập (như <code>create_blocked</code>) rồi ném lại.</td></tr>
+<tr><td class="num">H5</td><td><strong>State sai schema bị reset về BOT</strong> <span class="b ok">Đã xử lý 29/10</span><span class="ref">stages/context_loader.py:80-89</span></td><td>Khi đổi schema <code>ConversationState</code> (extra=forbid), mọi hội thoại cũ mất pending và mode; hội thoại đang do nhân viên xử lý bị bot chen vào.</td><td>Validate ở chế độ bỏ qua field lạ khi đọc (hoặc migrate state có version); khi lỗi, giữ <code>mode</code> nếu đọc được thay vì reset toàn bộ; log WARNING kèm session_id.</td></tr>
+<tr><td class="num">H6</td><td><strong>Số nguồn [S1]… reset mỗi lượt</strong> <span class="b missing">Để sau</span><span class="ref">stages/context_loader.py:53-64 · schemas/system/run_state.py:44</span></td><td>Citations không được lưu nên <code>next_source_id</code> luôn bắt đầu S1; 2 tin trước gửi cho LLM vẫn chứa [S1] trỏ tới chunk khác → LLM có thể trộn nguồn.</td><td>Lưu citations (source_id → chunk_id) trong <code>retrieval_snapshot</code> và nạp lại vào <code>ConversationMessage.citations</code>; hoặc bỏ ký hiệu [S#] khỏi history trước khi gửi LLM.</td></tr>
+</tbody></table></div>
+
+<h3>Mức trung bình</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Vấn đề</th><th>Lý do gây lỗi</th><th>Đề xuất</th></tr></thead>
+<tbody>
+<tr><td class="num">M1</td><td><strong>Chặn nhầm thuật ngữ CNC</strong><span class="ref">stages/security/policies/injection_rules.py:50</span></td><td>Rule <code>override\s*:</code> có thể khớp "Feed override: 50%" và chặn câu hợp lệ (suy luận, chưa kiểm thử). Mọi finding đều BLOCK bất kể mức độ.</td><td>Viết test với các câu CNC thường gặp; thu hẹp rule (yêu cầu ngữ cảnh "instruction/prompt"); dùng <code>REVIEW</code> cho finding mức thấp thay vì chặn.</td></tr>
+<tr><td class="num">M2</td><td><strong>Rule chống injection chỉ tiếng Anh</strong></td><td>"Bỏ qua mọi hướng dẫn trước đó" lọt qua, phụ thuộc LLM phân loại out_of_scope; thẻ <code>&lt;/query&gt;</code> trong câu hỏi không bị chặn.</td><td>Thêm rule tiếng Việt (có/không dấu); escape hoặc chặn chuỗi trùng thẻ prompt (<code>&lt;query&gt;</code>, <code>&lt;pending&gt;</code>, <code>&lt;state&gt;</code>).</td></tr>
+<tr><td class="num">M3</td><td><strong><code>sub_queries=[]</code> thành lỗi</strong> <span class="b ok">Đã xử lý lớp code 29/10</span><span class="ref">analysis/analyzer.py:90</span></td><td>"ok", "cảm ơn nhé" không có pending → <code>analysis_error</code>, khách thấy lỗi cho một câu xã giao.</td><td>Khi danh sách rỗng và không có pending: tạo một ý <code>other.chitchat</code> như nhánh pending không chặn đang làm.</td></tr>
+<tr><td class="num">M4</td><td><strong>JSON bị cắt báo sai mã</strong><span class="ref">providers/openai.py:43-54 · analyzer.py:67</span></td><td><code>max_tokens=600</code> với 3 ý dài có thể cắt JSON; lỗi báo <code>analysis_provider_error</code> nên khó phân biệt với sự cố mạng. Thông báo lỗi còn ghi "Ollama".</td><td>Bắt <code>InvalidModelJSONError</code> riêng → <code>analysis_invalid_output</code>; theo dõi <code>finish_reason=length</code>; sửa thông báo.</td></tr>
+<tr><td class="num">M5</td><td><strong>Mã SSE gộp thô</strong><span class="ref">routers/sse.py</span></td><td>Lỗi thực thi/dựng trả lời báo <code>analysis_error</code> ("hãy diễn đạt lại") dù không phải lỗi của khách; lỗi DB khi ghi history báo <code>provider_error</code>.</td><td>Tách <code>execution_error</code>, <code>composition_error</code>, <code>persistence_error</code> (thay đổi API: cập nhật frontend và docs).</td></tr>
+<tr><td class="num">M6</td><td><strong>Lỗi nạp context không ghi history</strong><span class="ref">chat_service.py:100-101</span></td><td>Không có dấu vết trong Workspace cho lượt lỗi <code>context_error</code>/lỗi DB.</td><td>Đưa 2 bước vào khối <code>try</code> hoặc ghi history <code>error</code> qua session riêng.</td></tr>
+<tr><td class="num">M7</td><td><strong>Ngân sách token không bao toàn bộ prompt</strong><span class="ref">stages/prune_stage.py:26-32 · answer_composer.py</span></td><td>Prune chỉ tính query + history; system prompt, ví dụ, <code>&lt;sources&gt;</code> (tới 3 ý × 5 nguồn × 3.000 ký tự) không bị giới hạn; composer không timeout, không <code>max_tokens</code>.</td><td>Đặt budget riêng cho composer (cắt sources theo token), thêm timeout và <code>max_tokens</code> cho <code>stream_chat</code>.</td></tr>
+<tr><td class="num">M8</td><td><strong>Đổi model âm thầm</strong><span class="ref">validate_registry.py:140, 199-210</span></td><td>Khách gõ model lạ "F84", LLM điền F86 → guard bỏ F86 → không còn mention → kế thừa <code>active_model</code> và trả lời sai model mà không hỏi lại. Guard so chuỗi con nên "10s" (10 giây) có thể khớp alias.</td><td>Model bị guard bỏ thì chuyển thành <code>unresolved_mentions</code>; so khớp theo ranh giới từ.</td></tr>
+<tr><td class="num">M9</td><td><strong>Số thứ tự lựa chọn lệch</strong><span class="ref">answer_composer.py:111-114 · state_update.py:132-136</span></td><td>LLM hiển thị <code>display_candidates</code> chưa lọc, còn pending lưu danh sách đã bỏ model đã biết và chỉ cho mention đầu → "số 2" có thể chọn model khác với cái khách thấy.</td><td>Dùng đúng một danh sách: lưu pending trước, đưa đúng <code>pending.candidates</code> vào prompt.</td></tr>
+<tr><td class="num">M10</td><td><strong>Ý handoff bị giữ thành clarify</strong><span class="ref">orchestration/planner.py:11-24</span></td><td>Câu "F20 giá bao nhiêu và có cổng gì" giữ cả ý giá → yêu cầu gặp nhân viên bị hoãn.</td><td>Không giữ ý có route handoff/chitchat/out_of_scope theo mention chung.</td></tr>
+<tr><td class="num">M11</td><td><strong>Idempotency chỉ lưu</strong><span class="ref">dependencies.py · chat_history.idempotency_key</span></td><td>Retry do mạng vẫn gọi LLM lần 2 và tạo 2 dòng history.</td><td>Unique (session_id, idempotency_key); key đã completed → phát lại câu trả lời đã lưu; đang chạy → 409.</td></tr>
+</tbody></table></div>
+
+<h3>Mức thấp</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Vấn đề</th><th>Đề xuất</th></tr></thead>
+<tbody>
+<tr><td class="num">L1</td><td>Code chết/hỏng: <code>analysis/context_builder.py</code> (biến chưa định nghĩa), <code>validate_registry.handoff_config</code> (dùng <code>REGISTRY</code> không tồn tại), <code>turn_route</code>/<code>batches</code> tính nhưng không dùng.</td><td>Xóa hoặc nối vào luồng; tránh tài liệu hóa như tính năng.</td></tr>
+<tr><td class="num">L2</td><td><code>_usage</code> chỉ đếm token câu hỏi + câu trả lời, giá cố định gpt-4o-mini; bỏ qua prompt phân tích, sources và embedding.</td><td>Lấy <code>usage</code> thật từ response OpenAI, cộng dồn theo từng lần gọi.</td></tr>
+<tr><td class="num">L3</td><td>TTL pending chỉ giảm ở lượt không liên quan; matcher không kiểm TTL; mã giống model như "x40", "cn5" bị coi là lựa chọn model.</td><td>Giảm TTL theo lượt bất kỳ; loại các tiền tố mã connector/tham số khỏi <code>_MODEL_LIKE</code>.</td></tr>
+<tr><td class="num">L4</td><td>Prompt phân tích được dựng lại mỗi request (<code>AnalysisStage</code> tạo theo request); mặc định <code>n_examples</code> lệch giữa analyzer (5) và stage (4).</td><td>Cache prompt theo phiên bản registry; thống nhất một hằng số.</td></tr>
+</tbody></table></div>
+
+<!-- ============================================================ 12 -->
+<h2 id="xac-nhan">12. Câu hỏi cần xác nhận</h2>
+<ul class="qa">
+  <li>Khi chưa có nền tảng chăm sóc khách hàng, bot nên trả lời handoff thế nào: hotline cố định, form để lại liên hệ, hay tạo ticket trong CRM?</li>
+  <li>Clarify có nên dùng câu hỏi cố định theo mẫu (rẻ, ổn định, đánh số đúng) thay vì để LLM viết?</li>
+  <li>Lượt bị khách ngắt giữa chừng có cần lưu (để tính chi phí và hiển thị trong Workspace) không?</li>
+  <li>Ngưỡng <code>RETRIEVAL_MIN_SIMILARITY=0.25</code> và top 6 đã được đo trên dữ liệu thật chưa? Cần bộ câu hỏi đánh giá (Recall@k).</li>
+  <li>Khi tra cứu lỗi hệ thống, khách nên thấy câu trả lời mềm (như hiện tại) hay một thông báo lỗi rõ ràng để thử lại?</li>
+  <li>Có chấp nhận đổi mã lỗi SSE (tách <code>execution_error</code>/<code>composition_error</code>) khi frontend đang chỉ xử lý riêng <code>request_blocked</code>?</li>
+</ul>
+
+<!-- ============================================================ 13 -->
+<h2 id="phu-luc">13. Phụ lục: mã nguồn và tham số</h2>
+<div class="grid2">
+<div class="table-wrap"><table>
+<thead><tr><th>Thành phần</th><th>File (từ <code>backend/app/modules/chatbot/</code>)</th></tr></thead>
+<tbody>
+<tr><td>Route chat, SSE</td><td><code>routers/chat.py</code>, <code>routers/sse.py</code></td></tr>
+<tr><td>Auth, request context</td><td><code>dependencies.py</code>, <code>services/visitor_identity.py</code></td></tr>
+<tr><td>Session</td><td><code>services/session_access.py</code>, <code>repositories/chat_session_repository.py</code></td></tr>
+<tr><td>Điều phối</td><td><code>services/chat_service.py</code></td></tr>
+<tr><td>Security</td><td><code>stages/security/</code></td></tr>
+<tr><td>Context</td><td><code>stages/context_loader.py</code>, <code>stages/prune_stage.py</code></td></tr>
+<tr><td>Làm rõ</td><td><code>stages/clarification_resume_stage.py</code>, <code>clarification/</code></td></tr>
+<tr><td>Phân tích</td><td><code>stages/analysis_stage.py</code>, <code>analysis/</code>, <code>extraction/</code></td></tr>
+<tr><td>Thực thi</td><td><code>stages/execution_stage.py</code>, <code>orchestration/</code></td></tr>
+<tr><td>Tra cứu</td><td><code>retrieval/retriever.py</code>, <code>repositories/doc_chunk_repository.py</code>, <code>backend/sql/doc_chunks.sql</code></td></tr>
+<tr><td>Trả lời</td><td><code>stages/answer_composer.py</code>, <code>prompts/</code></td></tr>
+<tr><td>Handoff</td><td><code>providers/handoff.py</code></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table>
+<thead><tr><th>Tham số</th><th>Giá trị</th></tr></thead>
+<tbody>
+<tr><td><code>MAX_MESSAGE_CHARS</code></td><td>4.000</td></tr>
+<tr><td><code>CONTEXT_TOKEN_BUDGET</code></td><td>2048</td></tr>
+<tr><td>Timeout phân tích · <code>max_tokens</code> · temperature</td><td>8 s · 600 · 0</td></tr>
+<tr><td><code>MAX_SUB_QUERIES</code></td><td>3</td></tr>
+<tr><td><code>MAX_CLARIFY_ATTEMPTS</code> · <code>PENDING_TTL</code></td><td>2 · 2</td></tr>
+<tr><td>Scheduler <code>max_concurrency</code></td><td>4</td></tr>
+<tr><td>Vector / FTS candidate k · RRF k</td><td>20 / 20 · 60</td></tr>
+<tr><td><code>RETRIEVAL_MIN_SIMILARITY</code></td><td>0.25</td></tr>
+<tr><td>Top chunk · chunk cha tối đa</td><td>6 · 5</td></tr>
+<tr><td><code>RETRIEVAL_SPEC_BOOST</code></td><td>0.005</td></tr>
+<tr><td>Nội dung nguồn trong prompt</td><td>3.000 ký tự/nguồn</td></tr>
+<tr><td>History gửi composer</td><td>2 tin gần nhất</td></tr>
+<tr><td>Visitor token TTL</td><td>7 ngày (<code>VISITOR_TOKEN_TTL_SECONDS</code>)</td></tr>
+</tbody></table></div>
+</div>
+
+<footer>
+  Báo cáo lập từ mã nguồn tại <code>E:\projects\QS_Technology</code> ngày 29/10/2026. Nội dung mô tả hành vi có trong code; điểm ghi "suy luận" chưa được kiểm thử. Sơ đồ dùng Mermaid 10.9.1 tải từ CDN jsDelivr; khi không có mạng, khối sơ đồ hiển thị dạng mã nguồn Mermaid.
+</footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "base",
+      securityLevel: "strict",
+      themeVariables: {
+        fontFamily: "Be Vietnam Pro, system-ui, sans-serif",
+        fontSize: "13px",
+        primaryColor: "#ffffff",
+        primaryBorderColor: "#8a929d",
+        primaryTextColor: "#1a1e24",
+        lineColor: "#6b7480",
+        clusterBkg: "#f7f8fa",
+        clusterBorder: "#cfd5dd",
+        edgeLabelBackground: "#ffffff",
+        actorBkg: "#e9eef8",
+        actorBorder: "#4a6fae",
+        noteBkgColor: "#fff2d6",
+        noteBorderColor: "#c08a1e"
+      },
+      flowchart: { htmlLabels: true, curve: "basis", useMaxWidth: true, nodeSpacing: 36, rankSpacing: 44 },
+      sequence: { useMaxWidth: true, mirrorActors: false }
+    });
+  }
+  // Sơ đồ rộng mặc định co vừa khung; nút chuyển sang cỡ thật và cuộn ngang.
+  document.querySelectorAll(".zoom").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var box = document.getElementById(button.dataset.target);
+      var svg = box && box.querySelector("svg");
+      if (!svg) return;
+      var full = box.classList.toggle("full");
+      svg.style.width = full ? svg.style.maxWidth : "";
+      button.textContent = full ? "Co vừa khung" : "Xem cỡ thật";
+    });
+  });
+</script>
+</body>
+</html>

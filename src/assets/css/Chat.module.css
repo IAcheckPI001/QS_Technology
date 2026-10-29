@@ -251,3 +251,63 @@
         margin-left: 0 !important;
     }
 }
+.sessionSearch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 4px 12px;
+    padding: 8px 10px;
+    border: 1px solid #dbe6ea;
+    border-radius: 10px;
+    color: #78909e;
+    background: #fff;
+}
+
+.sessionSearch input {
+    min-width: 0;
+    flex: 1;
+    border: 0;
+    outline: 0;
+    color: #38556a;
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+}
+
+.sessionItem strong {
+    color: #193348;
+    font-size: 14px;
+}
+
+.selectedSession strong {
+    color: #0f6d79;
+}
+
+.sessionCount {
+    display: inline-block;
+    margin: 14px 8px 0;
+    padding: 4px 10px;
+    border-radius: 14px;
+    color: #38556a;
+    background: #e1f2f4;
+    font-size: 11px;
+}
+
+.chatHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: -18px -18px 0;
+    padding: 14px 18px;
+    border-bottom: 1px solid #e5ebef;
+}
+
+.chatHeader strong {
+    color: #193348;
+    font-size: 16px;
+}
+
+.chatHeader small {
+    color: #8aa0ab;
+    font-size: 12px;
+}

@@ -7,6 +7,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 
 import Home from './pages/Home';
+import SupportWorkspace from './pages/SupportWorkspace.jsx';
 import ScrollToTop from "./hooks/scrollToTop.jsx";
 import.meta.env.VITE_API_URL;
 
@@ -14,11 +15,11 @@ function App(){
   return (
     <Router>
       <ScrollToTop />
-      <Header/>
+      {/* <Header/> */}
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<SupportWorkspace />} />
       </Routes>
-      <Footer/>
+      {/* <Footer/> */}
     </Router>
   )
 

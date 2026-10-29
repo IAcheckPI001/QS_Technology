@@ -18,6 +18,16 @@ export const getChatHistory = async (sessionId, config = {}) => {
     return res.data;
 };
 
+export const listChatConversations = async (params = {}, config = {}) => {
+    const res = await apiFetch.get('/chatbot/conversations', { ...config, params });
+    return res.data;
+};
+
+export const getRetrievalSnapshot = async (sessionId, config = {}) => {
+    const res = await apiFetch.get(`/chatbot/sessions/${sessionId}/retrieval`, config);
+    return res.data;
+};
+
 export const listSupportChatSessions = async (config = {}) => {
     const res = await apiFetch.get("/support-chat/sessions", config);
     return res.data;
@@ -34,7 +44,7 @@ export const getSupportChatMessages = async (sessionId, config = {}) => {
 };
 
 export const prepareLearning = async (sessionId, config = {}) => {
-    const res = await apiFetch.post("/learning-knowledge", {
+    const res = await apiFetch.post("/ai/learning", {
         schema_version: "1.0",
         session_id: sessionId,
         retry_failed: false,
@@ -50,51 +60,71 @@ export class ChatStreamError extends Error {
     }
 }
 
+// Visitor token định danh khách website; server ký, gửi lại token cũ để giữ cùng guest.
+const requestVisitorToken = async (currentToken) => {
+    const res = await apiFetch.post('/chat/website/visitor', null, {
+        headers: currentToken ? { Authorization: `Bearer ${currentToken}` } : {},
+    });
+    localStorage.setItem(VISITOR_TOKEN_KEY, res.data.token);
+    return res.data.token;
+};
+
+const ensureVisitorToken = async () => (
+    localStorage.getItem(VISITOR_TOKEN_KEY) || requestVisitorToken(null)
+);
+
+const readErrorDetail = async (response) => {
+    try {
+        const payload = await response.json();
+        return payload.detail && typeof payload.detail === 'object' ? payload.detail : {};
+    } catch {
+        return {}; // non-JSON proxy errors use the status fallback
+    }
+};
+
 // POST requires fetch (EventSource only supports GET). The backend uses SSE framing.
-export const streamChatbotResponse = async (message, channel, { signal, onChunk } = {}) => {
+export const streamChatbotResponse = async (message, { signal, onChunk } = {}) => {
     const baseURL = (apiFetch.defaults.baseURL || '').replace(/\/$/, '');
-    const visitorToken = localStorage.getItem(VISITOR_TOKEN_KEY);
-    const sessionId = localStorage.getItem(SESSION_ID_KEY);
+    // Một key cho một tin nhắn: giữ nguyên khi retry chính request này.
+    const idempotencyKey = newMessageId();
 
-    const payload = {
-        schema_version: "1.0",
-
-        session_id: sessionId || null,
-
-        message: {
-            message_id: newMessageId(),
-            text: message,
-        },
-
-        channel: channel,
-
-        client_context: getClientContext(),
-    };
-
-    console.log(baseURL);
-    
-    const response = await fetch(`${baseURL}/chatbot`, {
+    const send = async (visitorToken) => fetch(`${baseURL}/chat/website`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream',
-            ...(visitorToken
-          ? {
-              Authorization: `Bearer ${visitorToken}`,
-            }
-          : {}),
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'text/event-stream',
+            Authorization: `Bearer ${visitorToken}`,
+            'Idempotency-Key': idempotencyKey,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+            schema_version: '1.0',
+            session_id: localStorage.getItem(SESSION_ID_KEY) || null,
+            message: { text: message },
+            client_context: getClientContext(),
+        }),
         signal,
     });
 
+    let response = await send(await ensureVisitorToken());
+    let detail = response.ok ? null : await readErrorDetail(response);
+    if (response.status === 401) {
+        // Token hết hạn/sai: xin token mới rồi thử lại một lần.
+        response = await send(await requestVisitorToken(localStorage.getItem(VISITOR_TOKEN_KEY)));
+        detail = response.ok ? null : await readErrorDetail(response);
+    }
+    if (response.status === 404 && detail?.code === 'session_not_found') {
+        // Session cũ không còn thuộc khách này: bắt đầu hội thoại mới.
+        localStorage.removeItem(SESSION_ID_KEY);
+        response = await send(localStorage.getItem(VISITOR_TOKEN_KEY));
+        detail = response.ok ? null : await readErrorDetail(response);
+    }
+
     if (!response.ok) {
-        let details = `Chat request failed (${response.status})`;
-        try {
-            const payload = await response.json();
-            details = payload.detail?.message || payload.detail || payload.message || details;
-            if (typeof details !== 'string') details = `Chat request failed (${response.status})`;
-        } catch { /* non-JSON proxy errors use the status fallback */ }
-        throw new ChatStreamError(details, `http_${response.status}`);
+        const details = typeof detail?.message === 'string'
+            ? detail.message
+            : `Chat request failed (${response.status})`;
+        throw new ChatStreamError(details, detail?.code || `http_${response.status}`);
     }
 
     if (!response.body) {

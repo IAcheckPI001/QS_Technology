@@ -50,7 +50,7 @@ provider layer, and database access remains in the repository layer.
 | P3 history reads and ownership | Partially implemented | Support-chat session/message reads and session creation are available behind `LEARNING_API_ENABLED`; authentication and ownership are still deferred. |
 | P4 health/readiness semantics | Open | Connectivity check exists, but readiness status/error semantics and schema checks are incomplete. |
 | P5 active chatbot pipeline | Partially implemented | Security, context loading (with persisted `ConversationState`), pruning, the clarification loop (deterministic resume, `pending_answer`, held sub-queries, 2-attempt limit), analysis, execution-plan execution, fixed replies for chitchat/out_of_scope/handoff-only turns and provider final-answer streaming run. Retrieval is wired at test level: one retrieve task per sub-query, filtered hybrid search (vector + FTS, RRF, parent expansion) over `doc_chunks` via `match_doc_chunks` (`backend/sql/doc_chunks.sql`, applied manually), sources rendered into the answer prompt. Not verified against live Supabase; retrieval parameters are untuned starting values. Handoff is a scaffold: `DisabledHandoffProvider` creates no ticket, so `mode` stays `bot`. Requires the `conversation_state` column migration (not verified live). |
-| P6 knowledge learning pipeline (`learning_ai`) | Ingestion + privacy wired behind a flag | Pure domain logic (record schema, post-LLM validation, rule conflicts, review lifecycle, chunking, indexer sync) plus CRM ingestion, prefilter and the Ollama-backed privacy pipeline exist and are unit-tested with fake providers. `POST /learning-knowledge` runs ingestion + privacy when `LEARNING_API_ENABLED=true` (no authentication yet). LLM segment/extract calls, job persistence, outbox, embedding and vector index are missing. Not verified against live Supabase/Ollama. |
+| P6 knowledge learning pipeline (`learning_ai`) | Ingestion + privacy wired behind a flag | Pure domain logic (record schema, post-LLM validation, rule conflicts, review lifecycle, chunking, indexer sync) plus CRM ingestion, prefilter and the Ollama-backed privacy pipeline exist and are unit-tested with fake providers. `POST /ai/learning` runs ingestion + privacy when `LEARNING_API_ENABLED=true` (no authentication yet). LLM segment/extract calls, job persistence, outbox, embedding and vector index are missing. Not verified against live Supabase/Ollama. |
 
 ## Finding status
 
@@ -71,13 +71,23 @@ provider layer, and database access remains in the repository layer.
 
 ### Session ID lifecycle
 
-1. Missing `session_id`: the backend reuses
-   `backend/app/util/uuid_generate.py` to generate a UUID.
-2. Existing UUID with history: the same ID is reused.
-3. Invalid or unknown UUID: a new UUID is generated.
+1. Missing `session_id`: `SessionAccessService` creates a UUID and a
+   `public.chat_sessions` row owned by the current principal and channel.
+2. Existing UUID owned by the same principal (same channel, not revoked or
+   expired): the same ID is reused.
+3. Any other UUID (unknown, other owner, legacy session that exists only in
+   `chat_history`): `404 session_not_found`; a non-UUID value is a 422.
 4. The authoritative UUID is returned in the existing SSE `done` event.
-5. The frontend stores it in `localStorage` under
-   `chatbot_session_id`.
+5. The frontend stores it in `localStorage` under `chatbot_session_id` and, on
+   `session_not_found`, clears it and retries once with a new session.
+6. Website principals come from a server-signed visitor token
+   (`POST /chat/website/visitor`, `VISITOR_TOKEN_SECRET`). CRM backends call
+   `POST /chat/crm` with a per-integration service key
+   (`backend/sql/service_keys.sql`, CLI `app.modules.chatbot.service_keys_cli`)
+   and send `user_id`; CRM sessions are owned by (integration, `user_id`).
+   The CRM widget keeps `session_id` in UI state and sends `null` for a new
+   conversation.
+7. `backend/sql/chat_sessions.sql` must be applied on Supabase first.
 
 Clearing that local key starts a new active conversation but does not delete
 historical database records. Deletion is not currently implemented.
@@ -89,9 +99,10 @@ historical database records. Deletion is not currently implemented.
   sources (`[S#]` citations in the text only).
 - A provider or pipeline exception attempts to write `status='error'` with any
   partial answer.
-- `input_tokens`, `output_tokens`, `cost_usd`, `normalized_query`, and
-  `retrieved_chunk_ids` are not produced by the current active flow; they remain
-  defaults or `null`.
+- `normalized_query` stores the Vietnamese `standalone_query` of each
+  sub-query (joined by newlines) once analysis has run. `input_tokens`,
+  `output_tokens` and `cost_usd` are estimates from question/answer text only.
+  `retrieved_chunk_ids` is not produced; `retrieval_snapshot` is used instead.
 - Synthetic UUIDs and metrics are permitted only in local/test fixtures, never
   as fabricated production measurements.
 
@@ -99,38 +110,65 @@ historical database records. Deletion is not currently implemented.
 
 ### High priority
 
-1. **Error history durability**
-   - The `error` record is created in the same request transaction that is
-     rolled back after the provider exception.
-   - The error record may therefore not persist.
-   - This weakens operational visibility and violates the documented
-     completed/error history behavior.
+1. **Error history durability: verified in test, depends on FastAPI version**
+   - `test_error_history_from_failed_stream_is_committed_not_rolled_back`
+     (FastAPI 0.143.0) shows the `error` row is committed: the router catches
+     the exception inside the SSE generator, so `get_db_session` exits normally
+     and commits after streaming.
+   - `requirements.txt` allows `fastapi>=0.115`. FastAPI 0.106–0.117 closed
+     yield-dependencies before a `StreamingResponse` was sent; on those versions
+     history writes during streaming would not be committed. Raising the
+     minimum version is a dependency decision that has not been made yet.
+   - Not verified against live Supabase.
 
 2. **No live Supabase verification**
    - No verified `/health/db` request has been recorded.
    - No verified insert/select against `public.chat_history` has been recorded.
    - The ORM definition has not been compared automatically with the live table.
 
-3. **Backend test suite partially failing**
+3. **Backend test suite**
    - Tests run with `backend\venv\Scripts\python.exe -m pytest` from `backend/`.
-   - 5 chatbot tests fail because they lag the in-progress chatbot refactor.
-     See the validation record.
+   - All tests pass as of 2026-10-28. See the validation record.
+
+4a. **Handoff is a stub (H1) and source numbers restart each turn (H6)**
+   - `DisabledHandoffProvider` returns `None` while the reply promises a human
+     agent; `[S#]` citations are not persisted, so numbering restarts at S1.
+   - Both deferred; see `docs/ai/reports/diagram_request_handler.html` §11.
+
+4b. **CRM service key: delegated trust, no per-user authorization yet**
+   - `user_id` is asserted by the CRM backend; a leaked key can impersonate any
+     employee of that integration. Mitigation today: revoke + reissue.
+   - Deferred: employee permissions resolved from `user_id` (tools, assigned
+     customers, learning access), an API to list/read a user's conversations,
+     per-integration scopes, tenant isolation of `doc_chunks`/retrieval, rate
+     limiting per key, `last_used_at` tracking.
+   - `backend/sql/service_keys.sql` and the `acting_user_id` column in
+     `chat_sessions.sql` are not applied/verified on live Supabase.
 
 ### Medium priority
 
-4. **History reads are not implemented**
-   - The frontend still contains the legacy `/chats` client path.
-   - There is no current `chat_history` read endpoint.
+4. **History reads have no ownership check**
+   - `GET /chatbot/sessions/{id}/history`, `/retrieval` and
+     `GET /chatbot/conversations` exist for the Support Workspace
+     (`/support-workspace`) but are unauthenticated; `/chatbot/conversations`
+     lists every session. Keep them internal until item 5 is solved.
+   - `chat_history.channel`, `updated_date` and `retrieval_snapshot` require
+     `backend/sql/chat_history_workspace.sql` on Supabase.
+   - The Workspace "Hỗ trợ ticket" view uses support-chat sessions
+     (`history_support_chat`); opening a `chat_history` session there shows a
+     "not in support-chat" notice because the two tables do not share sessions.
 
-5. **No ownership boundary**
-   - `session_id` is client-controlled and is not an authorization credential.
-   - The table has no account ID or visitor-token ownership field.
+5. **Ownership only on chat writes**
+   - `POST /chat/*` binds sessions to the principal via `public.chat_sessions`
+     (website: visitor token). The GET history/retrieval/conversation endpoints
+     do not check ownership yet.
    - Production history reads must remain disabled until ownership checks exist.
 
-6. **No idempotency key**
-   - The frontend sends `message_id`, but it is not persisted in
-     `chat_history`.
-   - Retries can create duplicate history rows.
+6. **Idempotency key stored, not enforced**
+   - The frontend sends `Idempotency-Key` (one UUID per message, reused on
+     retry); it is stored in `chat_history.idempotency_key`.
+   - Duplicate detection/replay is not implemented: retries can still create
+     duplicate history rows and LLM calls.
 
 7. **No ordering/concurrency policy**
    - Concurrent requests for one session can be committed out of order.
@@ -166,15 +204,15 @@ historical database records. Deletion is not currently implemented.
 
 ### P1 — Required before calling persistence complete
 
-1. Make `status='error'` durable by isolating error-history persistence from
-   the rolled-back provider/request transaction, or by handling the error
-   commit explicitly.
+1. Decide the minimum FastAPI version (see open risk 1) so the verified
+   commit-after-stream behavior of `status='error'`/`completed` rows holds.
 2. Install/restore the backend test environment and run the focused tests.
 3. Run the backend with the configured runtime environment.
 4. Verify `/health/db` against Supabase.
 5. Execute a real chat request and verify the inserted row in
-   `public.chat_history`. Token/cost fields should remain unset until usage
-   extraction is implemented; do not treat them as currently generated.
+   `public.chat_history`. Token/cost fields are estimates from question and
+   answer text only (no prompt context, no embedding); replace with provider
+   usage when available.
 
 ### P2 — Required before enabling history reads
 
@@ -244,6 +282,36 @@ ORM expects that column, and it has not been verified against the live table.
   **164 passed, 5 failed**; the same 5 pre-existing chatbot failures.
 - Backend pytest after fixed replies + clarification loop + handoff scaffold
   (2026-10-20): **182 passed, 5 failed**; the same 5 pre-existing failures.
+- Backend pytest after P0 (pipeline error handling, `analysis_error`, clarification
+  cases A/B/C) (2026-10-24): **211 passed, 3 failed**. Remaining failures are in
+  `tests/chatbot/test_context_pipeline.py`: `Prune.token_counter` signature and
+  `ContextLoader.resolve_retrieval_scope` (missing `Branch` import/staticmethod),
+  scheduled as P1.
+- Fix after live test (2026-10-24): `RetrievalQuery.answer_mode` rejected
+  `general` (retrieve task failed with `retrieval_error`); both schemas now share
+  `AnswerMode`. The LLM `general` flag is gated by `allow_general` and
+  `MODEL_SPECIFIC_PATTERN`. Backend pytest: **216 passed, 3 failed** (same P1
+  failures).
+- Backend pytest after P1 (Prune/CRM fixes, logging, error-row commit test,
+  `last_models`/`active_model`, non-blocking pending, multilingual) (2026-10-24):
+  **232 passed, 0 failed**.
+- Backend pytest after API gateway step (request ID outcome, channel endpoints,
+  visitor token, `chat_sessions` ownership) (2026-10-28): **274 passed, 0 failed**.
+  `npm run build` passed; `npm run lint` still fails on pre-existing errors in
+  files outside this change.
+- Backend pytest after high-risk fixes from
+  `docs/ai/reports/diagram_request_handler.html` (H2 request log without message
+  text, H3 `retrieval_status` in snapshot, H4 `cancelled` history on client
+  disconnect, H5 per-field `conversation_state` recovery) (2026-10-29):
+  **292 passed, 0 failed**. H1 (handoff stub) and H6 (`[S#]` restarts each turn)
+  remain open.
+- Empty analysis output (`sub_queries=[]` without pending, e.g. a statement with
+  no question) is now answered as chitchat instead of `analysis_error`
+  (2026-10-29, M3 code layer). Prompt rule for statements → out_of_scope is
+  deferred. Backend pytest: **297 passed, 0 failed**.
+- CRM service key auth (`/chat/crm`, `ServiceAuthService`, `acting_user_id`
+  session ownership) (2026-10-29): **319 passed, 0 failed**. `npm run build`
+  passed; `npm run lint` still fails on pre-existing errors in `src/`.
 - Live Supabase connectivity/insert: **not verified**.
 
 ## Architectural impact
