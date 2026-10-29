@@ -26,4 +26,9 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    // widget-backend chạy trên Node, không phải trình duyệt.
+    files: ['widget-backend/**/*.js'],
+    languageOptions: { globals: globals.node },
+  },
 ])

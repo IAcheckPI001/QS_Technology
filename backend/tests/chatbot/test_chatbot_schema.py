@@ -109,13 +109,11 @@ def test_website_without_resources_ok():
 
 # --- Principal / RequestContext ------------------------------------------------
 
-def test_guest_principal_cannot_carry_tenant_or_roles():
-    with pytest.raises(ValidationError):
-        PrincipalContext(subject_id="g", principal_type="guest",
-                         authn_method="guest_token", tenant_id="t1")
-    with pytest.raises(ValidationError):
-        PrincipalContext(subject_id="g", principal_type="guest",
-                         authn_method="guest_token", roles=frozenset({"admin"}))
+def test_only_service_principal_is_supported():
+    for principal_type, authn_method in (("guest", "guest_token"), ("employee", "crm_jwt")):
+        with pytest.raises(ValidationError):
+            PrincipalContext(subject_id="x", principal_type=principal_type,
+                             authn_method=authn_method, tenant_id="t1", credential_id="k1")
 
 
 def test_service_principal_requires_tenant_and_credential():
@@ -128,18 +126,13 @@ def test_service_principal_requires_tenant_and_credential():
     assert PrincipalContext(**base, tenant_id="t1", credential_id="k1").tenant_id == "t1"
 
 
-def test_acting_for_revalidates_and_only_applies_to_service():
+def test_acting_for_revalidates():
     service = make_service_principal(None)
 
     assert service.acting_for("employee_456").acting_user_id == "employee_456"
     assert service.acting_user_id is None
     with pytest.raises(ValidationError):
         service.acting_for("   ")
-    with pytest.raises(ValueError):
-        make_principal().acting_for("employee_456")
-    with pytest.raises(ValidationError):
-        PrincipalContext(subject_id="g", principal_type="guest",
-                         authn_method="guest_token", acting_user_id="employee_456")
 
 
 def test_request_context_requires_aware_datetime():

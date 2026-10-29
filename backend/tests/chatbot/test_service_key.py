@@ -4,11 +4,13 @@ import pytest
 
 from app.core.security.service_key import (
     InvalidServiceKey,
+    ServiceKeyChannelMismatch,
     generate_service_key,
     hash_secret,
     parse_service_key,
     secret_matches,
 )
+from app.modules.chatbot.schemas.default import ChannelType
 from app.modules.chatbot.services import ServiceAuthService
 from tests.chatbot.test_chat_routes import FakeServiceKeyStore
 
@@ -42,7 +44,7 @@ def test_service_auth_builds_service_principal_from_key_record():
     store = FakeServiceKeyStore()
     token = store.issue()
 
-    principal = asyncio.run(ServiceAuthService(store).authenticate(token))
+    principal = asyncio.run(ServiceAuthService(store).authenticate(token, ChannelType.CRM))
 
     assert principal.principal_type == "service"
     assert principal.authn_method == "service_key"
@@ -50,3 +52,14 @@ def test_service_auth_builds_service_principal_from_key_record():
     assert principal.tenant_id == "qs_technology"
     assert principal.credential_id == parse_service_key(token).key_id
     assert principal.acting_user_id is None and not principal.scopes and not principal.roles
+
+
+def test_service_auth_rejects_key_issued_for_other_channel():
+    store = FakeServiceKeyStore()
+    token = store.issue(channel="website")
+
+    with pytest.raises(ServiceKeyChannelMismatch) as error:
+        asyncio.run(ServiceAuthService(store).authenticate(token, ChannelType.CRM))
+
+    assert (error.value.key_channel, error.value.expected) == ("website", "crm")
+    assert error.value.key_id == parse_service_key(token).key_id

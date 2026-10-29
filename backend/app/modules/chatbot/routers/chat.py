@@ -1,72 +1,42 @@
 """Endpoint chat theo kênh: channel do endpoint quyết định, không lấy từ body.
 
+Người gọi luôn là hệ thống tích hợp (website backend, CRM backend) xác thực bằng
+service key được cấp cho đúng kênh của endpoint.
+
 Luồng: auth dependency → schema kênh → SessionAccessService → adapter →
 InboundRequest → ChatbotService (SSE).
 """
 
 import logging
 from collections.abc import Callable
-from typing import Literal
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import AwareDatetime
 
 from app.modules.chatbot.adapters.crm import crm_to_inbound
 from app.modules.chatbot.adapters.website import website_to_inbound
 from app.modules.chatbot.dependencies import (
-    bearer_token,
     get_chatbot_service,
     get_crm_principal,
     get_idempotency_key,
     get_request_context,
     get_session_access_service,
-    get_visitor_identity_service,
     get_website_principal,
-    request_id_of,
 )
-from app.modules.chatbot.routers.sse import error_response, set_outcome, stream_chat
+from app.modules.chatbot.routers.sse import error_response, stream_chat
 from app.modules.chatbot.schemas.channels import CRMChatIn, WebsiteChatIn
-from app.modules.chatbot.schemas.default import SCHEMA_VERSION, ChannelType, OutboundModel
+from app.modules.chatbot.schemas.default import ChannelType
 from app.modules.chatbot.schemas.inbound import InboundRequest
 from app.modules.chatbot.schemas.security.principal import PrincipalContext, RequestContext
 from app.modules.chatbot.services import (
     ChatbotService,
     SessionAccessService,
     SessionNotFound,
-    VisitorIdentityService,
 )
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["chatbot"])
-
-
-class VisitorTokenOut(OutboundModel):
-    schema_version: Literal["1.0"] = SCHEMA_VERSION
-    token: str
-    token_type: Literal["Bearer"] = "Bearer"
-    expires_at: AwareDatetime
-
-
-@router.post("/chat/website/visitor", response_model=VisitorTokenOut)
-async def issue_visitor_token(
-    request: Request,
-    authorization: str | None = Header(default=None),
-    identity: VisitorIdentityService | None = Depends(get_visitor_identity_service),
-) -> VisitorTokenOut | JSONResponse:
-    request_id = request_id_of(request)
-    if identity is None:
-        return error_response(
-            request,
-            503,
-            "visitor_auth_not_configured",
-            "Website chat is not configured yet. Set VISITOR_TOKEN_SECRET on the backend.",
-            request_id,
-        )
-    issued = identity.issue(bearer_token(authorization))
-    set_outcome(request, "ok")
-    return VisitorTokenOut(token=issued.token, expires_at=issued.expires_at)
 
 
 @router.post("/chat/website", response_model=None)

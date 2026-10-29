@@ -6,7 +6,7 @@ cùng dạng với các lỗi JSON khác của router.
 
 import logging
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException, Request
@@ -14,8 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.request_context import current_request_id
-from app.core.security.service_key import InvalidServiceKey
-from app.core.security.visitor_token import InvalidVisitorToken
+from app.core.security.service_key import InvalidServiceKey, ServiceKeyChannelMismatch
 from app.db.session import get_db_session
 from app.modules.chatbot.repositories.chat_session_repository import ChatSessionRepository
 from app.modules.chatbot.repositories.history_repository import HistoryRepository
@@ -26,7 +25,6 @@ from app.modules.chatbot.services import (
     ChatbotService,
     ServiceAuthService,
     SessionAccessService,
-    VisitorIdentityService,
 )
 from app.modules.chatbot.stages.execution_stage import ExecutionStage
 from app.modules.chatbot.stages.prune_stage import Prune
@@ -66,16 +64,6 @@ def get_service_auth_service(
     db: AsyncSession = Depends(get_db_session),
 ) -> ServiceAuthService:
     return ServiceAuthService(ServiceKeyRepository(db))
-
-
-def get_visitor_identity_service() -> VisitorIdentityService | None:
-    if not settings.visitor_token_secret:
-        return None
-    return VisitorIdentityService(
-        secret=settings.visitor_token_secret,
-        issuer=settings.visitor_token_issuer,
-        ttl=timedelta(seconds=settings.visitor_token_ttl_seconds),
-    )
 
 
 def api_error(
@@ -122,42 +110,16 @@ def bearer_token(authorization: str | None) -> str | None:
     return token.strip()
 
 
-def get_website_principal(
+async def _authenticate_service(
     request: Request,
-    authorization: str | None = Header(default=None),
-    identity: VisitorIdentityService | None = Depends(get_visitor_identity_service),
+    auth: ServiceAuthService,
+    authorization: str | None,
+    channel: ChannelType,
 ) -> PrincipalContext:
-    if identity is None:
-        raise api_error(
-            503,
-            "visitor_auth_not_configured",
-            "Website chat is not configured yet. Set VISITOR_TOKEN_SECRET on the backend.",
-            request_id_of(request),
-        )
-    token = bearer_token(authorization)
-    try:
-        if token is None:
-            raise InvalidVisitorToken("missing")
-        return identity.authenticate(token)
-    except InvalidVisitorToken:
-        raise api_error(
-            401,
-            "unauthorized",
-            "Visitor token is missing or invalid. Request a new token and try again.",
-            request_id_of(request),
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from None
-
-
-async def get_crm_principal(
-    request: Request,
-    authorization: str | None = Header(default=None),
-    auth: ServiceAuthService = Depends(get_service_auth_service),
-) -> PrincipalContext:
-    """Principal service của CRM backend; `acting_user_id` do router gắn từ body."""
+    """Xác thực service key cho kênh của endpoint; mọi lỗi auth thành HTTPException."""
     request_id = request_id_of(request)
     try:
-        principal = await auth.authenticate(bearer_token(authorization))
+        principal = await auth.authenticate(bearer_token(authorization), channel)
     except InvalidServiceKey as error:
         # Lý do chỉ ghi log; client luôn nhận cùng một 401 để không lộ key nào tồn tại.
         # key_id là phần công khai của key, được phép log; secret thì không.
@@ -175,6 +137,21 @@ async def get_crm_principal(
             request_id,
             headers={"WWW-Authenticate": "Bearer"},
         ) from None
+    except ServiceKeyChannelMismatch as error:
+        logger.warning(
+            "Service key channel mismatch key_id=%s key_channel=%s expected=%s request_id=%s",
+            error.key_id,
+            error.key_channel,
+            error.expected,
+            request_id,
+        )
+        request.state.outcome = "service_key_channel_mismatch"
+        raise api_error(
+            403,
+            "service_key_channel_mismatch",
+            "This service key is not allowed to call this endpoint.",
+            request_id,
+        ) from None
     except Exception:
         logger.exception("Service key lookup failed (request_id=%s)", request_id)
         request.state.outcome = "database_unavailable"
@@ -185,12 +162,31 @@ async def get_crm_principal(
             request_id,
         ) from None
     logger.debug(
-        "Service key accepted integration_id=%s key_id=%s request_id=%s",
+        "Service key accepted integration_id=%s key_id=%s channel=%s request_id=%s",
         principal.subject_id,
         principal.credential_id,
+        channel.value,
         request_id,
     )
     return principal
+
+
+async def get_website_principal(
+    request: Request,
+    authorization: str | None = Header(default=None),
+    auth: ServiceAuthService = Depends(get_service_auth_service),
+) -> PrincipalContext:
+    """Principal của website backend; khách ẩn danh do website backend tự quản lý."""
+    return await _authenticate_service(request, auth, authorization, ChannelType.WEBSITE)
+
+
+async def get_crm_principal(
+    request: Request,
+    authorization: str | None = Header(default=None),
+    auth: ServiceAuthService = Depends(get_service_auth_service),
+) -> PrincipalContext:
+    """Principal của CRM backend; `acting_user_id` do router gắn từ body."""
+    return await _authenticate_service(request, auth, authorization, ChannelType.CRM)
 
 
 def get_idempotency_key(

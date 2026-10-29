@@ -5,8 +5,9 @@ import {apiFetch} from './api.service.js'
 import {getClientContext} from '../utils/client-context.js';
 import {newMessageId} from '../utils/generate-message-id.js';
 
-const VISITOR_TOKEN_KEY = "visitor_token";
-const SESSION_ID_KEY = "chatbot_session_id";
+// Widget gọi widget-backend (cùng origin qua proxy /api), không gọi thẳng dịch vụ AI:
+// service key, visitor_id và session_id đều nằm ở server/cookie HttpOnly.
+const WIDGET_API_URL = (import.meta.env.VITE_WIDGET_API_URL || '').replace(/\/$/, '');
 
 export const getChats = async (config = {}) => {
     const res = await apiFetch.get("/chats", config);
@@ -60,19 +61,6 @@ export class ChatStreamError extends Error {
     }
 }
 
-// Visitor token định danh khách website; server ký, gửi lại token cũ để giữ cùng guest.
-const requestVisitorToken = async (currentToken) => {
-    const res = await apiFetch.post('/chat/website/visitor', null, {
-        headers: currentToken ? { Authorization: `Bearer ${currentToken}` } : {},
-    });
-    localStorage.setItem(VISITOR_TOKEN_KEY, res.data.token);
-    return res.data.token;
-};
-
-const ensureVisitorToken = async () => (
-    localStorage.getItem(VISITOR_TOKEN_KEY) || requestVisitorToken(null)
-);
-
 const readErrorDetail = async (response) => {
     try {
         const payload = await response.json();
@@ -82,43 +70,38 @@ const readErrorDetail = async (response) => {
     }
 };
 
+// Lịch sử hội thoại hiện tại của khách; widget-backend đọc session từ cookie.
+export const getWidgetHistory = async ({ signal } = {}) => {
+    const response = await fetch(`${WIDGET_API_URL}/api/chat/history`, {
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+        signal,
+    });
+    if (!response.ok) {
+        const detail = await readErrorDetail(response);
+        throw new ChatStreamError(detail.message || `History request failed (${response.status})`, detail.code);
+    }
+    return response.json();
+};
+
 // POST requires fetch (EventSource only supports GET). The backend uses SSE framing.
 export const streamChatbotResponse = async (message, { signal, onChunk } = {}) => {
-    const baseURL = (apiFetch.defaults.baseURL || '').replace(/\/$/, '');
-    // Một key cho một tin nhắn: giữ nguyên khi retry chính request này.
-    const idempotencyKey = newMessageId();
-
-    const send = async (visitorToken) => fetch(`${baseURL}/chat/website`, {
+    // Session hết hạn được widget-backend tự mở lại; trình duyệt không giữ session_id.
+    const response = await fetch(`${WIDGET_API_URL}/api/chat`, {
         method: 'POST',
         credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
             Accept: 'text/event-stream',
-            Authorization: `Bearer ${visitorToken}`,
-            'Idempotency-Key': idempotencyKey,
+            'Idempotency-Key': newMessageId(),
         },
         body: JSON.stringify({
-            schema_version: '1.0',
-            session_id: localStorage.getItem(SESSION_ID_KEY) || null,
             message: { text: message },
             client_context: getClientContext(),
         }),
         signal,
     });
-
-    let response = await send(await ensureVisitorToken());
-    let detail = response.ok ? null : await readErrorDetail(response);
-    if (response.status === 401) {
-        // Token hết hạn/sai: xin token mới rồi thử lại một lần.
-        response = await send(await requestVisitorToken(localStorage.getItem(VISITOR_TOKEN_KEY)));
-        detail = response.ok ? null : await readErrorDetail(response);
-    }
-    if (response.status === 404 && detail?.code === 'session_not_found') {
-        // Session cũ không còn thuộc khách này: bắt đầu hội thoại mới.
-        localStorage.removeItem(SESSION_ID_KEY);
-        response = await send(localStorage.getItem(VISITOR_TOKEN_KEY));
-        detail = response.ok ? null : await readErrorDetail(response);
-    }
+    const detail = response.ok ? null : await readErrorDetail(response);
 
     if (!response.ok) {
         const details = typeof detail?.message === 'string'
@@ -147,12 +130,7 @@ export const streamChatbotResponse = async (message, { signal, onChunk } = {}) =
         try {
             const payload = JSON.parse(rawData);
             if (eventName === 'delta' && typeof payload.text === 'string') onChunk?.(payload.text);
-            if (eventName === 'done') {
-                receivedDone = true;
-                if (typeof payload.session_id === 'string' && payload.session_id) {
-                    localStorage.setItem(SESSION_ID_KEY, payload.session_id);
-                }
-            }
+            if (eventName === 'done') receivedDone = true;
             if (eventName === 'error') throw new ChatStreamError(payload.message || 'Chat service failed.', payload.code);
         } catch (error) {
             if (error instanceof ChatStreamError) throw error;

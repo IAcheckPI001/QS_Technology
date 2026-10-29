@@ -2,11 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { LoaderCircle, Send, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
-import { getChatHistory, streamChatbotResponse } from '../services/chatbot.service.js';
+import { getWidgetHistory, streamChatbotResponse } from '../services/chatbot.service.js';
 import styles from './Chatbot.module.css';
 
 const MAX_REQUEST_LENGTH = 1500;
-const SESSION_ID_KEY = 'chatbot_session_id';
 
 function makeMessageId() {
     return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -23,11 +22,9 @@ function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
     const endOfMessagesRef = useRef(null);
 
     useEffect(() => {
-        const sessionId = localStorage.getItem(SESSION_ID_KEY);
-        if (!sessionId) return undefined;
-
+        // widget-backend trả hội thoại hiện tại theo cookie; chưa có thì messages rỗng.
         const controller = new AbortController();
-        getChatHistory(sessionId, { signal: controller.signal })
+        getWidgetHistory({ signal: controller.signal })
             .then((history) => {
                 if (controller.signal.aborted) return;
                 const restoredMessages = history.messages.flatMap((item) => {
@@ -39,13 +36,8 @@ function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
                 });
                 setMessages(restoredMessages);
             })
-            .catch((error) => {
+            .catch(() => {
                 if (controller.signal.aborted) return;
-                if (error?.response?.status === 404) {
-                    localStorage.removeItem(SESSION_ID_KEY);
-                    setMessages([]);
-                    return;
-                }
                 setRequestError(t('chatbot.historyError', { defaultValue: 'Không thể tải lịch sử hội thoại.' }));
             });
 

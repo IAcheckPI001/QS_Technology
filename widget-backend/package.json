@@ -1,0 +1,14 @@
+{
+  "name": "qs-widget-backend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Backend cho chatbot widget: quản lý khách ẩn danh bằng cookie và gọi dịch vụ AI bằng service key.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "test": "node --test"
+  }
+}

@@ -67,6 +67,7 @@ class QueryAnalyzer:
             raise AnalysisError("analysis_provider_error", "Query analysis failed.") from exc
 
         data = self._coerce(resp)
+        print("data", data)
         if data is None:
             log.warning("query_analysis invalid output")
             raise AnalysisError("analysis_invalid_output", "Query analysis returned invalid output.")

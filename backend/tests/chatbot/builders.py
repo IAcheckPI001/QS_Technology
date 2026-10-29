@@ -18,11 +18,14 @@ from app.modules.chatbot.schemas.system import RunState
 DEFAULT_SESSION_ID = UUID("00000000-0000-0000-0000-000000000001")
 
 
-def make_principal(subject_id: str = "guest-1") -> PrincipalContext:
+def make_principal(subject_id: str = "website_main") -> PrincipalContext:
+    """Principal của website backend: service key, không có người dùng cụ thể."""
     return PrincipalContext(
         subject_id=subject_id,
-        principal_type="guest",
-        authn_method="guest_token",
+        principal_type="service",
+        tenant_id="qs_technology",
+        authn_method="service_key",
+        credential_id="fedcba9876543210",
     )
 
 

@@ -1,8 +1,14 @@
 from datetime import UTC, datetime
 from typing import Protocol
 
-from app.core.security.service_key import InvalidServiceKey, parse_service_key, secret_matches
+from app.core.security.service_key import (
+    InvalidServiceKey,
+    ServiceKeyChannelMismatch,
+    parse_service_key,
+    secret_matches,
+)
 from app.modules.chatbot.repositories.service_key_repository import ServiceKeyRecord
+from app.modules.chatbot.schemas.default import ChannelType
 from app.modules.chatbot.schemas.security.principal import PrincipalContext
 
 
@@ -11,14 +17,16 @@ class ServiceKeyStore(Protocol):
 
 
 class ServiceAuthService:
-    """Xác minh service key của hệ thống tích hợp (principal_type="service")."""
+    """Xác minh service key của hệ thống tích hợp và quyền gọi kênh của endpoint."""
 
     def __init__(self, repository: ServiceKeyStore) -> None:
         self._repository = repository
 
-    async def authenticate(self, token: str | None) -> PrincipalContext:
-        """Raise InvalidServiceKey nếu key thiếu/sai/thu hồi/hết hạn.
+    async def authenticate(self, token: str | None, channel: ChannelType) -> PrincipalContext:
+        """Raise InvalidServiceKey nếu key thiếu/sai/thu hồi/hết hạn, và
+        ServiceKeyChannelMismatch nếu key không được cấp cho `channel`.
 
+        `channel` do endpoint quyết định; kênh của key chỉ để đối chiếu quyền.
         Lỗi đọc DB được để nguyên cho caller: không được quy thành 401.
         """
         parsed = parse_service_key(token)
@@ -34,6 +42,8 @@ class ServiceAuthService:
             raise InvalidServiceKey("expired", parsed.key_id)
         if record.integration_disabled_at is not None:
             raise InvalidServiceKey("integration_disabled", parsed.key_id)
+        if record.channel != channel.value:
+            raise ServiceKeyChannelMismatch(parsed.key_id, record.channel, channel.value)
         return PrincipalContext(
             subject_id=record.integration_id,
             principal_type="service",

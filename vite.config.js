@@ -7,5 +7,9 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    // Widget chat gọi widget-backend cùng origin để cookie HttpOnly hoạt động.
+    proxy: {
+      '/api': 'http://localhost:8787',
+    },
   },
 })

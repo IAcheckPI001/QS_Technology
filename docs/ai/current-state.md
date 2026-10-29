@@ -77,17 +77,20 @@ provider layer, and database access remains in the repository layer.
    expired): the same ID is reused.
 3. Any other UUID (unknown, other owner, legacy session that exists only in
    `chat_history`): `404 session_not_found`; a non-UUID value is a 422.
-4. The authoritative UUID is returned in the existing SSE `done` event.
-5. The frontend stores it in `localStorage` under `chatbot_session_id` and, on
-   `session_not_found`, clears it and retries once with a new session.
-6. Website principals come from a server-signed visitor token
-   (`POST /chat/website/visitor`, `VISITOR_TOKEN_SECRET`). CRM backends call
-   `POST /chat/crm` with a per-integration service key
-   (`backend/sql/service_keys.sql`, CLI `app.modules.chatbot.service_keys_cli`)
-   and send `user_id`; CRM sessions are owned by (integration, `user_id`).
-   The CRM widget keeps `session_id` in UI state and sends `null` for a new
-   conversation.
-7. `backend/sql/chat_sessions.sql` must be applied on Supabase first.
+4. The authoritative UUID is returned in the SSE `done` event and in the
+   `X-Session-ID` response header.
+5. The AI service authenticates only service keys bound to a channel
+   (`backend/sql/service_keys.sql`, CLI `app.modules.chatbot.service_keys_cli`).
+   The visitor-token flow was removed (2026-10-29).
+6. Website: `widget-backend/` calls `POST /chat/website` with the website key.
+   It keeps `session_id` in an HttpOnly cookie (`qs_chat_session`), issues an
+   anonymous `qs_visitor` cookie that is never sent to the AI service, and on
+   `session_not_found` clears the cookie and retries once. Website sessions are
+   owned by the website integration.
+7. CRM: CRM backends call `POST /chat/crm` and send `user_id`; CRM sessions are
+   owned by (integration, `user_id`). The CRM widget keeps `session_id` in UI
+   state and sends `null` for a new conversation.
+8. `backend/sql/chat_sessions.sql` must be applied on Supabase first.
 
 Clearing that local key starts a new active conversation but does not delete
 historical database records. Deletion is not currently implemented.
@@ -160,8 +163,10 @@ historical database records. Deletion is not currently implemented.
 
 5. **Ownership only on chat writes**
    - `POST /chat/*` binds sessions to the principal via `public.chat_sessions`
-     (website: visitor token). The GET history/retrieval/conversation endpoints
-     do not check ownership yet.
+     (service key integration, plus `user_id` for CRM). The GET
+     history/retrieval/conversation endpoints do not check authentication or
+     ownership yet; Support Workspace calls them directly from the browser and
+     widget-backend calls the history endpoint server-to-server.
    - Production history reads must remain disabled until ownership checks exist.
 
 6. **Idempotency key stored, not enforced**
@@ -220,7 +225,8 @@ historical database records. Deletion is not currently implemented.
    session ordering.
 7. Decide whether reads support authenticated users, anonymous visitors, or
    both.
-8. For anonymous access, add server-issued visitor-token ownership binding.
+8. Anonymous website visitors are bound to sessions by widget-backend
+   cookies; the AI service GET endpoints still need service-key auth.
 9. For authenticated access, validate account ownership.
 10. Add authorization tests for matching and mismatched session/token pairs.
 
@@ -312,6 +318,14 @@ ORM expects that column, and it has not been verified against the live table.
 - CRM service key auth (`/chat/crm`, `ServiceAuthService`, `acting_user_id`
   session ownership) (2026-10-29): **319 passed, 0 failed**. `npm run build`
   passed; `npm run lint` still fails on pre-existing errors in `src/`.
+- AI service is service-key only (visitor token removed, keys bound to a
+  channel, `X-Session-ID` header) and `widget-backend/` added (2026-10-29):
+  backend pytest **311 passed, 0 failed**; `node --test` in `widget-backend`
+  **15 passed**; `npm run build` passed; `npm run lint` unchanged (139
+  pre-existing errors in `src/`). End-to-end against live Supabase: **not
+  verified**. Backlog: rate limit in widget-backend, "new conversation" button
+  (BFF has `POST /api/chat/reset`), docker-compose service for widget-backend,
+  Support Workspace default session (no longer in `localStorage`).
 - Live Supabase connectivity/insert: **not verified**.
 
 ## Architectural impact

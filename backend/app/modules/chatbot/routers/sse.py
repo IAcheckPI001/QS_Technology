@@ -116,10 +116,13 @@ def stream_chat(
     return StreamingResponse(
         event_stream(),
         media_type="text/event-stream",
-        # Cùng giá trị RequestContextMiddleware ghi đè; vẫn đặt cho app không có middleware.
+        # X-Request-ID: cùng giá trị RequestContextMiddleware ghi đè; vẫn đặt cho app
+        # không có middleware. X-Session-ID: session đã resolve trước khi stream, để
+        # bên tích hợp lưu (ví dụ đặt cookie) trước khi nhận body.
         headers={
             "Cache-Control": "no-cache, no-transform",
             "X-Accel-Buffering": "no",
             "X-Request-ID": request_id,
+            "X-Session-ID": session_id,
         },
     )

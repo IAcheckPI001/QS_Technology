@@ -15,6 +15,7 @@ class ServiceKeyRecord:
     revoked_at: datetime | None
     integration_id: str
     tenant_id: str
+    channel: str
     integration_disabled_at: datetime | None
 
 
@@ -40,5 +41,6 @@ class ServiceKeyRepository:
             revoked_at=key.revoked_at,
             integration_id=integration.id,
             tenant_id=integration.tenant_id,
+            channel=integration.channel,
             integration_disabled_at=integration.disabled_at,
         )

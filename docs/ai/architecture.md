@@ -35,19 +35,36 @@ Module chatbot (`backend/app/modules/chatbot/`):
 ```text
 routers/      chat.py (POST /chat/*), workspace.py (GET /chatbot/*), sse.py (SSE + map lỗi)
 dependencies.py  service/repository, RequestContext, auth theo kênh, Idempotency-Key
-services/     chat_service.py (ChatbotService), session_access.py, visitor_identity.py
+services/     chat_service.py (ChatbotService), session_access.py, service_auth.py
 adapters/     website.py, crm.py: schema kênh -> InboundRequest
 repositories/ history_repository.py, chat_session_repository.py, doc_chunk_repository.py
 ```
 
 Router không tự khởi tạo provider hoặc repository.
 
+## Ba thành phần khi chạy
+
+```text
+Trình duyệt (widget src/chatbot)
+  └─ cookie HttpOnly qs_visitor, qs_chat_session ─▶ widget-backend/ (Node, :8787)
+       └─ Bearer qsk_… (key kênh website) + {session_id, message} ─▶ backend/ dịch vụ AI (:8000) POST /chat/website
+CRM backend ─ Bearer qsk_… (key kênh crm) + {user_id, session_id, message} ─▶ dịch vụ AI POST /chat/crm
+```
+
+- **Dịch vụ AI** (`backend/`): chỉ xác thực service key và xử lý chat; không
+  biết khách website.
+- **widget-backend** (`widget-backend/`): giữ `CHATBOT_API_KEY`, cấp
+  `visitor_id` ẩn danh, giữ `session_id` trong cookie HttpOnly (đọc từ header
+  `X-Session-ID`), chuyển tiếp SSE và gỡ `session_id` khỏi event `done`.
+- **Widget** (`src/`): chỉ gọi `/api/chat` và `/api/chat/history` cùng origin
+  (Vite proxy `/api` khi dev). Support Workspace vẫn gọi thẳng GET
+  `/chatbot/...` của dịch vụ AI (chưa xác thực).
+
 ## Luồng `POST /chat/website` (và `POST /chat/crm`)
 
 1. Middleware chốt `request_id`. Dependency dựng `RequestContext` (channel do
-   endpoint quyết định), xác thực principal (website: visitor token HS256 →
-   `guest`; CRM: service key qua `ServiceAuthService` → `service`) và đọc
-   `Idempotency-Key`. Với CRM, router gắn `user_id` của body vào principal bằng
+   endpoint quyết định), xác thực service key qua `ServiceAuthService` (key phải
+   được cấp cho kênh của endpoint) và đọc `Idempotency-Key`. Với CRM, router gắn `user_id` của body vào principal bằng
    `PrincipalContext.acting_for()`.
 2. Router parse schema kênh (`WebsiteChatIn`/`CRMChatIn`); Pydantic kiểm tra
    schema version, `session_id` UUID, giới hạn text và client context. Nếu chưa
@@ -205,8 +222,8 @@ Router không tự khởi tạo provider hoặc repository.
 
 ## API surface hiện tại
 
-Đang public: `GET /health`, `GET /health/db`, `POST /chat/website/visitor`,
-`POST /chat/website`, `POST /chat/crm` (service key server-to-server)
+Đang public: `GET /health`, `GET /health/db`, `POST /chat/website` và
+`POST /chat/crm` (service key server-to-server, đúng kênh)
 và các GET `/chatbot/...` của Support Workspace. Module `learning_ai` cung cấp
 `POST /ai/learning` và các endpoint support-chat khi `LEARNING_API_ENABLED=true`
 (xem mục dưới). Quyền nhân viên CRM theo `user_id`, ownership cho các GET history, chống xử lý trùng

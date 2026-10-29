@@ -11,8 +11,8 @@ Các route hiện được include từ `backend/app/api/v1/router.py`:
 
 - `GET /health`: kiểm tra process đang chạy, trả `{"status": "ok"}`.
 - `GET /health/db`: chạy database connectivity check, trả trạng thái database.
-- `POST /chat/website/visitor`: cấp/làm mới visitor token cho khách website.
-- `POST /chat/website`: chat của khách website (visitor token), trả
+- `POST /chat/website`: chat từ website backend (server-to-server, service key
+  kênh `website`), trả
   `text/event-stream`.
 - `POST /chat/crm`: chat từ CRM backend (server-to-server, service key), trả
   `text/event-stream`.
@@ -209,6 +209,7 @@ Lỗi trả `{"detail": {"code", "message", "request_id"}}` với message tổng
 
 | HTTP | `code` | Khi nào |
 |---|---|---|
+| 403 | `service_key_channel_mismatch` | Key hợp lệ nhưng cấp cho kênh khác endpoint (ví dụ key website gọi `/chat/crm`) |
 | 404 | `session_not_found` | Session không có row nào |
 | 422 | (FastAPI) | `session_id` không phải UUID, sai `schema_version`, field lạ |
 | 503 | `privacy_provider_not_configured` | Bật route nhưng thiếu `OLLAMA_BASE_URL`/`OLLAMA_MODEL` |
@@ -231,43 +232,50 @@ với header. Dòng log `http_request_finished` có `outcome=` do route ghi
 
 ## Xác thực theo kênh
 
-Channel do endpoint quyết định, không lấy từ body. Principal
-(`PrincipalContext`) chỉ do auth dependency dựng
-(`backend/app/modules/chatbot/dependencies.py`), không bao giờ từ body.
+Dịch vụ AI chỉ có một cách xác thực: **service key** của hệ thống tích hợp
+(website backend, CRM backend), gửi server-to-server
+`Authorization: Bearer qsk_<key_id>_<secret>`. Key chỉ lưu ở server tích hợp
+(`.env`), **không** đưa xuống JavaScript trình duyệt. Khách website ẩn danh do
+website backend tự quản lý (xem `widget-backend/README.md`); dịch vụ AI không
+biết khách là ai.
 
-- **Website (guest)**: client gọi `POST /chat/website/visitor` (không body)
-  để nhận `{"schema_version": "1.0", "token", "token_type": "Bearer",
-  "expires_at"}`. Token là JWT HS256 do server ký bằng `VISITOR_TOKEN_SECRET`
-  (`sub` = `guest_id`, TTL `VISITOR_TOKEN_TTL_SECONDS`, mặc định 7 ngày). Gửi kèm
-  `Authorization: Bearer <token>` còn hợp lệ thì được làm mới cùng `guest_id`;
-  thiếu/sai/hết hạn thì nhận `guest_id` mới. Chat gửi
-  `Authorization: Bearer <token>`.
-- **CRM (service)**: CRM backend gửi `Authorization: Bearer qsk_<key_id>_<secret>`.
-  Key cấp cho từng hệ thống tích hợp, chỉ lưu ở server CRM (`.env`), **không**
-  đưa xuống JavaScript trình duyệt và không bật CORS cho luồng này. Chatbot tra
-  `key_id` trong `public.service_keys` (chỉ lưu SHA-256 của secret), so sánh hằng
-  thời gian, kiểm tra `revoked_at`/`expires_at` và `disabled_at` của integration,
-  rồi dựng principal `service`:
+Channel do **endpoint** quyết định (`/chat/website` → `website`, `/chat/crm` →
+`crm`), không lấy từ body. Mỗi integration được cấp cho đúng một kênh
+(`service_integrations.channel`); kênh của key chỉ để đối chiếu quyền: key gọi
+endpoint khác kênh nhận `403 service_key_channel_mismatch`.
+
+Dịch vụ tra `key_id` trong `public.service_keys` (chỉ lưu SHA-256 của secret),
+so sánh hằng thời gian, kiểm tra `revoked_at`/`expires_at`, `disabled_at` và
+`channel` của integration, rồi dựng principal `service`:
 
   | Trường | Nguồn |
   |---|---|
   | `subject_id` | `service_integrations.id` (giữ nguyên khi xoay vòng key) |
   | `tenant_id` | `service_integrations.tenant_id` (hiện cố định `qs_technology`) |
   | `credential_id` | `service_keys.id` (= `key_id`; audit/thu hồi) |
-  | `acting_user_id` | `user_id` trong body |
+  | `acting_user_id` | CRM: `user_id` trong body; website: không có |
   | `roles`, `scopes` | rỗng (chưa dùng) |
 
-  `user_id` là giá trị CRM khẳng định sau khi tự xác thực nhân viên; Chatbot
+  `user_id` là giá trị CRM khẳng định sau khi tự xác thực nhân viên; dịch vụ
   tin vì tin key. Key bị lộ thì có thể mạo danh mọi nhân viên của integration
-  đó: thu hồi và cấp key mới (`python -m app.modules.chatbot.service_keys_cli
-  create|revoke`, chạy từ `backend/`). Áp dụng `backend/sql/service_keys.sql`
-  trước khi deploy.
+  đó. Session website thuộc về integration website: dịch vụ tin website backend
+  chỉ gửi `session_id` của đúng khách.
+
+  Cấp và thu hồi key (chạy từ `backend/`, sau khi áp `backend/sql/service_keys.sql`):
+
+  ```powershell
+  # Integration mới: bắt buộc --channel; --name mặc định bằng integration-id
+  python -m app.modules.chatbot.service_keys_cli create --integration-id website_main --channel website
+  # Xoay vòng: cấp key mới cho integration đã có (giữ kênh/tên), rồi thu hồi key cũ
+  python -m app.modules.chatbot.service_keys_cli create --integration-id website_main
+  python -m app.modules.chatbot.service_keys_cli revoke --key-id <key_id>
+  ```
 
 ## `POST /chat/website` và `POST /chat/crm`
 
 Header:
 
-- `Authorization: Bearer <token>`: bắt buộc.
+- `Authorization: Bearer qsk_<key_id>_<secret>`: bắt buộc, key đúng kênh.
 - `Idempotency-Key: <uuid>`: tùy chọn. Client tạo một key cho mỗi tin nhắn mới
   và giữ nguyên khi retry chính request đó. **Hiện chỉ được lưu vào
   `chat_history.idempotency_key`; backend chưa chống xử lý trùng.**
@@ -324,12 +332,10 @@ Lỗi trước khi mở stream trả JSON `{"detail": {"code", "message", "reque
 
 | HTTP | `code` | Khi nào |
 |---|---|---|
-| 401 | `unauthorized` | Thiếu/sai/hết hạn visitor token (kèm `WWW-Authenticate: Bearer`) |
 | 401 | `invalid_service_key` | `/chat/crm`: thiếu, sai định dạng, không tồn tại, sai secret, bị thu hồi, hết hạn key, hoặc integration bị disable. Cùng một body cho mọi lý do; lý do chỉ ghi log `Service key rejected reason=... key_id=...` (kèm `WWW-Authenticate: Bearer`) |
 | 404 | `session_not_found` | `session_id` không thuộc principal/kênh, bị thu hồi hoặc hết hạn |
 | 422 | `invalid_idempotency_key` | `Idempotency-Key` không phải UUID |
 | 422 | (FastAPI) | Body sai schema |
-| 503 | `visitor_auth_not_configured` | Chưa đặt `VISITOR_TOKEN_SECRET` |
 | 503 | `provider_not_configured` | Chưa đặt `OPENAI_API_KEY` |
 | 503 | `database_unavailable` | Không đọc/tạo được session, hoặc không tra được service key (không quy thành 401) |
 
@@ -342,6 +348,9 @@ Route trả `StreamingResponse` với:
 - `Content-Type: text/event-stream`;
 - `Cache-Control: no-cache, no-transform`;
 - `X-Request-ID` do middleware tạo và expose qua CORS.
+- `X-Session-ID`: session đã resolve (trùng `session_id` trong event `done`),
+  gửi trong header để bên tích hợp lưu trước khi đọc body (widget-backend đặt
+  cookie từ header này).
 
 Các event hiện có:
 

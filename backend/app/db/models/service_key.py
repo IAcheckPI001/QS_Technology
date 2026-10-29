@@ -14,6 +14,8 @@ class ServiceIntegration(Base):
 
     id: Mapped[str] = mapped_column(String(128), primary_key=True)
     tenant_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    # Kênh (endpoint) mà key của integration được phép gọi: crm | website.
+    channel: Mapped[str] = mapped_column(String(16), nullable=False)
     name: Mapped[str] = mapped_column(String(256), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

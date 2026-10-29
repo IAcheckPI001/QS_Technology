@@ -35,6 +35,16 @@ class InvalidServiceKey(Exception):
         self.key_id = key_id
 
 
+class ServiceKeyChannelMismatch(Exception):
+    """Key hợp lệ nhưng cấp cho kênh khác với endpoint được gọi."""
+
+    def __init__(self, key_id: str, key_channel: str, expected: str) -> None:
+        super().__init__(f"{key_channel} != {expected}")
+        self.key_id = key_id
+        self.key_channel = key_channel
+        self.expected = expected
+
+
 @dataclass(frozen=True)
 class ParsedServiceKey:
     key_id: str

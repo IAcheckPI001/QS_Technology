@@ -45,7 +45,8 @@ def test_missing_session_id_creates_session_owned_by_principal():
     session_id = _resolve(store, None)
 
     row = store.rows[session_id]
-    assert (row.principal_type, row.subject_id, row.channel) == ("guest", "guest-1", "website")
+    assert (row.principal_type, row.subject_id, row.acting_user_id, row.channel) == (
+        "service", "website_main", None, "website")
 
 
 def test_owner_can_resume_session():
@@ -56,11 +57,7 @@ def test_owner_can_resume_session():
     assert store.touched == [session_id]
 
 
-def _service_named_like_guest():
-    return make_service_principal(integration_id="guest-1")
-
-
-@pytest.mark.parametrize("case", ["unknown", "other_guest", "other_type", "other_channel",
+@pytest.mark.parametrize("case", ["unknown", "other_integration", "with_acting_user", "other_channel",
                                   "revoked", "expired"])
 def test_inaccessible_session_is_not_found(case):
     store = FakeSessionStore()
@@ -68,10 +65,10 @@ def test_inaccessible_session_is_not_found(case):
     principal, channel = make_principal(), ChannelType.WEBSITE
     if case == "unknown":
         session_id = uuid4()
-    elif case == "other_guest":
-        principal = make_principal("guest-2")
-    elif case == "other_type":
-        principal = _service_named_like_guest()
+    elif case == "other_integration":
+        principal = make_principal("website_other")
+    elif case == "with_acting_user":
+        principal = make_service_principal("employee-1", integration_id="website_main")
     elif case == "other_channel":
         channel = ChannelType.CRM
     elif case == "revoked":
