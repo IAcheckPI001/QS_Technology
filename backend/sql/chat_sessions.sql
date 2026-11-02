@@ -47,6 +47,12 @@ BEGIN
     END IF;
 END $$;
 
+-- Lease "đang có một lượt chạy" của phiên: chặn hai lượt chạy song song trên cùng
+-- phiên (gửi đúp, hai tab). Lượt kết thúc thì về NULL; tiến trình chết giữa chừng
+-- thì lease tự hết hạn (CHAT_TURN_LEASE_S).
+ALTER TABLE public.chat_sessions
+    ADD COLUMN IF NOT EXISTS turn_lease_until TIMESTAMPTZ;
+
 -- Header Idempotency-Key của client, lưu theo từng lượt. Hiện chỉ lưu, chưa
 -- chống xử lý trùng nên index chưa UNIQUE.
 ALTER TABLE public.chat_history

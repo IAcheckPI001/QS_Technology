@@ -1,6 +1,8 @@
 // Cookie của widget: đều HttpOnly nên JavaScript (kể cả XSS) không đọc được.
 export const VISITOR_COOKIE = 'qs_visitor';
 export const SESSION_COOKIE = 'qs_chat_session';
+// Session của route kiểm thử /api/chat/crm, tách khỏi session website.
+export const CRM_SESSION_COOKIE = 'qs_crm_session';
 
 export const VISITOR_MAX_AGE = 365 * 24 * 3600;
 export const SESSION_MAX_AGE = 30 * 24 * 3600;

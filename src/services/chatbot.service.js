@@ -85,9 +85,9 @@ export const getWidgetHistory = async ({ signal } = {}) => {
 };
 
 // POST requires fetch (EventSource only supports GET). The backend uses SSE framing.
-export const streamChatbotResponse = async (message, { signal, onChunk } = {}) => {
-    // Session hết hạn được widget-backend tự mở lại; trình duyệt không giữ session_id.
-    const response = await fetch(`${WIDGET_API_URL}/api/chat`, {
+// Session hết hạn được widget-backend tự mở lại; trình duyệt không giữ session_id.
+const streamSse = async (path, body, { signal, onChunk } = {}) => {
+    const response = await fetch(`${WIDGET_API_URL}${path}`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -95,10 +95,7 @@ export const streamChatbotResponse = async (message, { signal, onChunk } = {}) =
             Accept: 'text/event-stream',
             'Idempotency-Key': newMessageId(),
         },
-        body: JSON.stringify({
-            message: { text: message },
-            client_context: getClientContext(),
-        }),
+        body: JSON.stringify(body),
         signal,
     });
     const detail = response.ok ? null : await readErrorDetail(response);
@@ -174,6 +171,18 @@ export const streamChatbotResponse = async (message, { signal, onChunk } = {}) =
         reader.releaseLock();
     }
 };
+
+export const streamChatbotResponse = (message, options = {}) => streamSse('/api/chat', {
+    message: { text: message },
+    client_context: getClientContext(),
+}, options);
+
+// Chỉ để kiểm thử kênh CRM: widget-backend proxy sang /chat/crm (route chỉ bật khi có
+// CHATBOT_CRM_API_KEY). userId là dữ liệu mẫu, không phải nhân viên đã xác thực.
+export const streamCrmChatbotResponse = (message, { userId, ...options } = {}) => streamSse('/api/chat/crm', {
+    user_id: userId,
+    message: { text: message },
+}, options);
 
 export const checkSession = async () => {
   const res = await apiFetch.get("/check-session");

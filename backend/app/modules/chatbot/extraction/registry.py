@@ -8,6 +8,9 @@ from typing import Any
  
 MAX_SUB_QUERIES = 3
 MAX_CANDIDATES = 3
+# Tìm model theo tiêu chí: tối đa bấy nhiêu model thì agent tự tra tiếp từng model,
+# nhiều hơn thì hỏi nhân viên chọn.
+MAX_AUTO_LOOKUP_MODELS = 3
 FUZZY_CUTOFF = 0.6
 DOMAINS = ("technical_docs", "company_info", "product_catalog")
 SCOPES = ("installation", "operation", "configuration", "maintenance")
@@ -144,7 +147,23 @@ REGISTRY: dict[str, Any] = {
     "handoff_reasons": [
         "pricing", "warranty", "policy", "purchase", "shipping", "human_request",
     ],
- 
+
+    # ------------------------------------------------------------- capabilities
+    # Phần cứng HỖ TRỢ gì (khác coverage: có TÀI LIỆU gì). Closed world: mọi model
+    # đều có một dòng; interface không liệt kê nghĩa là không hỗ trợ. Dùng để tìm
+    # model theo tiêu chí bằng code thay vì đọc văn bản RAG.
+    "capabilities": {
+        "control_interface": {
+            "F54": ["pulse_train"],
+            "F86": ["pulse_train", "ethercat"],
+            "F10T": ["pulse_train", "ethercat"],
+            "ASTRO_10S": ["pulse_train", "ethercat"],
+            "ASTRO_6AH": ["pulse_train", "ethercat", "mechatrolink"],
+            "ASTRO_6AV": ["pulse_train", "ethercat", "mechatrolink"],
+            "ASTRO_10I": ["pulse_train", "ethercat", "mechatrolink"],
+        },
+    },
+
     # ----------------------------------------------------------------- coverage
     # None            : không phụ thuộc model
     # list[model]     : model có dữ liệu

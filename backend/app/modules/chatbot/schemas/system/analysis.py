@@ -14,6 +14,8 @@ class Route(StrEnum):
     HANDOFF = "handoff"
     CLARIFY = "clarify"
     OUT_OF_SCOPE = "out_of_scope"
+    # Chỉ luồng agent: đã tìm model bằng bảng capabilities, không cần retrieval.
+    CATALOG = "catalog"
 
 
 class Intent(SystemModel):
@@ -30,6 +32,12 @@ class ExtractedEntities(SystemModel):
     product_models: list[NonEmptyStr] = Field(default_factory=list)
     unresolved_mentions: list[NonEmptyStr] = Field(default_factory=list)
     control_interface: list[NonEmptyStr] = Field(default_factory=list)
+    # Điều kiện tìm model: interface phải KHÔNG hỗ trợ, và cách kết hợp control_interface.
+    excluded_control_interface: list[NonEmptyStr] = Field(default_factory=list)
+    interface_match: Literal["all", "any"] = "all"
+    # Điều kiện trong câu hỏi không biểu diễn được bằng các trường trên (vd. "6 trục",
+    # "Profinet"): không được bỏ qua khi tìm model.
+    unmapped_conditions: list[NonEmptyStr] = Field(default_factory=list)
     spec_attributes: list[NonEmptyStr] = Field(default_factory=list)
 
 

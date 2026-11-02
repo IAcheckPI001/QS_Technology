@@ -48,11 +48,35 @@ def update_conversation_state(state: RunState) -> ConversationState:
         pending = current.pending.model_copy(update={"ttl": ttl}) if ttl > 0 else None
         attempts = current.clarify_attempts if pending else 0
 
-    turn_models = list(dict.fromkeys(
+    turn_models = [
         model
         for sub_query in analysis.sub_queries
         for model in sub_query.entities.product_models
-    ))
+    ]
+    return current.model_copy(update={
+        "pending": pending,
+        "clarify_attempts": attempts,
+        **_model_context(current, turn_models),
+        "language": state.context.query.language,
+        "last_intent": analysis.sub_queries[0].intent,
+    })
+
+
+def update_agent_conversation_state(state: RunState, turn_models: list[str]) -> ConversationState:
+    """State sau một lượt agent: chỉ cập nhật ngữ cảnh model.
+
+    Không pending (agent hỏi lại qua history) và không handoff. turn_models do
+    tool có khái niệm model cung cấp (tra cứu tài liệu: model của các lần tra cứu
+    có nguồn, theo thứ tự gọi); lượt chỉ dùng tool khác thì rỗng và ngữ cảnh giữ nguyên.
+    """
+    if state.context is None:
+        raise ValueError("conversation state update requires context")
+    current = state.context.conversation.state
+    return current.model_copy(update=_model_context(current, turn_models))
+
+
+def _model_context(current: ConversationState, turn_models: list[str]) -> dict:
+    turn_models = list(dict.fromkeys(turn_models))
     # Accumulate oldest -> newest; a model mentioned again moves to the end.
     last_models = [model for model in current.last_models if model not in turn_models]
     last_models = [*last_models, *turn_models][-MAX_LAST_MODELS:]
@@ -64,14 +88,7 @@ def update_conversation_state(state: RunState) -> ConversationState:
         active_model = None
     else:
         active_model = current.active_model
-    return current.model_copy(update={
-        "pending": pending,
-        "clarify_attempts": attempts,
-        "last_models": last_models,
-        "active_model": active_model,
-        "language": state.context.query.language,
-        "last_intent": analysis.sub_queries[0].intent,
-    })
+    return {"last_models": last_models, "active_model": active_model}
 
 
 def _general_pending(state: RunState) -> PendingClarification | None:

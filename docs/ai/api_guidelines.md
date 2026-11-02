@@ -156,6 +156,13 @@ embedding hoặc database), `incomplete` (task chưa chạy xong), `not_applicab
 `retrieval_tasks: [{task_id, status, error_code, no_hits, fallback}]`. Lỗi tra
 cứu **không** được báo cho khách (LLM trả lời mềm, history vẫn `completed`);
 trường này là dấu vết để vận hành và Support Workspace theo dõi.
+Lượt agent (kênh CRM) gộp task của mọi lần gọi tool tra cứu: `task_id` có dạng
+`{tool_call_id}:task-retrieve-qN`, và snapshot trong DB có thêm khóa nội bộ
+`agent_steps: [{step, kind: "llm"|"tool", name, tool_call_id, status,
+latency_ms, finish_reason}]` (`status`: `ok`, `deduplicated` hoặc mã lỗi tool như
+`tool_call_limit`, `model_not_evidenced`), `answered_without_tools: bool` và
+`invalid_citations: [S#]` (không chứa nội dung tin nhắn hay output tool;
+endpoint này chưa trả các khóa đó).
 Không có snapshot trả `404 retrieval_not_found`; database lỗi trả
 `503 database_unavailable`.
 
@@ -311,6 +318,15 @@ Body của `/chat/crm` khác website (field lạ, kể cả `client_context` và
 - `session_id`: `null`/bỏ trống = hội thoại mới (nút "Cuộc trò chuyện mới");
   lượt sau gửi giá trị từ event `done`. Không phải bí mật: chỉ dùng lại được
   khi session cùng integration **và** cùng `user_id`.
+- Câu trả lời của `/chat/crm` do **luồng agent** tạo khi server đặt
+  `CRM_CHAT_FLOW=agent` (mặc định; thử nghiệm): agent gọi tool tra cứu tài liệu
+  và trả câu trả lời cuối trong **một** event `delta`. Request/response contract
+  không đổi; không có trường mode trong body. `CRM_CHAT_FLOW=pipeline` đưa về
+  luồng tra cứu như website (stream nhiều `delta`).
+- Kiểm thử từ chatbot widget: widget-backend có route `POST /api/chat/crm`
+  (chỉ bật khi đặt `CHATBOT_CRM_API_KEY`, `user_id` do trình duyệt gửi, không
+  dùng production); widget gọi route này khi build với `VITE_CHATBOT_CHANNEL=crm`
+  (xem `widget-backend/README.md`).
 
 - `message.text`: 1–4.000 ký tự sau khi strip.
 - `message_id` do server sinh (trùng `chat_history.id`); `message_id` hay
@@ -334,12 +350,14 @@ Lỗi trước khi mở stream trả JSON `{"detail": {"code", "message", "reque
 |---|---|---|
 | 401 | `invalid_service_key` | `/chat/crm`: thiếu, sai định dạng, không tồn tại, sai secret, bị thu hồi, hết hạn key, hoặc integration bị disable. Cùng một body cho mọi lý do; lý do chỉ ghi log `Service key rejected reason=... key_id=...` (kèm `WWW-Authenticate: Bearer`) |
 | 404 | `session_not_found` | `session_id` không thuộc principal/kênh, bị thu hồi hoặc hết hạn |
+| 409 | `session_busy` | Phiên đang có một lượt khác chưa trả lời xong (gửi đúp, hai tab). Client chờ lượt trước kết thúc rồi gửi lại; lease tự hết hạn sau `CHAT_TURN_LEASE_S` nếu tiến trình chết |
 | 422 | `invalid_idempotency_key` | `Idempotency-Key` không phải UUID |
 | 422 | (FastAPI) | Body sai schema |
 | 503 | `provider_not_configured` | Chưa đặt `OPENAI_API_KEY` |
-| 503 | `database_unavailable` | Không đọc/tạo được session, hoặc không tra được service key (không quy thành 401) |
+| 503 | `database_unavailable` | Không đọc/tạo được session hoặc lease của phiên, hoặc không tra được service key (không quy thành 401) |
 
-Áp dụng `backend/sql/chat_sessions.sql` trên Supabase trước khi deploy.
+Áp dụng `backend/sql/chat_sessions.sql` trên Supabase trước khi deploy (gồm cột
+`turn_lease_until` cho lease theo phiên).
 
 ## Response và SSE contract
 
@@ -375,6 +393,10 @@ công khi nhận `done`, và xử lý `error` theo `code`. Các mã lỗi chính
   (`AnalysisError`, `ExecutionError`, `AnswerCompositionError`: timeout hoặc lỗi
   provider ở bước phân tích, output sai schema, plan không hợp lệ). Xảy ra trước
   khi có `delta`.
+- SSE `agent_error` (chỉ `/chat/crm` khi chạy agent): lượt agent không hoàn tất
+  (`agent_timeout` hết thời gian của lượt, `agent_empty_answer`,
+  `agent_context_missing`; mã chi tiết chỉ ghi log). Lỗi của từng tool không làm
+  hỏng lượt: agent nhận mã lỗi tool và vẫn trả lời.
 - SSE `provider_error`: lỗi trong phần xử lý provider/stream câu trả lời, hoặc
   lỗi không phân loại.
 
@@ -425,7 +447,10 @@ secret hoặc nội dung log nội bộ.
   `language` (v3.3, nội bộ).
 - Support-chat history endpoints chỉ được enable cùng `LEARNING_API_ENABLED` và
   chưa có ownership; client legacy `/chats` không phải contract backend hiện tại.
-- Retrieval đã nối ở mức kiểm thử (xem architecture.md bước 8); tools chưa có.
+- Retrieval đã nối ở mức kiểm thử (xem architecture.md bước 8). Tool agent mới
+  có `product_docs_ask` cho kênh CRM (thử nghiệm, xem architecture.md "Luồng
+  agent"); chưa có tool CRM, chưa phân quyền tool theo role/scope (mọi nhân viên
+  CRM dùng được mọi tool), chưa có event SSE tiến trình.
 - Lượt chỉ có chitchat/out_of_scope/handoff trả câu cố định (một chunk SSE)
   không qua LLM; các lượt khác stream từ provider qua `AnswerComposer`, dựa trên
   kết quả task của execution plan. Output strict của analyzer có thêm

@@ -8,7 +8,9 @@ from pydantic import Field
 from ..default import SystemModel, NonNegInt
 from ..inbound import InboundRequest
 from ..security.principal import PrincipalContext, RequestContext
+from .agent import AgentRun
 from .analysis import Analysis
+from .catalog import CatalogMatch
 from .orchestration import ExecutionPlan
 from .retrieval import Candidate, RetrievalTrace
 from .run_context import RunContext
@@ -30,6 +32,12 @@ class RunState(SystemModel):
     stats: RunStats = Field(default_factory=RunStats)
     iteration: NonNegInt = 0
     security: SecurityDecision | None = None
+    agent: AgentRun | None = None              # chỉ có ở luồng agent (kênh CRM)
+    # Chỉ RunState con của tool tra cứu (luồng agent):
+    # model đã được xác nhận trong lượt agent, guard nhận như bằng chứng;
+    evidence_models: list[str] = Field(default_factory=list)
+    # model tìm theo bảng capabilities (CatalogLookupStage).
+    catalog_match: CatalogMatch | None = None
 
     # --- Source registry: suy ra từ trace, không lưu trùng ---------------
     def sources(self) -> dict[str, Candidate]:

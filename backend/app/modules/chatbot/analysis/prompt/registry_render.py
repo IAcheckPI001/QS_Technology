@@ -25,13 +25,16 @@ def _render_hints(mapping: dict[str, str]) -> str:
  
 # ------------------------------------------------------------------ few-shot
 def _sq(q, intent, models=(), unresolved=(), ci=(), spec=(), handoff=None, conflict=False,
-        dependency="model_specific") -> dict:
+        dependency="model_specific", excluded=(), match="all", unmapped=()) -> dict:
     return {
         "standalone_query": q,
         "intent": intent,
         "product_models": list(models),
         "unresolved_mentions": list(unresolved),
         "control_interface": list(ci),
+        "excluded_control_interface": list(excluded),
+        "interface_match": match,
+        "unmapped_conditions": list(unmapped),
         "spec_attributes": list(spec),
         "handoff_reason": handoff,
         "history_conflict": conflict,
@@ -88,6 +91,17 @@ EXAMPLES = [
      "sub_queries": [
          _sq("Macro trong bộ điều khiển CNC dùng để làm gì", "guide.configuration", dependency="general"),
          _sq("Các bước cấu hình tham số macro trên bộ điều khiển", "guide.configuration")]},
+    # 12. Tìm model theo tiêu chí: phủ định -> excluded_control_interface; điều kiện ngoài
+    #     danh sách -> unmapped_conditions; câu hỏi phụ thuộc kết quả tìm KHÔNG tự điền model
+    #     (kể cả khi state có model); luôn có trong bản lean
+    {"always": True, "state": {"last_models": ["F54"], "active_model": "F54"},
+     "query": "Model nào hỗ trợ EtherCAT nhưng không hỗ trợ Mechatrolink và có 6 trục? Hướng dẫn lắp đặt model đó.",
+     "sub_queries": [
+         _sq("Các model hỗ trợ EtherCAT, không hỗ trợ Mechatrolink và có 6 trục",
+             "lookup.product_catalog", ci=["ethercat"], excluded=["mechatrolink"],
+             unmapped=["6 trục"], dependency="general"),
+         _sq("Hướng dẫn lắp đặt các model hỗ trợ EtherCAT, không hỗ trợ Mechatrolink và có 6 trục",
+             "guide.installation", ci=["ethercat"])]},
     # 9. Trả lời câu hỏi làm rõ + hỏi thêm ý mới -> pending_answer; luôn có trong bản lean
     {"always": True,
      "pending": {"focus": "F84", "candidates": ["F86"],

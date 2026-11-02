@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -36,6 +37,22 @@ class Settings(BaseSettings):
     usd_to_vnd_rate: float = Field(default=26000, alias="USD_TO_VND_RATE")
     
     context_token_budget: int = Field(default=2048, alias="CONTEXT_TOKEN_BUDGET",)
+    # Kênh CRM chạy luồng agent (tool-calling); "pipeline" để rollback về luồng tra cứu cũ.
+    crm_chat_flow: Literal["agent", "pipeline"] = Field(default="agent", alias="CRM_CHAT_FLOW")
+    # Giới hạn của một lượt agent. Mọi timeout lấy từ deadline chung AGENT_TURN_TIMEOUT_S;
+    # AGENT_FINAL_RESERVE_S được giữ lại cho bước trả lời cuối.
+    agent_max_steps: int = Field(default=5, alias="AGENT_MAX_STEPS")
+    agent_max_tool_calls: int = Field(default=8, alias="AGENT_MAX_TOOL_CALLS")
+    agent_turn_timeout_s: float = Field(default=60.0, alias="AGENT_TURN_TIMEOUT_S")
+    agent_llm_timeout_s: float = Field(default=20.0, alias="AGENT_LLM_TIMEOUT_S")
+    agent_tool_timeout_s: float = Field(default=20.0, alias="AGENT_TOOL_TIMEOUT_S")
+    agent_final_reserve_s: float = Field(default=10.0, alias="AGENT_FINAL_RESERVE_S")
+    agent_tool_output_tokens: int = Field(default=3000, alias="AGENT_TOOL_OUTPUT_TOKENS")
+    agent_parallel_tools: int = Field(default=3, alias="AGENT_PARALLEL_TOOLS")
+    agent_max_concurrent_runs: int = Field(default=8, alias="AGENT_MAX_CONCURRENT_RUNS")
+    agent_history_messages: int = Field(default=6, alias="AGENT_HISTORY_MESSAGES")
+    # Lease chống hai lượt chạy song song trên cùng phiên; hết hạn tự giải phóng nếu tiến trình chết.
+    chat_turn_lease_s: int = Field(default=120, alias="CHAT_TURN_LEASE_S")
     ollama_base_url: str = Field(default="", alias="OLLAMA_BASE_URL")
     ollama_model: str = Field(default="", alias="OLLAMA_MODEL")
     ollama_timeout_seconds: float = Field(default=180.0, alias="OLLAMA_TIMEOUT_SECONDS")
@@ -105,6 +122,31 @@ class Settings(BaseSettings):
             raise ValueError(
                 "RETRIEVAL_FINAL_CHUNK_TOP_K must not exceed RETRIEVAL_VECTOR_CANDIDATE_K"
             )
+        return self
+
+    @field_validator(
+        "agent_max_steps",
+        "agent_max_tool_calls",
+        "agent_turn_timeout_s",
+        "agent_llm_timeout_s",
+        "agent_tool_timeout_s",
+        "agent_tool_output_tokens",
+        "agent_parallel_tools",
+        "agent_max_concurrent_runs",
+        "chat_turn_lease_s",
+    )
+    @classmethod
+    def _validate_agent_positive(cls, value: float) -> float:
+        if value <= 0:
+            raise ValueError("Agent limits and turn lease must be greater than zero")
+        return value
+
+    @model_validator(mode="after")
+    def _agent_reserve_within_turn(self) -> "Settings":
+        if not 0 <= self.agent_final_reserve_s < self.agent_turn_timeout_s:
+            raise ValueError("AGENT_FINAL_RESERVE_S must be >= 0 and below AGENT_TURN_TIMEOUT_S")
+        if self.chat_turn_lease_s <= self.agent_turn_timeout_s:
+            raise ValueError("CHAT_TURN_LEASE_S must exceed AGENT_TURN_TIMEOUT_S")
         return self
 
     @field_validator("log_level", mode="before")

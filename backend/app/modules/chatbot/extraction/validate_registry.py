@@ -3,7 +3,10 @@ import re
 from typing import Any
 import difflib
 
-from app.modules.chatbot.extraction.registry import (MAX_SUB_QUERIES, MAX_CANDIDATES, DOMAINS, FUZZY_CUTOFF, MODEL_POLICIES, MODEL_SPECIFIC_PATTERN, NO_TARGET_ROUTES, SCOPES, REGISTRY as R)
+from app.modules.chatbot.extraction.registry import (MAX_SUB_QUERIES, MAX_CANDIDATES, DOMAINS, FUZZY_CUTOFF, MODEL_POLICIES, MODEL_SPECIFIC_PATTERN, NO_TARGET_ROUTES, SCOPES, REGISTRY as R, RegistryError)
+from typing import Literal
+
+InterfaceMatch = Literal["all", "any"]
 
 def _norm(s: Any) -> str:
     """Không phân biệt hoa/thường, khoảng trắng, gạch ngang/gạch dưới."""
@@ -63,7 +66,14 @@ def validate_registry() -> None:
         if isinstance(cov, dict):
             for m, ifs in cov.items():
                 check(set(ifs) <= set(R["control_interface"]), f"coverage {dom}/{m} interface lạ")
- 
+    caps = R["capabilities"]
+    check(set(caps) == {"control_interface"}, f"capability lạ: {sorted(set(caps) - {'control_interface'})}")
+    interfaces = caps["control_interface"]
+    # Closed world: thiếu dòng của một model thì "không hỗ trợ" sẽ thành kết luận sai.
+    check(set(interfaces) == models, "capabilities.control_interface phải có đúng mọi model")
+    for m, ifs in interfaces.items():
+        check(set(ifs) <= set(R["control_interface"]), f"capabilities {m} interface lạ")
+
 def handoff_config(reason: str) -> dict:
     cfg = REGISTRY["handoff_reasons"][reason]
     return {"reason": reason, "queue": cfg["queue"], "mode": cfg["mode"]}
@@ -137,6 +147,40 @@ def _model_keys(model: str) -> set[str]:
     return {_norm(model)} | {_norm(a) for a, m in R["aliases"].items() if m == model}
 
 
+def models_in_text(text: str) -> list[str]:
+    """Model có mã hoặc alias xuất hiện trong text, theo thứ tự registry.
+
+    Cùng cách so khớp với guard_extracted_models. Alias mơ hồ ("Astro 6A") không
+    được tính vì không chỉ ra một model cụ thể.
+    """
+    normalized = _norm(text)
+    return [m for m in R["product_models"] if any(k in normalized for k in _model_keys(m))]
+
+
+def models_with_interfaces(
+    required: list[str] | tuple = (),
+    excluded: list[str] | tuple = (),
+    match: InterfaceMatch = "all",
+) -> list[str]:
+    """Model thỏa điều kiện control_interface theo bảng capabilities, thứ tự registry.
+
+    match="all": hỗ trợ mọi interface trong required; "any": ít nhất một. required
+    rỗng thì mọi model đều thỏa phần này; excluded loại model hỗ trợ bất kỳ interface nào.
+    """
+    table = R["capabilities"]["control_interface"]
+    out = []
+    for m in R["product_models"]:
+        supported = set(table[m])
+        if required:
+            ok = set(required) <= supported if match == "all" else bool(set(required) & supported)
+            if not ok:
+                continue
+        if set(excluded) & supported:
+            continue
+        out.append(m)
+    return out
+
+
 def guard_extracted_models(raw_sub_queries: list[dict], evidence_text: str) -> list[dict]:
     """[C10] Không để LLM âm thầm đổi model (vd. người dùng gõ F84, LLM ghi F86).
 
@@ -178,6 +222,11 @@ def resolve_sub_query(
     if intent not in R["intents"]:
         return _unclear(sq.get("standalone_query") or "", idx)
     spec = R["intents"][intent]
+    included = _unique(sq.get("control_interface"))
+    excluded = _unique(sq.get("excluded_control_interface"))
+    if set(included) & set(excluded):
+        # "hỗ trợ EtherCAT nhưng không hỗ trợ EtherCAT": không tự chọn một nghĩa.
+        return _unclear(sq.get("standalone_query") or "", idx, "conflicting_interface_conditions")
     policy = spec["model_policy"]
     need = spec.get("min_models", 1)
     warnings: list[str] = [f"model_not_in_text:{m}" for m in sq.get("dropped_models") or []]
@@ -278,7 +327,7 @@ def resolve_sub_query(
             ifs = _covered_interfaces(t["domain"], m)
             if ifs is None:
                 continue
-            for ci in sq.get("control_interface") or []:
+            for ci in included:
                 if ci not in ifs:
                     warnings.append(f"interface_not_covered:{m}:{ci}")
  
@@ -305,7 +354,10 @@ def resolve_sub_query(
         "entities": {
             "product_models": models,
             "unresolved_mentions": ambiguous + unknown,
-            "control_interface": list(sq.get("control_interface") or []),
+            "control_interface": included,
+            "excluded_control_interface": excluded,
+            "interface_match": "any" if sq.get("interface_match") == "any" else "all",
+            "unmapped_conditions": _unique(sq.get("unmapped_conditions")),
             "spec_attributes": list(sq.get("spec_attributes") or []),
         },
         "retrieval_scope": retrieval,
@@ -322,7 +374,7 @@ def resolve_sub_query(
     }
  
  
-def _unclear(query: str, idx: int = 0) -> dict:
+def _unclear(query: str, idx: int = 0, warning: str = "llm_output_invalid") -> dict:
     """[C8] Không hiểu được câu hỏi -> hỏi lại, KHÔNG gán out_of_scope."""
     return {
         "id": f"q{idx + 1}",
@@ -336,8 +388,18 @@ def _unclear(query: str, idx: int = 0) -> dict:
         "handoff_reason": None,
         "unsupported_models": [],
         "route": "clarify",
-        "warnings": ["llm_output_invalid"],
+        "warnings": [warning],
     }
+
+
+def _unique(values: Any) -> list[str]:
+    """Chuỗi khác rỗng, bỏ trùng, giữ thứ tự (trường mảng thô của LLM)."""
+    out: list[str] = []
+    for value in values or []:
+        text = str(value).strip()
+        if text and text not in out:
+            out.append(text)
+    return out
  
  
 def resolve_with_raw(

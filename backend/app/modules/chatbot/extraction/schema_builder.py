@@ -3,7 +3,8 @@ from app.modules.chatbot.extraction.registry import REGISTRY as R
 
 
 def build_output_schema() -> dict:
-    """Schema strict (OpenAI Structured Outputs). v3.1: thêm pending_answer; v3.2: thêm model_dependency; v3.3: thêm language."""
+    """Schema strict (OpenAI Structured Outputs). v3.1: thêm pending_answer; v3.2: thêm model_dependency; v3.3: thêm language;
+    v3.4: thêm excluded_control_interface, interface_match, unmapped_conditions."""
  
     def arr(enum=None) -> dict:
         items: dict = {"type": "string"}
@@ -17,6 +18,9 @@ def build_output_schema() -> dict:
         "product_models": arr(R["product_models"]),
         "unresolved_mentions": arr(),
         "control_interface": arr(R["control_interface"]),
+        "excluded_control_interface": arr(R["control_interface"]),
+        "interface_match": {"type": "string", "enum": ["all", "any"]},
+        "unmapped_conditions": arr(),
         "spec_attributes": arr(R["spec_attributes"]),
         "handoff_reason": {"type": ["string", "null"], "enum": [*R["handoff_reasons"], None]},
         "history_conflict": {"type": "boolean"},

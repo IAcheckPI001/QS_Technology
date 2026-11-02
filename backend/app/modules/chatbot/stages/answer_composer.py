@@ -27,6 +27,80 @@ def _pages(start: int | None, end: int | None) -> str | None:
     return str(start) if end is None or end == start else f"{start}-{end}"
 
 
+def serialize_turn(
+    state: RunState,
+    source_char_limit: int = 3000,
+    include_models: bool = False,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Kết quả task và nguồn của một lượt đã chạy plan, ở dạng gửi cho LLM.
+
+    Dùng chung cho AnswerComposer và output của tool tra cứu tài liệu.
+    include_models: mỗi nhóm nguồn ghi các model đã lọc khi retrieve, để agent
+    tra nhiều model không gán nhầm nguồn của model này cho model khác.
+    """
+    assert state.analysis is not None and state.plan is not None
+    sub_queries = {sub_query.id: sub_query for sub_query in state.analysis.sub_queries}
+    task_results = []
+    sources = []
+    for task, result in zip(state.plan.tasks, collect_results(state.plan)):
+        item: dict[str, Any] = {
+            "task_id": task.task_id,
+            "kind": task.kind.value,
+            "status": result.status.value,
+            "queries": [
+                sub_queries[sub_query_id].standalone_query
+                for sub_query_id in task.sub_query_ids
+                if sub_query_id in sub_queries
+            ],
+        }
+        if result.metadata:
+            item["metadata"] = result.metadata
+        inherited = [
+            warning.split(":", 1)[1]
+            for sub_query_id in task.sub_query_ids
+            if sub_query_id in sub_queries
+            for warning in sub_queries[sub_query_id].warnings
+            if warning.startswith("inherited_model:")
+        ]
+        if inherited:
+            item["context_model"] = display_name(inherited[0])
+        if result.error is not None:
+            item["error"] = result.error.code
+        task_results.append(item)
+
+        if result.retrieval is None:
+            continue
+        for sub_result in result.retrieval.results:
+            sub_query = sub_queries.get(sub_result.sub_query_id)
+            if sub_query is None:
+                continue
+            answer_mode = (
+                sub_query.retrieval_scope.answer_mode
+                if sub_query.retrieval_scope is not None
+                else "full"
+            )
+            group: dict[str, Any] = {
+                "query": sub_query.standalone_query,
+                "answer_mode": answer_mode,
+            }
+            if include_models:
+                scope = sub_query.retrieval_scope
+                group["product_models"] = list(scope.model_filter or []) if scope else []
+            sources.append({
+                **group,
+                "sources": [
+                    {
+                        "source_id": hit.source_id,
+                        "section": " › ".join(hit.section_path) or hit.section_title,
+                        "pages": _pages(hit.page_start, hit.page_end),
+                        "content": hit.content[:source_char_limit],
+                    }
+                    for hit in sub_result.hits
+                ],
+            })
+    return task_results, sources
+
+
 class AnswerComposer:
     """Turn executed task results into one streamed provider answer per turn."""
 
@@ -44,59 +118,7 @@ class AnswerComposer:
                 "Answer composition requires context, analysis and an executed plan.",
             )
 
-        sub_queries = {sub_query.id: sub_query for sub_query in state.analysis.sub_queries}
-        task_results = []
-        sources = []
-        for task, result in zip(state.plan.tasks, collect_results(state.plan)):
-            item: dict[str, Any] = {
-                "task_id": task.task_id,
-                "kind": task.kind.value,
-                "status": result.status.value,
-                "queries": [
-                    sub_queries[sub_query_id].standalone_query
-                    for sub_query_id in task.sub_query_ids
-                    if sub_query_id in sub_queries
-                ],
-            }
-            if result.metadata:
-                item["metadata"] = result.metadata
-            inherited = [
-                warning.split(":", 1)[1]
-                for sub_query_id in task.sub_query_ids
-                if sub_query_id in sub_queries
-                for warning in sub_queries[sub_query_id].warnings
-                if warning.startswith("inherited_model:")
-            ]
-            if inherited:
-                item["context_model"] = display_name(inherited[0])
-            if result.error is not None:
-                item["error"] = result.error.code
-            task_results.append(item)
-
-            if result.retrieval is None:
-                continue
-            for sub_result in result.retrieval.results:
-                sub_query = sub_queries.get(sub_result.sub_query_id)
-                if sub_query is None:
-                    continue
-                answer_mode = (
-                    sub_query.retrieval_scope.answer_mode
-                    if sub_query.retrieval_scope is not None
-                    else "full"
-                )
-                sources.append({
-                    "query": sub_query.standalone_query,
-                    "answer_mode": answer_mode,
-                    "sources": [
-                        {
-                            "source_id": hit.source_id,
-                            "section": " › ".join(hit.section_path) or hit.section_title,
-                            "pages": _pages(hit.page_start, hit.page_end),
-                            "content": hit.content[: self._source_char_limit],
-                        }
-                        for hit in sub_result.hits
-                    ],
-                })
+        task_results, sources = serialize_turn(state, self._source_char_limit)
 
         parts = [
             f"<language>{state.context.query.language}</language>",

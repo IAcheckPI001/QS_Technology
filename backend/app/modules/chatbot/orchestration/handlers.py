@@ -123,6 +123,8 @@ def build_task_handlers(
         TaskKind.OUT_OF_SCOPE.value: handle_direct,
         TaskKind.NO_DOCS.value: handle_no_docs,
         TaskKind.HANDOFF.value: handle_handoff,
+        # Kết quả tìm model nằm ở RunState.catalog_match; task chỉ đánh dấu đã xong.
+        TaskKind.CATALOG.value: handle_direct,
     }
     if retriever is not None:
         handlers[TaskKind.RETRIEVE.value] = handle_retrieve

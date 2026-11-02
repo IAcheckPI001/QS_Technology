@@ -11,6 +11,7 @@ from app.api.v1.router import api_router
 from app.api.middleware.request_context import RequestContextMiddleware
 from app.core.config import settings
 from app.core.logging import configure_logging
+from app.modules.chatbot.agent.setup import build_agent_runner
 from app.modules.chatbot.providers.openai import OpenAIProvider
 from app.modules.chatbot.repositories.doc_chunk_repository import DocChunkRepository
 from app.modules.chatbot.retrieval import Retriever, RetrieverConfig
@@ -34,8 +35,14 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
             DocChunkRepository(),
             RetrieverConfig.from_settings(settings),
         )
+    agent_runner = None
+    if provider is not None and settings.crm_chat_flow == "agent":
+        # Provider/tool không đủ điều kiện thì ToolConfigurationError dừng khởi động.
+        agent_runner = build_agent_runner(provider, retriever, settings)
+        logger.info("CRM chat flow: agent (tools=%s)", ", ".join(agent_runner.tool_names))
     application.state.chatbot_provider = provider
     application.state.chatbot_retriever = retriever
+    application.state.chatbot_agent_runner = agent_runner
 
     privacy_provider = None
     application.state.learning_privacy_pipeline = None

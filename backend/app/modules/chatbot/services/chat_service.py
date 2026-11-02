@@ -2,6 +2,7 @@ import asyncio
 import logging
 from collections.abc import AsyncIterator
 from time import perf_counter
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 import anyio
@@ -12,12 +13,18 @@ from app.modules.chatbot.schemas.security.principal import PrincipalContext, Req
 from app.modules.chatbot.providers.openai import OpenAIProvider
 from app.modules.chatbot.repositories.history_repository import HistoryRepository
 from app.modules.chatbot.schemas.inbound import InboundRequest
-from app.modules.chatbot.clarification import update_conversation_state
+from app.modules.chatbot.tools.product_docs import product_docs_plans
+from app.modules.chatbot.clarification import (
+    update_agent_conversation_state,
+    update_conversation_state,
+)
 from app.modules.chatbot.orchestration import select_direct_response_code
 from app.modules.chatbot.prompts.direct_responses import get_direct_response
 from app.modules.chatbot.providers.handoff import DisabledHandoffProvider, HandoffProvider
+from app.modules.chatbot.schemas.default import ChannelType
 from app.modules.chatbot.schemas.system import (
     ConversationState,
+    ExecutionPlan,
     Mode,
     RunState,
     RetrievalScope,
@@ -33,7 +40,11 @@ from app.modules.chatbot.schemas.system.security import SecurityAction
 from app.modules.chatbot.stages.execution_stage import ExecutionStage
 from app.modules.chatbot.stages.answer_composer import AnswerComposer
 from app.modules.chatbot.stages.clarification_resume_stage import ClarificationResumeStage
+from app.modules.chatbot.stages.retrieval_pipeline import RetrievalPipeline
 from app.util.normalize import guess_reply_language
+
+if TYPE_CHECKING:
+    from app.modules.chatbot.agent import AgentRunner
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +62,7 @@ class ChatbotService:
         answer_composer: AnswerComposer | None = None,
         clarification_stage: ClarificationResumeStage | None = None,
         handoff_provider: HandoffProvider | None = None,
+        agent_runner: "AgentRunner | None" = None,
     ) -> None:
         self._provider = provider
         self._history_repository = history_repository
@@ -62,6 +74,13 @@ class ChatbotService:
         self._answer_composer = answer_composer or AnswerComposer(provider)
         self._clarification_stage = clarification_stage or ClarificationResumeStage()
         self._handoff_provider = handoff_provider or DisabledHandoffProvider()
+        self._retrieval_pipeline = RetrievalPipeline(
+            self._clarification_stage,
+            self._analysis_stage,
+            self._execution_stage,
+        )
+        # Chỉ được inject khi CRM_CHAT_FLOW=agent; không có thì CRM chạy pipeline cũ.
+        self._agent_runner = agent_runner
 
     async def stream_reply(
         self,
@@ -140,43 +159,52 @@ class ChatbotService:
             # Mọi lỗi sau khi đã nạp context (analysis, execution, compose, stream)
             # đều để lại một bản ghi status='error' rồi mới ném tiếp cho router.
             try:
-                analysis_time = perf_counter()
-                await self._clarification_stage.execute(state)
-                await self._analysis_stage.execute(state)
-                self._clarification_stage.apply_attempt_limit(state)
-                await self._execution_stage.execute(state)
-                # Chỉ log số liệu định tuyến, không log câu hỏi/analysis đầy đủ.
-                logger.debug(
-                    "analysis+execution in %.2fs intents=%s routes=%s tasks=%s",
-                    perf_counter() - analysis_time,
-                    [sub_query.intent for sub_query in state.analysis.sub_queries],
-                    [sub_query.route.value for sub_query in state.analysis.sub_queries],
-                    [f"{task.kind.value}:{task.status.value}" for task in state.plan.tasks],
-                )
-
-                assert state.plan is not None and state.analysis is not None
-                # Ngôn ngữ trả lời: analysis -> ngôn ngữ của phiên -> locale client -> vi.
-                language = (
-                    state.analysis.language
-                    or conversation_state.language
-                    or _locale_language(locale)
-                    or "vi"
-                )
-                context.query.language = language
-                direct_code = select_direct_response_code(state.plan, language)
-                if direct_code is not None:
-                    answer_parts.append(get_direct_response(direct_code, language))
-                    yield answer_parts[0]
-                else:
-                    async for chunk in self._answer_composer.stream(state):
+                if self._agent_runner is not None and request_context.channel is ChannelType.CRM:
+                    # Kênh CRM: agent tự gọi tool tra cứu. Conversation state chỉ cập nhật
+                    # ngữ cảnh model (không pending, không handoff sang người thật).
+                    async for chunk in self._agent_runner.run(state):
                         answer_parts.append(chunk)
                         yield chunk
+                    next_state = update_agent_conversation_state(state, [
+                        model
+                        for tool_plan in product_docs_plans(state.agent)
+                        for model in tool_plan.product_models
+                    ])
+                else:
+                    analysis_time = perf_counter()
+                    await self._retrieval_pipeline.run(state)
+                    # Chỉ log số liệu định tuyến, không log câu hỏi/analysis đầy đủ.
+                    logger.debug(
+                        "analysis+execution in %.2fs intents=%s routes=%s tasks=%s",
+                        perf_counter() - analysis_time,
+                        [sub_query.intent for sub_query in state.analysis.sub_queries],
+                        [sub_query.route.value for sub_query in state.analysis.sub_queries],
+                        [f"{task.kind.value}:{task.status.value}" for task in state.plan.tasks],
+                    )
 
-                next_state = await self._transfer_handoff(
-                    state,
-                    session_id,
-                    update_conversation_state(state),
-                )
+                    assert state.plan is not None and state.analysis is not None
+                    # Ngôn ngữ trả lời: analysis -> ngôn ngữ của phiên -> locale client -> vi.
+                    language = (
+                        state.analysis.language
+                        or conversation_state.language
+                        or _locale_language(locale)
+                        or "vi"
+                    )
+                    context.query.language = language
+                    direct_code = select_direct_response_code(state.plan, language)
+                    if direct_code is not None:
+                        answer_parts.append(get_direct_response(direct_code, language))
+                        yield answer_parts[0]
+                    else:
+                        async for chunk in self._answer_composer.stream(state):
+                            answer_parts.append(chunk)
+                            yield chunk
+
+                    next_state = await self._transfer_handoff(
+                        state,
+                        session_id,
+                        update_conversation_state(state),
+                    )
             except Exception:
                 answer = "".join(answer_parts)
                 await self._history_repository.create(
@@ -228,15 +256,27 @@ class ChatbotService:
 
     def _retrieval_snapshot(self, state: RunState) -> dict:
         """Chunk đã chọn của lượt này, xếp theo score giảm dần cho màn Kết quả chunk."""
+        plans = _executed_plans(state)
+        tasks = [task for _, plan in plans for task in plan.tasks]
         hits = [
             hit
-            for task in (state.plan.tasks if state.plan else [])
+            for task in tasks
             if task.result is not None and task.result.retrieval is not None
             for result in task.result.retrieval.results
             for hit in result.hits
         ]
         hits.sort(key=lambda hit: hit.score, reverse=True)
-        status, retrieval_tasks = retrieval_status(state.plan.tasks if state.plan else [])
+        status, retrieval_tasks = retrieval_status(tasks)
+        # Luồng agent: nhiều lần tra cứu có cùng task_id, gắn tool_call_id để phân biệt.
+        prefixes = [
+            prefix
+            for prefix, plan in plans
+            for task in plan.tasks
+            if task.kind is TaskKind.RETRIEVE
+        ]
+        for row, prefix in zip(retrieval_tasks, prefixes):
+            if prefix:
+                row["task_id"] = f"{prefix}:{row['task_id']}"
         if status in ("error", "partial_error"):
             logger.warning(
                 "retrieval failed status=%s session_id=%s failed_tasks=%d",
@@ -244,7 +284,7 @@ class ChatbotService:
                 state.input.session.session_id,
                 sum(1 for task in retrieval_tasks if task["status"] == TaskStatus.FAILED.value),
             )
-        return {
+        snapshot = {
             "query": state.input.message.text,
             # Lỗi tra cứu không ném lên client (LLM trả lời mềm): lưu lại để truy vết.
             "retrieval_status": status,
@@ -272,6 +312,13 @@ class ChatbotService:
                 for rank, hit in enumerate(hits, start=1)
             ],
         }
+        agent = getattr(state, "agent", None)
+        if agent is not None:
+            # Nội bộ: trace từng bước của agent (không chứa nội dung tin nhắn/tool output).
+            snapshot["agent_steps"] = [step.model_dump(mode="json") for step in agent.steps]
+            snapshot["answered_without_tools"] = agent.answered_without_tools
+            snapshot["invalid_citations"] = list(agent.invalid_citations)
+        return snapshot
 
     async def _record_cancelled(
         self,
@@ -399,8 +446,23 @@ def _locale_language(locale: str | None) -> str | None:
     return locale.strip().lower().replace("_", "-").split("-", 1)[0] if locale else None
 
 
+def _executed_plans(state: RunState) -> list[tuple[str | None, ExecutionPlan]]:
+    """Plan đã chạy của lượt: plan của pipeline, hoặc plan của từng lần agent gọi tra cứu."""
+    agent = getattr(state, "agent", None)
+    if agent is not None:
+        return [(tool_plan.tool_call_id, tool_plan.plan) for tool_plan in product_docs_plans(agent)]
+    return [(None, state.plan)] if state.plan is not None else []
+
+
 def _normalized_query(state: RunState) -> str | None:
-    """Câu hỏi đã chuẩn hóa (tiếng Việt) của các sub-query, lưu log ở chat_history."""
+    """Câu hỏi đã chuẩn hóa (tiếng Việt) của các sub-query, lưu log ở chat_history.
+
+    Luồng agent: các câu hỏi agent đã gửi cho tool tra cứu.
+    """
+    agent = getattr(state, "agent", None)
+    if agent is not None:
+        questions = [tool_plan.question for tool_plan in product_docs_plans(agent)]
+        return "\n".join(questions) if questions else None
     if state.analysis is None:
         return None
     return "\n".join(sub_query.standalone_query for sub_query in state.analysis.sub_queries)

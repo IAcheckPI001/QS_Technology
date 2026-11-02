@@ -22,6 +22,7 @@ from app.modules.chatbot.dependencies import (
     get_idempotency_key,
     get_request_context,
     get_session_access_service,
+    get_turn_lease,
     get_website_principal,
 )
 from app.modules.chatbot.routers.sse import error_response, stream_chat
@@ -32,7 +33,9 @@ from app.modules.chatbot.schemas.security.principal import PrincipalContext, Req
 from app.modules.chatbot.services import (
     ChatbotService,
     SessionAccessService,
+    SessionBusy,
     SessionNotFound,
+    SessionTurnLease,
 )
 
 logger = logging.getLogger(__name__)
@@ -47,12 +50,14 @@ async def chat_website(
     request_context: RequestContext = Depends(get_request_context(ChannelType.WEBSITE)),
     idempotency_key: UUID | None = Depends(get_idempotency_key),
     sessions: SessionAccessService = Depends(get_session_access_service),
+    turn_lease: SessionTurnLease = Depends(get_turn_lease),
     service: ChatbotService | None = Depends(get_chatbot_service),
 ) -> StreamingResponse | JSONResponse:
     return await _chat(
         request,
         service,
         sessions,
+        turn_lease,
         principal,
         request_context,
         payload.session_id,
@@ -74,12 +79,14 @@ async def chat_crm(
     request_context: RequestContext = Depends(get_request_context(ChannelType.CRM)),
     idempotency_key: UUID | None = Depends(get_idempotency_key),
     sessions: SessionAccessService = Depends(get_session_access_service),
+    turn_lease: SessionTurnLease = Depends(get_turn_lease),
     service: ChatbotService | None = Depends(get_chatbot_service),
 ) -> StreamingResponse | JSONResponse:
     return await _chat(
         request,
         service,
         sessions,
+        turn_lease,
         principal.acting_for(payload.user_id),
         request_context,
         payload.session_id,
@@ -97,6 +104,7 @@ async def _chat(
     request: Request,
     service: ChatbotService | None,
     sessions: SessionAccessService,
+    turn_lease: SessionTurnLease,
     principal: PrincipalContext,
     request_context: RequestContext,
     requested_session_id: UUID | None,
@@ -136,7 +144,38 @@ async def _chat(
             request_id,
         )
 
-    inbound = to_inbound(session_id, str(uuid4()))
+    # Phiên mới chưa ai khác biết id nên không cần lease (và chưa commit để chiếm được).
+    leased = requested_session_id is not None
+    if leased:
+        try:
+            await turn_lease.acquire(session_id)
+        except SessionBusy:
+            return error_response(
+                request,
+                409,
+                "session_busy",
+                "Another message in this conversation is still being answered. Try again shortly.",
+                request_id,
+            )
+        except Exception:
+            logger.exception("Failed to acquire chat turn lease (request_id=%s)", request_id)
+            return error_response(
+                request,
+                503,
+                "database_unavailable",
+                "Chat session could not be initialized. Please try again.",
+                request_id,
+            )
+
+    async def release_lease() -> None:
+        await turn_lease.release(session_id)
+
+    try:
+        inbound = to_inbound(session_id, str(uuid4()))
+    except BaseException:
+        if leased:
+            await release_lease()
+        raise
     # Chỉ metadata: không log nội dung tin nhắn, page_url hay timezone (có thể chứa PII).
     logger.debug(
         "chat request channel=%s principal_type=%s subject_id=%s acting_user_id=%s "
@@ -153,4 +192,11 @@ async def _chat(
         inbound.client_context.locale if inbound.client_context else None,
         inbound.message.idempotency_key is not None,
     )
-    return stream_chat(request, service, inbound, principal, request_context)
+    return stream_chat(
+        request,
+        service,
+        inbound,
+        principal,
+        request_context,
+        on_finish=release_lease if leased else None,
+    )

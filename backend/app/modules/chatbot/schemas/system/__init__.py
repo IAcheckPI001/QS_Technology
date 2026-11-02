@@ -35,6 +35,19 @@ from .run_context import (
     QueryInfo, RetrievalScope, RewriteInfo, RewriteMethod, RunContext, 
     MAX_LAST_MODELS,ConversationState, Mode, PendingClarification
 )
+from .agent import (
+    AgentRun,
+    AgentStep,
+    AgentToolPlan,
+    AssistantTurn,
+    LLMCapabilities,
+    SchemaDialect,
+    TokenUsage,
+    ToolCallRequest,
+    ToolChoice,
+    ToolTurnState,
+)
+from .catalog import CatalogConditions, CatalogMatch, CatalogModel, CatalogNextAction
 from .run_state import RunState
 from .run_stats import LLMCall, LLMStage, RunStats, TokenTotal, ChatRequest
 from .security import SecurityAction, SecurityDecision, SecurityFinding, SecuritySeverity
@@ -60,5 +73,8 @@ __all__ = [
     "SecurityAction", "SecurityDecision", "SecurityFinding", "SecuritySeverity",
     "ExecutionPlan", "ExecutionTask", "NormalizedTaskResult", "TaskError",
     "TaskKind", "TaskStatus",
+    "AgentRun", "AgentStep", "AgentToolPlan", "AssistantTurn", "LLMCapabilities",
+    "SchemaDialect", "TokenUsage", "ToolCallRequest", "ToolChoice", "ToolTurnState",
+    "CatalogConditions", "CatalogMatch", "CatalogModel", "CatalogNextAction",
 ]
  

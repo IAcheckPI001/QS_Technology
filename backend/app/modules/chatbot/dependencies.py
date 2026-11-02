@@ -16,7 +16,10 @@ from app.core.config import settings
 from app.core.request_context import current_request_id
 from app.core.security.service_key import InvalidServiceKey, ServiceKeyChannelMismatch
 from app.db.session import get_db_session
-from app.modules.chatbot.repositories.chat_session_repository import ChatSessionRepository
+from app.modules.chatbot.repositories.chat_session_repository import (
+    ChatSessionRepository,
+    ChatTurnLeaseRepository,
+)
 from app.modules.chatbot.repositories.history_repository import HistoryRepository
 from app.modules.chatbot.repositories.service_key_repository import ServiceKeyRepository
 from app.modules.chatbot.schemas.default import ChannelType
@@ -25,6 +28,7 @@ from app.modules.chatbot.services import (
     ChatbotService,
     ServiceAuthService,
     SessionAccessService,
+    SessionTurnLease,
 )
 from app.modules.chatbot.stages.execution_stage import ExecutionStage
 from app.modules.chatbot.stages.prune_stage import Prune
@@ -51,6 +55,8 @@ def get_chatbot_service(
         history_repository,
         prune=Prune(settings.context_token_budget),
         execution_stage=ExecutionStage(retriever=retriever),
+        # Chỉ có khi CRM_CHAT_FLOW=agent; dùng chung một runner để giới hạn số lượt đồng thời.
+        agent_runner=getattr(request.app.state, "chatbot_agent_runner", None),
     )
 
 
@@ -58,6 +64,10 @@ def get_session_access_service(
     db: AsyncSession = Depends(get_db_session),
 ) -> SessionAccessService:
     return SessionAccessService(ChatSessionRepository(db))
+
+
+def get_turn_lease() -> SessionTurnLease:
+    return SessionTurnLease(ChatTurnLeaseRepository(), settings.chat_turn_lease_s)
 
 
 def get_service_auth_service(

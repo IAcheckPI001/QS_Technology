@@ -17,6 +17,7 @@ from app.modules.chatbot.dependencies import (
     get_chatbot_service,
     get_service_auth_service,
     get_session_access_service,
+    get_turn_lease,
 )
 from app.modules.chatbot.repositories.service_key_repository import ServiceKeyRecord
 from app.modules.chatbot.routers import router
@@ -26,10 +27,11 @@ from app.modules.chatbot.services import (
     ChatbotService,
     ServiceAuthService,
     SessionAccessService,
+    SessionTurnLease,
 )
 from tests.chatbot.builders import make_request_context
 from tests.chatbot.test_chat_history import FakeHistoryRepository, FakeProvider
-from tests.chatbot.test_session_access import FakeSessionStore
+from tests.chatbot.test_session_access import FakeSessionStore, FakeTurnLeaseStore
 
 WEBSITE_INTEGRATION = {"integration_id": "website_main", "channel": "website"}
 BODY = {"message": {"text": "Địa chỉ công ty?"}}
@@ -68,6 +70,7 @@ class Harness:
     def __init__(self):
         self.history = FakeHistoryRepository()
         self.sessions = FakeSessionStore()
+        self.leases = FakeTurnLeaseStore()
         self.keys = FakeServiceKeyStore()
         app = FastAPI()
         app.include_router(router)
@@ -76,6 +79,9 @@ class Harness:
         )
         app.dependency_overrides[get_session_access_service] = (
             lambda: SessionAccessService(self.sessions)
+        )
+        app.dependency_overrides[get_turn_lease] = (
+            lambda: SessionTurnLease(self.leases, ttl_s=120)
         )
         app.dependency_overrides[get_chatbot_service] = (
             lambda: ChatbotService(FakeProvider(["Xin ", "chào"]), self.history)
@@ -302,3 +308,61 @@ def test_chat_request_log_has_metadata_but_no_message_text(caplog):
     assert "channel=website" in message and "locale=vi" in message and "new_session=True" in message
     assert "subject_id=website_main" in message and "acting_user_id=None" in message
     assert secret not in caplog.text and "0912345678" not in caplog.text
+
+
+# --- lease theo phiên: một lượt tại một thời điểm -----------------------------------
+
+def test_second_turn_on_busy_session_is_rejected_with_409():
+    harness = Harness()
+    key = harness.keys.issue()
+    session_id = _events(harness.crm_chat(key).text)[-1][1]["session_id"]
+    harness.leases.held.add(UUID(session_id))   # một lượt khác đang chạy
+
+    response = harness.crm_chat(key, body={**CRM_BODY, "session_id": session_id})
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "session_busy"
+    assert len(harness.history.created) == 1
+
+
+def test_lease_is_taken_for_existing_session_and_released_after_stream():
+    harness = Harness()
+    key = harness.keys.issue()
+    session_id = _events(harness.crm_chat(key).text)[-1][1]["session_id"]
+    assert harness.leases.acquired == []        # phiên mới: không cần lease
+
+    response = harness.crm_chat(key, body={**CRM_BODY, "session_id": session_id})
+
+    assert response.status_code == 200
+    assert harness.leases.acquired == [UUID(session_id)]
+    assert harness.leases.released == [UUID(session_id)]
+    assert harness.leases.held == set()
+
+
+def test_lease_is_released_when_the_turn_fails():
+    harness = Harness()
+    key = harness.keys.issue()
+    session_id = _events(harness.crm_chat(key).text)[-1][1]["session_id"]
+    harness.client.app.app.dependency_overrides[get_chatbot_service] = (
+        lambda: ChatbotService(FakeProvider(error=RuntimeError("provider down")), harness.history)
+    )
+
+    response = harness.crm_chat(key, body={**CRM_BODY, "session_id": session_id})
+
+    assert _events(response.text)[-1][0] == "error"
+    assert harness.leases.held == set()
+
+
+def test_lease_store_failure_is_unavailable():
+    harness = Harness()
+    key = harness.keys.issue()
+    session_id = _events(harness.crm_chat(key).text)[-1][1]["session_id"]
+
+    async def broken(session_id, ttl_s):
+        raise ConnectionError("db down")
+
+    harness.leases.acquire = broken
+    response = harness.crm_chat(key, body={**CRM_BODY, "session_id": session_id})
+
+    assert response.status_code == 503
+    assert response.json()["detail"]["code"] == "database_unavailable"

@@ -1,12 +1,32 @@
 from collections.abc import AsyncIterator
 from typing import Any
 
+from app.modules.chatbot.schemas.system import (
+    AssistantTurn,
+    LLMCapabilities,
+    ModelProvider,
+    TokenUsage,
+    ToolCallRequest,
+    ToolChoice,
+)
 from app.util.parse_json import parse_json_object
 
 from openai import AsyncOpenAI
 
+# OpenAI Chat Completions hỗ trợ đủ tool calling, nhiều tool call trong một
+# response, tool_choice none/required và Structured Outputs (strict).
+OPENAI_CAPABILITIES = LLMCapabilities(
+    tool_calling=True,
+    parallel_tool_calls=True,
+    tool_choice_none=True,
+    tool_choice_required=True,
+    schema_dialect="openai_strict",
+)
+
 
 class OpenAIProvider:
+    kind = ModelProvider.OPENAI
+
     def __init__(
         self,
         api_key: str,
@@ -20,6 +40,10 @@ class OpenAIProvider:
     @property
     def model(self) -> str:
         return self._model
+
+    @property
+    def capabilities(self) -> LLMCapabilities:
+        return OPENAI_CAPABILITIES
 
     async def stream_chat(self, messages: list[dict[str, str]]) -> AsyncIterator[str]:
         stream: Any = await self._client.chat.completions.create(
@@ -72,6 +96,53 @@ class OpenAIProvider:
             raise RuntimeError("Ollama returned no text content.")
 
         return content
+
+    async def chat_complete_tools(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]],
+        *,
+        tool_choice: ToolChoice = "auto",
+        parallel_tool_calls: bool = True,
+        max_tokens: int = 1200,
+    ) -> AssistantTurn:
+        """Một bước của vòng lặp agent; arguments giữ nguyên chuỗi để registry validate."""
+        options: dict[str, Any] = {}
+        if tools:
+            options["tools"] = tools
+            options["tool_choice"] = tool_choice
+            if tool_choice == "auto":
+                options["parallel_tool_calls"] = parallel_tool_calls
+        resp = await self._client.chat.completions.create(
+            model=self._model,
+            messages=messages,
+            temperature=0,
+            max_tokens=max_tokens,
+            stream=False,
+            **options,
+        )
+        if not resp.choices:
+            raise RuntimeError("OpenAI returned no completion choices.")
+        choice = resp.choices[0]
+        message = choice.message
+        usage = resp.usage
+        return AssistantTurn(
+            content=message.content or None,
+            tool_calls=[
+                ToolCallRequest(
+                    id=call.id,
+                    name=call.function.name,
+                    arguments_raw=call.function.arguments or "",
+                )
+                for call in message.tool_calls or []
+                if call.type == "function"
+            ],
+            finish_reason=choice.finish_reason,
+            usage=TokenUsage(
+                input_tokens=usage.prompt_tokens if usage else 0,
+                output_tokens=usage.completion_tokens if usage else 0,
+            ),
+        )
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
         response = await self._client.embeddings.create(

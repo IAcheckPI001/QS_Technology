@@ -14,11 +14,16 @@ Frontend
   -> ContextLoader (history + ConversationState)
   -> [mode ≠ bot] câu cố định agent.*, dừng
   -> Prune
-  -> ClarificationResumeStage (deterministic, không LLM)
-  -> AnalysisStage -> OpenAIProvider (bỏ qua nếu đã resume)
-  -> ExecutionStage -> ExecutionScheduler -> handlers (retrieve -> Retriever -> match_doc_chunks)
-  -> câu cố định (chitchat/out_of_scope/handoff-only) | AnswerComposer -> OpenAIProvider.stream_chat
-  -> HandoffProvider (disabled) + update_conversation_state
+  ├─ website, hoặc CRM khi CRM_CHAT_FLOW=pipeline (RetrievalPipeline):
+  │   -> ClarificationResumeStage (deterministic, không LLM)
+  │   -> AnalysisStage -> OpenAIProvider (bỏ qua nếu đã resume)
+  │   -> ExecutionStage -> ExecutionScheduler -> handlers (retrieve -> Retriever -> match_doc_chunks)
+  │   -> câu cố định (chitchat/out_of_scope/handoff-only) | AnswerComposer -> OpenAIProvider.stream_chat
+  │   -> HandoffProvider (disabled) + update_conversation_state
+  └─ CRM (mặc định, xem "Luồng agent"):
+      -> AgentRunner ⇄ OpenAIProvider.chat_complete_tools ⇄ ToolRegistry
+         -> product_docs_ask = RetrievalPipeline trên RunState con
+            (clarification -> analysis -> CatalogLookupStage -> execution, không compose)
   -> HistoryRepository -> Supabase public.chat_history
   -> SSE về frontend
 ```
@@ -29,15 +34,25 @@ Frontend
 `backend/app/api/v1/router.py` và bọc ngoài cùng bằng `RequestContextMiddleware`
 (request ID, access log có `outcome`). Lifespan tạo `OpenAIProvider` khi có
 `OPENAI_API_KEY`, lưu provider vào `app.state` và đóng provider khi shutdown.
+Khi `CRM_CHAT_FLOW=agent` (mặc định), lifespan dựng thêm `AgentRunner`
+(`agent/setup.py`): đăng ký tool, kiểm tra capability của provider và schema
+của từng tool. Thiếu capability hoặc schema không hợp lệ thì **dừng khởi động**
+(`ToolConfigurationError`), không để lỗi xuất hiện giữa lượt chat.
 
 Module chatbot (`backend/app/modules/chatbot/`):
 
 ```text
 routers/      chat.py (POST /chat/*), workspace.py (GET /chatbot/*), sse.py (SSE + map lỗi)
 dependencies.py  service/repository, RequestContext, auth theo kênh, Idempotency-Key
-services/     chat_service.py (ChatbotService), session_access.py, service_auth.py
+services/     chat_service.py (ChatbotService), session_access.py (+ SessionTurnLease), service_auth.py
 adapters/     website.py, crm.py: schema kênh -> InboundRequest
-repositories/ history_repository.py, chat_session_repository.py, doc_chunk_repository.py
+repositories/ history_repository.py, chat_session_repository.py (+ ChatTurnLeaseRepository), doc_chunk_repository.py
+stages/       ... + retrieval_pipeline.py (clarification -> analysis -> [catalog] -> execution, dùng chung)
+              catalog_lookup_stage.py (tìm model theo bảng capabilities, chỉ pipeline của agent)
+extraction/   registry.py (intents, models, coverage, capabilities), validate_registry.py, product_catalog.py
+agent/        runner.py (AgentRunner), deadline.py, prompts.py, setup.py
+tools/        registry.py (ToolRegistry), schema.py (chuẩn hóa JSON Schema), base.py, product_docs.py
+providers/    openai.py, base.py (ToolCallingProvider + LLMCapabilities)
 ```
 
 Router không tự khởi tạo provider hoặc repository.
@@ -74,6 +89,16 @@ CRM backend ─ Bearer qsk_… (key kênh crm) + {user_id, session_id, message} 
    trả 404 `session_not_found`. Server sinh `message_id`; adapter dựng
    `InboundRequest` nội bộ (strict), service nhận kèm `PrincipalContext` và
    `RequestContext` trong `RunState`.
+   Với session đã có, router chiếm **lease theo phiên** (`SessionTurnLease`,
+   cột `chat_sessions.turn_lease_until`, một câu UPDATE nguyên tử, commit ngay
+   bằng session DB riêng). Phiên đang có lượt chạy trả 409 `session_busy`. Lease
+   được giải phóng khi stream SSE kết thúc vì bất kỳ lý do gì (xong, lỗi, client
+   ngắt; shield trước cancel của anyio) và tự hết hạn sau `CHAT_TURN_LEASE_S`
+   nếu tiến trình chết. Session mới không cần lease. Câu chiếm lease cũng cập
+   nhật `last_activity_at`; transaction của request **không** UPDATE dòng
+   `chat_sessions` của phiên đã có, vì transaction đó chỉ commit sau khi stream
+   xong và khóa dòng sẽ chặn chính lease của request (connection riêng). Lệnh
+   lease đặt `lock_timeout = 3s` để không treo tới `statement_timeout`.
 4. `SecurityStage` normalize nội dung, chạy `InjectionGuard` và `ContentPolicy`.
    Nếu block, service ghi audit `status='blocked'` bằng session database riêng,
    không chạy context/provider, rồi router phát SSE `error`.
@@ -187,6 +212,202 @@ CRM backend ─ Bearer qsk_… (key kênh crm) + {user_id, session_id, message} 
 11. Context/domain/provider exception được log server-side và ánh xạ thành SSE
     `context_error` hoặc `provider_error`.
 
+## Luồng agent (kênh CRM)
+
+Trạng thái: **thử nghiệm**. Kênh CRM luôn chạy agent khi `CRM_CHAT_FLOW=agent`
+(mặc định); `CRM_CHAT_FLOW=pipeline` đưa CRM về luồng tra cứu ở trên (rollback,
+không phải lựa chọn của từng người dùng). Website không bị ảnh hưởng.
+
+`ChatbotService` rẽ nhánh sau khi nạp context (bước 5–6): kênh CRM và có
+`agent_runner` → `AgentRunner.run(state)`; còn lại → `RetrievalPipeline` +
+compose như trên. Phần đầu lượt (security, session/lease, context, chặn khi
+`mode ≠ bot`) và phần cuối lượt (history completed/error/cancelled) dùng chung.
+
+**Orchestrator là code, không có planner LLM riêng.** `AgentRunner` chạy vòng
+lặp tool-calling: mỗi bước gọi `provider.chat_complete_tools`; LLM tự chọn tool
+và tham số; runner validate, kiểm quyền, thực thi và ghi trace. `plan()` để sẵn
+chỗ chèn bước lập kế hoạch khi số tool lớn (khoảng 15–20+).
+
+**Hybrid: LLM điều phối, backend kiểm soát dữ liệu.** LLM quyết định gọi tool
+nào, khi nào và có cần bước tiếp không. Tool (backend) quyết định dữ liệu nào hợp
+lệ: output có cấu trúc kèm bước kế tiếp hợp lệ (vd. `catalog_match.next_action`),
+từ chối call sai nghiệp vụ bằng mã lỗi (vd. `model_not_evidenced`).
+
+**Orchestrator trung lập với tool.** Runner không biết tool làm gì; mọi hành vi
+riêng do `ToolSpec` khai báo, nên thêm tool báo cáo/CRM không phải sửa runner và
+luật của tool này không áp lên tool khác:
+- luật chung ở system prompt, luật riêng ở `ToolSpec.guide` (xem dưới);
+- state riêng của tool trong lượt ở `AgentRun.tool_states` (subclass
+  `ToolTurnState`, lấy qua `ToolContext.turn_state(...)`); `AgentRun` chỉ giữ
+  phần chung: `steps`, `source_texts` (S# → nội dung), `invalid_citations`;
+- song song theo `read_only` + `concurrency_safe`, gộp call trùng theo
+  `deduplicate`, trần riêng theo `max_calls_per_turn`.
+
+**Prompt hai cấp.** Cấp agent: `agent/prompts.py` chỉ chứa luật **chung** cho mọi
+tool (dữ liệu nghiệp vụ phải lấy qua tool phụ trách, output tool là dữ liệu, xử
+lý lỗi tool, hỏi lại khi tool cần thêm thông tin, trích `[S#]`) và
+`<now>`/`<language_hint>`. Luật đọc output của từng tool nằm ở `ToolSpec.guide`,
+ghép vào `<tool_guides>` **chỉ cho các tool principal được dùng**
+(`registry.allowed`); vd. luật model/catalog nằm trong `PRODUCT_DOCS_GUIDE`.
+Danh sách tool **không** render vào prompt mà gửi qua tham số `tools` của
+provider, sinh từ `ToolRegistry`; `ToolSpec.description` nói khi nào gọi và input.
+Cấp miền: prompt `AnalysisStage` cùng intent/entity registry chạy **bên trong**
+`product_docs_ask`; agent không thấy registry intent.
+
+**Provider contract** (`providers/base.py`). `ToolCallingProvider` khai báo
+`LLMCapabilities` tĩnh: `tool_calling`, `parallel_tool_calls`,
+`tool_choice_none`, `tool_choice_required`, `schema_dialect`
+(`openai_strict` | `json_schema_basic`). Agent cần `tool_calling` và
+`tool_choice_none`; không giả định mọi endpoint OpenAI-compatible hỗ trợ đủ.
+`OpenAIProvider` khai báo đủ. `chat_complete_tools` trả `AssistantTurn`
+(`content`, `tool_calls[{id, name, arguments_raw}]`, `finish_reason`, `usage`);
+arguments giữ nguyên chuỗi, registry mới parse. Backend của tool (Tavily, CRM…)
+không phải provider.
+
+**ToolRegistry** (`tools/`). `ToolSpec(name, description, input_model,
+output_model, run, guide, read_only, concurrency_safe, deduplicate,
+max_calls_per_turn, timeout_s, required_scope)`:
+- Tên theo `^[a-zA-Z0-9_-]{1,64}$` (không dấu chấm: `product_docs_ask`); input
+  model bắt buộc `extra="forbid"`; output kế thừa `ToolOutput`.
+- `to_provider_schema` là nơi **duy nhất** chuẩn hóa JSON Schema của Pydantic:
+  inline `$defs`/`$ref`, `Optional[T]` → `type: [T, "null"]`,
+  `additionalProperties: false` mọi object, strict thì mọi field vào `required`
+  và bỏ keyword không hỗ trợ (ràng buộc vẫn do Pydantic kiểm khi validate).
+  Dict tự do, schema đệ quy, union object với dialect basic → lỗi lúc startup.
+- `allowed(principal)`: hiện mọi tool không đòi scope đều được dùng (chưa có
+  role/scope cho nhân viên CRM) — điểm gắn phân quyền sau này.
+- `invoke` luôn trả đúng một `ToolOutcome` cho mỗi `tool_call_id`; lỗi là mã gửi
+  lại LLM: `tool_invalid_args` (JSON sai, sai schema, field lạ; kèm vị trí lỗi,
+  không lặp giá trị), `tool_not_found`, `tool_not_allowed`, `tool_timeout`,
+  `tool_failed` (chi tiết chỉ vào log), `tool_invalid_output`,
+  `tool_output_too_large`. Tool từ chối vì nghiệp vụ bằng `ToolRejected(code,
+  detail)` (`ToolArgumentError` → `tool_invalid_args`); `detail` do tool viết,
+  không chứa dữ liệu nhạy cảm. `CancelledError` không bao giờ bị bắt.
+- Thêm tool mới: input `extra="forbid"`, output kế thừa `ToolOutput` (tự cắt
+  bằng `to_llm` nếu lớn), `description` + `guide`, khai báo `read_only` /
+  `concurrency_safe` / `deduplicate` (tool ghi: không gộp call, chưa hỗ trợ xác
+  nhận người dùng) / `max_calls_per_turn` / `required_scope`, đăng ký trong
+  `agent/setup.py`. State trong lượt dùng subclass `ToolTurnState` riêng.
+
+**Giao thức tool-call trong runner.**
+- `tool_choice="auto"` trong vòng lặp; `"none"` cho bước cuối (hết bước, hết
+  lượt gọi tool, hết giờ, hoặc lần trả lời rỗng đầu tiên) — vẫn gửi `tools` để
+  lịch sử message `tool` hợp lệ.
+- Có tool call (kèm hoặc không kèm content): content là suy nghĩ trung gian,
+  không gửi người dùng nhưng giữ trong assistant message. Chỉ có content: câu
+  trả lời cuối, yield thành **một** `delta` (chưa stream token). Rỗng hai lần:
+  `agent_empty_answer`. `finish_reason=length`: câu trả lời vẫn trả kèm log
+  cảnh báo; tool call bị cắt thành `tool_invalid_args`.
+- Mỗi `tool_call_id` có đúng một message `role=tool`, theo thứ tự call; call
+  vượt `AGENT_MAX_TOOL_CALLS` nhận `tool_budget_exhausted`, call bỏ vì hết giờ
+  nhận `tool_timeout`, call vượt `max_calls_per_turn` của tool nhận
+  `tool_call_limit` (call của tool khác vẫn chạy).
+- Call trùng (cùng tên, argument giống nhau sau khi chuẩn hóa thứ tự key và
+  khoảng trắng) của tool `deduplicate` (mặc định = `read_only`) không chạy lại:
+  dùng output của call thành công ở bước trước hoặc của call cùng response, bước
+  ghi `status="deduplicated"`. Call lỗi được thử lại; tool ghi luôn chạy.
+- Câu trả lời cuối: `[S#]` không thuộc nguồn đã trả trong lượt bị bỏ khỏi câu
+  trả lời và ghi vào `invalid_citations`.
+- Output tool được cắt theo **token** (`util/token_counter.py`,
+  `AGENT_TOOL_OUTPUT_TOKENS`). `product_docs_ask` cắt theo cấu trúc: luôn giữ
+  `status`/`clarification`/`task_results`, thêm nguồn theo rank tới khi hết
+  budget, nguồn cuối cắt ở ranh giới câu, ghi `truncated`/`omitted_sources`.
+
+**Deadline chung và cancellation.** `Deadline(AGENT_TURN_TIMEOUT_S)`; mỗi lời
+gọi nhận `min(giới hạn riêng, thời gian còn lại − AGENT_FINAL_RESERVE_S)` nên
+tổng không vượt timeout của lượt; còn dưới phần dự phòng thì bỏ tool còn lại và
+chuyển sang bước cuối; bước cuối hết giờ → `agent_timeout`. Client ngắt: cancel
+đi xuyên `stream_reply` → runner → `TaskGroup` của các tool → RunState con →
+`QueryAnalyzer`/`Retriever`/`DocChunkRepository`; service ghi `cancelled`,
+không ghi `completed`. Tầng agent không tạo task chạy ngầm tách rời.
+
+**Concurrency ba mức.**
+1. Tool call trong một response: độc lập theo định nghĩa (LLM chưa thấy kết quả
+   của nhau; phụ thuộc thể hiện qua bước sau). Chạy song song bằng `TaskGroup`
+   (tối đa `AGENT_PARALLEL_TOOLS`) chỉ khi provider cho phép và mọi tool trong
+   batch `read_only` + `concurrency_safe`; ngược lại tuần tự. S# cấp qua
+   `SourceAllocator` dùng chung của lượt: không trùng, chunk trùng giữ S#; khi
+   song song, thứ tự số theo thứ tự hoàn thành.
+2. Nhiều nhân viên: mỗi request có state riêng; provider/retriever không có
+   trạng thái. `AGENT_MAX_CONCURRENT_RUNS` giới hạn lượt agent đồng thời mỗi
+   tiến trình. Kết nối DB tối đa ≈ số lượt × tool song song × task retrieve: cân
+   với `DATABASE_POOL_SIZE`.
+3. Cùng một phiên: lease theo phiên (bước 3), 409 `session_busy`.
+
+**`product_docs_ask`.** Chạy `RetrievalPipeline` trên RunState con, có thêm
+`CatalogLookupStage` giữa Analysis và Execution (chỉ pipeline của tool, website
+không có): `query.origin` = câu hỏi agent viết; history = history phiên + tin
+nhắn hiện tại; `pending` bị bỏ; `last_models`/`active_model` của phiên được giữ
+để kế thừa model và phát hiện `context_conflict` bằng code. Status: `answered`
+(có nguồn), `matched` / `no_match` (tìm model bằng dữ liệu sản phẩm),
+`needs_clarification` (candidates gồm `code` + `name`), `no_docs`, `handoff`,
+`out_of_scope`, `failed`. Nhóm nguồn ghi `product_models` (model đã lọc khi
+retrieve) để agent không gán nguồn của model này cho model khác.
+
+*Tìm model theo tiêu chí (Q1) rồi hỏi tiếp về model đó (Q2).* Sub-query
+discovery = `lookup.product_catalog` chưa có model, có `control_interface`,
+`excluded_control_interface` hoặc `unmapped_conditions` (analysis schema v3.4,
+thêm `interface_match: all|any`). `CatalogLookupStage` lọc bằng
+`ProductCatalog` (hiện `RegistryProductCatalog` đọc `REGISTRY["capabilities"]`
+— phần cứng **hỗ trợ** gì, khác `coverage` là **có tài liệu** gì; closed world:
+mọi model có một dòng) và trả `catalog_match` (`applied`, `unmapped_conditions`,
+`models[{code, name, has_technical_docs, documented_interfaces}]`,
+`next_action`):
+
+| Kết quả | `next_action` | Retrieval | Model được dùng làm bằng chứng ở Q2 |
+|---|---|---|---|
+| Điều kiện trong bảng loại hết model | `report_no_match` (status `no_match`) | không | — |
+| 1–3 model (`MAX_AUTO_LOOKUP_MODELS`), không có `unmapped_conditions` | `lookup_each` | không | có (`discovered_models`) |
+| ≥ 4 model, không có `unmapped_conditions` | `ask_selection` | không | không: lượt sau nhân viên nêu model hoặc "tất cả" (danh sách nằm trong history) |
+| Có `unmapped_conditions` | `verify_with_sources` | catalog; lọc theo ứng viên nếu có điều kiện trong bảng, không lọc nếu không có | chỉ model trong nguồn agent trích qua `based_on_sources` |
+
+`no_match` khác `needs_clarification`: dữ liệu xác nhận không có thì báo kết quả,
+không hỏi lại. Một interface vừa yêu cầu vừa loại trừ → `unclear_query`.
+Trong cùng lần gọi có discovery, sub-query cần model mà model không có trong câu
+hỏi của agent (thiếu model, `context_conflict`, so sánh thiếu model, hoặc model
+kế thừa từ phiên) được giữ lại với task status `awaiting_models` (không phải câu
+hỏi lại nhân viên); agent gọi lại theo `next_action`. Sub-query độc lập có model
+riêng (vd. "F86 có bao nhiêu trục? F54 thì sao?") chạy như thường.
+
+*Bằng chứng model.* Model trong câu hỏi của agent phải có trong: tin nhắn hoặc
+history của nhân viên, `last_models`/`active_model` của phiên, `discovered_models`
+của lượt (`ProductDocsTurnState`), hoặc nguồn trích qua `based_on_sources`
+(`models_in_text`, không tính alias mơ hồ). Thiếu → `model_not_evidenced` trước
+khi gọi LLM analysis; S# không có trong lượt → `tool_invalid_args`. Guard trong
+AnalysisStage vẫn chạy với cùng bằng chứng (`RunState.evidence_models`) để chặn
+model LLM analysis tự thêm. `based_on_sources` chỉ kiểm model **có xuất hiện**
+trong nguồn, không kiểm nghĩa câu.
+
+- Làm rõ model qua history, không qua `pending`: tool trả
+  `needs_clarification` → agent hỏi lại; lượt sau agent gọi lại với mã model
+  nhân viên chọn; câu hỏi lại ở lượt trước nằm trong history nên guard giữ được
+  model đó.
+- `handoff` chỉ là **kết quả nghiệp vụ** (giá, bảo hành… ngoài tài liệu, kèm
+  `handoff_reason`); agent không đổi `Mode`, không gọi `HandoffProvider`.
+- Lượt agent chỉ cập nhật ngữ cảnh model của `conversation_state`
+  (`last_models`/`active_model` từ các lần tra cứu có nguồn, qua
+  `product_docs_plans`); không pending, không handoff. Lượt chỉ dùng tool khác
+  giữ nguyên ngữ cảnh model.
+- Tool có gọi LLM (analysis) vì thuộc tầng agent; quy tắc "handler orchestration
+  không gọi LLM" giữ nguyên.
+
+**Persistence.** `retrieval_snapshot` gộp plan của mọi lần gọi tool (task id
+`{tool_call_id}:task-retrieve-qN`) và thêm khóa nội bộ `agent_steps` (bước LLM/
+tool, trạng thái, latency; không chứa nội dung), `answered_without_tools` (lượt
+không gọi tool nào — theo dõi câu trả lời từ trí nhớ) và `invalid_citations`.
+`normalized_query` lưu các câu hỏi agent gửi cho `product_docs_ask`. Lỗi agent →
+history `error`, SSE `agent_error`.
+
+**Eval thủ công** (`backend/evals/`): `crm_agent_cases.json` +
+`run_crm_agent_eval.py` chạy `AgentRunner` với OpenAI và Supabase thật (không ghi
+DB, không chạy trong CI) cho hành vi phụ thuộc LLM: đại từ/ngữ cảnh, phủ định và
+"hoặc", tách câu hỏi, làm theo `next_action`, prompt injection.
+
+**Chưa có / ngoài phạm vi:** phân quyền tool theo role/scope, event SSE tiến
+trình, stream token câu trả lời cuối, tool CRM/báo cáo/web search, tool ghi dữ
+liệu (cần xác nhận người dùng), planner LLM, MCP (registry chạy cùng tiến trình; có thể
+thêm adapter MCP sau), provider Ollama/Gemini cho agent.
+
 ## Persistence và session
 
 - `HistoryRepository` là ranh giới database và ánh xạ
@@ -205,8 +426,9 @@ CRM backend ─ Bearer qsk_… (key kênh crm) + {user_id, session_id, message} 
   `/chatbot/sessions/{session_id}/...` và `/chatbot/conversations` (Support
   Workspace) **chưa** kiểm ownership.
 - `message_id` do server sinh là `chat_history.id`; `Idempotency-Key` được lưu
-  vào `chat_history.idempotency_key` nhưng chưa chống xử lý trùng. Concurrent
-  request cùng session chưa có ordering guarantee.
+  vào `chat_history.idempotency_key` nhưng chưa chống xử lý trùng. Hai request
+  cùng session không chạy song song: request thứ hai nhận 409 `session_busy`
+  (lease theo phiên).
 
 ## Các lớp và trách nhiệm
 
@@ -216,7 +438,9 @@ CRM backend ─ Bearer qsk_… (key kênh crm) + {user_id, session_id, message} 
 | Schema | Contract version, validation, giới hạn input | Quyết định orchestration |
 | `ChatbotService` | Điều phối session và stages, lifecycle history | Chứa provider implementation |
 | Stage | Một bước domain có typed state/decision | Tạo HTTP response |
-| Provider | Adapter cho OpenAI/LLM | Policy/security/routing |
+| `AgentRunner` | Vòng lặp tool-calling, giới hạn, deadline, trace | Chứa logic của từng tool, render tool vào prompt |
+| `ToolRegistry` / tool | Contract tool, chuẩn hóa schema, kiểm quyền, invoke an toàn | Ghi state cha ngoài `ToolContext`, tạo task chạy ngầm |
+| Provider | Adapter cho OpenAI/LLM, khai báo capability | Policy/security/routing |
 | Repository | Query/write Supabase | Trả SSE hoặc biết UI |
 | Frontend service | POST và parse SSE | Tự quyết định trạng thái backend |
 

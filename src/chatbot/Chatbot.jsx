@@ -2,10 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { LoaderCircle, Send, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
-import { getWidgetHistory, streamChatbotResponse } from '../services/chatbot.service.js';
+import { getWidgetHistory, streamChatbotResponse, streamCrmChatbotResponse } from '../services/chatbot.service.js';
 import styles from './Chatbot.module.css';
 
 const MAX_REQUEST_LENGTH = 1500;
+// Kiểm thử kênh CRM: VITE_CHATBOT_CHANNEL=crm gửi qua /api/chat/crm với user_id mẫu.
+const IS_CRM_TEST = import.meta.env.VITE_CHATBOT_CHANNEL === 'crm';
+const CRM_TEST_USER_ID = import.meta.env.VITE_CRM_TEST_USER_ID || 'employee_test_001';
 
 function makeMessageId() {
     return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -23,6 +26,8 @@ function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
 
     useEffect(() => {
         // widget-backend trả hội thoại hiện tại theo cookie; chưa có thì messages rỗng.
+        // Lịch sử này là của kênh website nên bỏ qua khi kiểm thử CRM.
+        if (IS_CRM_TEST) return undefined;
         const controller = new AbortController();
         getWidgetHistory({ signal: controller.signal })
             .then((history) => {
@@ -76,7 +81,10 @@ function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
         activeControllerRef.current = controller;
 
         try {
-            await streamChatbotResponse(message, {
+            const stream = IS_CRM_TEST ? streamCrmChatbotResponse : streamChatbotResponse;
+            console.log("user_id :" + IS_CRM_TEST);
+            await stream(message, {
+                userId: IS_CRM_TEST ? CRM_TEST_USER_ID : undefined,
                 signal: controller.signal,
                 onChunk: (chunk) => {
                     setMessages((current) => current.map((item) => (

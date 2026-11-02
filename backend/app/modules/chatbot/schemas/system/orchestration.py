@@ -24,6 +24,7 @@ class TaskKind(StrEnum):
     CHITCHAT = "chitchat"
     OUT_OF_SCOPE = "out_of_scope"
     NO_DOCS = "no_docs"
+    CATALOG = "catalog"
 
 
 class TaskError(SystemModel):

@@ -56,10 +56,16 @@ class AnalysisStage:
         last_models = context.conversation.state.last_models
         active_model = context.conversation.state.active_model
         data = await self.analyzer.analyze_raw(self.build_context_analysis(context))
+        # Bằng chứng là tin nhắn thật của người dùng, không phải context.query.origin:
+        # khi agent gọi tra cứu, origin là câu agent tự viết và có thể chứa model
+        # người dùng chưa từng nhắc. Ở luồng chat, hai giá trị này trùng nhau.
+        # evidence_models: model tool agent đã xác nhận trong lượt (tìm theo bảng
+        # capabilities, hoặc có trong nguồn agent trích); luồng chat luôn rỗng.
         evidence = "\n".join([
-            context.query.origin,
+            state.input.message.text,
             *(message.content for message in context.conversation.history),
             *last_models,
+            *state.evidence_models,
         ])
         raw_sub_queries = guard_extracted_models(list(data["sub_queries"]), evidence)
         pending = context.conversation.state.pending
@@ -113,6 +119,9 @@ def _acknowledgement(query: str) -> dict:
         "product_models": [],
         "unresolved_mentions": [],
         "control_interface": [],
+        "excluded_control_interface": [],
+        "interface_match": "all",
+        "unmapped_conditions": [],
         "spec_attributes": [],
         "handoff_reason": None,
         "history_conflict": False,

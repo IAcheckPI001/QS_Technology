@@ -2,12 +2,13 @@
 
 import json
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import aclosing
 
 from fastapi import Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
+from app.modules.chatbot.agent import AgentError
 from app.modules.chatbot.analysis.analyzer import AnalysisError
 from app.modules.chatbot.schemas.inbound import InboundRequest
 from app.modules.chatbot.schemas.security.principal import PrincipalContext, RequestContext
@@ -54,7 +55,9 @@ def stream_chat(
     inbound: InboundRequest,
     principal: PrincipalContext,
     request_context: RequestContext,
+    on_finish: Callable[[], Awaitable[None]] | None = None,
 ) -> StreamingResponse:
+    """on_finish chạy khi stream kết thúc vì bất kỳ lý do gì (xong, lỗi, client ngắt)."""
     request_id = request_context.request_id
     session_id = inbound.session.session_id
 
@@ -63,6 +66,15 @@ def stream_chat(
         return sse_event("error", {"code": code, "message": message, "request_id": request_id})
 
     async def event_stream() -> AsyncIterator[str]:
+        try:
+            async with aclosing(_events()) as events:
+                async for event in events:
+                    yield event
+        finally:
+            if on_finish is not None:
+                await on_finish()
+
+    async def _events() -> AsyncIterator[str]:
         try:
             # aclosing: khi client ngắt và generator này bị đóng, stream_reply cũng
             # được đóng ngay (không chờ GC) để kịp ghi lượt status='cancelled'.
@@ -105,6 +117,17 @@ def stream_chat(
             yield error_event(
                 "analysis_error",
                 "The request could not be analyzed. Please rephrase and try again.",
+            )
+        except AgentError as error:
+            logger.exception(
+                "Chat agent failed code=%s (request_id=%s session_id=%s)",
+                error.code,
+                request_id,
+                session_id,
+            )
+            yield error_event(
+                "agent_error",
+                "The assistant could not complete the request. Please try again.",
             )
         except Exception:
             logger.exception("Chat provider failed (request_id=%s)", request_id)

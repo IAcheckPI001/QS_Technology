@@ -1,10 +1,17 @@
 from app.modules.chatbot.services.chat_service import ChatbotService
 from app.modules.chatbot.services.service_auth import ServiceAuthService
-from app.modules.chatbot.services.session_access import SessionAccessService, SessionNotFound
+from app.modules.chatbot.services.session_access import (
+    SessionAccessService,
+    SessionBusy,
+    SessionNotFound,
+    SessionTurnLease,
+)
 
 __all__ = [
     "ChatbotService",
     "ServiceAuthService",
     "SessionAccessService",
+    "SessionBusy",
     "SessionNotFound",
+    "SessionTurnLease",
 ]

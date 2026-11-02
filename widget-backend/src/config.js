@@ -16,6 +16,8 @@ export function loadConfig(env = process.env) {
         port: positiveInt(env.PORT, 8787, 'PORT'),
         aiServiceUrl: (env.AI_SERVICE_URL || 'http://localhost:8000').replace(/\/+$/, ''),
         apiKey,
+        // Service key kênh crm, chỉ để kiểm thử /api/chat/crm; trống = tắt route đó.
+        crmApiKey: (env.CHATBOT_CRM_API_KEY ?? '').trim() || null,
         allowedOrigins: new Set(
             (env.ALLOWED_ORIGINS || DEFAULT_ORIGINS).split(',').map((origin) => origin.trim()).filter(Boolean),
         ),

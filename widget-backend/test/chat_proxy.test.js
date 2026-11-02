@@ -5,6 +5,7 @@ import { after, before, beforeEach, describe, test } from 'node:test';
 import { createWidgetServer } from '../src/server.js';
 
 const API_KEY = 'qsk_0123456789abcdef_' + 'a'.repeat(43);
+const CRM_API_KEY = 'qsk_fedcba9876543210_' + 'b'.repeat(43);
 const ORIGIN = 'http://localhost:5173';
 const SESSION_A = '11111111-1111-4111-8111-111111111111';
 const SESSION_B = '22222222-2222-4222-8222-222222222222';
@@ -84,6 +85,7 @@ before(async () => {
         port: 0,
         aiServiceUrl: `http://127.0.0.1:${aiPort}`,
         apiKey: API_KEY,
+        crmApiKey: CRM_API_KEY,
         allowedOrigins: new Set([ORIGIN]),
         cookieSecure: false,
         aiResponseTimeoutMs: 5000,
@@ -259,15 +261,96 @@ describe('GET /api/chat/history and POST /api/chat/reset', () => {
         assert.ok(response.cookies.some((cookie) => cookie.startsWith('qs_chat_session=;') && cookie.includes('Max-Age=0')));
     });
 
-    test('reset clears the session cookie', async () => {
+    test('reset clears the website and CRM session cookies', async () => {
         const response = await call('/api/chat/reset', { method: 'POST', headers: { Origin: ORIGIN } });
 
         assert.equal(response.status, 204);
         assert.ok(response.cookies.some((cookie) => cookie.startsWith('qs_chat_session=;') && cookie.includes('Max-Age=0')));
+        assert.ok(response.cookies.some((cookie) => cookie.startsWith('qs_crm_session=;') && cookie.includes('Max-Age=0')));
     });
 
     test('unknown route is 404 and health is ok', async () => {
         assert.equal((await call('/api/unknown')).status, 404);
         assert.deepEqual(JSON.parse((await call('/health')).text), { status: 'ok' });
+    });
+});
+
+describe('POST /api/chat/crm (test route)', () => {
+    const crmChat = (headers = {}, body = { user_id: 'employee_test_001', message: { text: 'Lỗi CNC F86?' } }) => (
+        call('/api/chat/crm', { method: 'POST', headers: { Origin: ORIGIN, ...headers }, body })
+    );
+
+    test('calls /chat/crm with the CRM key and user_id, session in its own cookie', async () => {
+        const response = await crmChat({}, {
+            user_id: '  employee_test_001 ',
+            message: { text: 'Lỗi CNC F86?' },
+            client_context: { locale: 'vi' },
+        });
+
+        assert.equal(response.status, 200);
+        assert.equal(response.text, SSE_BODY);
+        assert.equal(cookieValue(response.cookies, 'qs_crm_session'), SESSION_A);
+        assert.equal(cookieValue(response.cookies, 'qs_chat_session'), undefined);
+
+        const [request] = ai.requests;
+        assert.equal(request.url, '/chat/crm');
+        assert.equal(request.headers.authorization, `Bearer ${CRM_API_KEY}`);
+        assert.deepEqual(request.body, {
+            schema_version: '1.0',
+            user_id: 'employee_test_001',
+            session_id: null,
+            message: { text: 'Lỗi CNC F86?' },
+        });
+    });
+
+    test('reuses the CRM session cookie, not the website one', async () => {
+        await crmChat({ Cookie: `qs_chat_session=${SESSION_B}; qs_crm_session=${SESSION_A}` });
+
+        assert.equal(ai.requests[0].body.session_id, SESSION_A);
+    });
+
+    test('stale CRM session is retried once as a new conversation', async () => {
+        ai.reply = (request, res) => (request.body.session_id
+            ? json(404, { detail: { code: 'session_not_found', message: 'gone' } })(request, res)
+            : sse(SESSION_B)(request, res));
+
+        const response = await crmChat({ Cookie: `qs_crm_session=${SESSION_A}` });
+
+        assert.equal(response.status, 200);
+        assert.deepEqual(ai.requests.map((request) => request.body.session_id), [SESSION_A, null]);
+        assert.equal(cookieValue(response.cookies.filter((c) => !c.includes('Max-Age=0')), 'qs_crm_session'), SESSION_B);
+    });
+
+    test('missing or too long user_id is rejected before calling AI', async () => {
+        const missing = await crmChat({}, { message: { text: 'hi' } });
+        const tooLong = await crmChat({}, { user_id: 'x'.repeat(129), message: { text: 'hi' } });
+
+        assert.equal(missing.status, 400);
+        assert.equal(JSON.parse(missing.text).detail.code, 'invalid_request');
+        assert.equal(tooLong.status, 400);
+        assert.equal(ai.requests.length, 0);
+    });
+
+    test('route is disabled without a CRM key', async () => {
+        const noCrm = createWidgetServer({
+            port: 0,
+            aiServiceUrl: `http://127.0.0.1:${aiPort}`,
+            apiKey: API_KEY,
+            crmApiKey: null,
+            allowedOrigins: new Set([ORIGIN]),
+            cookieSecure: false,
+            aiResponseTimeoutMs: 5000,
+        }, { logger });
+        const port = await listen(noCrm);
+        const saved = widgetPort;
+        widgetPort = port;
+        try {
+            const response = await crmChat();
+            assert.equal(response.status, 404);
+            assert.equal(ai.requests.length, 0);
+        } finally {
+            widgetPort = saved;
+            noCrm.close();
+        }
     });
 });

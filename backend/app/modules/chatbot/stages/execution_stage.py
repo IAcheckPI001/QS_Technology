@@ -32,7 +32,11 @@ class ExecutionStage:
         self._max_concurrency = max_concurrency
         self._retriever = retriever
 
-    async def execute(self, state: RunState) -> RunState:
+    async def execute(
+        self,
+        state: RunState,
+        source_allocator: "SourceAllocator | None" = None,
+    ) -> RunState:
         if state.analysis is None:
             raise ExecutionError("analysis_missing", "Execution requires an analysis plan.")
 
@@ -42,11 +46,36 @@ class ExecutionStage:
             max_concurrency=self._max_concurrency,
         )
         state.plan = await scheduler.run(plan)
-        assign_source_ids(state)
+        assign_source_ids(state, source_allocator)
         return state
 
 
-def assign_source_ids(state: RunState) -> None:
+class SourceAllocator:
+    """Cấp S# cho chunk context; chunk đã có S# dùng lại số cũ.
+
+    Một lượt agent gọi tra cứu nhiều lần (có thể song song): dùng chung một
+    allocator để S# không trùng giữa các lần gọi. Gán đồng bộ, không await, nên
+    an toàn giữa các coroutine của cùng event loop.
+    """
+
+    def __init__(self, next_number: int = 1) -> None:
+        self._next_number = next_number
+        self._assigned: dict[str, str] = {}
+
+    @classmethod
+    def for_state(cls, state: RunState) -> "SourceAllocator":
+        return cls(int(state.next_source_id()[1:]))
+
+    def source_id(self, chunk_id: str) -> str:
+        source_id = self._assigned.get(chunk_id)
+        if source_id is None:
+            source_id = f"S{self._next_number}"
+            self._next_number += 1
+            self._assigned[chunk_id] = source_id
+        return source_id
+
+
+def assign_source_ids(state: RunState, allocator: SourceAllocator | None = None) -> None:
     """Gán S# cho chunk context theo thứ tự task, sau khi mọi task chạy xong.
 
     Task retrieve chạy song song nên không gán trong handler: thứ tự S# phải
@@ -55,8 +84,7 @@ def assign_source_ids(state: RunState) -> None:
     """
     if state.plan is None:
         return
-    next_number = int(state.next_source_id()[1:])
-    assigned: dict[str, str] = {}
+    allocator = allocator or SourceAllocator.for_state(state)
 
     for task in state.plan.tasks:
         result = task.result
@@ -67,11 +95,7 @@ def assign_source_ids(state: RunState) -> None:
             hits = []
             selected: dict[str, str] = {}
             for hit in sub_result.hits:
-                source_id = assigned.get(hit.chunk_id)
-                if source_id is None:
-                    source_id = f"S{next_number}"
-                    next_number += 1
-                    assigned[hit.chunk_id] = source_id
+                source_id = allocator.source_id(hit.chunk_id)
                 hits.append(hit.model_copy(update={"source_id": source_id}))
                 selected.update({chunk_id: source_id for chunk_id in hit.matched_chunk_ids})
             traces = [_select_candidates(trace, selected) for trace in sub_result.traces]

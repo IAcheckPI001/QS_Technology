@@ -33,7 +33,10 @@ Chọn đúng một intent theo mục tiêu thực sự của người dùng, kh
 <entity_rules>
 1. product_models: chỉ ghi model có trong <models> (mã canonical hoặc alias), chuẩn hóa về mã canonical, không phân biệt hoa/thường, khoảng trắng, gạch. Không suy diễn model không được nhắc.
 2. Cụm trông như tên model nhưng KHÔNG khớp <models> (ví dụ "Astro 6A", "Astro 10", "F20", "6AHE") -> ghi nguyên văn vào unresolved_mentions; KHÔNG đoán, KHÔNG đưa vào product_models, KHÔNG đổi intent vì có model lạ.
-3. control_interface: {_render_hints(R['control_interface'])}.
+3. control_interface: {_render_hints(R['control_interface'])}. Ghi interface người dùng hỏi hoặc yêu cầu phải có.
+3a. excluded_control_interface: interface model phải KHÔNG hỗ trợ ("không hỗ trợ X", "không có X", "trừ X"). "Không CẦN X", "X không quan trọng" là không ràng buộc gì: không ghi X vào đâu cả. Một interface không được nằm ở cả hai trường.
+3b. interface_match: "any" khi các interface trong control_interface nối bằng "hoặc" ("EtherCAT hoặc Mechatrolink"); còn lại "all".
+3c. unmapped_conditions: khi tìm/lọc model theo tiêu chí, mọi điều kiện KHÔNG biểu diễn được bằng control_interface/excluded_control_interface (giá trị cụ thể như "6 trục", "màn hình 10 inch", interface không có trong danh sách như "Profinet"), ghi ngắn gọn bằng tiếng Việt, mỗi điều kiện một mục. Không bỏ sót điều kiện nào; không có thì [].
 4. spec_attributes: {_render_hints(R['spec_attributes'])}. Chỉ ghi thuộc tính người dùng thực sự hỏi.
 5. handoff_reason: chỉ khi intent = handoff.human, chọn một mã; nhiều lý do thì lấy lý do được nhắc đầu tiên. Intent khác -> null. Mã hợp lệ: {", ".join(R["handoff_reasons"])}.
 6. model_dependency: "model_specific" khi câu trả lời đúng hay sai tùy model: thông số, chân/tín hiệu connector, đấu dây, các bước cấu hình/thao tác, tham số, mã lỗi/alarm. "general" khi chỉ hỏi nguyên lý, khái niệm, công dụng chung, hoặc intent không cần model (company_info, product_catalog, chitchat, out_of_scope, handoff). Không tự thêm model để đổi câu hỏi chung thành câu hỏi cụ thể. Quy tắc áp dụng như nhau cho câu hỏi bằng mọi ngôn ngữ (tiếng Anh "wire", "pin", "connector", "parameter", "alarm" đều là model_specific).

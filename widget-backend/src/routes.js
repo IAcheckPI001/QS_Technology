@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { AiServiceUnreachable } from './ai_client.js';
 import {
+    CRM_SESSION_COOKIE,
     SESSION_COOKIE,
     SESSION_MAX_AGE,
     VISITOR_COOKIE,
@@ -131,48 +132,39 @@ export function createRouter({ config, ai, logger = console }) {
         );
     }
 
-    async function postChat(req, res, ctx) {
-        assertOrigin(req);
-        ensureVisitor(req, ctx);
-        const payload = await readJson(req);
+    function readMessageText(payload) {
         const text = payload?.message?.text;
         if (typeof text !== 'string' || !text.trim()) {
             throw new HttpError(400, 'invalid_request', 'message.text is required.');
         }
-        const clientContext = payload.client_context && typeof payload.client_context === 'object'
-            ? payload.client_context
-            : undefined;
-        const idempotencyKey = isUuid(req.headers['idempotency-key']) ? req.headers['idempotency-key'] : undefined;
+        return text;
+    }
 
+    // Phần chung của các route chat: session theo cookie `cookieName`, `send(sessionId, signal)`
+    // gọi endpoint chat tương ứng của dịch vụ AI.
+    async function proxyChat(req, res, ctx, { cookieName, send }) {
         // Trình duyệt ngắt → huỷ request tới dịch vụ AI (dịch vụ ghi lượt 'cancelled').
         const controller = new AbortController();
         res.on('close', () => {
             if (!res.writableFinished) controller.abort();
         });
-        const send = (sessionId) => ai.chatWebsite({
-            sessionId,
-            message: { text },
-            clientContext,
-            idempotencyKey,
-            signal: controller.signal,
-        });
 
-        let sessionId = readUuidCookie(req, SESSION_COOKIE);
-        let upstream = await send(sessionId);
+        let sessionId = readUuidCookie(req, cookieName);
+        let upstream = await send(sessionId, controller.signal);
         if (upstream.status === 404 && sessionId) {
             const detail = await readDetail(upstream);
             if (detail.code !== 'session_not_found') return relayError(res, ctx, upstream, detail);
             // Session cũ không còn (hết hạn, bị thu hồi): bắt đầu hội thoại mới một lần.
-            ctx.cookies.push(clearCookie(SESSION_COOKIE, cookieOptions));
+            ctx.cookies.push(clearCookie(cookieName, cookieOptions));
             sessionId = null;
-            upstream = await send(null);
+            upstream = await send(null, controller.signal);
         }
         if (!upstream.ok) return relayError(res, ctx, upstream);
 
         const nextSessionId = upstream.headers.get('x-session-id');
         if (isUuid(nextSessionId)) {
             // Đặt trước khi stream: sau khi gửi header thì không đặt cookie được nữa.
-            ctx.cookies.push(serializeCookie(SESSION_COOKIE, nextSessionId.toLowerCase(), {
+            ctx.cookies.push(serializeCookie(cookieName, nextSessionId.toLowerCase(), {
                 ...cookieOptions,
                 maxAge: SESSION_MAX_AGE,
             }));
@@ -190,6 +182,55 @@ export function createRouter({ config, ai, logger = console }) {
         } finally {
             res.end();
         }
+    }
+
+    async function postChat(req, res, ctx) {
+        assertOrigin(req);
+        ensureVisitor(req, ctx);
+        const payload = await readJson(req);
+        const text = readMessageText(payload);
+        const clientContext = payload.client_context && typeof payload.client_context === 'object'
+            ? payload.client_context
+            : undefined;
+        const idempotencyKey = isUuid(req.headers['idempotency-key']) ? req.headers['idempotency-key'] : undefined;
+
+        return proxyChat(req, res, ctx, {
+            cookieName: SESSION_COOKIE,
+            send: (sessionId, signal) => ai.chatWebsite({
+                sessionId,
+                message: { text },
+                clientContext,
+                idempotencyKey,
+                signal,
+            }),
+        });
+    }
+
+    // Chỉ để kiểm thử kênh CRM từ widget: user_id do trình duyệt gửi nên ai gọi được route
+    // này cũng mạo danh được nhân viên. Chỉ bật khi có CHATBOT_CRM_API_KEY; không bật production.
+    async function postCrmChat(req, res, ctx) {
+        if (!config.crmApiKey) throw new HttpError(404, 'not_found', 'Route not found.');
+        assertOrigin(req);
+        ensureVisitor(req, ctx);
+        const payload = await readJson(req);
+        const text = readMessageText(payload);
+        const userId = typeof payload?.user_id === 'string' ? payload.user_id.trim() : '';
+        if (!userId || userId.length > 128) {
+            throw new HttpError(400, 'invalid_request', 'user_id is required (1-128 characters).');
+        }
+        const idempotencyKey = isUuid(req.headers['idempotency-key']) ? req.headers['idempotency-key'] : undefined;
+
+        // Đổi user_id giữa các lượt: dịch vụ AI trả session_not_found → proxyChat mở session mới.
+        return proxyChat(req, res, ctx, {
+            cookieName: CRM_SESSION_COOKIE,
+            send: (sessionId, signal) => ai.chatCrm({
+                sessionId,
+                userId,
+                message: { text },
+                idempotencyKey,
+                signal,
+            }),
+        });
     }
 
     async function getHistory(req, res, ctx) {
@@ -211,13 +252,14 @@ export function createRouter({ config, ai, logger = console }) {
     async function postReset(req, res, ctx) {
         assertOrigin(req);
         ensureVisitor(req, ctx);
-        ctx.cookies.push(clearCookie(SESSION_COOKIE, cookieOptions));
+        ctx.cookies.push(clearCookie(SESSION_COOKIE, cookieOptions), clearCookie(CRM_SESSION_COOKIE, cookieOptions));
         res.writeHead(204, { 'Set-Cookie': ctx.cookies });
         res.end();
     }
 
     const routes = {
         'POST /api/chat': postChat,
+        'POST /api/chat/crm': postCrmChat,
         'GET /api/chat/history': getHistory,
         'POST /api/chat/reset': postReset,
         'GET /health': (req, res, ctx) => sendJson(res, ctx, 200, { status: 'ok' }),

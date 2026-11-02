@@ -15,9 +15,11 @@ Frontend
   -> SecurityStage
   -> ContextLoader
   -> Prune
-  -> AnalysisStage -> QueryAnalyzer -> OpenAIProvider
-  -> ExecutionStage -> ExecutionScheduler -> deterministic task handlers
-  -> AnswerComposer -> OpenAIProvider.stream_chat
+  ├─ website / CRM with CRM_CHAT_FLOW=pipeline:
+  │   -> AnalysisStage -> QueryAnalyzer -> OpenAIProvider
+  │   -> ExecutionStage -> ExecutionScheduler -> deterministic task handlers
+  │   -> AnswerComposer -> OpenAIProvider.stream_chat
+  └─ CRM (default, experimental): AgentRunner ⇄ ToolRegistry (product_docs_ask)
   -> HistoryRepository -> Supabase public.chat_history
   -> SSE response
 ```
@@ -50,6 +52,7 @@ provider layer, and database access remains in the repository layer.
 | P3 history reads and ownership | Partially implemented | Support-chat session/message reads and session creation are available behind `LEARNING_API_ENABLED`; authentication and ownership are still deferred. |
 | P4 health/readiness semantics | Open | Connectivity check exists, but readiness status/error semantics and schema checks are incomplete. |
 | P5 active chatbot pipeline | Partially implemented | Security, context loading (with persisted `ConversationState`), pruning, the clarification loop (deterministic resume, `pending_answer`, held sub-queries, 2-attempt limit), analysis, execution-plan execution, fixed replies for chitchat/out_of_scope/handoff-only turns and provider final-answer streaming run. Retrieval is wired at test level: one retrieve task per sub-query, filtered hybrid search (vector + FTS, RRF, parent expansion) over `doc_chunks` via `match_doc_chunks` (`backend/sql/doc_chunks.sql`, applied manually), sources rendered into the answer prompt. Not verified against live Supabase; retrieval parameters are untuned starting values. Handoff is a scaffold: `DisabledHandoffProvider` creates no ticket, so `mode` stays `bot`. Requires the `conversation_state` column migration (not verified live). |
+| P5b CRM agent flow | Experimental, unit-tested only | `/chat/crm` runs a bounded tool-calling loop (`AgentRunner`) when `CRM_CHAT_FLOW=agent` (default). One tool: `product_docs_ask` (reruns clarification → analysis → retrieval on a child state, no compose). Provider capabilities and tool schemas are checked at startup. Shared turn deadline, cancellation propagation, three-level concurrency limits and a per-session turn lease (409 `session_busy`) are implemented and tested with fakes only. Hybrid model selection: questions like "which models support EtherCAT? how do I install it?" filter models in code from `REGISTRY["capabilities"]` (`catalog_match` with `next_action` report_no_match / lookup_each / ask_selection / verify_with_sources), and follow-up lookups only accept models backed by evidence (employee message/history, session model context, discovered models, or cited sources via `based_on_sources`). The orchestrator is tool-neutral: shared rules in the system prompt, per-tool rules in `ToolSpec.guide`, per-tool turn state, `deduplicate` and `max_calls_per_turn` per tool. No per-role tool permissions (every CRM employee can use every tool), no SSE progress events, the final answer is one `delta` (no token streaming), no CRM/web tools. Not verified against live OpenAI tool calling or Supabase; `chat_sessions.turn_lease_until` must be applied manually. |
 | P6 knowledge learning pipeline (`learning_ai`) | Ingestion + privacy wired behind a flag | Pure domain logic (record schema, post-LLM validation, rule conflicts, review lifecycle, chunking, indexer sync) plus CRM ingestion, prefilter and the Ollama-backed privacy pipeline exist and are unit-tested with fake providers. `POST /ai/learning` runs ingestion + privacy when `LEARNING_API_ENABLED=true` (no authentication yet). LLM segment/extract calls, job persistence, outbox, embedding and vector index are missing. Not verified against live Supabase/Ollama. |
 
 ## Finding status
@@ -141,6 +144,9 @@ historical database records. Deletion is not currently implemented.
 4b. **CRM service key: delegated trust, no per-user authorization yet**
    - `user_id` is asserted by the CRM backend; a leaked key can impersonate any
      employee of that integration. Mitigation today: revoke + reissue.
+   - The CRM agent flow currently lets every employee use every registered
+     tool. `ToolRegistry.allowed(principal)` and `ToolSpec.required_scope` are
+     the hook for role/scope checks; nothing populates `principal.scopes` yet.
    - Deferred: employee permissions resolved from `user_id` (tools, assigned
      customers, learning access), an API to list/read a user's conversations,
      per-integration scopes, tenant isolation of `doc_chunks`/retrieval, rate
@@ -175,10 +181,25 @@ historical database records. Deletion is not currently implemented.
    - Duplicate detection/replay is not implemented: retries can still create
      duplicate history rows and LLM calls.
 
-7. **No ordering/concurrency policy**
-   - Concurrent requests for one session can be committed out of order.
-   - The current UI limits normal concurrent sends, but the backend has no
-     ordering or idempotency guarantee.
+7. **Per-session turn lease; no idempotent replay**
+   - A second request on a session whose turn is still running gets
+     409 `session_busy` (`chat_sessions.turn_lease_until`, released when the
+     SSE stream ends, expires after `CHAT_TURN_LEASE_S`). New sessions take no
+     lease. Requires `backend/sql/chat_sessions.sql` on Supabase (not verified
+     live).
+   - The lease release is shielded against anyio cancellation (how Starlette
+     cancels a stream); a raw `asyncio` task cancel can interrupt it, and the
+     lease then expires on its TTL.
+   - Found in live testing (2026-10-30): the first version also touched
+     `last_activity_at` inside the request transaction, which holds the row
+     lock until the stream ends; the lease UPDATE (separate connection) then
+     waited on it until `statement_timeout`, so every resumed session hung ~30s
+     (widget-backend 502). Fixed: the lease UPDATE sets `last_activity_at`,
+     the request transaction no longer updates existing session rows, and lease
+     statements use `lock_timeout = 3s`. Unit tests use fakes and cannot
+     reproduce row locks; this path still needs live verification.
+   - A retry sent while the original turn still runs is rejected by the lease;
+     a retry after it finished runs again (no replay by `Idempotency-Key`).
 
 ### Lower priority
 
@@ -233,7 +254,32 @@ historical database records. Deletion is not currently implemented.
 ### P3 — Reliability and data quality
 
 11. Persist or otherwise enforce an idempotency key based on `message_id`.
-12. Define ordering/concurrency behavior for one session.
+12. ~~Define ordering/concurrency behavior for one session.~~ Done: per-session
+    turn lease (409 `session_busy`).
+12b. Product capabilities and model selection (agent flow), known limits:
+     - Capabilities live in code (`extraction/registry.py`), closed world: a
+       model without an interface is treated as not supporting it. Data comes
+       from the product team; changes need a deploy. Move to a database
+       repository behind `ProductCatalog` later. Only `control_interface` exists;
+       spec values (number of axes, screen size) are not structured yet, so such
+       conditions go to `unmapped_conditions` and `verify_with_sources`.
+     - `verify_with_sources` relies on top-k chunks: the model list can be
+       incomplete, and the 1–3 / ≥4 threshold is only applied through the prompt.
+       `based_on_sources` checks that the model appears in the cited source, not
+       what the sentence says.
+     - "Astro nào hỗ trợ EtherCAT" (family alias as a filter) still asks to
+       disambiguate "Astro". No hardware/firmware version entity. Sources carry
+       the model filter of their group, not a per-chunk model (`match_doc_chunks`
+       does not return `product_models`).
+     - LLM-dependent behaviour (negation "không cần" vs "không hỗ trợ", pronouns,
+       following `next_action`, prompt injection) is covered by the manual eval
+       `backend/evals/run_crm_agent_eval.py`, which has **not been run** yet.
+12a. CRM agent flow backlog: per-role tool permissions, SSE progress event,
+     token streaming of the final answer, CRM/report tools (with templates +
+     compute), write tools with user confirmation, planner step when the tool
+     count grows, MCP adapter, Ollama/Gemini capability declarations, live
+     verification of OpenAI tool calling and of cancellation reaching asyncpg
+     (`pg_stat_activity`).
 13. Add provider usage extraction for token counts and cost.
 14. Decide `retrieved_chunk_ids` type (`UUID[]` vs `doc_chunks.id bigint`) before persisting retrieval metadata.
 
@@ -326,6 +372,29 @@ ORM expects that column, and it has not been verified against the live table.
   verified**. Backlog: rate limit in widget-backend, "new conversation" button
   (BFF has `POST /api/chat/reset`), docker-compose service for widget-backend,
   Support Workspace default session (no longer in `localStorage`).
+- CRM agent flow (`AgentRunner`, `ToolRegistry`, `product_docs_ask`, provider
+  capabilities, shared deadline, cancellation, per-session turn lease)
+  (2026-10-30): backend pytest **387 passed, 0 failed** (311 existing tests
+  unchanged in assertions; `test_chat_routes.py` harness gained a fake lease
+  store). `npm run build` passed; `npm run lint` unchanged (139 pre-existing
+  errors in `src/`). Live OpenAI tool calling and Supabase: **not verified**.
+- Turn-lease self-lock fix (2026-10-30): backend pytest **390 passed, 0 failed**.
+  `test_session_access.py::test_owner_can_resume_session` now asserts that a
+  resumed session is only read (previously asserted a `touch`). `npm run build`
+  passed. Live re-test on Supabase pending.
+- Hybrid model selection (capabilities table, `CatalogLookupStage`,
+  `catalog_match`, `awaiting_models`, evidence + `based_on_sources`, CRM model
+  context, call dedup, citation check, analysis schema v3.4) and tool-neutral
+  orchestrator (`ToolSpec.guide`, per-tool turn state, `deduplicate`,
+  `max_calls_per_turn`) (2026-10-30): backend pytest **450 passed, 0 failed**.
+  Changed assertions in existing tests, all intended: the agent child state now
+  sends the session `last_models` to analysis; a model the agent invents is
+  rejected with `model_not_evidenced` before analysis (previously
+  `needs_clarification` from the guard); an unknown `[S#]` in the final answer is
+  removed; the strict tool schema snapshot includes `based_on_sources`; the CRM
+  turn now updates `last_models`/`active_model`. `npm run build` passed;
+  `npm run lint` unchanged (139 pre-existing errors in `src/`). Live OpenAI and
+  Supabase: **not verified**; manual eval not run.
 - Live Supabase connectivity/insert: **not verified**.
 
 ## Architectural impact
@@ -354,6 +423,10 @@ analysis/provider work. It removes the oldest history turns first and never
 truncates the current query. `AnalysisStage` then builds the analysis context,
 calls `QueryAnalyzer` through `OpenAIProvider`. `ExecutionStage` builds and runs
 the execution plan with deterministic handlers, and `AnswerComposer` streams the
-final answer from the task results, including retrieved `<sources>`. Tools are not executed. Invalid configuration is an application/configuration
+final answer from the task results, including retrieved `<sources>`. On the CRM
+channel (agent flow) the same clarification → analysis → execution steps run
+inside the `product_docs_ask` tool via `RetrievalPipeline`, with
+`CatalogLookupStage` between analysis and execution, and the agent writes the
+final answer. Invalid configuration is an application/configuration
 error; an unfit mandatory payload is a context-budget/domain error. Neither is
 a security block.
