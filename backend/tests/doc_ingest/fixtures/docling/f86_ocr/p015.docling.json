@@ -1,0 +1,666 @@
+{
+ "schema_name": "DoclingDocument",
+ "version": "1.10.0",
+ "name": "F86_Operation Manual (English Version)",
+ "origin": {
+  "mimetype": "application/pdf",
+  "binary_hash": 5936226309445889319,
+  "filename": "F86_Operation Manual (English Version).pdf"
+ },
+ "furniture": {
+  "self_ref": "#/furniture",
+  "children": [],
+  "content_layer": "furniture",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "body": {
+  "self_ref": "#/body",
+  "children": [
+   {
+    "$ref": "#/texts/0"
+   },
+   {
+    "$ref": "#/texts/1"
+   },
+   {
+    "$ref": "#/texts/2"
+   },
+   {
+    "$ref": "#/texts/3"
+   },
+   {
+    "$ref": "#/pictures/0"
+   },
+   {
+    "$ref": "#/pictures/1"
+   },
+   {
+    "$ref": "#/texts/6"
+   },
+   {
+    "$ref": "#/pictures/2"
+   },
+   {
+    "$ref": "#/texts/15"
+   },
+   {
+    "$ref": "#/texts/16"
+   }
+  ],
+  "content_layer": "body",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "groups": [],
+ "texts": [
+  {
+   "self_ref": "#/texts/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 35.0625,
+      "t": 752.879030863444,
+      "r": 331.1015625,
+      "b": 742.5,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      43
+     ]
+    }
+   ],
+   "orig": "2.2.3 F86 CONTROLLER INPUT CONNECTION TABLE",
+   "text": "2.2.3 F86 CONTROLLER INPUT CONNECTION TABLE",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 34.265625,
+      "t": 732.1209665934244,
+      "r": 562.59375,
+      "b": 701.383056640625,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      53
+     ]
+    }
+   ],
+   "orig": "Reg   g        o o  on signal cause damage to device.",
+   "text": "Reg   g        o o  on signal cause damage to device."
+  },
+  {
+   "self_ref": "#/texts/2",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 34.6640625,
+      "t": 685.4153137207031,
+      "r": 189.2578125,
+      "b": 673.8387044270834,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      22
+     ]
+    }
+   ],
+   "orig": "2.3 TOOL LENGTH SENSOR",
+   "text": "2.3 TOOL LENGTH SENSOR",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/3",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 34.265625,
+      "t": 663.4596761067709,
+      "r": 560.6015625,
+      "b": 616.7540283203125,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      279
+     ]
+    }
+   ],
+   "orig": "Tool length sensor is a device to measure the length, wear of cutting tools and these values will be calculated to determine the tool ware compensation. And the controller will able to adjust suitable working value achieve the desired dimensions and tolerances of machined parts.",
+   "text": "Tool length sensor is a device to measure the length, wear of cutting tools and these values will be calculated to determine the tool ware compensation. And the controller will able to adjust suitable working value achieve the desired dimensions and tolerances of machined parts."
+  },
+  {
+   "self_ref": "#/texts/4",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "caption",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 232.6875,
+      "t": 467.0564371744792,
+      "r": 398.0390625,
+      "b": 453.883056640625,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      30
+     ]
+    }
+   ],
+   "orig": "Figure 2-6. Tool length sensor",
+   "text": "Figure 2-6. Tool length sensor"
+  },
+  {
+   "self_ref": "#/texts/5",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 576.140625,
+      "t": 467.45562744140625,
+      "r": 588.09375,
+      "b": 396.399169921875,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      13
+     ]
+    }
+   ],
+   "orig": "QS TECHNOLOGY",
+   "text": "QS TECHNOLOGY"
+  },
+  {
+   "self_ref": "#/texts/6",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 35.0625,
+      "t": 439.9112955729167,
+      "r": 144.6328125,
+      "b": 429.133056640625,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      18
+     ]
+    }
+   ],
+   "orig": "2.3.1 3 WIRES TYPE",
+   "text": "2.3.1 3 WIRES TYPE",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/7",
+   "parent": {
+    "$ref": "#/pictures/2"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "caption",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 141.84375,
+      "t": 261.07255045572913,
+      "r": 469.7578125,
+      "b": 247.49995930989587,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      60
+     ]
+    }
+   ],
+   "orig": "Figure 2-7. Tool length sensor wiring diagram (3 wires type)",
+   "text": "Figure 2-7. Tool length sensor wiring diagram (3 wires type)"
+  },
+  {
+   "self_ref": "#/texts/8",
+   "parent": {
+    "$ref": "#/pictures/2"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 391.265625,
+      "t": 422.3467610677083,
+      "r": 411.984375,
+      "b": 409.9717610677083,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "24V",
+   "text": "24V"
+  },
+  {
+   "self_ref": "#/texts/9",
+   "parent": {
+    "$ref": "#/pictures/2"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 309.1875,
+      "t": 386.0201416015625,
+      "r": 346.2421875,
+      "b": 374.8427327473958,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "BROWN",
+   "text": "BROWN"
+  },
+  {
+   "self_ref": "#/texts/10",
+   "parent": {
+    "$ref": "#/pictures/2"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 311.578125,
+      "t": 361.6693522135417,
+      "r": 344.25,
+      "b": 349.2943522135417,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "BLACK",
+   "text": "BLACK"
+  },
+  {
+   "self_ref": "#/texts/11",
+   "parent": {
+    "$ref": "#/pictures/2"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 396.84375,
+      "t": 362.4677327473958,
+      "r": 457.8046875,
+      "b": 350.4919026692708,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      14
+     ]
+    }
+   ],
+   "orig": "(Probe signal)",
+   "text": "(Probe signal)"
+  },
+  {
+   "self_ref": "#/texts/12",
+   "parent": {
+    "$ref": "#/pictures/2"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 462.984375,
+      "t": 354.883056640625,
+      "r": 485.296875,
+      "b": 341.7096761067708,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "X56",
+   "text": "X56"
+  },
+  {
+   "self_ref": "#/texts/13",
+   "parent": {
+    "$ref": "#/pictures/2"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 311.1796875,
+      "t": 338.1169026692708,
+      "r": 343.8515625,
+      "b": 324.5443522135417,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "GREEN",
+   "text": "GREEN"
+  },
+  {
+   "self_ref": "#/texts/14",
+   "parent": {
+    "$ref": "#/pictures/2"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 395.25,
+      "t": 285.4233805338542,
+      "r": 411.1875,
+      "b": 272.649169921875,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      2
+     ]
+    }
+   ],
+   "orig": "OV",
+   "text": "OV"
+  },
+  {
+   "self_ref": "#/texts/15",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 34.6640625,
+      "t": 27.54435221354163,
+      "r": 207.984375,
+      "b": 15.169352213541629,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      21
+     ]
+    }
+   ],
+   "orig": "QS TECHNOLOGY CO.,LTD",
+   "text": "QS TECHNOLOGY CO.,LTD"
+  },
+  {
+   "self_ref": "#/texts/16",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 513.984375,
+      "t": 27.14510091145837,
+      "r": 561.796875,
+      "b": 14.770100911458371,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      7
+     ]
+    }
+   ],
+   "orig": "PAGE 13",
+   "text": "PAGE 13"
+  }
+ ],
+ "pictures": [
+  {
+   "self_ref": "#/pictures/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/4"
+    }
+   ],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 193.91278076171875,
+      "t": 605.8131866455078,
+      "r": 435.8980407714844,
+      "b": 485.29217529296875,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [
+    {
+     "$ref": "#/texts/4"
+    }
+   ],
+   "references": [],
+   "footnotes": [],
+   "annotations": [],
+   "image": null
+  },
+  {
+   "self_ref": "#/pictures/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/5"
+    }
+   ],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 510.73193359375,
+      "t": 496.6357421875,
+      "r": 587.3449096679688,
+      "b": 368.7701416015625,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [],
+   "references": [],
+   "footnotes": [],
+   "annotations": [],
+   "image": null
+  },
+  {
+   "self_ref": "#/pictures/2",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/7"
+    },
+    {
+     "$ref": "#/texts/8"
+    },
+    {
+     "$ref": "#/texts/9"
+    },
+    {
+     "$ref": "#/texts/10"
+    },
+    {
+     "$ref": "#/texts/11"
+    },
+    {
+     "$ref": "#/texts/12"
+    },
+    {
+     "$ref": "#/texts/13"
+    },
+    {
+     "$ref": "#/texts/14"
+    }
+   ],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 15,
+     "bbox": {
+      "l": 147.03707885742188,
+      "t": 420.7469177246094,
+      "r": 483.2425842285156,
+      "b": 274.173828125,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [
+    {
+     "$ref": "#/texts/7"
+    }
+   ],
+   "references": [],
+   "footnotes": [],
+   "annotations": [],
+   "image": null
+  }
+ ],
+ "tables": [],
+ "key_value_items": [],
+ "form_items": [],
+ "pages": {
+  "15": {
+   "size": {
+    "width": 612.0,
+    "height": 792.0
+   },
+   "page_no": 15,
+   "image": null
+  }
+ }
+}

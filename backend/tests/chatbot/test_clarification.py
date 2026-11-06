@@ -84,9 +84,9 @@ def test_matcher_accepts_alias_confirmation_and_ordinal():
 
 
 def test_matcher_rejects_ambiguous_or_new_questions():
-    two = _pending(candidates=("ASTRO_6AH", "ASTRO_6AV"))
+    two = _pending(candidates=("6AH", "6AV"))
     assert match_confirmation("đúng", two) is None
-    assert match_confirmation("2", two) == "ASTRO_6AV"
+    assert match_confirmation("2", two) == "6AV"
     assert match_confirmation("F86 có cổng USB không?", _pending()) is None
     assert match_confirmation("cho mình hỏi giá bộ này bao nhiêu", _pending()) is None
 
@@ -543,17 +543,17 @@ def test_previous_models_are_kept_for_comparison_with_active_model():
 def test_last_models_keep_only_the_most_recent_four():
     outputs = [
         _out(_dep(f"Giới thiệu {model}", "lookup.product_info", "model_specific", models=[model]))
-        for model in ("F54", "F86", "F10T", "ASTRO_10S", "F54")
+        for model in ("F54", "F86", "F10T", "6AH", "F54")
     ]
     provider = AnalysisProvider(outputs)
     repository = StoringHistoryRepository()
     service = ChatbotService(provider, repository)
 
-    for message in ("F54", "F86", "F10T", "Astro 10S", "F54 lần nữa"):
+    for message in ("F54", "F86", "F10T", "Astro 6AH", "F54 lần nữa"):
         _send(service, f"Giới thiệu {message}")
 
     assert repository.rows[-1].conversation_state["last_models"] == [
-        "F86", "F10T", "ASTRO_10S", "F54",
+        "F86", "F10T", "6AH", "F54",
     ]
 
 

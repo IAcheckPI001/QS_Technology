@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -51,6 +52,12 @@ class Settings(BaseSettings):
     agent_parallel_tools: int = Field(default=3, alias="AGENT_PARALLEL_TOOLS")
     agent_max_concurrent_runs: int = Field(default=8, alias="AGENT_MAX_CONCURRENT_RUNS")
     agent_history_messages: int = Field(default=6, alias="AGENT_HISTORY_MESSAGES")
+    # Tool báo cáo CRM (crm_report, thử nghiệm): gọi API CRM bằng Bearer <acting_user_id>.
+    crm_report_enabled: bool = Field(default=False, alias="CRM_REPORT_ENABLED")
+    crm_api_base_url: str = Field(default="", alias="CRM_API_BASE_URL")
+    crm_api_timeout_s: float = Field(default=10.0, alias="CRM_API_TIMEOUT_S")
+    crm_report_max_items: int = Field(default=2000, alias="CRM_REPORT_MAX_ITEMS")
+    crm_report_timezone: str = Field(default="Asia/Ho_Chi_Minh", alias="CRM_REPORT_TIMEZONE")
     # Lease chống hai lượt chạy song song trên cùng phiên; hết hạn tự giải phóng nếu tiến trình chết.
     chat_turn_lease_s: int = Field(default=120, alias="CHAT_TURN_LEASE_S")
     ollama_base_url: str = Field(default="", alias="OLLAMA_BASE_URL")
@@ -140,6 +147,31 @@ class Settings(BaseSettings):
         if value <= 0:
             raise ValueError("Agent limits and turn lease must be greater than zero")
         return value
+
+    @field_validator("crm_api_base_url", "crm_report_timezone", mode="before")
+    @classmethod
+    def _strip_crm(cls, value: str) -> str:
+        return value.strip()
+
+    @field_validator("crm_api_timeout_s", "crm_report_max_items")
+    @classmethod
+    def _validate_crm_positive(cls, value: float) -> float:
+        if value <= 0:
+            raise ValueError("CRM API timeout and max items must be greater than zero")
+        return value
+
+    @model_validator(mode="after")
+    def _crm_report_configured(self) -> "Settings":
+        if not self.crm_report_enabled:
+            return self
+        if not self.crm_api_base_url:
+            raise ValueError("CRM_REPORT_ENABLED requires CRM_API_BASE_URL")
+        # Cần dữ liệu múi giờ (tzdata hệ thống hoặc package tzdata) khi bật tool.
+        try:
+            ZoneInfo(self.crm_report_timezone)
+        except (ZoneInfoNotFoundError, ValueError):
+            raise ValueError("CRM_REPORT_TIMEZONE must be an IANA timezone name") from None
+        return self
 
     @model_validator(mode="after")
     def _agent_reserve_within_turn(self) -> "Settings":

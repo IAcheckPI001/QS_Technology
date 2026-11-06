@@ -16,7 +16,8 @@ from ..privacy.schemas import FindingType, SensitivityFlag
 from .common import StrictModel
 
 SCHEMA_VERSION = "1.0"
-PRODUCT_MODELS = Literal["F54", "F86", "F10T", "ASTRO_10S", "ASTRO_6AH", "ASTRO_6AV", "ASTRO_10I"]
+# Cùng danh mục với chatbot registry (product_name của CRM).
+PRODUCT_MODELS = Literal["F54", "F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE"]
 
 
 class SupportChatSessionCreate(StrictModel):

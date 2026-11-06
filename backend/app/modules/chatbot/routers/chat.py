@@ -87,7 +87,7 @@ async def chat_crm(
         service,
         sessions,
         turn_lease,
-        principal.acting_for(payload.user_id),
+        principal.acting_for(payload.user_id, payload.crm_access_token),
         request_context,
         payload.session_id,
         lambda session_id, message_id: crm_to_inbound(

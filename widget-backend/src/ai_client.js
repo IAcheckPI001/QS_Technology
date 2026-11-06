@@ -52,7 +52,7 @@ export function createAiClient(config, fetchImpl = fetch) {
         },
 
         // Chỉ dùng để kiểm thử kênh CRM: user_id do trình duyệt gửi, không phải danh tính đã xác thực.
-        chatCrm({ sessionId, userId, message, idempotencyKey, signal }) {
+        chatCrm({ sessionId, userId, crmAccessToken, message, idempotencyKey, signal }) {
             return request('/chat/crm', {
                 method: 'POST',
                 apiKey: config.crmApiKey,
@@ -63,6 +63,7 @@ export function createAiClient(config, fetchImpl = fetch) {
                 body: {
                     schema_version: '1.0',
                     user_id: userId,
+                    ...(crmAccessToken ? { crm_access_token: crmAccessToken } : {}),
                     session_id: sessionId,
                     message,
                 },

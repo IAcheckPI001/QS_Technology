@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 import pytest
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 
 from app.modules.chatbot.schemas import InboundRequest, OutboundResponse
 from app.modules.chatbot.schemas.channels import CRMChatIn, WebsiteChatIn
@@ -76,6 +76,34 @@ def test_crm_body_requires_user_id_and_ignores_website_fields():
     for missing in ({"message": {"text": "hi"}}, {"user_id": "   ", "message": {"text": "hi"}}):
         with pytest.raises(ValidationError):
             CRMChatIn.model_validate(missing)
+
+
+def test_crm_access_token_is_optional_secret_and_never_dumped():
+    body = CRMChatIn.model_validate({
+        "user_id": "employee_456",
+        "crm_access_token": " eyJ.secret.token ",
+        "message": {"text": "Bao nhiêu ticket?"},
+    })
+
+    assert body.crm_access_token.get_secret_value() == "eyJ.secret.token"
+    assert "secret" not in repr(body) and "crm_access_token" not in body.model_dump()
+    assert CRMChatIn.model_validate({"user_id": "e", "message": {"text": "hi"}}).crm_access_token is None
+    for token in ("", "x" * 4097):
+        with pytest.raises(ValidationError):
+            CRMChatIn.model_validate({"user_id": "e", "crm_access_token": token,
+                                      "message": {"text": "hi"}})
+
+
+def test_principal_keeps_crm_token_out_of_dump_and_repr():
+    service = make_service_principal(user_id=None)
+    token = SecretStr("eyJ.secret.token")
+
+    principal = service.acting_for("employee_456", token)
+
+    assert principal.crm_access_token.get_secret_value() == "eyJ.secret.token"
+    assert "crm_access_token" not in principal.model_dump()
+    assert "secret" not in repr(principal) and "secret" not in principal.model_dump_json()
+    assert principal.acting_for("employee_789").crm_access_token is None
 
 
 # --- InboundRequest nội bộ (strict) --------------------------------------------

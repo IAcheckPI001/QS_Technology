@@ -1,0 +1,263 @@
+{
+ "schema_name": "DoclingDocument",
+ "version": "1.10.0",
+ "name": "F54_Operation Manual (English Version)_V.02",
+ "origin": {
+  "mimetype": "application/pdf",
+  "binary_hash": 10649216247643491873,
+  "filename": "F54_Operation Manual (English Version)_V.02.pdf"
+ },
+ "furniture": {
+  "self_ref": "#/furniture",
+  "children": [],
+  "content_layer": "furniture",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "body": {
+  "self_ref": "#/body",
+  "children": [
+   {
+    "$ref": "#/texts/0"
+   },
+   {
+    "$ref": "#/texts/1"
+   },
+   {
+    "$ref": "#/texts/2"
+   },
+   {
+    "$ref": "#/pictures/0"
+   },
+   {
+    "$ref": "#/texts/4"
+   },
+   {
+    "$ref": "#/texts/5"
+   }
+  ],
+  "content_layer": "body",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "groups": [],
+ "texts": [
+  {
+   "self_ref": "#/texts/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 85.104,
+      "t": 756.5880000000001,
+      "r": 142.26,
+      "b": 741.936,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      10
+     ]
+    }
+   ],
+   "orig": "Model: F54",
+   "text": "Model: F54"
+  },
+  {
+   "self_ref": "#/texts/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 344.71,
+      "t": 756.5880000000001,
+      "r": 553.216,
+      "b": 741.936,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      39
+     ]
+    }
+   ],
+   "orig": "Operation Manual (English Version)_V.01",
+   "text": "Operation Manual (English Version)_V.01"
+  },
+  {
+   "self_ref": "#/texts/2",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 85.104,
+      "t": 724.768,
+      "r": 158.56400000000002,
+      "b": 710.116,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      13
+     ]
+    }
+   ],
+   "orig": "1.2 Dimension",
+   "text": "1.2 Dimension",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/3",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "caption",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 203.33,
+      "t": 353.08244,
+      "r": 385.03496000000007,
+      "b": 340.92128,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      42
+     ]
+    }
+   ],
+   "orig": "Figure 3. F54 controller dimension drawing",
+   "text": "Figure 3. F54 controller dimension drawing"
+  },
+  {
+   "self_ref": "#/texts/4",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 85.104,
+      "t": 49.908000000000015,
+      "r": 175.224,
+      "b": 35.25599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      14
+     ]
+    }
+   ],
+   "orig": "www.qstcnc.com",
+   "text": "www.qstcnc.com",
+   "hyperlink": "http://www.qstcnc.com/"
+  },
+  {
+   "self_ref": "#/texts/5",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 513.7,
+      "t": 49.908000000000015,
+      "r": 553.1080000000001,
+      "b": 35.25599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      8
+     ]
+    }
+   ],
+   "orig": "Page | 2",
+   "text": "Page | 2"
+  }
+ ],
+ "pictures": [
+  {
+   "self_ref": "#/pictures/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/3"
+    }
+   ],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 89.73854064941406,
+      "t": 667.598518371582,
+      "r": 526.3523559570312,
+      "b": 351.5933532714844,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [
+    {
+     "$ref": "#/texts/3"
+    }
+   ],
+   "references": [],
+   "footnotes": [],
+   "image": null,
+   "annotations": []
+  }
+ ],
+ "tables": [],
+ "key_value_items": [],
+ "form_items": [],
+ "pages": {
+  "9": {
+   "size": {
+    "width": 612.0,
+    "height": 792.0
+   },
+   "image": null,
+   "page_no": 9
+  }
+ }
+}

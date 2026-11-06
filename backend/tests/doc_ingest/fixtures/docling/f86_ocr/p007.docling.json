@@ -1,0 +1,809 @@
+{
+ "schema_name": "DoclingDocument",
+ "version": "1.10.0",
+ "name": "F86_Operation Manual (English Version)",
+ "origin": {
+  "mimetype": "application/pdf",
+  "binary_hash": 5936226309445889319,
+  "filename": "F86_Operation Manual (English Version).pdf"
+ },
+ "furniture": {
+  "self_ref": "#/furniture",
+  "children": [],
+  "content_layer": "furniture",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "body": {
+  "self_ref": "#/body",
+  "children": [
+   {
+    "$ref": "#/texts/0"
+   },
+   {
+    "$ref": "#/pictures/0"
+   },
+   {
+    "$ref": "#/pictures/1"
+   },
+   {
+    "$ref": "#/texts/21"
+   },
+   {
+    "$ref": "#/texts/22"
+   }
+  ],
+  "content_layer": "body",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "groups": [],
+ "texts": [
+  {
+   "self_ref": "#/texts/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 33.8671875,
+      "t": 753.2782236735026,
+      "r": 124.3125,
+      "b": 742.5,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      13
+     ]
+    }
+   ],
+   "orig": "1.1 APPERANCE",
+   "text": "1.1 APPERANCE"
+  },
+  {
+   "self_ref": "#/texts/1",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "caption",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 237.46875,
+      "t": 410.3709716796875,
+      "r": 374.9296875,
+      "b": 396.7983805338542,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      26
+     ]
+    }
+   ],
+   "orig": "Figure 1-1. F86 controller",
+   "text": "Figure 1-1. F86 controller"
+  },
+  {
+   "self_ref": "#/texts/2",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 216.75,
+      "t": 681.0241902669271,
+      "r": 253.8046875,
+      "b": 675.0362854003906,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      13
+     ]
+    }
+   ],
+   "orig": "QS TECHNOLOGY",
+   "text": "QS TECHNOLOGY"
+  },
+  {
+   "self_ref": "#/texts/3",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 319.1484375,
+      "t": 683.4193522135416,
+      "r": 331.5,
+      "b": 677.4314473470052,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "F-86",
+   "text": "F-86"
+  },
+  {
+   "self_ref": "#/texts/4",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 400.03125,
+      "t": 676.2338663736979,
+      "r": 413.9765625,
+      "b": 670.2459615071615,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "RESET",
+   "text": "RESET"
+  },
+  {
+   "self_ref": "#/texts/5",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 408.796875,
+      "t": 633.1209615071615,
+      "r": 417.1640625,
+      "b": 628.3306376139323,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "Back",
+   "text": "Back"
+  },
+  {
+   "self_ref": "#/texts/6",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 374.53125,
+      "t": 602.383056640625,
+      "r": 380.90625,
+      "b": 594.7983805338541,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      2
+     ]
+    }
+   ],
+   "orig": "0.",
+   "text": "0."
+  },
+  {
+   "self_ref": "#/texts/7",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 219.140625,
+      "t": 547.6935424804688,
+      "r": 227.5078125,
+      "b": 541.7056274414062,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "m",
+   "text": "m"
+  },
+  {
+   "self_ref": "#/texts/8",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 297.6328125,
+      "t": 540.1088663736979,
+      "r": 308.7890625,
+      "b": 532.524190266927,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "5th",
+   "text": "5th"
+  },
+  {
+   "self_ref": "#/texts/9",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 312.375,
+      "t": 538.5120849609375,
+      "r": 321.9375,
+      "b": 532.524190266927,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "6th",
+   "text": "6th"
+  },
+  {
+   "self_ref": "#/texts/10",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 374.53125,
+      "t": 538.1128946940104,
+      "r": 384.890625,
+      "b": 532.124979654948,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "AUX4",
+   "text": "AUX4"
+  },
+  {
+   "self_ref": "#/texts/11",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 388.875,
+      "t": 537.3145141601562,
+      "r": 399.6328125,
+      "b": 531.3265991210938,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "AUX3",
+   "text": "AUX3"
+  },
+  {
+   "self_ref": "#/texts/12",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 284.484375,
+      "t": 526.1370849609375,
+      "r": 293.25,
+      "b": 519.3507893880208,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      2
+     ]
+    }
+   ],
+   "orig": "X>",
+   "text": "X>"
+  },
+  {
+   "self_ref": "#/texts/13",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 370.9453125,
+      "t": 520.9475708007812,
+      "r": 381.3046875,
+      "b": 514.9596557617188,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "AUX1",
+   "text": "AUX1"
+  },
+  {
+   "self_ref": "#/texts/14",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 385.2890625,
+      "t": 519.749979654948,
+      "r": 395.6484375,
+      "b": 514.1612752278645,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "AUX2",
+   "text": "AUX2"
+  },
+  {
+   "self_ref": "#/texts/15",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 292.0546875,
+      "t": 510.1693522135417,
+      "r": 302.4140625,
+      "b": 501.78627522786456,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "5th",
+   "text": "5th"
+  },
+  {
+   "self_ref": "#/texts/16",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 306.0,
+      "t": 508.9717610677083,
+      "r": 315.1640625,
+      "b": 502.58465576171875,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "6th",
+   "text": "6th"
+  },
+  {
+   "self_ref": "#/texts/17",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "caption",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 203.203125,
+      "t": 150.49593098958337,
+      "r": 409.59375,
+      "b": 137.32255045572913,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      38
+     ]
+    }
+   ],
+   "orig": "Figure 1-2. F86 controller outside box",
+   "text": "Figure 1-2. F86 controller outside box"
+  },
+  {
+   "self_ref": "#/texts/18",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 294.84375,
+      "t": 265.06449381510413,
+      "r": 361.3828125,
+      "b": 256.68143717447913,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      13
+     ]
+    }
+   ],
+   "orig": "QS TECHNOLOGY",
+   "text": "QS TECHNOLOGY"
+  },
+  {
+   "self_ref": "#/texts/19",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 344.25,
+      "t": 214.76611328125,
+      "r": 391.265625,
+      "b": 212.7701416015625,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      17
+     ]
+    }
+   ],
+   "orig": "MOTION CONTROLLER",
+   "text": "MOTION CONTROLLER"
+  },
+  {
+   "self_ref": "#/texts/20",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 253.8046875,
+      "t": 206.383056640625,
+      "r": 300.421875,
+      "b": 203.18949381510413,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      15
+     ]
+    }
+   ],
+   "orig": "MADE BY VIETNAM",
+   "text": "MADE BY VIETNAM"
+  },
+  {
+   "self_ref": "#/texts/21",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 33.8671875,
+      "t": 28.34269205729163,
+      "r": 208.78125,
+      "b": 14.370930989583371,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      21
+     ]
+    }
+   ],
+   "orig": "QS TECHNOLOGY CO.,LTD",
+   "text": "QS TECHNOLOGY CO.,LTD"
+  },
+  {
+   "self_ref": "#/texts/22",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 513.5859375,
+      "t": 27.94352213541663,
+      "r": 559.0078125,
+      "b": 14.370930989583371,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      6
+     ]
+    }
+   ],
+   "orig": "PAGE 5",
+   "text": "PAGE 5"
+  }
+ ],
+ "pictures": [
+  {
+   "self_ref": "#/pictures/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/1"
+    },
+    {
+     "$ref": "#/texts/2"
+    },
+    {
+     "$ref": "#/texts/3"
+    },
+    {
+     "$ref": "#/texts/4"
+    },
+    {
+     "$ref": "#/texts/5"
+    },
+    {
+     "$ref": "#/texts/6"
+    },
+    {
+     "$ref": "#/texts/7"
+    },
+    {
+     "$ref": "#/texts/8"
+    },
+    {
+     "$ref": "#/texts/9"
+    },
+    {
+     "$ref": "#/texts/10"
+    },
+    {
+     "$ref": "#/texts/11"
+    },
+    {
+     "$ref": "#/texts/12"
+    },
+    {
+     "$ref": "#/texts/13"
+    },
+    {
+     "$ref": "#/texts/14"
+    },
+    {
+     "$ref": "#/texts/15"
+    },
+    {
+     "$ref": "#/texts/16"
+    }
+   ],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 161.50839233398438,
+      "t": 698.3300247192383,
+      "r": 448.4853515625,
+      "b": 475.0930480957031,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [
+    {
+     "$ref": "#/texts/1"
+    }
+   ],
+   "references": [],
+   "footnotes": [],
+   "annotations": [],
+   "image": null
+  },
+  {
+   "self_ref": "#/pictures/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/17"
+    },
+    {
+     "$ref": "#/texts/18"
+    },
+    {
+     "$ref": "#/texts/19"
+    },
+    {
+     "$ref": "#/texts/20"
+    }
+   ],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 7,
+     "bbox": {
+      "l": 218.28179931640625,
+      "t": 353.43328857421875,
+      "r": 395.5101623535156,
+      "b": 185.4984130859375,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [
+    {
+     "$ref": "#/texts/17"
+    }
+   ],
+   "references": [],
+   "footnotes": [],
+   "annotations": [],
+   "image": null
+  }
+ ],
+ "tables": [],
+ "key_value_items": [],
+ "form_items": [],
+ "pages": {
+  "7": {
+   "size": {
+    "width": 612.0,
+    "height": 792.0
+   },
+   "page_no": 7,
+   "image": null
+  }
+ }
+}

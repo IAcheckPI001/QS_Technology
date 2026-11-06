@@ -29,31 +29,31 @@
       "id": "g2_ethercat_ask_selection",
       "group": "query_complexity",
       "turns": ["Model nào hỗ trợ EtherCAT? Hướng dẫn lắp đặt model đó."],
-      "expect": {"next_actions_any": ["ask_selection"], "catalog_models": ["F86", "F10T", "ASTRO_10S", "ASTRO_6AH", "ASTRO_6AV", "ASTRO_10I"], "tool_calls_max": 2}
+      "expect": {"next_actions_any": ["ask_selection"], "catalog_models": ["F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE"], "tool_calls_max": 2}
     },
     {
-      "id": "g2_ethercat_and_mechatrolink_lookup_each",
+      "id": "g2_ethercat_without_mechatrolink_lookup_each",
       "group": "query_complexity",
-      "turns": ["Model nào hỗ trợ cả EtherCAT và Mechatrolink? Hướng dẫn lắp đặt các model đó."],
-      "expect": {"next_actions_any": ["lookup_each"], "catalog_models": ["ASTRO_6AH", "ASTRO_6AV", "ASTRO_10I"], "tool_calls_min": 4}
+      "turns": ["Model nào hỗ trợ EtherCAT nhưng không hỗ trợ Mechatrolink? Hướng dẫn lắp đặt các model đó."],
+      "expect": {"next_actions_any": ["lookup_each"], "catalog_models": ["F86", "F86E", "F10T"], "tool_calls_min": 4}
     },
     {
       "id": "g2_negation_not_supported",
       "group": "query_complexity",
       "turns": ["Model nào hỗ trợ EtherCAT nhưng không hỗ trợ Mechatrolink?"],
-      "expect": {"catalog_models": ["F86", "F10T", "ASTRO_10S"]}
+      "expect": {"catalog_models": ["F86", "F86E", "F10T"]}
     },
     {
       "id": "g2_negation_not_needed",
       "group": "query_complexity",
       "turns": ["Model nào hỗ trợ EtherCAT, không cần Mechatrolink?"],
-      "expect": {"catalog_models": ["F86", "F10T", "ASTRO_10S", "ASTRO_6AH", "ASTRO_6AV", "ASTRO_10I"]}
+      "expect": {"catalog_models": ["F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE"]}
     },
     {
       "id": "g2_or_conditions",
       "group": "query_complexity",
       "turns": ["Model nào hỗ trợ EtherCAT hoặc Mechatrolink?"],
-      "expect": {"catalog_models": ["F86", "F10T", "ASTRO_10S", "ASTRO_6AH", "ASTRO_6AV", "ASTRO_10I"]}
+      "expect": {"catalog_models": ["F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE"]}
     },
     {
       "id": "g2_no_match",

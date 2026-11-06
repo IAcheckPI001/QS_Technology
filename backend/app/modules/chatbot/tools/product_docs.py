@@ -43,7 +43,7 @@ PRODUCT_DOCS_DESCRIPTION = (
     "tìm model theo tiêu chí, so sánh model, lắp đặt/đấu dây, vận hành, cấu hình tham số, xử lý "
     "lỗi/alarm, thông tin công ty. Dùng cho mọi thông tin về sản phẩm. "
     "`question` phải tự đủ nghĩa (không dùng 'nó', 'model đó') và ghi rõ mã model nếu đã biết "
-    "(vd F86, ASTRO_6AV); mỗi lần gọi một câu hỏi. `based_on_sources`: chỉ dùng khi model trong "
+    "(vd F86, 6AV); mỗi lần gọi một câu hỏi. `based_on_sources`: chỉ dùng khi model trong "
     "question được chọn từ nguồn của lần gọi trước (xem hướng dẫn của tool)."
 )
 

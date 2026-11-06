@@ -36,7 +36,9 @@ luôn trả theo thứ tự `message_no`.
 
 - `GET /support-chat/sessions` trả danh sách session mới nhất trước.
 - `POST /support-chat/sessions` nhận `{ "product_models": ["F86"] }` và trả
-  session vừa tạo (`201`).
+  session vừa tạo (`201`). `product_models` theo mã `product_name` của CRM:
+  `F54`, `F86`, `F86E`, `F10T`, `6AH`, `6AHE`, `6AV`, `6AVE`, `10iV`, `10iVE`
+  (mã cũ `ASTRO_*` không còn hợp lệ, trả 422).
 - `GET /support-chat/sessions/{session_id}/messages` trả `{session_id,
   messages}` hoặc `404 session_not_found`.
 
@@ -309,12 +311,18 @@ Body của `/chat/crm` khác website (field lạ, kể cả `client_context` và
 {
   "schema_version": "1.0",
   "user_id": "employee_456",
+  "crm_access_token": "<token CRM của nhân viên, tùy chọn>",
   "session_id": null,
   "message": {"text": "Hướng dẫn xử lý lỗi trên bộ điều khiển CNC F86"}
 }
 ```
 
 - `user_id`: bắt buộc, 1–128 ký tự sau khi strip.
+- `crm_access_token`: tùy chọn, 1–4096 ký tự. Token CRM của chính nhân viên đó;
+  tool báo cáo (`crm_report`) dùng làm `Authorization: Bearer` khi gọi API CRM, nên
+  CRM phân quyền/phạm vi dữ liệu theo token. **Không** log, không lưu
+  (`chat_sessions`, history, snapshot), không dùng để khớp session. Bỏ trống thì
+  tool dùng `user_id` làm Bearer (hành vi cũ).
 - `session_id`: `null`/bỏ trống = hội thoại mới (nút "Cuộc trò chuyện mới");
   lượt sau gửi giá trị từ event `done`. Không phải bí mật: chỉ dùng lại được
   khi session cùng integration **và** cùng `user_id`.
@@ -325,7 +333,8 @@ Body của `/chat/crm` khác website (field lạ, kể cả `client_context` và
   luồng tra cứu như website (stream nhiều `delta`).
 - Kiểm thử từ chatbot widget: widget-backend có route `POST /api/chat/crm`
   (chỉ bật khi đặt `CHATBOT_CRM_API_KEY`, `user_id` do trình duyệt gửi, không
-  dùng production); widget gọi route này khi build với `VITE_CHATBOT_CHANNEL=crm`
+  dùng production); widget gọi route này khi build với `VITE_CHATBOT_CHANNEL=crm`,
+  gửi kèm `crm_access_token` từ `VITE_CRM_TEST_TOKEN` nếu có
   (xem `widget-backend/README.md`).
 
 - `message.text`: 1–4.000 ký tự sau khi strip.

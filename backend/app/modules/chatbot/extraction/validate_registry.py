@@ -59,6 +59,7 @@ def validate_registry() -> None:
     for cands in R["ambiguous_aliases"].values():
         check(set(cands) <= models, "ambiguous alias trỏ tới model không tồn tại")
     check(not set(_ALIAS) & set(_AMBIG), "alias trùng với alias mơ hồ")
+    check(set(R["display_names"]) <= models, "display_names có model lạ")
     for dom, cov in R["coverage"].items():
         check(dom in DOMAINS, f"coverage domain lạ: {dom}")
         if cov is not None:
@@ -81,11 +82,8 @@ def handoff_config(reason: str) -> dict:
 validate_registry()
 
 def display_name(model: str) -> str:
-    """ASTRO_10S -> 'Astro 10S' ; F86 -> 'F86' (dùng cho câu hỏi/nút bấm)."""
-    if "_" not in model:
-        return model
-    fam, rest = model.split("_", 1)
-    return f"{fam.capitalize()} {rest}"
+    """6AH -> 'Astro 6AH' ; F86 -> 'F86' (dùng cho câu hỏi/nút bấm)."""
+    return R["display_names"].get(model, model)
 
 
 def suggest_models(mention: str, limit: int = MAX_CANDIDATES) -> list[str]:
@@ -147,14 +145,29 @@ def _model_keys(model: str) -> set[str]:
     return {_norm(model)} | {_norm(a) for a, m in R["aliases"].items() if m == model}
 
 
+def _key_pattern(key: str) -> str:
+    # Cho phép khoảng trắng/"_"/"-" giữa các ký tự như _norm, nhưng mã phải đứng riêng:
+    # "6AH" không khớp trong "6AHE", "F86" không khớp trong "F86E".
+    return r"(?<![^\W_])" + r"[\s_\-]*".join(map(re.escape, key)) + r"(?![^\W_])"
+
+
+_MODEL_PATTERNS = {
+    m: re.compile("|".join(_key_pattern(k) for k in sorted(_model_keys(m))), re.IGNORECASE)
+    for m in R["product_models"]
+}
+
+
+def _mentions(model: str, text: str) -> bool:
+    return _MODEL_PATTERNS[model].search(text) is not None
+
+
 def models_in_text(text: str) -> list[str]:
     """Model có mã hoặc alias xuất hiện trong text, theo thứ tự registry.
 
     Cùng cách so khớp với guard_extracted_models. Alias mơ hồ ("Astro 6A") không
     được tính vì không chỉ ra một model cụ thể.
     """
-    normalized = _norm(text)
-    return [m for m in R["product_models"] if any(k in normalized for k in _model_keys(m))]
+    return [m for m in R["product_models"] if _mentions(m, text)]
 
 
 def models_with_interfaces(
@@ -188,12 +201,11 @@ def guard_extracted_models(raw_sub_queries: list[dict], evidence_text: str) -> l
     gần giống. Chỉ giữ model có mã hoặc alias xuất hiện trong câu hỏi, lịch sử
     hay last_models; model bị loại được ghi vào `dropped_models`.
     """
-    evidence = _norm(evidence_text)
     guarded: list[dict] = []
     for sq in raw_sub_queries:
         kept, dropped = [], []
         for model in sq.get("product_models") or []:
-            ok = model not in R["product_models"] or any(k in evidence for k in _model_keys(model))
+            ok = model not in R["product_models"] or _mentions(model, evidence_text)
             (kept if ok else dropped).append(model)
         guarded.append({**sq, "product_models": kept, "dropped_models": dropped} if dropped else sq)
     return guarded

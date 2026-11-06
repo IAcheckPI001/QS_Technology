@@ -1,0 +1,6 @@
+# Image dịch vụ chat không chứa tool ingest offline (doc_ingest) và venv cục bộ.
+app/modules/doc_ingest/
+requirements-ingest.txt
+venv/
+tests/
+**/__pycache__/

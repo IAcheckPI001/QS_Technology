@@ -321,6 +321,29 @@ describe('POST /api/chat/crm (test route)', () => {
         assert.equal(cookieValue(response.cookies.filter((c) => !c.includes('Max-Age=0')), 'qs_crm_session'), SESSION_B);
     });
 
+    test('forwards crm_access_token to /chat/crm without logging it', async () => {
+        const token = 'eyJ.' + 'T'.repeat(270) + '.sig';
+        const response = await crmChat({}, {
+            user_id: 'employee_test_001',
+            crm_access_token: ` ${token} `,
+            message: { text: 'Bao nhiêu ticket?' },
+        });
+
+        assert.equal(response.status, 200);
+        assert.equal(ai.requests[0].body.crm_access_token, token);
+        assert.equal(ai.requests[0].body.user_id, 'employee_test_001');
+        assert.ok(logs.every((line) => !String(line).includes(token)));
+    });
+
+    test('invalid crm_access_token is rejected before calling AI', async () => {
+        for (const crm_access_token of [42, '   ', 'x'.repeat(4097)]) {
+            const response = await crmChat({}, { user_id: 'e', crm_access_token, message: { text: 'hi' } });
+            assert.equal(response.status, 400);
+            assert.equal(JSON.parse(response.text).detail.code, 'invalid_request');
+        }
+        assert.equal(ai.requests.length, 0);
+    });
+
     test('missing or too long user_id is rejected before calling AI', async () => {
         const missing = await crmChat({}, { message: { text: 'hi' } });
         const tooLong = await crmChat({}, { user_id: 'x'.repeat(129), message: { text: 'hi' } });

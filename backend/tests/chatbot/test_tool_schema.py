@@ -167,8 +167,20 @@ def test_agent_setup_registers_product_docs_tool():
     assert runner.tool_names == ["product_docs_ask"]
 
 
-def _settings() -> Settings:
-    return Settings(DATABASE_URL="postgresql+asyncpg://user:pass@host/db")
+def test_agent_setup_registers_crm_report_when_enabled():
+    settings = _settings(CRM_REPORT_ENABLED=True, CRM_API_BASE_URL="https://crm.test")
+    runner = build_agent_runner(ScriptedToolProvider(), retriever=object(), settings=settings)
+
+    assert runner.tool_names == ["product_docs_ask", "crm_report"]
+
+
+def _settings(**overrides) -> Settings:
+    # Ghi đè cờ CRM để file .env cục bộ không làm đổi kết quả test.
+    return Settings(**{
+        "DATABASE_URL": "postgresql+asyncpg://user:pass@host/db",
+        "CRM_REPORT_ENABLED": False,
+        **overrides,
+    })
 
 
 def _principal():

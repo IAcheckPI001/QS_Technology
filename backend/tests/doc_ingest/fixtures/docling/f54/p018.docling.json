@@ -1,0 +1,489 @@
+{
+ "schema_name": "DoclingDocument",
+ "version": "1.10.0",
+ "name": "F54_Operation Manual (English Version)_V.02",
+ "origin": {
+  "mimetype": "application/pdf",
+  "binary_hash": 10649216247643491873,
+  "filename": "F54_Operation Manual (English Version)_V.02.pdf"
+ },
+ "furniture": {
+  "self_ref": "#/furniture",
+  "children": [],
+  "content_layer": "furniture",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "body": {
+  "self_ref": "#/body",
+  "children": [
+   {
+    "$ref": "#/texts/0"
+   },
+   {
+    "$ref": "#/texts/1"
+   },
+   {
+    "$ref": "#/texts/2"
+   },
+   {
+    "$ref": "#/pictures/0"
+   },
+   {
+    "$ref": "#/texts/4"
+   },
+   {
+    "$ref": "#/texts/5"
+   },
+   {
+    "$ref": "#/texts/6"
+   },
+   {
+    "$ref": "#/texts/7"
+   },
+   {
+    "$ref": "#/texts/8"
+   },
+   {
+    "$ref": "#/tables/0"
+   },
+   {
+    "$ref": "#/texts/10"
+   },
+   {
+    "$ref": "#/texts/11"
+   }
+  ],
+  "content_layer": "body",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "groups": [],
+ "texts": [
+  {
+   "self_ref": "#/texts/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 18,
+     "bbox": {
+      "l": 85.104,
+      "t": 756.5880000000001,
+      "r": 142.26,
+      "b": 741.936,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      10
+     ]
+    }
+   ],
+   "orig": "Model: F54",
+   "text": "Model: F54"
+  },
+  {
+   "self_ref": "#/texts/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 18,
+     "bbox": {
+      "l": 344.71,
+      "t": 756.5880000000001,
+      "r": 553.216,
+      "b": 741.936,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      39
+     ]
+    }
+   ],
+   "orig": "Operation Manual (English Version)_V.01",
+   "text": "Operation Manual (English Version)_V.01"
+  },
+  {
+   "self_ref": "#/texts/2",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 18,
+     "bbox": {
+      "l": 85.104,
+      "t": 724.768,
+      "r": 357.6,
+      "b": 710.116,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      48
+     ]
+    }
+   ],
+   "orig": "Homing switch wiring diagram for NPN, PNP signal",
+   "text": "Homing switch wiring diagram for NPN, PNP signal",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/3",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "caption",
+   "prov": [
+    {
+     "page_no": 18,
+     "bbox": {
+      "l": 188.66,
+      "t": 498.78244,
+      "r": 451.66828,
+      "b": 486.62128,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      60
+     ]
+    }
+   ],
+   "orig": "Figure 14. Homing switch wiring diagram for (NPN,PNP signal)",
+   "text": "Figure 14. Homing switch wiring diagram for (NPN,PNP signal)"
+  },
+  {
+   "self_ref": "#/texts/4",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 18,
+     "bbox": {
+      "l": 85.104,
+      "t": 476.698,
+      "r": 115.1,
+      "b": 462.046,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "Note:",
+   "text": "Note:",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/5",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 18,
+     "bbox": {
+      "l": 85.104,
+      "t": 451.738,
+      "r": 520.7400000000001,
+      "b": 420.046,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      143
+     ]
+    }
+   ],
+   "orig": "After connecting the homing sensor for the axes (X,Y,Z,A). The installer will proceed to configure the following setting on the F54 controller:",
+   "text": "After connecting the homing sensor for the axes (X,Y,Z,A). The installer will proceed to configure the following setting on the F54 controller:"
+  },
+  {
+   "self_ref": "#/texts/6",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 18,
+     "bbox": {
+      "l": 85.104,
+      "t": 409.738,
+      "r": 550.5199999999999,
+      "b": 378.166,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      122
+     ]
+    }
+   ],
+   "orig": "Step 1: On the main sreen of the controller, use the arrow buttons to switch to the right and select the PARAMETER button.",
+   "text": "Step 1: On the main sreen of the controller, use the arrow buttons to switch to the right and select the PARAMETER button."
+  },
+  {
+   "self_ref": "#/texts/7",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 18,
+     "bbox": {
+      "l": 85.104,
+      "t": 367.83799999999997,
+      "r": 324.368,
+      "b": 353.186,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      42
+     ]
+    }
+   ],
+   "orig": "Step 2: From PARAMETER screen, select USER",
+   "text": "Step 2: From PARAMETER screen, select USER"
+  },
+  {
+   "self_ref": "#/texts/8",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 18,
+     "bbox": {
+      "l": 85.104,
+      "t": 342.878,
+      "r": 525.1520000000002,
+      "b": 311.186,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      124
+     ]
+    }
+   ],
+   "orig": "Step 3: Proceed to configure the status parameters for axes homing sensor (X,Y,Z,A) at parameter M1920, M1921, M1922, M1923.",
+   "text": "Step 3: Proceed to configure the status parameters for axes homing sensor (X,Y,Z,A) at parameter M1920, M1921, M1922, M1923."
+  },
+  {
+   "self_ref": "#/texts/9",
+   "parent": {
+    "$ref": "#/tables/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "caption",
+   "prov": [
+    {
+     "page_no": 18,
+     "bbox": {
+      "l": 160.58,
+      "t": 86.41643999999997,
+      "r": 479.5554800000003,
+      "b": 74.25527999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      75
+     ]
+    }
+   ],
+   "orig": "Figure 15. Homing sensor status configuration parameters for axes (X,Y,Z,A)",
+   "text": "Figure 15. Homing sensor status configuration parameters for axes (X,Y,Z,A)"
+  },
+  {
+   "self_ref": "#/texts/10",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 18,
+     "bbox": {
+      "l": 85.104,
+      "t": 49.908000000000015,
+      "r": 175.224,
+      "b": 35.25599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      14
+     ]
+    }
+   ],
+   "orig": "www.qstcnc.com",
+   "text": "www.qstcnc.com",
+   "hyperlink": "http://www.qstcnc.com/"
+  },
+  {
+   "self_ref": "#/texts/11",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 18,
+     "bbox": {
+      "l": 507.34,
+      "t": 49.908000000000015,
+      "r": 553.1080000000001,
+      "b": 35.25599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      9
+     ]
+    }
+   ],
+   "orig": "Page | 11",
+   "text": "Page | 11"
+  }
+ ],
+ "pictures": [
+  {
+   "self_ref": "#/pictures/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/3"
+    }
+   ],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 18,
+     "bbox": {
+      "l": 199.29782104492188,
+      "t": 699.6018371582031,
+      "r": 439.15240478515625,
+      "b": 509.1595764160156,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [
+    {
+     "$ref": "#/texts/3"
+    }
+   ],
+   "references": [],
+   "footnotes": [],
+   "image": null,
+   "annotations": []
+  }
+ ],
+ "tables": [
+  {
+   "self_ref": "#/tables/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/9"
+    }
+   ],
+   "content_layer": "body",
+   "label": "table",
+   "prov": [
+    {
+     "page_no": 18,
+     "bbox": {
+      "l": 139.61326599121094,
+      "t": 302.045654296875,
+      "r": 500.17706298828125,
+      "b": 98.1494140625,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [
+    {
+     "$ref": "#/texts/9"
+    }
+   ],
+   "references": [],
+   "footnotes": [],
+   "data": {
+    "table_cells": [],
+    "num_rows": 0,
+    "num_cols": 0,
+    "orientation": "rot_0",
+    "grid": []
+   },
+   "annotations": []
+  }
+ ],
+ "key_value_items": [],
+ "form_items": [],
+ "pages": {
+  "18": {
+   "size": {
+    "width": 612.0,
+    "height": 792.0
+   },
+   "image": null,
+   "page_no": 18
+  }
+ }
+}

@@ -1,0 +1,198 @@
+{
+ "schema_name": "DoclingDocument",
+ "version": "1.10.0",
+ "name": "F86_Operation Manual (English Version)",
+ "origin": {
+  "mimetype": "application/pdf",
+  "binary_hash": 5936226309445889319,
+  "filename": "F86_Operation Manual (English Version).pdf"
+ },
+ "furniture": {
+  "self_ref": "#/furniture",
+  "children": [],
+  "content_layer": "furniture",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "body": {
+  "self_ref": "#/body",
+  "children": [
+   {
+    "$ref": "#/texts/0"
+   },
+   {
+    "$ref": "#/texts/1"
+   },
+   {
+    "$ref": "#/pictures/0"
+   },
+   {
+    "$ref": "#/texts/2"
+   },
+   {
+    "$ref": "#/texts/3"
+   }
+  ],
+  "content_layer": "body",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "groups": [],
+ "texts": [
+  {
+   "self_ref": "#/texts/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 6,
+     "bbox": {
+      "l": 29.8828125,
+      "t": 746.8911285400391,
+      "r": 330.3046875,
+      "b": 693.7983805338541,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      10
+     ]
+    }
+   ],
+   "orig": "CHAPTER 1.",
+   "text": "CHAPTER 1.",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 6,
+     "bbox": {
+      "l": 34.6640625,
+      "t": 650.6854756673177,
+      "r": 224.71875,
+      "b": 635.516123453776,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      19
+     ]
+    }
+   ],
+   "orig": "CONTROLLER OVERVIEW",
+   "text": "CONTROLLER OVERVIEW",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/2",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 6,
+     "bbox": {
+      "l": 224.3203125,
+      "t": 324.9435221354167,
+      "r": 387.28125,
+      "b": 308.1774088541667,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      13
+     ]
+    }
+   ],
+   "orig": "QS TECHNOLOGY",
+   "text": "QS TECHNOLOGY"
+  },
+  {
+   "self_ref": "#/texts/3",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 6,
+     "bbox": {
+      "l": 34.265625,
+      "t": 28.34269205729163,
+      "r": 559.8046875,
+      "b": 13.971761067708371,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      28
+     ]
+    }
+   ],
+   "orig": "QS TECHNOLOGY CO.,LTD PAGE 4",
+   "text": "QS TECHNOLOGY CO.,LTD PAGE 4"
+  }
+ ],
+ "pictures": [
+  {
+   "self_ref": "#/pictures/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 6,
+     "bbox": {
+      "l": 153.85379028320312,
+      "t": 484.8188781738281,
+      "r": 457.869384765625,
+      "b": 327.9498596191406,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [],
+   "references": [],
+   "footnotes": [],
+   "annotations": [],
+   "image": null
+  }
+ ],
+ "tables": [],
+ "key_value_items": [],
+ "form_items": [],
+ "pages": {
+  "6": {
+   "size": {
+    "width": 612.0,
+    "height": 792.0
+   },
+   "page_no": 6,
+   "image": null
+  }
+ }
+}

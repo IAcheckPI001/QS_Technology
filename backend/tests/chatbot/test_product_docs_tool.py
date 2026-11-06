@@ -38,7 +38,7 @@ def _ask(registry, state, question, call_id="c1", allocator=None):
 def _catalog_chunks():
     return FakeChunks({
         ("technical_docs", ("F86",)): [chunk(1), chunk(2)],
-        ("product_catalog", ("ASTRO_6AV",)): [chunk(7, doc_id="astro_catalog")],
+        ("product_catalog", ("6AV",)): [chunk(7, doc_id="astro_catalog")],
     })
 
 
@@ -91,7 +91,7 @@ def test_ambiguous_model_needs_clarification_with_codes_and_names():
     assert output.sources == []
     assert output.clarification.reason == "ambiguous_product_model"
     assert [(c.code, c.name) for c in output.clarification.candidates] == [
-        ("ASTRO_6AH", "Astro 6AH"), ("ASTRO_6AV", "Astro 6AV"),
+        ("6AH", "Astro 6AH"), ("6AHE", "6AHE"), ("6AV", "Astro 6AV"), ("6AVE", "6AVE"),
     ]
 
 
@@ -104,26 +104,26 @@ def test_clarification_answer_is_resolved_from_history_without_pending():
                             message_id="h1:assistant"),
     ]
     provider = ScriptedToolProvider(analysis_outputs=[analysis_output(
-        sub_query("Hướng dẫn lắp đặt ASTRO_6AV", "guide.installation", ["ASTRO_6AV"]),
+        sub_query("Hướng dẫn lắp đặt 6AV", "guide.installation", ["6AV"]),
     )])
     chunks = _catalog_chunks()
     state = crm_state("cái V", history=history)
     # Pending cũ của luồng chat không được dùng trong luồng agent.
     state.context.conversation.state = ConversationState(
         pending=PendingClarification(
-            focus="Astro 6A", question_type="choose", candidates=["ASTRO_6AH", "ASTRO_6AV"],
+            focus="Astro 6A", question_type="choose", candidates=["6AH", "6AV"],
             llm_raw={"sub_queries": []}, ttl=2,
         ),
         last_models=["F54"],
         active_model="F54",
     )
 
-    output = _ask(docs_registry(provider, chunks), state, "Hướng dẫn lắp đặt ASTRO_6AV").output
+    output = _ask(docs_registry(provider, chunks), state, "Hướng dẫn lắp đặt 6AV").output
 
     assert output.status == "answered"
-    assert chunks.calls[0]["models"] == ["ASTRO_6AV"]
+    assert chunks.calls[0]["models"] == ["6AV"]
     assert output.sources[0].answer_mode == "overview"   # chưa có tài liệu lắp đặt: degrade
-    assert output.sources[0].product_models == ["ASTRO_6AV"]
+    assert output.sources[0].product_models == ["6AV"]
     analysis_prompt = provider.analysis_messages[0][1]["content"]
     assert "<pending>" not in analysis_prompt
     assert "cái V" in analysis_prompt and "Astro 6AH hay Astro 6AV" in analysis_prompt

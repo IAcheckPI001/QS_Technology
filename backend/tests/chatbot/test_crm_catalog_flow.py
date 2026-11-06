@@ -25,9 +25,11 @@ from tests.chatbot.test_clarification import StoringHistoryRepository
 
 SESSION_ID = UUID("00000000-0000-0000-0000-0000000000c2")
 QUESTION = "Model nào hỗ trợ EtherCAT? Hướng dẫn lắp đặt model đó."
-SELECTION = ("Có 6 model hỗ trợ EtherCAT: F86, F10T, Astro 10S, Astro 6AH, Astro 6AV và Astro 10I. "
-             "Anh/chị muốn xem hướng dẫn lắp đặt model nào?")
-ETHERCAT = ["F86", "F10T", "ASTRO_10S", "ASTRO_6AH", "ASTRO_6AV", "ASTRO_10I"]
+SELECTION = ("Có 9 model hỗ trợ EtherCAT: F86, F86E, F10T, Astro 6AH, 6AHE, Astro 6AV, 6AVE, "
+             "10iV và 10iVE. Anh/chị muốn xem hướng dẫn lắp đặt model nào?")
+ETHERCAT = ["F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE"]
+# Model EtherCAT có catalog (coverage.product_catalog); các model còn lại chưa có tài liệu.
+WITH_CATALOG = ["F10T", "6AH", "6AV", "10iV"]
 
 
 def _send(service, text):
@@ -45,9 +47,9 @@ def _send(service, text):
 
 def _analyze(query):
     """Analysis giả theo câu hỏi agent gửi (các lần tra cứu song song không theo thứ tự)."""
-    if "EtherCAT" in query and "Mechatrolink" in query and "lắp đặt" not in query:
-        return analysis_output(sub_query(query, "lookup.product_catalog",
-                                         ci=["ethercat", "mechatrolink"], dependency="general"))
+    if "không hỗ trợ Mechatrolink" in query and "lắp đặt" not in query:
+        return analysis_output(sub_query(query, "lookup.product_catalog", ci=["ethercat"],
+                                         excluded=["mechatrolink"], dependency="general"))
     if "EtherCAT" in query and "lắp đặt" not in query:
         return analysis_output(sub_query(query, "lookup.product_catalog", ci=["ethercat"],
                                          dependency="general"))
@@ -59,7 +61,7 @@ def _analyze(query):
 
 def _chunks():
     results = {("technical_docs", ("F86",)): [chunk(1, content="Lắp F86: cấp nguồn 24V.")]}
-    for code in ETHERCAT[1:]:
+    for code in WITH_CATALOG:
         results[("product_catalog", (code,))] = [chunk(10 + len(results), doc_id="catalog",
                                                        content=f"Tổng quan {code}.")]
     results[("product_catalog", ())] = [chunk(50, doc_id="catalog", content="Không nhắc Profinet.")]
@@ -115,55 +117,56 @@ def test_all_selected_models_are_looked_up_in_parallel_next_turn():
         calls(ask("c1", "Các model hỗ trợ EtherCAT")),
         answer(SELECTION),
         calls(*lookups),
-        answer("F86: cấp nguồn 24V [S1]. Các model Astro, F10T chỉ có tổng quan."),
-    ])
+        answer("F86: cấp nguồn 24V [S1]. Các model còn lại chỉ có tổng quan hoặc chưa có tài liệu."),
+    ], max_tool_calls=12)
 
     _send(service, QUESTION)
     _send(service, "tất cả")
 
     # Model lấy từ câu hỏi chọn ở lượt trước (history), nên không bị chặn.
-    assert _tool_steps(repository.rows[-1]) == [("product_docs_ask", "ok")] * 6
-    payloads = _tool_payloads(provider.calls[3])
-    assert [p["status"] for p in payloads] == ["answered"] * 6
-    assert [p["sources"][0]["answer_mode"] for p in payloads] == ["full"] + ["overview"] * 5
-    assert sorted(call["models"][0] for call in chunks.calls) == sorted(ETHERCAT)
-    # Ngữ cảnh model chỉ giữ MAX_LAST_MODELS model gần nhất.
-    assert repository.rows[-1].conversation_state["last_models"] == ETHERCAT[-4:]
+    assert _tool_steps(repository.rows[-1]) == [("product_docs_ask", "ok")] * 9
+    statuses = [p["status"] for p in _tool_payloads(provider.calls[3])]
+    assert statuses.count("answered") == 1 + len(WITH_CATALOG)
+    assert statuses.count("no_docs") == len(ETHERCAT) - 1 - len(WITH_CATALOG)
+    assert sorted(call["models"][0] for call in chunks.calls) == sorted(["F86", *WITH_CATALOG])
+    # Ngữ cảnh model chỉ giữ MAX_LAST_MODELS model gần nhất có nguồn.
+    assert repository.rows[-1].conversation_state["last_models"] == WITH_CATALOG
 
 
 def test_three_matches_are_looked_up_automatically_in_same_turn():
-    astro = ["ASTRO_6AH", "ASTRO_6AV", "ASTRO_10I"]
+    found = ["F86", "F86E", "F10T"]
     service, provider, chunks, repository = _service([
-        calls(ask("c1", "Các model hỗ trợ cả EtherCAT và Mechatrolink")),
-        calls(*[ask(f"c{i}", f"Hướng dẫn lắp đặt {code}") for i, code in enumerate(astro, start=2)]),
-        answer("Ba model chỉ có tài liệu tổng quan [S1][S2][S3]."),
+        calls(ask("c1", "Các model hỗ trợ EtherCAT nhưng không hỗ trợ Mechatrolink")),
+        calls(*[ask(f"c{i}", f"Hướng dẫn lắp đặt {code}") for i, code in enumerate(found, start=2)]),
+        answer("F86 cấp nguồn 24V [S1]; F10T chỉ có tổng quan [S2]; F86E chưa có tài liệu."),
     ])
 
-    reply = _send(service, "Model nào hỗ trợ cả EtherCAT và Mechatrolink? Hướng dẫn lắp đặt các model đó.")
+    reply = _send(service, "Model nào hỗ trợ EtherCAT nhưng không hỗ trợ Mechatrolink? "
+                           "Hướng dẫn lắp đặt các model đó.")
 
-    assert reply == ["Ba model chỉ có tài liệu tổng quan [S1][S2][S3]."]
+    assert reply == ["F86 cấp nguồn 24V [S1]; F10T chỉ có tổng quan [S2]; F86E chưa có tài liệu."]
     [first] = _tool_payloads(provider.calls[1])
     assert first["catalog_match"]["next_action"] == "lookup_each"
-    assert all(not m["has_technical_docs"] for m in first["catalog_match"]["models"])
-    assert sorted(call["models"][0] for call in chunks.calls) == sorted(astro)
+    assert [m["code"] for m in first["catalog_match"]["models"]] == found
+    assert sorted(call["models"][0] for call in chunks.calls) == ["F10T", "F86"]   # F86E: no_docs
     assert _tool_steps(repository.rows[-1]) == [("product_docs_ask", "ok")] * 4
 
 
 def test_agent_skipping_selection_is_blocked_by_backend():
-    # Agent bỏ qua ask_selection và tự tra cả 6 model trong cùng lượt.
+    # Agent bỏ qua ask_selection và tự tra cả 9 model trong cùng lượt.
     lookups = [ask(f"c{i}", f"Hướng dẫn lắp đặt {code}") for i, code in enumerate(ETHERCAT, start=2)]
     service, provider, chunks, repository = _service([
         calls(ask("c1", "Các model hỗ trợ EtherCAT")),
         calls(*lookups),
         answer(SELECTION),
-    ])
+    ], max_tool_calls=12)
 
     _send(service, QUESTION)
 
     assert chunks.calls == []
     assert {p["error"] for p in _tool_payloads(provider.calls[2])[1:]} == {"model_not_evidenced"}
     statuses = [status for _, status in _tool_steps(repository.rows[-1])]
-    assert statuses == ["ok"] + ["model_not_evidenced"] * 6
+    assert statuses == ["ok"] + ["model_not_evidenced"] * 9
 
 
 def test_condition_outside_table_is_verified_with_sources():

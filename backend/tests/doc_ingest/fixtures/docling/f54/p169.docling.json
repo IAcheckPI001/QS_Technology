@@ -1,0 +1,3809 @@
+{
+ "schema_name": "DoclingDocument",
+ "version": "1.10.0",
+ "name": "F54_Operation Manual (English Version)_V.02",
+ "origin": {
+  "mimetype": "application/pdf",
+  "binary_hash": 10649216247643491873,
+  "filename": "F54_Operation Manual (English Version)_V.02.pdf"
+ },
+ "furniture": {
+  "self_ref": "#/furniture",
+  "children": [],
+  "content_layer": "furniture",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "body": {
+  "self_ref": "#/body",
+  "children": [
+   {
+    "$ref": "#/texts/0"
+   },
+   {
+    "$ref": "#/texts/1"
+   },
+   {
+    "$ref": "#/tables/0"
+   },
+   {
+    "$ref": "#/texts/2"
+   },
+   {
+    "$ref": "#/tables/1"
+   },
+   {
+    "$ref": "#/texts/3"
+   },
+   {
+    "$ref": "#/texts/4"
+   }
+  ],
+  "content_layer": "body",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "groups": [],
+ "texts": [
+  {
+   "self_ref": "#/texts/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 169,
+     "bbox": {
+      "l": 85.104,
+      "t": 756.5880000000001,
+      "r": 142.26,
+      "b": 741.936,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      10
+     ]
+    }
+   ],
+   "orig": "Model: F54",
+   "text": "Model: F54"
+  },
+  {
+   "self_ref": "#/texts/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 169,
+     "bbox": {
+      "l": 344.71,
+      "t": 756.5880000000001,
+      "r": 553.216,
+      "b": 741.936,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      39
+     ]
+    }
+   ],
+   "orig": "Operation Manual (English Version)_V.01",
+   "text": "Operation Manual (English Version)_V.01"
+  },
+  {
+   "self_ref": "#/texts/2",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 169,
+     "bbox": {
+      "l": 85.104,
+      "t": 359.558,
+      "r": 203.08400000000006,
+      "b": 344.906,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      22
+     ]
+    }
+   ],
+   "orig": "5.2 Spindle parameters",
+   "text": "5.2 Spindle parameters",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/3",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 169,
+     "bbox": {
+      "l": 85.104,
+      "t": 49.908000000000015,
+      "r": 175.224,
+      "b": 35.25599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      14
+     ]
+    }
+   ],
+   "orig": "www.qstcnc.com",
+   "text": "www.qstcnc.com",
+   "hyperlink": "http://www.qstcnc.com/"
+  },
+  {
+   "self_ref": "#/texts/4",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 169,
+     "bbox": {
+      "l": 500.86,
+      "t": 49.908000000000015,
+      "r": 553.096,
+      "b": 35.25599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      10
+     ]
+    }
+   ],
+   "orig": "Page | 162",
+   "text": "Page | 162"
+  }
+ ],
+ "pictures": [],
+ "tables": [
+  {
+   "self_ref": "#/tables/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "table",
+   "prov": [
+    {
+     "page_no": 169,
+     "bbox": {
+      "l": 84.21835327148438,
+      "t": 725.2445068359375,
+      "r": 556.0809936523438,
+      "b": 383.85882568359375,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [],
+   "references": [],
+   "footnotes": [],
+   "data": {
+    "table_cells": [
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 69.60000000000002,
+       "r": 165.56768000000002,
+       "b": 80.63999999999999,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12200 - #12207",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 69.60000000000002,
+       "r": 362.83616000000006,
+       "b": 94.10000000000002,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis negative coordinate of stroke limit 1 st (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 69.60000000000002,
+       "r": 512.33728,
+       "b": 80.63999999999999,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 96.74000000000001,
+       "r": 165.56768000000002,
+       "b": 107.77999999999997,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12210 - #12217",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 96.74000000000001,
+       "r": 359.84432000000015,
+       "b": 121.22000000000003,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis positive coordinate of stroke limit 1 st (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 96.74000000000001,
+       "r": 512.33728,
+       "b": 107.77999999999997,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 123.86000000000001,
+       "r": 165.56768000000002,
+       "b": 134.89999999999998,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12220 - #12227",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 123.86000000000001,
+       "r": 362.83616000000006,
+       "b": 148.34000000000003,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis negative coordinate of stroke limit 2 nd (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 123.86000000000001,
+       "r": 512.33728,
+       "b": 134.89999999999998,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 150.98000000000002,
+       "r": 165.56768000000002,
+       "b": 162.01999999999998,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12230 - #12237",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 150.07999999999993,
+       "r": 352.80400000000003,
+       "b": 175.46000000000004,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis positive coordinate of stroke 2 nd (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 150.98000000000002,
+       "r": 512.33728,
+       "b": 162.01999999999998,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 178.10000000000002,
+       "r": 165.56768000000002,
+       "b": 189.14,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12240 - #12247",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 178.10000000000002,
+       "r": 362.83616000000006,
+       "b": 202.58000000000004,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis negative coordinate of stroke limit 3 rd (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 178.10000000000002,
+       "r": 512.33728,
+       "b": 189.14,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 205.22000000000003,
+       "r": 165.56768000000002,
+       "b": 216.26,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12250 - #12257",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 204.31999999999994,
+       "r": 351.48404,
+       "b": 229.70000000000005,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis positive coordinate of stroke 3 rd (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 205.22000000000003,
+       "r": 512.33728,
+       "b": 216.26,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 232.34000000000003,
+       "r": 165.56768000000002,
+       "b": 243.38,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12260 - #12267",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 231.43999999999994,
+       "r": 354.484,
+       "b": 256.85,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis negative coordinate of stroke 4 th (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 232.34000000000003,
+       "r": 512.33728,
+       "b": 243.38,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 259.49,
+       "r": 165.56768000000002,
+       "b": 270.53,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12270 - #12277",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 258.5899999999999,
+       "r": 351.484,
+       "b": 283.84999999999997,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis positive coordinate of stroke 4 th (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 259.49,
+       "r": 512.33728,
+       "b": 270.53,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 286.49,
+       "r": 165.56768000000002,
+       "b": 297.53,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12280 - #12287",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 285.59,
+       "r": 320.92136,
+       "b": 297.53,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis reference point 2 nd (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 286.49,
+       "r": 512.33728,
+       "b": 297.53,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 300.17,
+       "r": 165.56768000000002,
+       "b": 311.21,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 9,
+      "end_row_offset_idx": 10,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12290 - #12297",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 299.27,
+       "r": 319.60136,
+       "b": 311.21,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 9,
+      "end_row_offset_idx": 10,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis reference point 3 rd (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 300.17,
+       "r": 512.33728,
+       "b": 311.21,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 9,
+      "end_row_offset_idx": 10,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 313.85,
+       "r": 165.56768000000002,
+       "b": 324.89,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 10,
+      "end_row_offset_idx": 11,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12300 - #12307",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 312.95,
+       "r": 319.60136,
+       "b": 324.89,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 10,
+      "end_row_offset_idx": 11,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis reference point 4 th (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 313.85,
+       "r": 512.33728,
+       "b": 324.89,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 10,
+      "end_row_offset_idx": 11,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 327.53000000000003,
+       "r": 165.56768000000002,
+       "b": 338.57,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 11,
+      "end_row_offset_idx": 12,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12310 - #12317",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 326.63,
+       "r": 319.60136,
+       "b": 338.57,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 11,
+      "end_row_offset_idx": 12,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis reference point 5 th (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 327.53000000000003,
+       "r": 512.33728,
+       "b": 338.57,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 11,
+      "end_row_offset_idx": 12,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 341.21000000000004,
+       "r": 165.56768000000002,
+       "b": 352.25,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 12,
+      "end_row_offset_idx": 13,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12320 - #12327",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 340.30999999999995,
+       "r": 319.60136,
+       "b": 352.25,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 12,
+      "end_row_offset_idx": 13,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis reference point 6 th (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 341.21000000000004,
+       "r": 512.33728,
+       "b": 352.25,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 12,
+      "end_row_offset_idx": 13,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 354.89000000000004,
+       "r": 165.56768000000002,
+       "b": 365.93,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 13,
+      "end_row_offset_idx": 14,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12330 - #12337",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 354.89000000000004,
+       "r": 343.01936000000006,
+       "b": 365.93,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 13,
+      "end_row_offset_idx": 14,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis jogging acceleration (mm/s/s)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 498.34,
+       "t": 354.89000000000004,
+       "r": 520.71808,
+       "b": 365.93,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 13,
+      "end_row_offset_idx": 14,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "1000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 368.57000000000005,
+       "r": 165.56768000000002,
+       "b": 379.61,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 14,
+      "end_row_offset_idx": 15,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12340 - #12347",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 368.57000000000005,
+       "r": 288.11744000000004,
+       "b": 379.61,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 14,
+      "end_row_offset_idx": 15,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis gear (Motor side)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 368.57000000000005,
+       "r": 512.33728,
+       "b": 379.61,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 14,
+      "end_row_offset_idx": 15,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "1",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 382.25,
+       "r": 165.56768000000002,
+       "b": 393.28999999999996,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 15,
+      "end_row_offset_idx": 16,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12350 - #12357",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 382.25,
+       "r": 286.28479999999996,
+       "b": 393.28999999999996,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 15,
+      "end_row_offset_idx": 16,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis gear (Screw side)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 382.25,
+       "r": 512.33728,
+       "b": 393.28999999999996,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 15,
+      "end_row_offset_idx": 16,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "1",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 395.93,
+       "r": 165.56768000000002,
+       "b": 406.96999999999997,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 16,
+      "end_row_offset_idx": 17,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12360 - #12367",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 395.93,
+       "r": 304.3572799999999,
+       "b": 406.96999999999997,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 16,
+      "end_row_offset_idx": 17,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis encoder pulse/round",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 395.93,
+       "r": 512.33728,
+       "b": 406.96999999999997,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 16,
+      "end_row_offset_idx": 17,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     }
+    ],
+    "num_rows": 17,
+    "num_cols": 3,
+    "orientation": "rot_0",
+    "grid": [
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 69.60000000000002,
+        "r": 165.56768000000002,
+        "b": 80.63999999999999,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12200 - #12207",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 69.60000000000002,
+        "r": 362.83616000000006,
+        "b": 94.10000000000002,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis negative coordinate of stroke limit 1 st (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 69.60000000000002,
+        "r": 512.33728,
+        "b": 80.63999999999999,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 96.74000000000001,
+        "r": 165.56768000000002,
+        "b": 107.77999999999997,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12210 - #12217",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 96.74000000000001,
+        "r": 359.84432000000015,
+        "b": 121.22000000000003,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis positive coordinate of stroke limit 1 st (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 96.74000000000001,
+        "r": 512.33728,
+        "b": 107.77999999999997,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 123.86000000000001,
+        "r": 165.56768000000002,
+        "b": 134.89999999999998,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12220 - #12227",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 123.86000000000001,
+        "r": 362.83616000000006,
+        "b": 148.34000000000003,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis negative coordinate of stroke limit 2 nd (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 123.86000000000001,
+        "r": 512.33728,
+        "b": 134.89999999999998,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 150.98000000000002,
+        "r": 165.56768000000002,
+        "b": 162.01999999999998,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12230 - #12237",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 150.07999999999993,
+        "r": 352.80400000000003,
+        "b": 175.46000000000004,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis positive coordinate of stroke 2 nd (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 150.98000000000002,
+        "r": 512.33728,
+        "b": 162.01999999999998,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 178.10000000000002,
+        "r": 165.56768000000002,
+        "b": 189.14,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12240 - #12247",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 178.10000000000002,
+        "r": 362.83616000000006,
+        "b": 202.58000000000004,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis negative coordinate of stroke limit 3 rd (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 178.10000000000002,
+        "r": 512.33728,
+        "b": 189.14,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 205.22000000000003,
+        "r": 165.56768000000002,
+        "b": 216.26,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12250 - #12257",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 204.31999999999994,
+        "r": 351.48404,
+        "b": 229.70000000000005,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis positive coordinate of stroke 3 rd (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 205.22000000000003,
+        "r": 512.33728,
+        "b": 216.26,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 232.34000000000003,
+        "r": 165.56768000000002,
+        "b": 243.38,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12260 - #12267",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 231.43999999999994,
+        "r": 354.484,
+        "b": 256.85,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis negative coordinate of stroke 4 th (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 232.34000000000003,
+        "r": 512.33728,
+        "b": 243.38,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 259.49,
+        "r": 165.56768000000002,
+        "b": 270.53,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12270 - #12277",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 258.5899999999999,
+        "r": 351.484,
+        "b": 283.84999999999997,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis positive coordinate of stroke 4 th (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 259.49,
+        "r": 512.33728,
+        "b": 270.53,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 286.49,
+        "r": 165.56768000000002,
+        "b": 297.53,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12280 - #12287",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 285.59,
+        "r": 320.92136,
+        "b": 297.53,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis reference point 2 nd (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 286.49,
+        "r": 512.33728,
+        "b": 297.53,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 300.17,
+        "r": 165.56768000000002,
+        "b": 311.21,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 9,
+       "end_row_offset_idx": 10,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12290 - #12297",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 299.27,
+        "r": 319.60136,
+        "b": 311.21,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 9,
+       "end_row_offset_idx": 10,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis reference point 3 rd (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 300.17,
+        "r": 512.33728,
+        "b": 311.21,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 9,
+       "end_row_offset_idx": 10,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 313.85,
+        "r": 165.56768000000002,
+        "b": 324.89,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 10,
+       "end_row_offset_idx": 11,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12300 - #12307",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 312.95,
+        "r": 319.60136,
+        "b": 324.89,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 10,
+       "end_row_offset_idx": 11,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis reference point 4 th (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 313.85,
+        "r": 512.33728,
+        "b": 324.89,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 10,
+       "end_row_offset_idx": 11,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 327.53000000000003,
+        "r": 165.56768000000002,
+        "b": 338.57,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 11,
+       "end_row_offset_idx": 12,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12310 - #12317",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 326.63,
+        "r": 319.60136,
+        "b": 338.57,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 11,
+       "end_row_offset_idx": 12,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis reference point 5 th (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 327.53000000000003,
+        "r": 512.33728,
+        "b": 338.57,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 11,
+       "end_row_offset_idx": 12,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 341.21000000000004,
+        "r": 165.56768000000002,
+        "b": 352.25,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 12,
+       "end_row_offset_idx": 13,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12320 - #12327",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 340.30999999999995,
+        "r": 319.60136,
+        "b": 352.25,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 12,
+       "end_row_offset_idx": 13,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis reference point 6 th (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 341.21000000000004,
+        "r": 512.33728,
+        "b": 352.25,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 12,
+       "end_row_offset_idx": 13,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 354.89000000000004,
+        "r": 165.56768000000002,
+        "b": 365.93,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 13,
+       "end_row_offset_idx": 14,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12330 - #12337",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 354.89000000000004,
+        "r": 343.01936000000006,
+        "b": 365.93,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 13,
+       "end_row_offset_idx": 14,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis jogging acceleration (mm/s/s)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 498.34,
+        "t": 354.89000000000004,
+        "r": 520.71808,
+        "b": 365.93,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 13,
+       "end_row_offset_idx": 14,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "1000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 368.57000000000005,
+        "r": 165.56768000000002,
+        "b": 379.61,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 14,
+       "end_row_offset_idx": 15,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12340 - #12347",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 368.57000000000005,
+        "r": 288.11744000000004,
+        "b": 379.61,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 14,
+       "end_row_offset_idx": 15,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis gear (Motor side)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 368.57000000000005,
+        "r": 512.33728,
+        "b": 379.61,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 14,
+       "end_row_offset_idx": 15,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "1",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 382.25,
+        "r": 165.56768000000002,
+        "b": 393.28999999999996,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 15,
+       "end_row_offset_idx": 16,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12350 - #12357",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 382.25,
+        "r": 286.28479999999996,
+        "b": 393.28999999999996,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 15,
+       "end_row_offset_idx": 16,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis gear (Screw side)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 382.25,
+        "r": 512.33728,
+        "b": 393.28999999999996,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 15,
+       "end_row_offset_idx": 16,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "1",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 395.93,
+        "r": 165.56768000000002,
+        "b": 406.96999999999997,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 16,
+       "end_row_offset_idx": 17,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12360 - #12367",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 395.93,
+        "r": 304.3572799999999,
+        "b": 406.96999999999997,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 16,
+       "end_row_offset_idx": 17,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis encoder pulse/round",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 395.93,
+        "r": 512.33728,
+        "b": 406.96999999999997,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 16,
+       "end_row_offset_idx": 17,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ]
+    ]
+   },
+   "annotations": []
+  },
+  {
+   "self_ref": "#/tables/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "table",
+   "prov": [
+    {
+     "page_no": 169,
+     "bbox": {
+      "l": 84.36800384521484,
+      "t": 338.3558349609375,
+      "r": 556.0570068359375,
+      "b": 85.60321044921875,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [],
+   "references": [],
+   "footnotes": [],
+   "data": {
+    "table_cells": [
+     {
+      "bbox": {
+       "l": 100.7,
+       "t": 453.442,
+       "r": 157.54399999999998,
+       "b": 468.094,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "Parameter",
+      "column_header": true,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 242.93,
+       "t": 453.442,
+       "r": 306.746,
+       "b": 468.094,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Description",
+      "column_header": true,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 401.83,
+       "t": 453.442,
+       "r": 463.1019999999999,
+       "b": 468.094,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "Work range",
+      "column_header": true,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 501.94,
+       "t": 453.442,
+       "r": 542.3080000000001,
+       "b": 468.094,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "Default",
+      "column_header": true,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 114.02,
+       "t": 472.03,
+       "r": 144.464,
+       "b": 484.03,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#0104",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 178.58,
+       "t": 472.03,
+       "r": 226.54399999999995,
+       "b": 484.03,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "RES.CODE",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 381.79,
+       "t": 472.03,
+       "r": 464.146,
+       "b": 498.67,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0: Default S.code 1: Last S.code",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 518.98,
+       "t": 472.03,
+       "r": 525.064,
+       "b": 484.03,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 94.344,
+       "t": 501.55,
+       "r": 164.096,
+       "b": 513.55,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#0120 - #0123",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 178.58,
+       "t": 501.55,
+       "r": 305.26400000000007,
+       "b": 513.55,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Spindle direction (SPI.DIR)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 381.79,
+       "t": 501.55,
+       "r": 455.05,
+       "b": 528.19,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0: Forward - 1: Reverse",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 518.98,
+       "t": 501.55,
+       "r": 525.064,
+       "b": 513.55,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 94.344,
+       "t": 531.0699999999999,
+       "r": 164.096,
+       "b": 543.0699999999999,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4090 - #4093",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 178.58,
+       "t": 531.0699999999999,
+       "r": 245.46800000000005,
+       "b": 543.0699999999999,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Spindle mode",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 381.79,
+       "t": 531.0699999999999,
+       "r": 436.714,
+       "b": 572.35,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0: Disable 1: 0→10V 2: 0→±10V",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 518.98,
+       "t": 531.0699999999999,
+       "r": 525.064,
+       "b": 543.0699999999999,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 114.02,
+       "t": 575.26,
+       "r": 144.44,
+       "b": 587.26,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8020",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 178.58,
+       "t": 575.26,
+       "r": 294.68000000000006,
+       "b": 587.26,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Init spindle override (%)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 381.79,
+       "t": 575.008,
+       "r": 417.274,
+       "b": 587.26,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0 → 10",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 499.3,
+       "t": 575.26,
+       "r": 544.816,
+       "b": 587.26,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "5 (= 50%)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 96.024,
+       "t": 590.26,
+       "r": 162.42000000000002,
+       "b": 616.9,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8030, #8032 #8034, #8036",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 178.58,
+       "t": 590.26,
+       "r": 306.014,
+       "b": 616.9,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Spindle(1) - Gear (1,2,3,4) (Motor side)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 381.79,
+       "t": 590.26,
+       "r": 435.85,
+       "b": 602.26,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0 - 999999",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 518.98,
+       "t": 590.26,
+       "r": 525.064,
+       "b": 602.26,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "1",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 96.024,
+       "t": 619.78,
+       "r": 162.42000000000002,
+       "b": 646.42,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8031, #8033 #8035, #8037",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 178.58,
+       "t": 619.78,
+       "r": 306.014,
+       "b": 646.42,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Spindle(1) - Gear (1,2,3,4) (Screw side)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 381.79,
+       "t": 619.78,
+       "r": 435.85,
+       "b": 631.78,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0 - 999999",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 518.98,
+       "t": 619.78,
+       "r": 525.064,
+       "b": 631.78,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "1",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 96.024,
+       "t": 649.3,
+       "r": 162.452,
+       "b": 675.94,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8040, #8042 #8044, #8046",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 178.58,
+       "t": 649.3,
+       "r": 306.014,
+       "b": 675.94,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Spindle(2) - Gear (1,2,3,4) (Motor side)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 381.79,
+       "t": 649.3,
+       "r": 435.85,
+       "b": 661.3,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0 - 999999",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 518.98,
+       "t": 649.3,
+       "r": 525.064,
+       "b": 661.3,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "1",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 96.024,
+       "t": 678.8199999999999,
+       "r": 162.452,
+       "b": 705.456,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8041, #8043 #8045, #8047",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 178.58,
+       "t": 678.8199999999999,
+       "r": 306.014,
+       "b": 705.456,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Spindle(2) - Gear (1,2,3,4) (Screw side)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 381.79,
+       "t": 678.8199999999999,
+       "r": 435.85,
+       "b": 690.8199999999999,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0 - 999999",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 518.98,
+       "t": 678.8199999999999,
+       "r": 525.064,
+       "b": 690.8199999999999,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "1",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     }
+    ],
+    "num_rows": 9,
+    "num_cols": 4,
+    "orientation": "rot_0",
+    "grid": [
+     [
+      {
+       "bbox": {
+        "l": 100.7,
+        "t": 453.442,
+        "r": 157.54399999999998,
+        "b": 468.094,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "Parameter",
+       "column_header": true,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 242.93,
+        "t": 453.442,
+        "r": 306.746,
+        "b": 468.094,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Description",
+       "column_header": true,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 401.83,
+        "t": 453.442,
+        "r": 463.1019999999999,
+        "b": 468.094,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "Work range",
+       "column_header": true,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 501.94,
+        "t": 453.442,
+        "r": 542.3080000000001,
+        "b": 468.094,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "Default",
+       "column_header": true,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 114.02,
+        "t": 472.03,
+        "r": 144.464,
+        "b": 484.03,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#0104",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 178.58,
+        "t": 472.03,
+        "r": 226.54399999999995,
+        "b": 484.03,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "RES.CODE",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 381.79,
+        "t": 472.03,
+        "r": 464.146,
+        "b": 498.67,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0: Default S.code 1: Last S.code",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 518.98,
+        "t": 472.03,
+        "r": 525.064,
+        "b": 484.03,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 94.344,
+        "t": 501.55,
+        "r": 164.096,
+        "b": 513.55,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#0120 - #0123",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 178.58,
+        "t": 501.55,
+        "r": 305.26400000000007,
+        "b": 513.55,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Spindle direction (SPI.DIR)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 381.79,
+        "t": 501.55,
+        "r": 455.05,
+        "b": 528.19,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0: Forward - 1: Reverse",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 518.98,
+        "t": 501.55,
+        "r": 525.064,
+        "b": 513.55,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 94.344,
+        "t": 531.0699999999999,
+        "r": 164.096,
+        "b": 543.0699999999999,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4090 - #4093",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 178.58,
+        "t": 531.0699999999999,
+        "r": 245.46800000000005,
+        "b": 543.0699999999999,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Spindle mode",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 381.79,
+        "t": 531.0699999999999,
+        "r": 436.714,
+        "b": 572.35,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0: Disable 1: 0→10V 2: 0→±10V",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 518.98,
+        "t": 531.0699999999999,
+        "r": 525.064,
+        "b": 543.0699999999999,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 114.02,
+        "t": 575.26,
+        "r": 144.44,
+        "b": 587.26,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8020",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 178.58,
+        "t": 575.26,
+        "r": 294.68000000000006,
+        "b": 587.26,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Init spindle override (%)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 381.79,
+        "t": 575.008,
+        "r": 417.274,
+        "b": 587.26,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0 → 10",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 499.3,
+        "t": 575.26,
+        "r": 544.816,
+        "b": 587.26,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "5 (= 50%)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 96.024,
+        "t": 590.26,
+        "r": 162.42000000000002,
+        "b": 616.9,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8030, #8032 #8034, #8036",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 178.58,
+        "t": 590.26,
+        "r": 306.014,
+        "b": 616.9,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Spindle(1) - Gear (1,2,3,4) (Motor side)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 381.79,
+        "t": 590.26,
+        "r": 435.85,
+        "b": 602.26,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0 - 999999",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 518.98,
+        "t": 590.26,
+        "r": 525.064,
+        "b": 602.26,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "1",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 96.024,
+        "t": 619.78,
+        "r": 162.42000000000002,
+        "b": 646.42,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8031, #8033 #8035, #8037",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 178.58,
+        "t": 619.78,
+        "r": 306.014,
+        "b": 646.42,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Spindle(1) - Gear (1,2,3,4) (Screw side)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 381.79,
+        "t": 619.78,
+        "r": 435.85,
+        "b": 631.78,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0 - 999999",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 518.98,
+        "t": 619.78,
+        "r": 525.064,
+        "b": 631.78,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "1",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 96.024,
+        "t": 649.3,
+        "r": 162.452,
+        "b": 675.94,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8040, #8042 #8044, #8046",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 178.58,
+        "t": 649.3,
+        "r": 306.014,
+        "b": 675.94,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Spindle(2) - Gear (1,2,3,4) (Motor side)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 381.79,
+        "t": 649.3,
+        "r": 435.85,
+        "b": 661.3,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0 - 999999",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 518.98,
+        "t": 649.3,
+        "r": 525.064,
+        "b": 661.3,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "1",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 96.024,
+        "t": 678.8199999999999,
+        "r": 162.452,
+        "b": 705.456,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8041, #8043 #8045, #8047",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 178.58,
+        "t": 678.8199999999999,
+        "r": 306.014,
+        "b": 705.456,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Spindle(2) - Gear (1,2,3,4) (Screw side)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 381.79,
+        "t": 678.8199999999999,
+        "r": 435.85,
+        "b": 690.8199999999999,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0 - 999999",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 518.98,
+        "t": 678.8199999999999,
+        "r": 525.064,
+        "b": 690.8199999999999,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "1",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ]
+    ]
+   },
+   "annotations": []
+  }
+ ],
+ "key_value_items": [],
+ "form_items": [],
+ "pages": {
+  "169": {
+   "size": {
+    "width": 612.0,
+    "height": 792.0
+   },
+   "image": null,
+   "page_no": 169
+  }
+ }
+}

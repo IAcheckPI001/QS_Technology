@@ -1,0 +1,44 @@
+# Profile mặc định: hoàn toàn chung, không có mẫu mã hay cụm từ riêng của hãng.
+# Luật T-05 chỉ dùng trùng header + hình dạng token; T-12 không parse mã (không có prefix).
+name: default
+vocabulary_file: registry_snapshot.json
+code_patterns: []
+param_prefixes: []
+applicability_lexicon:
+  - {phrase: "not available on", status: not_available}
+  - {phrase: "not available for", status: not_available}
+  - {phrase: "not supported on", status: not_available}
+  - {phrase: "not supported by", status: not_available}
+  - {phrase: "only available on", status: available_only}
+  - {phrase: "available only on", status: available_only}
+  - {phrase: "available on", status: available_only}
+  - {phrase: "only for", status: available_only}
+  - {phrase: "không áp dụng cho", status: not_available}
+  - {phrase: "không áp dụng với", status: not_available}
+  - {phrase: "không hỗ trợ trên", status: not_available}
+  - {phrase: "không có trên", status: not_available}
+  - {phrase: "chỉ áp dụng cho", status: available_only}
+  - {phrase: "chỉ áp dụng với", status: available_only}
+  - {phrase: "chỉ có trên", status: available_only}
+caption_keywords: ["Figure", "Fig.", "Hình", "Table", "Bảng"]
+# T-11: từ khóa caption bảng; từ khóa còn lại của caption_keywords là caption hình.
+table_caption_keywords: ["Table", "Bảng"]
+section_keywords: ["PART", "CHAPTER", "Phần", "Chương"]
+# T-17 (d): regex header/footer cho đoạn trang quá ngắn để luật lặp nhận ra; mặc định không có.
+furniture_patterns: []
+list_glyphs: ["o", "-", "•", "▪"]
+thresholds:
+  continuation_tol: 0.15
+  shape_majority: 0.6
+  shape_min_rows: 3
+  row_gap_factor: 1.5
+  max_range_len: 64
+  furniture_band: 0.12
+  furniture_min_pages: 3
+  figure_label_gap: 12.0
+  figure_label_max_tokens: 4
+  crop_bitmap_min: 0.5
+  crop_vector_margin: 36.0
+  crop_padding: 12.0
+  screenshot_bitmap_min: 0.8
+  watermark_cover_min: 0.9

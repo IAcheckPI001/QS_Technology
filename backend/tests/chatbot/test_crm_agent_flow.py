@@ -116,23 +116,23 @@ def test_two_turn_clarification_goes_through_history_not_pending():
         turns=[
             calls(ask("c1", "Hướng dẫn lắp đặt Astro 6A")),
             answer("Bạn đang dùng Astro 6AH hay Astro 6AV?"),
-            calls(ask("c2", "Hướng dẫn lắp đặt ASTRO_6AV")),
+            calls(ask("c2", "Hướng dẫn lắp đặt 6AV")),
             answer("Tổng quan lắp đặt Astro 6AV [S1]."),
         ],
         analysis_outputs=[
             analysis_output(sub_query("Hướng dẫn lắp đặt Astro 6A", "guide.installation",
                                       unresolved=["Astro 6A"])),
-            analysis_output(sub_query("Hướng dẫn lắp đặt ASTRO_6AV", "guide.installation",
-                                      ["ASTRO_6AV"])),
+            analysis_output(sub_query("Hướng dẫn lắp đặt 6AV", "guide.installation",
+                                      ["6AV"])),
         ],
     )
-    chunks = FakeChunks({("product_catalog", ("ASTRO_6AV",)): [chunk(7, doc_id="astro")]})
+    chunks = FakeChunks({("product_catalog", ("6AV",)): [chunk(7, doc_id="astro")]})
     repository = StoringHistoryRepository()
     service = _service(provider, chunks, repository)
 
     assert _send(service, "Hướng dẫn lắp đặt Astro 6A") == ["Bạn đang dùng Astro 6AH hay Astro 6AV?"]
     first_tool = tool_messages(provider.calls[1].messages)[0]["content"]
-    assert '"status": "needs_clarification"' in first_tool and "ASTRO_6AV" in first_tool
+    assert '"status": "needs_clarification"' in first_tool and "6AV" in first_tool
     assert repository.rows[-1].conversation_state["pending"] is None
 
     assert _send(service, "6AV") == ["Tổng quan lắp đặt Astro 6AV [S1]."]
@@ -140,7 +140,7 @@ def test_two_turn_clarification_goes_through_history_not_pending():
     assert second_history == [
         "Hướng dẫn lắp đặt Astro 6A", "Bạn đang dùng Astro 6AH hay Astro 6AV?", "6AV",
     ]
-    assert chunks.calls[-1]["models"] == ["ASTRO_6AV"]
+    assert chunks.calls[-1]["models"] == ["6AV"]
 
 
 def test_agent_error_is_recorded_and_mapped_to_sse_agent_error():

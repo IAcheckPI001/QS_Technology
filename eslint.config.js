@@ -5,7 +5,8 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // backend/ và .venv-ingest/ là mã Python và venv (có file .js của thư viện).
+  globalIgnores(['dist', 'backend', '.venv-ingest']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [

@@ -19,7 +19,7 @@ from tests.chatbot.agent_fakes import (
     sub_query,
 )
 
-ETHERCAT = ["F86", "F10T", "ASTRO_10S", "ASTRO_6AH", "ASTRO_6AV", "ASTRO_10I"]
+ETHERCAT = ["F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE"]
 
 
 def _find(question, *, ci=(), excluded=(), match="all", unmapped=()):
@@ -81,8 +81,8 @@ def test_many_matches_ask_selection_without_retrieval_or_evidence():
 
 
 @pytest.mark.parametrize(("conditions", "expected"), [
-    ({"ci": ["ethercat", "mechatrolink"]}, ["ASTRO_6AH", "ASTRO_6AV", "ASTRO_10I"]),
-    ({"ci": ["ethercat"], "excluded": ["mechatrolink"]}, ["F86", "F10T", "ASTRO_10S"]),
+    ({"ci": ["pulse_train"], "excluded": ["ethercat"]}, ["F54"]),
+    ({"ci": ["ethercat"], "excluded": ["mechatrolink"]}, ["F86", "F86E", "F10T"]),
 ])
 def test_few_matches_lookup_each_and_become_evidence(conditions, expected):
     output, chunks, state = _ask([analysis_output(_find("Tìm model", **conditions))], "Tìm model")
@@ -135,7 +135,7 @@ def test_condition_outside_table_still_retrieves_without_model_filter():
     assert output.status == "answered"
     assert output.catalog_match.next_action == "verify_with_sources"
     assert output.catalog_match.unmapped_conditions == ["6 trục"]
-    assert len(output.catalog_match.models) == 7      # ứng viên, chưa phải kết quả
+    assert len(output.catalog_match.models) == 10     # ứng viên, chưa phải kết quả
     assert chunks.calls[0]["models"] is None           # giữ cả chunk catalog chung
     assert output.sources[0].product_models == []
 
@@ -200,11 +200,12 @@ def test_model_inherited_from_session_is_not_used_for_dependent_question():
 
 
 def test_comparison_with_discovered_models_awaits_models():
-    question = "So sánh F86 với các model hỗ trợ Mechatrolink"
+    question = "So sánh F54 với các model hỗ trợ EtherCAT nhưng không hỗ trợ Mechatrolink"
     output, chunks, _ = _ask(
         [analysis_output(
-            _find("Các model hỗ trợ Mechatrolink", ci=["mechatrolink"]),
-            sub_query(question, "compare.product_models", ["F86"]),
+            _find("Các model hỗ trợ EtherCAT nhưng không hỗ trợ Mechatrolink", ci=["ethercat"],
+                  excluded=["mechatrolink"]),
+            sub_query(question, "compare.product_models", ["F54"]),
         )],
         question,
     )
@@ -262,7 +263,7 @@ def _six_axes_chunks(content="F10T điều khiển tối đa 6 trục."):
     return FakeChunks({
         ("product_catalog", ()): [chunk(5, doc_id="catalog", content=content)],
         ("product_catalog", ("F10T",)): [chunk(6, doc_id="catalog")],
-        ("product_catalog", ("ASTRO_6AH",)): [chunk(7, doc_id="catalog")],
+        ("product_catalog", ("6AH",)): [chunk(7, doc_id="catalog")],
     })
 
 
@@ -309,7 +310,7 @@ def test_unknown_cited_source_is_invalid_args(cited):
 
 def test_ambiguous_alias_in_cited_source_is_not_evidence():
     _, second, _, _ = _two_calls(
-        {"question": "Hướng dẫn lắp đặt ASTRO_6AH", "based_on_sources": ["S1"]},
+        {"question": "Hướng dẫn lắp đặt 6AH", "based_on_sources": ["S1"]},
         content="Astro 6A điều khiển tối đa 6 trục.",
     )
 
@@ -317,21 +318,20 @@ def test_ambiguous_alias_in_cited_source_is_not_evidence():
 
 
 @pytest.mark.parametrize(("conditions", "allowed"), [
-    ({"ci": ["ethercat", "mechatrolink"]}, True),    # 3 model: lookup_each
-    ({"ci": ["ethercat"]}, False),                   # 6 model: ask_selection, hỏi nhân viên trước
+    ({"ci": ["ethercat"], "excluded": ["mechatrolink"]}, True),   # 3 model: lookup_each
+    ({"ci": ["ethercat"]}, False),                   # 9 model: ask_selection, hỏi nhân viên trước
 ])
 def test_discovered_models_are_evidence_only_when_lookup_is_allowed(conditions, allowed):
     provider = ScriptedToolProvider(analysis_outputs=[
         analysis_output(_find("Tìm model", **conditions)),
-        analysis_output(sub_query("Hướng dẫn lắp đặt ASTRO_6AH", "guide.installation",
-                                  ["ASTRO_6AH"])),
+        analysis_output(sub_query("Hướng dẫn lắp đặt F86E", "guide.installation", ["F86E"])),
     ])
     registry = docs_registry(provider, _six_axes_chunks())
     state = crm_state("Tìm model rồi hướng dẫn lắp đặt")
     allocator = SourceAllocator.for_state(state)
 
     _call(registry, state, "Tìm model", "c1", allocator)
-    second = _call(registry, state, "Hướng dẫn lắp đặt ASTRO_6AH", "c2", allocator)
+    second = _call(registry, state, "Hướng dẫn lắp đặt F86E", "c2", allocator)
 
     assert second.ok is allowed
     if not allowed:

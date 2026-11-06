@@ -52,8 +52,9 @@ provider layer, and database access remains in the repository layer.
 | P3 history reads and ownership | Partially implemented | Support-chat session/message reads and session creation are available behind `LEARNING_API_ENABLED`; authentication and ownership are still deferred. |
 | P4 health/readiness semantics | Open | Connectivity check exists, but readiness status/error semantics and schema checks are incomplete. |
 | P5 active chatbot pipeline | Partially implemented | Security, context loading (with persisted `ConversationState`), pruning, the clarification loop (deterministic resume, `pending_answer`, held sub-queries, 2-attempt limit), analysis, execution-plan execution, fixed replies for chitchat/out_of_scope/handoff-only turns and provider final-answer streaming run. Retrieval is wired at test level: one retrieve task per sub-query, filtered hybrid search (vector + FTS, RRF, parent expansion) over `doc_chunks` via `match_doc_chunks` (`backend/sql/doc_chunks.sql`, applied manually), sources rendered into the answer prompt. Not verified against live Supabase; retrieval parameters are untuned starting values. Handoff is a scaffold: `DisabledHandoffProvider` creates no ticket, so `mode` stays `bot`. Requires the `conversation_state` column migration (not verified live). |
-| P5b CRM agent flow | Experimental, unit-tested only | `/chat/crm` runs a bounded tool-calling loop (`AgentRunner`) when `CRM_CHAT_FLOW=agent` (default). One tool: `product_docs_ask` (reruns clarification → analysis → retrieval on a child state, no compose). Provider capabilities and tool schemas are checked at startup. Shared turn deadline, cancellation propagation, three-level concurrency limits and a per-session turn lease (409 `session_busy`) are implemented and tested with fakes only. Hybrid model selection: questions like "which models support EtherCAT? how do I install it?" filter models in code from `REGISTRY["capabilities"]` (`catalog_match` with `next_action` report_no_match / lookup_each / ask_selection / verify_with_sources), and follow-up lookups only accept models backed by evidence (employee message/history, session model context, discovered models, or cited sources via `based_on_sources`). The orchestrator is tool-neutral: shared rules in the system prompt, per-tool rules in `ToolSpec.guide`, per-tool turn state, `deduplicate` and `max_calls_per_turn` per tool. No per-role tool permissions (every CRM employee can use every tool), no SSE progress events, the final answer is one `delta` (no token streaming), no CRM/web tools. Not verified against live OpenAI tool calling or Supabase; `chat_sessions.turn_lease_until` must be applied manually. |
+| P5b CRM agent flow | Experimental, unit-tested only | `/chat/crm` runs a bounded tool-calling loop (`AgentRunner`) when `CRM_CHAT_FLOW=agent` (default). Tools: `product_docs_ask` (reruns clarification → analysis → retrieval on a child state, no compose) and, behind `CRM_REPORT_ENABLED`, `crm_report` (aggregate ticket reports from the CRM API, see 12d). Provider capabilities and tool schemas are checked at startup. Shared turn deadline, cancellation propagation, three-level concurrency limits and a per-session turn lease (409 `session_busy`) are implemented and tested with fakes only. Hybrid model selection: questions like "which models support EtherCAT? how do I install it?" filter models in code from `REGISTRY["capabilities"]` (`catalog_match` with `next_action` report_no_match / lookup_each / ask_selection / verify_with_sources), and follow-up lookups only accept models backed by evidence (employee message/history, session model context, discovered models, or cited sources via `based_on_sources`). The orchestrator is tool-neutral: shared rules in the system prompt, per-tool rules in `ToolSpec.guide`, per-tool turn state, `deduplicate` and `max_calls_per_turn` per tool. No per-role tool permissions (every CRM employee can use every tool), no SSE progress events, the final answer is one `delta` (no token streaming), no web tools. Not verified against live OpenAI tool calling or Supabase; `chat_sessions.turn_lease_until` must be applied manually. |
 | P6 knowledge learning pipeline (`learning_ai`) | Ingestion + privacy wired behind a flag | Pure domain logic (record schema, post-LLM validation, rule conflicts, review lifecycle, chunking, indexer sync) plus CRM ingestion, prefilter and the Ollama-backed privacy pipeline exist and are unit-tested with fake providers. `POST /ai/learning` runs ingestion + privacy when `LEARNING_API_ENABLED=true` (no authentication yet). LLM segment/extract calls, job persistence, outbox, embedding and vector index are missing. Not verified against live Supabase/Ollama. |
+| P7 technical document ingest (`doc_ingest`) | Parsing spike done (F54); contract C1 locked (rev 3); table normalization, profile, approval core and CLI `run` with HTML report implemented and tested; pipeline PDF → chunk not complete | Offline CLI tool in a separate `.venv-ingest` (Docling), isolated from the chat service (import boundary tested both ways, excluded from the chat image via `backend/.dockerignore`). C1 locked 2026-11-03 (D-02, D-03, D-04 data model, D-08, D-11); rev 3 changes T-01 to whitespace-gap column boundaries because the rev 2 rule failed on F54 itself. Implemented: `schemas/` (Pydantic, `extra="forbid"`), `profile.py` + `profiles/` (`default`, `qs_controller`, registry vocabulary snapshot), `normalize/` (Docling JSON reader; logical tables T-01…T-05, T-15), `technical_refs/` (ParamRef T-12, applicability T-13 on table cells), review queue, `review/approval.py` (unit states, serve rule, approval gate, carry-over by id then unique hash match, risk-based bulk approval, publish rule), CLI `run` (`cli.py`, `pipeline.py`, `report/html_report.py`, `parse/docling_runner.py`): PDF or saved Docling JSON → run dir `data/ingest_runs/{doc_id}/{run_id}/` + `report/index.html` showing each step. T-13 output is `applicability_candidates` (candidates, not facts). Tests: five C1 groups (LT, HC, AP, HA, PI) on the F54 fixture plus synthetic fixtures, none need Docling. Also implemented: Docling label classification (T-16), V-01 text coverage, S0 with per-page OCR, header/footer check (T-17), printed pages (T-06), section paths (T-07), `NormalizedElement`, figures (T-18 labels next to pictures, T-09 screenshot, T-10 watermark candidate, T-11 caption, T-14 crop + render to `normalized/images/`). Not implemented: T-08, V-02…V-04, chunk builder, fact extraction, unit assignment, review CLI, publish, web upload. No DB writes. `doc_chunks` still holds hand-authored F86 chunks loaded by `chunking_loader/load_csv.py`. |
 
 ## Finding status
 
@@ -274,9 +275,37 @@ historical database records. Deletion is not currently implemented.
      - LLM-dependent behaviour (negation "không cần" vs "không hỗ trợ", pronouns,
        following `next_action`, prompt injection) is covered by the manual eval
        `backend/evals/run_crm_agent_eval.py`, which has **not been run** yet.
+12c. Product model codes follow CRM `product_name` (F54, F86, F86E, F10T, 6AH,
+     6AHE, 6AV, 6AVE, 10iV, 10iVE). `ASTRO_10S` was removed; old `ASTRO_*` codes
+     still resolve through alias normalization ("Astro 6AH" = "ASTRO_6AH" → 6AH);
+     "10i"/"Astro 10i" is ambiguous (10iV/10iVE). **Provisional data:**
+     capabilities of F86E/6AHE/6AVE copy the base model and 10iV/10iVE copy the
+     old 10i row; `doc_chunks` chunks tagged `ASTRO_10I` are mapped to `10iV`.
+     Existing Supabase data needs `backend/sql/migrate_product_models_crm.sql`
+     (run manually; stops if chunks still carry `ASTRO_10S`). Model matching in
+     text now requires a code boundary ("6AH" does not match inside "6AHE"), so
+     codes glued to Vietnamese words ("F86có") are no longer detected.
+12d. `crm_report` (experimental, `CRM_REPORT_ENABLED=false` by default):
+     aggregate-only reports over dataset `tickets` from CRM
+     `GET /api/v1/support/cases`, computed in-process (see architecture.md).
+     Verified with fakes and once against the CRM test API (22 tickets, client +
+     validate + engine); **not** verified end to end through `/chat/crm` with live
+     OpenAI. The CRM bearer is the optional `crm_access_token` of `/chat/crm`
+     (kept only in the request principal as `SecretStr`, excluded from dumps,
+     logs, `chat_sessions` and snapshots); without it the tool falls back to
+     `acting_user_id`, which is logged and stored, so it must not be a secret. The
+     widget test route reads the token from `VITE_CRM_TEST_TOKEN`, which is
+     bundled into the browser build: test environment only. Ticket status
+     `resolved` counts as done (with `closed`). Known limits: tokens are not
+     refreshed (CRM issues non-refreshing tokens); the `/ai/tools` endpoints
+     (need `X-API-Key` + Bearer) are not used yet; every call re-fetches all tickets the token can see (no cache,
+     no filter push-down to the API); `priority`/`category`/`support_mode` are
+     free strings until their enums are confirmed; `in_progress` is only updated
+     by CRM when a case page is opened; no list/detail queries, no SLA/overdue,
+     no `having` or cross-dataset joins.
 12a. CRM agent flow backlog: per-role tool permissions, SSE progress event,
-     token streaming of the final answer, CRM/report tools (with templates +
-     compute), write tools with user confirmation, planner step when the tool
+     token streaming of the final answer, report list/detail queries and more
+     datasets, write tools with user confirmation, planner step when the tool
      count grows, MCP adapter, Ollama/Gemini capability declarations, live
      verification of OpenAI tool calling and of cancellation reaching asyncpg
      (`pg_stat_activity`).
@@ -315,6 +344,46 @@ ORM expects that column, and it has not been verified against the live table.
     `pending_review`. Approval must run the gate after validation and conflicts.
 24. Review API/UI, semantic conflict comparison, `Embedder`/`SearchIndex`
     implementations, outbox worker, and chatbot retrieval using `ChunkFilters`.
+
+### P6 — Technical document ingest (`doc_ingest`)
+
+Design and per-step status are in `docs/ai/architecture.md`; the task list is
+`docs/ai/reports/p1_implementation_backlog.md` (BL-xx).
+
+Done: P-1 Parsing Spike on F54 (pdf pages 9, 11, 14, 18, 19, 40, 167–171;
+Docling 2.145.0, `do_ocr=False`, TableFormer accurate, ~96 s), spike tool
+`doc_ingest/spike/` (`run_spike.py`, `render_review.py`), `requirements-ingest.txt`,
+`.gitignore` entries, and the P-1 documents (BL-00, BL-01). These documents and
+the module are still untracked in git.
+
+Current step: **Ingestion V1 group A–C in progress** (C1 locked 2026-11-03).
+
+25. Reviewer fills the "Người duyệt" column in `parsing_spike.md` and confirms
+    decisions 1–11 (all rows are currently empty).
+26. Run the spike on F86 (BL-13, D-07). Both F86 PDFs are now in
+    `docs/ai/doc_ingest_spike/source/`, but no F86 output exists; required
+    before S1 image rules (vector diagrams) are approved.
+27. Done (2026-11-03): D-02, D-03, D-04 (data model), D-08, D-11 decided and
+    contract C1 locked as rev 3 (BL-14); details in
+    `p1_chunking_impact_assessment.md` §6. Still open: D-12 (V-xx/S0 thresholds)
+    blocks chunk generation; D-05, D-06, D-09, D-10 and the LLM part of D-04 block
+    later steps (F54 publish, F86 facts, unit publish, per-code values, fact
+    extraction).
+28. Ingestion V1 group A–C. Done (2026-11-03): schemas for tables, profile and
+    review (BL-04 partial; `NormalizedElement` and validation schemas missing),
+    configuration profile (BL-26), registry vocabulary snapshot (BL-29), table
+    normalizers T-01…T-05 and T-15 (BL-05, BL-06, BL-27), T-12/T-13 on table cells
+    (BL-11 partial), approval core (BL-18, BL-20 partial), synthetic fixtures
+    (BL-31). Remaining: T-08 (BL-09), T-12/T-13
+    on text, fixture text-layer words (BL-02b), V-01…V-04 (BL-25), chunk assertion
+    library (BL-15), whole-pipeline determinism (BL-23), F86 spike (BL-13).
+    Done earlier (2026-11-02): isolated module skeleton, golden F54 fixture
+    (BL-02), F86 baseline lock (BL-03).
+29. Ingestion V1 group D–E: baseline chunk builder, draft fact extraction,
+    quality gate, knowledge units, review CLI, approved package (BL-16…BL-22).
+30. Production integration (BL-90…BL-94): new tables, `doc_chunks` changes
+    (`unit_id`, nullable embedding, `parent_id` from `parent_key`), loader,
+    runtime facts/assets, eval vs. F86 baseline. Not planned yet.
 
 ## Validation record
 
@@ -395,6 +464,67 @@ ORM expects that column, and it has not been verified against the live table.
   turn now updates `last_models`/`active_model`. `npm run build` passed;
   `npm run lint` unchanged (139 pre-existing errors in `src/`). Live OpenAI and
   Supabase: **not verified**; manual eval not run.
+- `doc_ingest` isolated module skeleton (`geometry.py`, `parse/`, golden F54
+  fixture, import-boundary tests, F86 baseline lock) (2026-11-02): backend
+  pytest in `backend\venv` **557 passed, 11 skipped** (the skips are the
+  `requires_docling` tests); `.venv-ingest` `pytest tests\doc_ingest`
+  **37 passed**. Spike re-run on pages 11 and 18 after the helper move: Docling
+  JSON byte-identical, `p*_items.json` identical apart from the crop timing
+  field `ms`.
+- `doc_ingest` C1 implementation (schemas, profile, table normalization T-01…T-05
+  and T-15, T-12/T-13 on cells, approval core, five C1 test groups) (2026-11-03):
+  backend pytest in `backend\venv` **659 passed, 11 skipped** (skips are the
+  `requires_docling` tests); `.venv-ingest` `pytest tests\doc_ingest`
+  **138 passed**. GT-23 scan checked by inserting `"F54"` and `r"^#\d"` into a
+  rule module (test failed, file restored). Tests that need later steps (LT-10,
+  LT-11, AP-08…AP-10, HA-10…HA-12, PI-09) are listed as pending in
+  `p1_golden_tests.md` §6, not implemented as stubs.
+- `doc_ingest` CLI `run` + HTML report, `applicability_candidates`, carry-over by
+  hash (2026-11-03): backend pytest in `backend\venv` **668 passed, 11 skipped**;
+  `.venv-ingest` `pytest tests\doc_ingest` **147 passed**. Manual: CLI with Docling
+  on the F54 PDF (pages 11, 14, 167–171, ~79 s of Docling) gave `tables.jsonl` with
+  the same content hashes, cells, flags and review items as `--raw-dir` on the
+  fixture; report opened from `data/ingest_runs/f54/verify-f54/report/index.html`
+  (rendering checked by tests on HTML content, not in a browser by Claude).
+- `doc_ingest` safety net (2026-11-03): Docling label classification (T-16: table of
+  contents `document_index` kept, unsupported labels flagged `unsupported_element`), reader
+  now walks children of every node (captions were silently missing before), V-01 text
+  coverage against the PDF text layer (`words.json`, provisional thresholds 0.9/0.1, D-12
+  open). Found from the user's run of F54 pages 5–10, where the table of contents was
+  dropped without any flag. Backend pytest in `backend\venv` **679 passed, 12 skipped**;
+  `.venv-ingest` `pytest tests\doc_ingest` **159 passed**. Re-run of pages 5–10: TOC kept
+  (3 × T-16), V-01 passed 6/6; F54 fixture V-01 passed 11/11.
+- `doc_ingest` S0 + per-page OCR (2026-11-03): the user's F86 Operation Manual run
+  (pages 1–17) showed pictures but no text: the PDF has no text layer (text drawn as
+  bitmaps/paths), Docling ran without OCR, and the report showed 0 review items. Now S0
+  measures each page, pages without a text layer are OCR'd with RapidOCR (torch backend,
+  already in `.venv-ingest`; the default onnxruntime backend is not installed) and get
+  `ocr_required` (blocking). Re-run of F86 pages 1–17: 17/17 OCR, 235 s; captions
+  (Figure 1-1…2-11) and headings recovered; open issues I-21 (headings tagged as page
+  headers become furniture), I-22 (table drawn as an image, page 15), I-23 (OCR errors).
+- `doc_ingest` T-17 / T-06 / T-07 (2026-11-03): fixes I-21. Docling header/footer labels
+  are now checked: strings repeated on ≥ 3 pages in the top/bottom band (digits treated
+  as equal), lines merged from them, or profile `furniture_patterns` are furniture; a
+  header/footer seen once that is a numbered heading returns to the body
+  (`furniture_reclassified`, non-blocking); other single ones stay furniture with
+  `furniture_unconfirmed` (non-blocking). OCR text inside pictures becomes `figure_text`
+  (not body text, not headings). Printed page numbers come from /PageLabels or the footer
+  number sequence, never from an offset. `normalized/elements.jsonl` holds
+  `NormalizedElement` rows (fields for T-08…T-11 still empty). F86 pages 5–17 OCR output
+  is now a fixture (`fixtures/docling/f86_ocr`). F54 table hashes unchanged.
+- `doc_ingest` figures, BL-10 (2026-11-03): the run now stores `raw/p{n}.objects.json`
+  (bitmaps with pixel size, vector paths; objects inside a Form XObject use the form's
+  bounds, which fixes a wrong position for F54 page 18). New rule T-18 attaches short labels
+  next to a picture (F86 `320 mm` on pages 8 and 9) as `figure_text`. T-14 crop = Docling
+  bbox + covering bitmaps + nearby vector paths + the picture's labels, rendered to
+  `normalized/images/` when the run has the PDF. T-09 turns a 0-cell table covered by a
+  bitmap into `screenshot`; T-10 marks a caption-less picture inside a bitmap repeated on
+  ≥ 3 pages (same pixel size and same displayed size, any position) as
+  `watermark_candidate` (condition changed from IoU ≥ 0.9 to ≥ 90% of the picture covered,
+  because IoU missed F54 page 171; F86: 5 logos caught); T-11 moves figure/table captions to
+  the nearest target. Text inside or next to pictures is only a keyword for the picture,
+  never chunk body or a fact. HTML report has a Figures section. Picture units, review and
+  serving images with answers are still not built (BL-19, BL-21, BL-92).
 - Live Supabase connectivity/insert: **not verified**.
 
 ## Architectural impact

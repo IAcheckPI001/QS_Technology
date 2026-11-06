@@ -1,0 +1,297 @@
+# P-1 — Đặc tả golden test và chunk assertion
+
+Đặc tả cho Ingestion V1. Mọi khẳng định dưới đây đã được đối chiếu với JSON
+Docling thô và ảnh trang của spike F54 ([parsing_spike.md](parsing_spike.md)),
+không suy từ báo cáo.
+
+Trạng thái (2026-11-03): fixture F54 (BL-02) đã có; bộ test theo 5 nhóm quyết
+định C1 (§6) chạy trên fixture F54 + fixture tổng hợp. Trạng thái từng GT/CQ ở
+§6.6; test cần bước chưa có code ghi rõ "chờ BL-xx", không có stub.
+
+Contract được kiểm:
+- [p1_normalization_contract.md](p1_normalization_contract.md) (T-01…T-14,
+  ParamRef D-01);
+- mô hình HITL ở [assessment §4](p1_chunking_impact_assessment.md#4-quality-gate-tài-liệu-theo-document-và-knowledge-unit).
+
+## 1. Fixture (BL-02, làm ở V1)
+
+| Mục | Quy định |
+|---|---|
+| Nguồn | Docling JSON thô của 11 trang spike (9, 11, 14, 18, 19, 40, 167–171), sinh bằng `doc_ingest.spike.run_spike` với cấu hình ghi trong `parsing_spike.md` |
+| Vị trí | `backend/tests/doc_ingest/fixtures/docling/f54/p{n}.docling.json` |
+| Kích thước | Tổng JSON thô ≈ 6,7 MB (riêng p011 ≈ 2 MB). Trước khi commit, chỉ giữ các trường T-01…T-14 dùng (`texts`, `tables`, `pictures`, `groups`, `body`, `furniture`, `pages[].size`) và bỏ dữ liệu không dùng, có test kiểm bản rút gọn cho cùng kết quả normalize. Nếu vẫn > 3 MB thì nén gzip |
+| Bitmap | Bounds bitmap nhúng (T-09, T-10, T-14) lấy từ PDF lúc chạy spike, lưu kèm `p{n}.bitmaps.json`; test **không** cần PDF |
+| Text layer | Token text layer kèm toạ độ cho V-01/V-02, lưu `p{n}.words.json` (BL-02b, đã sinh cho 11 trang bằng `make_fixture --words-only`) |
+| README | sha256 PDF (`7cd0e69c…1bce21`), version Docling/docling-core/pypdfium2, lệnh sinh lại |
+| PDF | Không commit (đã gitignore) |
+
+Test chạy trong venv backend, không import Docling: chỉ đọc JSON fixture.
+
+## 2. Golden test lớp chuẩn hóa
+
+| ID | Trang | Khẳng định | Biến đổi |
+|---|---|---|---|
+| GT-01 | 11 | Bảng 2 cột, header `Port \| Functions`; cột 0 của 10 dòng dữ liệu là `CN1`…`CN10` theo thứ tự; dòng `CN3` có cột 1 = `MPG Handle`; flag `column_order_repaired`; caption `Figure 5. F54 controller I/O ports` thuộc **picture**, không thuộc bảng | T-01, T-11 |
+| GT-02 | 167 → 168 → 169 t0 | **Một** `LogicalTable` gồm 3 segment, 4 cột (`Parameter`, `Description`, `Work range`, `Default`); `#4140 - #4147` là dòng dữ liệu (`is_header=false`, log T-05); dòng `#12160 - #12167` có Work range = `""` và Default = `"0"`; dòng `#12200 - #12207` (169 t0) có Work range = `""` và Default = `"0"` (không phải Work range = "0"); mọi dòng đủ 4 cell; không mất dòng nào so với nguồn (167: 21 dòng dữ liệu, 168: 32, 169 t0: 17) | T-01…T-05 |
+| GT-03 | 169 t1 → 170 t0; 170 t1 → 171 t0 | Nối đúng 2 bảng logic; header kế thừa; dòng `#4136` (LCD sleep) có Work range = `""`, Default = `"15"`; dòng `#8050, #8052 …` (170 t0) thuộc bảng 5.2 Spindle | T-03, T-04 |
+| GT-04 | 168, 169 | `#8030, #8032 #8034, #8036` → `list`, codes `[8030, 8032, 8034, 8036]`, `range_*` = null; tra `#8033` khớp dòng `#8031, #8033 #8035, #8037`, **không** khớp dòng `#8030 …`; `#0000 - #0007` → `range`, codes 0…7; `#3` và `#0003` khớp cùng dòng; `M1920` không khớp `#1920`; trong mỗi bảng logic, codes giữa các dòng không giao | T-12 |
+| GT-05 | 171 | `#0136` có `applicability.status = not_available`, note chứa `F54`; `#4132`, `#4133`, `#4134` có `status = conditional` ("touch controller"); picture logo cuối bảng → `watermark_candidate` (không bị xóa) | T-13, T-10 |
+| GT-06 | 18 | Figure 15 → `screenshot` có caption `Figure 15. Homing sensor status configuration parameters…`; Figure 14 → `picture` có caption; không còn bảng 0×0 nào | T-09, T-11 |
+| GT-07 | 19 | 4 list_item cha `M1920:`…`M1923:`, mỗi cha đúng 2 con (`= 0`, `= 1`); con trỏ `parent_element_id` đúng cha; `text` của con M1921 giữ nguyên `(NC` thiếu `)` | T-08 |
+| GT-08 | 14 | Bảng X40–X57: 16 dòng dữ liệu + header `Add \| Name \| Function`; `label_heading` của bảng = `Input devices connection address table on F54 controller`; list "DO NOT connect both high-level and low-level…" có `normalized_type = warning`, `section_path` kết thúc bằng `2.3.1 Sensor Input wiring` | T-07, phân loại warning |
+| GT-09 | 40 | Bảng Y40–Y45 (6 dòng dữ liệu); cell cột Function có `lang = vi`, cột Name `lang = en`; 3 list_item dưới `Note:` là `warning`, cùng section với Figure 45 | T-07, lang |
+| GT-10 | 9 | Vùng crop original chứa trọn bounds bitmap của bản vẽ (x 54,8–561,7; y 96,0–454,5 pt) cộng padding, kẹp trong trang; caption `Figure 3. F54 controller dimension drawing`; **không** có text số đo nào trong `text` của element (số đo chỉ có trong bitmap) | T-14 |
+| GT-11 | tất cả | `printed_page.value`: 9→`2`, 11→`4`, 14→`7`, 18→`11`, 19→`12`, 40→`33`, 167→`160`, 168→`161`, 169→`162`, 170→`163`, 171→`164`; `source = furniture_sequence` (không cần regex trong manifest); header/footer có `content_layer = furniture` | T-06 |
+| GT-12 | 167–169, 18, 19 | Mọi dòng của bảng logic 5.1 có `section_path` kết thúc bằng `5.1 Axis parameters` (mang từ 167 sang trang không có heading); bảng 169 t1 có `5.2 Spindle parameters`; `Note:` / `Notes:` / `Parameter stauts description:` là `label_heading`, không vào `section_path` | T-07 |
+| GT-17 | 167–171 | Biến đổi là deterministic: chạy normalize hai lần trên cùng fixture cho `elements.jsonl`, `tables.jsonl`, `normalization_log.jsonl` giống hệt (so sha256) | tất cả |
+| GT-18 | 167–171 | Không mất provenance: mọi cell không rỗng có `raw_cell_ref` trỏ tới đúng một cell Docling; mọi cell Docling xuất hiện đúng một lần trong `LogicalTable` | T-01, T-02 |
+
+### Pipeline chung (rev 2)
+
+GT-01…GT-12 phải đạt với profile `default`. Ca nào cần profile miền thì ghi rõ
+trong test. V-01/V-02 cần token text layer kèm toạ độ, nên fixture bổ sung
+`p{n}.words.json` do `make_fixture` sinh từ PDF (BL-02b); test vẫn không cần PDF.
+
+| ID | Trang | Khẳng định | Biến đổi / kiểm |
+|---|---|---|---|
+| GT-19 | 168 | Với profile `default` (không có `code_patterns`), `#4140 - #4147` vẫn thành dòng dữ liệu nhờ hình dạng token `#9 - #9` trùng các dòng dữ liệu cột 0 của 167; log T-05 ghi bước (b) | T-05 |
+| GT-20 | tất cả | V-01: trên Docling output đã chuẩn hóa, độ phủ token ≥ ngưỡng ở mọi trang. Xóa giả lập một element text khỏi fixture trang 14 → `text_coverage_gap` blocking cho trang 14 | V-01 |
+| GT-21 | 11, 169 | V-02: chạy trên lưới Docling **thô** (bỏ qua T-01/T-04) → `table_crosscheck_mismatch` ở bảng trang 11 và bảng nối trang 169 t0; sau T-01/T-04 → đạt | V-02 |
+| GT-22 | tổng hợp | Fixture tổng hợp có dòng mô tả xuống dòng (cột khóa rỗng): T-15 gộp vào dòng trên; khoảng cách dọc vượt ngưỡng → `orphan_row`. V-03: cột trộn hình dạng token → `column_type_inconsistent` | T-15, V-03 |
+| GT-23 | — | Không luật T-xx nào chứa hằng số riêng của tài liệu hay miền: quét mã nguồn `doc_ingest/normalize/` không có `doc_id`, tên file, tên model, regex mã (`#\d`, `M\d{4}`…); các giá trị này chỉ có trong profile | §0, §9 |
+
+## 3. Golden test HITL (V1, sau khi có knowledge unit)
+
+| ID | Khẳng định |
+|---|---|
+| GT-13 | Unit bảng logic 5.1 (167–169) không chuyển được `approved` khi còn mục review_queue blocking (vd. đặt giả lập `column_count_mismatch`) |
+| GT-14 | Unit sơ đồ output CN5 (trang 40, Figure 45) không xuất bản được khi unit warning "…connect the output signal to an intermediate relay…" chưa `approved` |
+| GT-15 | Chạy lại pipeline không đổi nội dung → unit đã `approved` giữ nguyên; đổi một ô (vd. Default của `#8010` trên fixture sửa tay) → unit về `pending_review` |
+| GT-16 | Conflict F86 (port table vs Figure 2.1, `source_note` của baseline) được biểu diễn bằng một `conflict_group` giữ **cả hai** bên ở `conflict`; không bên nào xuất bản được |
+
+## 4. Chunk assertion (CQ)
+
+Chạy trên chunk do builder V1 sinh ra. Với baseline F86 chỉ chạy ở chế độ **báo
+cáo**, không fail, không sửa file.
+
+| ID | Khẳng định | Cách kiểm |
+|---|---|---|
+| CQ-01 | Chunk bảng có dòng header khớp `columns` của bảng logic; mọi dòng có đúng `len(columns)` ô | Parse lại content bảng của chunk, so với `tables.jsonl` |
+| CQ-02 | Không cắt giữa một dòng; mã, mô tả, work range, default nằm trên cùng một dòng | Mọi `row_id` của bảng xuất hiện trọn vẹn trong đúng một chunk |
+| CQ-03 | `content` ≤ 2500 ký tự (dưới giới hạn 3000 của `answer_composer.py:96`); chunk dài hơn phải chia theo ranh giới dòng và lặp header | Đo độ dài; kiểm header ở mọi phần |
+| CQ-04 | Chunk warning có `related_chunk_keys` không rỗng, trỏ tới chunk tồn tại cùng `section_path` | Resolve key |
+| CQ-05 | Provenance đủ: `doc_id`, `pdf_page_index` start/end, `printed_page`, `element_ids`; fact có ≥ 1 evidence verbatim | Kiểm null; với `text_span` / `table_cell` so chuỗi |
+| CQ-06 | Mọi asset ref resolve được; không asset nào có `normalized_type ∈ {watermark_candidate}`; visual chunk có caption hoặc title nguyên văn | Resolve + kiểm loại |
+| CQ-07 | Không chunk/fact nào có `applicability.status = not_available` được render thành câu khẳng định "có trên {model}" | Kiểm template render |
+| CQ-08 | `parent_key` của mọi chunk resolve được; không chu trình | Đồ thị cha–con |
+
+## 5. Regression baseline F86
+
+| ID | Khẳng định |
+|---|---|
+| RB-01 | `sha256(backend/app/modules/chunking_loader/documents/doc_chunks_f86.csv) == a8629f5878fc1d4f16c2706d7b0440a46fe9ecfe098e0b7ec525f16c878f02aa`. Test fail nếu file bị sửa; muốn đổi baseline phải đổi hash có chủ đích trong cùng commit |
+| RB-02 | Chạy CQ-01…CQ-08 ở chế độ báo cáo trên 92 chunk; lưu kết quả làm mốc. Kỳ vọng đã biết: CQ-08 **đạt** về dữ liệu (42 `parent_key` resolve đủ), nhưng DB không có `parent_id` (E-01); 7 chunk có `embed_text` > 600 token; 146 asset đều là ảnh cả trang |
+| RB-03 | Bộ eval retrieval C0 (khi tới phạm vi 3) chạy trên baseline trước, để có mốc so sánh với chunk V1 |
+
+## 6. Bộ test theo nhóm quyết định C1 (rev 3)
+
+Mỗi nhóm kiểm một quyết định đã chốt. Nguồn dữ liệu: **F54** = fixture golden 11
+trang; **SYN** = fixture tổng hợp sinh bằng `backend/tests/doc_ingest/synthetic.py`
+(dạng DoclingDocument JSON, bbox phần tử BOTTOMLEFT, cell TOPLEFT) cho các ca F54
+không có. Cột "Trạng thái": **đạt** = có test và đang pass; **chờ BL-xx** = cần
+bước chưa có code.
+
+Chạy (thư mục `backend`): `.\venv\Scripts\python.exe -m pytest tests\doc_ingest`
+hoặc `..\.venv-ingest\Scripts\python.exe -m pytest tests\doc_ingest`. Không test
+nào trong 5 nhóm cần Docling hay PDF.
+
+### 6.1 LogicalTable integrity (D-02) — `test_logical_table.py`
+
+| ID | Dữ liệu | Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|---|---|
+| LT-01 | F54, mọi bảng | Mỗi dòng đúng `len(columns)` ô; ô trống `text=""`, `raw_cell_ref=null`, `empty_fill` | 100% dòng | đạt |
+| LT-02 | SYN (gộp T-15 + cell lạc) | Cell nguồn = `raw_cell_ref` ∪ `merged_cell_refs` ∪ `unassigned_cells`, ba tập rời nhau | Cân bằng tuyệt đối | đạt |
+| LT-03 | F54 | `logical_table_id` dạng `{doc_id}:t\d{3}`, liên tiếp, theo (trang, y) | Không trùng, đúng thứ tự | đạt |
+| LT-04 | SYN | `row_id` giữ sau T-15 (`r0, r1, r3`), `merged_row_ids=[r2]`, log T-15 | Đúng | đạt |
+| LT-05 | F54 | Segment trên trang liên tiếp; không segment nào thuộc 2 bảng | 100% | đạt |
+| LT-06 | F54 169 + SYN | Không nối qua heading (5.1 kết thúc ở 169 t0, 5.2 là bảng mới); bảng không header lệch biên → `ambiguous_continuation` | Không nối sai | đạt |
+| LT-07 | SYN | 2 dòng header → `"Group / Key"`…, `complex_header` chặn chunk của đúng bảng đó | Chặn đúng phạm vi | đạt |
+| LT-08 | SYN | Cell có tâm ngoài bbox bảng → `unassigned_cells` (`outside_columns`) + `unassigned_cell` blocking | Cell còn nguyên | đạt |
+| LT-09 | F54 | `LogicalTable` round-trip JSON; field lạ bị từ chối | 100% | đạt |
+| LT-T01 | SYN | Cell tràn qua khe trắng → biên dự phòng theo header + `column_count_mismatch` | Đúng cột, có cờ | đạt |
+| LT-10 | Chunk/fact nháp | Mọi tham chiếu `(logical_table_id, row_id)` resolve được | 0 tham chiếu hỏng | chờ BL-16, BL-17 |
+| LT-11 | F54 | V-02 đạt trên mọi bảng đã chuẩn hóa | 100% bảng | chờ BL-02b, BL-25 |
+
+Kèm GT-01 (trừ phần caption T-11), GT-02, GT-03, GT-17 (phần bảng), GT-18: đạt.
+Trên F54 với `default` không có mục review cấu trúc nào (`unassigned_cell`,
+`column_count_mismatch`, `ambiguous_continuation`, `header_demotion_unsure`,
+`orphan_row`, `complex_header`).
+
+### 6.2 Header classification (D-03) — `test_header_classification.py`
+
+| ID | Dữ liệu | Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|---|---|
+| HC-01 | SYN | Header lặp ở segment nối trang → `repeated_header`, log bước a, không review | Đúng | đạt |
+| HC-02 | F54 168, `default` | `#4140 - #4147` thành dữ liệu ở bước b (= GT-19) | Log bước b | đạt |
+| HC-03 | SYN (2 dòng dữ liệu) | Dưới 3 dòng: `qs_controller` → bước c; `default` → bước d, giữ cờ header, `header_demotion_unsure` | Đúng theo profile | đạt |
+| HC-04 | SYN | Bước d chỉ chặn chunk bảng của nó; bảng khác không có review | Đúng phạm vi | đạt |
+| HC-05 | SYN | Hình dạng 3/5 = 60% → dữ liệu; 2/4 = 50% → review | Đúng tại biên | đạt |
+| HC-06 | F54 11, 14, 40 | Header thật không bị hạ; 0 `header_demotion_unsure` trên F54 | 0 lần hạ nhầm | đạt |
+| HC-07 | F54 | Cờ `header_inherited` ở t004 seg 1–2, t005 seg 1, t006 seg 1 | 4/4 | đạt |
+| HC-08 | SYN | Bảng không header: `header_text=null`, `header_source=none`, `header_missing` chặn fact | Không bịa header | đạt |
+| HC-09 | SYN | T-03: số cột Docling lớn hơn → `ambiguous_continuation`; heading chen giữa → bảng mới, không review; header khác nhưng thẳng hàng → nối + `header_demotion_unsure` (không im lặng) | 3/3 ca (ca lệch biên ở LT-06) | đạt |
+| HC-10 | F54 167–171 × 1,5 | Phóng to tọa độ: nội dung bảng, cờ, review không đổi | Giống hệt | đạt |
+
+### 6.3 Applicability (D-04) — `test_applicability.py`
+
+Lớp chuẩn hóa chỉ sinh **ứng viên** (`Row.applicability_candidates`, `ApplicabilityCandidate`);
+fact và `Applicability` của fact thuộc BL-17. AP-01…AP-07 kiểm ứng viên.
+
+| ID | Dữ liệu | Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|---|---|
+| AP-01 | Schema + F54 | `status` ngoài enum / field lạ bị từ chối; `models` ⊆ registry, `interfaces` ⊆ `control_interface` | 100% | đạt |
+| AP-02 | F54 171 `#0136` | `not_available`, `models=[F54]`, `condition_text="F54 controller"`, `note` là chuỗi con của cell | Khớp tuyệt đối | đạt |
+| AP-03 | F54 171 `#4132`–`#4134` | `conditional`, `models=[]`, `interfaces=[]`, `condition_text="touch controller"`, `applicability_note` + `applicability_model_unmatched` (chặn fact) | 3/3 | đạt |
+| AP-04 | F54, `qs_controller` | Mọi dòng dữ liệu bảng parameter có `param_ref`; 7 dòng mang applicability vẫn còn | Không mất dòng | đạt |
+| AP-05 | SYN (chuỗi) | EN + VI + alias (`Astro 6AV` → `6AV`) + nhiều model; interface `EtherCAT` → `ethercat` | 5/5 | đạt |
+| AP-06 | SYN | `Not available on Z99` → `models=[]`, cờ unmatched | Fact giữ, có cờ | đạt |
+| AP-07 | SYN | "available memory", "available options", "Unavailable on", "available once" không sinh applicability | 0 dương tính giả | đạt |
+| AP-08 | DB test | Chunk `not_available` cho F54 vẫn có `F54` trong `product_models`; `match_doc_chunks(p_models=['F54'])` trả về | Truy xuất được | chờ BL-16, phạm vi 3 |
+| AP-09 | Template trả lời | Fact `not_available` không bao giờ thành câu "có trên {model}" (CQ-07) | 0 câu sai | chờ BL-16, runtime |
+| AP-10 | S3 (LLM) | `note` do LLM trích là chuỗi con nguyên văn của evidence | 100% | chờ BL-17 |
+
+Kèm GT-04 (`qs_controller`: list/range/single, `#8033` chỉ khớp đúng dòng, `#3` =
+`#0003`, `M1920` ≠ `#1920`, không giao mã trong bảng, mẫu không parse được,
+`range_too_long`) và GT-05 phần applicability: đạt. Với `default` không dòng nào
+có `param_ref`.
+
+### 6.4 Approval / HITL (D-08) — `test_approval.py`
+
+| ID | Dữ liệu | Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|---|---|
+| HA-01 | Unit test | Mọi cặp (trạng thái, trạng thái): chỉ cặp khai báo trong `TRANSITIONS` chuyển được | 25/25 cặp | đạt |
+| HA-02 | Unit test | Chỉ (`active`, `approved`) được phục vụ | 1/15 ô | đạt |
+| HA-03 | F54 167–169 | Mục blocking chặn duyệt (= GT-13); khớp id con, không khớp tiền tố lẫn (`t004` ≠ `t0041`) | Đúng | đạt |
+| HA-04 | SYN unit | Wiring phụ thuộc warning chưa duyệt → không xuất bản | Đúng | đạt (unit giả lập; gán unit thật chờ BL-19) |
+| HA-05 | F54 167–169 | Chạy lại không đổi → giữ approval; sửa Default của `#8010` → `pending_review`; unit khác không ảnh hưởng (= GT-15) | Chỉ unit đổi mất approval | đạt |
+| HA-05b | F54 + SYN | Thêm một bảng phía trước làm id bảng 5.1 đổi `t001` → `t002`: vẫn `approved` (`matched_by` hash); hai unit cùng nội dung tranh một bản ghi → cả hai `pending_review` (`ambiguous`); khác `unit_type` → không khớp | Đúng | đạt |
+| HA-06 | SYN unit | Conflict group: không bên nào xuất bản | Đúng | đạt (dữ liệu F86 GT-16 chờ BL-13) |
+| HA-07 | SYN unit | Duyệt hàng loạt theo section: unit `parameter` và unit có cờ → `high_risk`; còn blocking → từ chối; ngoài section không đụng | 0 unit rủi ro cao lọt | đạt |
+| HA-08 | SYN unit | Chỉ unit `approved` của document `active` xuất bản được | Đúng | đạt |
+| HA-09 | Unit test | Duyệt cần reviewer có tên (rỗng, khoảng trắng, `system:*` bị từ chối); bản ghi có reviewer, thời điểm, hai hash | 100% | đạt (CLI `--reviewer` chờ BL-21) |
+| HA-10 | F54 | Admin sửa = annotation có ký tên, bản gốc giữ, chunk sửa cần embed lại | — | chờ BL-21 |
+| HA-11 | DB test | Publish chỉ ghi unit đã duyệt, có `unit_id`, không đụng unit khác | — | chờ BL-22, phạm vi 3 |
+| HA-12 | Embedder giả | Publish lại không đổi → 0 lời gọi embed; đổi 1 chunk → 1 | — | chờ BL-22 |
+
+### 6.5 Profile isolation (D-11) — `test_profile_isolation.py`, `tests/chatbot/test_registry_snapshot.py`
+
+| ID | Dữ liệu | Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|---|---|
+| PI-01 | Profile YAML | `default`, `qs_controller` nạp được (kế thừa lexicon, thresholds); key lạ bị từ chối; `extends` vòng bị từ chối | 100% | đạt |
+| PI-02 | `default` | `code_patterns`, `param_prefixes` rỗng; lexicon không chứa tên model | Đúng | đạt |
+| PI-03 | F54 | Mọi GT/nhóm trên chạy với `default`, trừ GT-04/AP-04 khai báo `qs_controller` | Đúng | đạt |
+| PI-04 | Mã nguồn | GT-23: chuỗi trong code (trừ docstring) của `normalize/`, `technical_refs/`, `review/`, `schemas/` không có tên model, `f54_om`, "touch controller", regex mã; không luật nào import `yaml` hay đọc `profiles/`. Đã thử chèn `"F54"` và `r"^#\d"` → test fail | 0 vi phạm | đạt |
+| PI-05 | F54 | `default` ↔ `qs_controller`: chỉ `param_ref` và cờ `param_table` khác; review giống hệt | Diff đúng phạm vi | đạt |
+| PI-06 | F54 167–169 | Thêm từ khóa caption vào profile → `profile_hash` đổi, unit bảng giữ approval | Giữ approval | đạt |
+| PI-07 | Venv chính | `registry_snapshot.json` = `product_models`, `aliases`, `control_interface` của `REGISTRY` | Khớp tuyệt đối | đạt |
+| PI-08 | F54 | Đổi `doc_id` → output giống hệt trừ định danh | Diff = 0 | đạt |
+| PI-09 | F86 | Luật F54 + `default` trên F86 không sửa code: không crash, LT-01/LT-02 đạt, bất thường thành cờ | 3 điều kiện | chờ BL-13 |
+
+### 6.6 CLI `run` + báo cáo HTML (BL-32) — `test_run_report.py`
+
+| Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|
+| `run --raw-dir` fixture F54 sinh đúng bố cục contract §1; jsonl validate bằng schema; `run_report.json` có `profile_hash`, trạng thái bước = `step_states()` | Đủ file, validate 100% | đạt |
+| Trạng thái bước lấy từ module có thật (S1 bảng `implemented`; T-12/T-13, review `partial`; S0, V-xx, build, fact, publish `not_implemented`) | Đúng | đạt |
+| HTML: đủ 6 bảng; ô `#4140 - #4147` ghi T-05; `#0136` là "ứng viên T-13 · not_available · … · chưa phải fact · chờ duyệt"; mục Fact "chưa triển khai (BL-17)"; V-xx "chưa triển khai" | Đúng | đạt |
+| Tập trang con `168-169` → bảng 5.1 gắn nhãn "có thể bị cắt" (trang 167 không được chọn); `167-169` → bảng liền 3 segment | Đúng | đạt |
+| Chạy hai lần → `normalized/*` giống hệt từng byte (GT-17) | Giống hệt | đạt |
+| Text tài liệu chứa `<script>` → escape trong HTML | Không có thẻ thô | đạt |
+| Chạy Docling thật (`--pdf` F54, trang 11, 14, 167–171) cho `tables.jsonl` cùng content hash, cell, cờ, review với `--raw-dir` trên fixture | Kiểm tay 2026-11-03: trùng hoàn toàn | kiểm tay (PDF không commit) |
+
+### 6.7 Lưới an toàn: nhãn Docling + V-01 (BL-33, BL-25 phần V-01) — `test_coverage.py`
+
+| Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|
+| GT-20 phần 1: V-01 trên 11 trang fixture F54 (có `words.json`) | Mọi trang đạt, không `text_coverage_gap` | đạt |
+| GT-20 phần 2: xóa text một list_item trang 14 | `text_coverage_gap` blocking chunk cho đúng `f54:p014`, có mẫu token thiếu | đạt |
+| Caption được đọc như con của picture/table (`Figure 5. F54 controller I/O ports` trang 11) | Có trong phần tử | đạt |
+| SYN `document_index` → T-16: giữ 4 cell, không thành bảng logic, log T-16, V-01 tính nội dung | Đúng | đạt |
+| SYN nhãn `formula` → `unsupported_element` (blocking chunk) và V-01 không tính → `text_coverage_gap` | Không bỏ im lặng | đạt |
+| SYN phần tử nhân đôi → `duplicate_ratio=0.5`, không đạt | Đúng | đạt |
+| Từ trong header/footer không tính | `page_tokens` chỉ gồm thân trang | đạt |
+| Trang không có từ text layer → `passed=null`, không review; không có words → không chạy | Đúng | đạt |
+| `item_id` review liên tục qua các bước (nhãn, bảng, V-01) | `rq-0001…` không trùng | đạt |
+| `page_words` từ PDF = `p014.words.json` của fixture | Giống hệt | đạt ở `.venv-ingest` (skip khi không có pypdfium2/PDF) |
+| `validation.jsonl` deterministic; báo cáo HTML có V-01 theo trang, mục lục, nhãn lạ; raw không có words → "V-01 không chạy" | Đúng | đạt (`test_run_report.py`) |
+
+### 6.8 S0 hồ sơ tài liệu + OCR (BL-24) — `test_s0.py`
+
+| Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|
+| `decide`: 0 / 19 ký tự → `missing`, OCR; 20 → `ok`; ký tự lỗi 20% → `poor`, OCR; ngưỡng đọc từ profile | 5/5 | đạt |
+| `--ocr auto/off/force` chọn đúng trang OCR; `docling_config` ghi cấu hình thực tế | Đúng | đạt |
+| Trang không có text layer → `ocr_required` blocking chunk; V-01 `passed=null` lý do "OCR page" | Đúng | đạt |
+| `--ocr off` vẫn gắn `ocr_required` (nội dung thiếu) | Đúng | đạt |
+| Trang F54 có text layer → không `ocr_required`, V-01 đạt | Đúng | đạt |
+| Bảng Docling 0 cell (F54 trang 18) → `empty_table` không blocking | Đúng | đạt |
+| `raw/profile.json` round-trip; báo cáo có bảng S0, cảnh báo "cả tài liệu được vẽ bằng hình", badge OCR | Đúng | đạt (`test_run_report.py`) |
+| `measure_pages` trên PDF thật: F54 trang 14 `ok`, F86 trang 5 `missing` (0 ký tự) | Đúng | đạt ở `.venv-ingest` (skip khi thiếu PDF) |
+| F86 trang 1–17 chạy `--ocr auto` | Kiểm tay 2026-11-03: 17/17 trang OCR, 235 s; caption Figure 1-1…2-11 và heading có; vấn đề I-21…I-23 | kiểm tay |
+
+### 6.9 T-17 header/footer, T-06 trang in, T-07 section — `test_furniture.py`, `test_printed_page.py`, `test_sections.py`
+
+| Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|
+| Footer lặp 3 trang → furniture `furniture_repeated`, không review; `PAGE3`/`PAGE 4` cùng khóa `page #` | Đúng | đạt |
+| Dòng gộp `ACME CO.,LTD PAGE 4` → `furniture_composed` | Đúng | đạt |
+| `page_header` duy nhất `1.1 APPERANCE` → body `heading` + `furniture_reclassified` (không chặn); phần tử sau có section path | Đúng | đạt |
+| `page_header` duy nhất `320 mm` → furniture + `furniture_unconfirmed` (không chặn) | Đúng | đạt |
+| `text` lặp ở dải dưới 3 trang → furniture + `furniture_promoted`; `section_header` lặp ("Notes:") → không | Đúng | đạt |
+| Con của picture (`page_header` logo, `section_header` rác) → `figure_text`, `parent_element_id` = picture, không làm heading | Đúng | đạt |
+| `furniture_patterns` của profile bắt đoạn 2 trang (luật lặp không áp dụng) | Đúng | đạt |
+| T-06: chuỗi `PAGE n`; `PAGEO` → `null` không nội suy; số lệch chuỗi → `null` + `printed_page_conflict`; < 3 trang → `null`; số cố định (`Rev 2`) không phải số trang; /PageLabels ưu tiên | Đúng | đạt |
+| T-06 F54 (`Page \| N`): trang 9 → "2", 167 → "160"; F86 OCR trang 5–17 → 3…15 (kể cả footer gộp trang 6, 11) | Đúng | đạt |
+| T-07: `parse_heading` (số nhiều đoạn, từ khóa, số dính chữ, `320 mm` yếu, `Notes:` không phải heading); cấp theo tiền tố số, mang qua trang, `label_heading`, `section_parent_missing`, `section_path_source` | Đúng | đạt |
+| F54 trang 167–169: `PART 5 …` › `5.1 …`; bảng trang 168 có section path và `table_ref` | Đúng | đạt |
+| F86 OCR (fixture `f86_ocr`, trang 5–17): 5 heading I-21 thành heading, `2.1 POWER SUPPLY` nằm dưới `CHAPTER 2.`; > 300 `figure_text` | Đúng | đạt |
+| Hồi quy F54: content hash 6 bảng không đổi, review không đổi, V-01 11/11 | Đúng | đạt (kiểm tay + `test_run_report.py`) |
+
+### 6.10 Hình: T-18, T-14, T-09, T-10, T-11 (BL-10) — `test_figures.py`
+
+| Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|
+| T-18: `page_header` `320 mm` cách hình 3 pt ở dải trên → `figure_text` của hình, không `furniture_unconfirmed`; `text` đè mép hình → `figure_text`; nhãn giữa hai hình → hình gần hơn | Đúng | đạt |
+| T-18 không gắn: câu văn, heading đánh số, `Notes:`, caption, chữ cách hình 40 pt; chuỗi lặp 3 trang sát hình vẫn là furniture | Đúng | đạt |
+| T-14: crop mở rộng theo bitmap ≥ 50%, nét vector kéo ra ≤ 36 pt, nhãn của hình; khung trang không mở rộng; không có `objects.json` → bbox + padding, log `no_object_info` | Đúng | đạt |
+| T-09: bảng 0 cell phủ bitmap → `screenshot` có caption, không `empty_table`, không vào bảng logic; không có bitmap → `empty_table` | Đúng | đạt |
+| T-10: picture nằm trong bitmap lặp 3 trang (IoU 0,53, phủ 100%) → `watermark_candidate`; có caption → `watermark_conflict`; hình thật lớn hơn watermark → giữ; bitmap 2 trang → không; logo đổi vị trí và xoay 90° qua các trang → vẫn lặp; ảnh cùng px nhưng mỗi lần một cỡ (dùng lại trong hình thật) → không | Đúng | đạt |
+| T-11: `Figure 5` gắn bảng → chuyển sang hình phía trên (`caption_relinked`, `source = rule`); dải hình lề phải cùng hàng caption không phải đích; caption không có parent được gắn; không ứng viên → `caption_ambiguous`; `Table 3` → bảng gần nhất | Đúng | đạt |
+| F54 (có `objects.json`): GT-10 crop trang 9 phủ bitmap 54,8–561,7; GT-01/I-10 Figure 5 trang 11; GT-06 Figure 15 trang 18 → screenshot; GT-05 trang 171 → watermark; V-01 11/11; hash bảng không đổi khi có/không có `objects.json` | Đúng | đạt |
+| F86 OCR: `320 mm` trang 8, 9 → `figure_text` đúng hình; chỉ 2 caption gắn lại (trang 17, Docling không gắn) | Đúng | đạt |
+| F86 trang 1–17 qua CLI (PDF + raw đã OCR): logo lề phải/giữa trang 9, 10, 13, 14, 15 → `watermark_candidate`; 22 picture, 0 `watermark_conflict`, 0 `caption_ambiguous`; crop trang 8, 9 chứa `320 mm` và đường kích thước | Đúng | đạt (kiểm tay, `data/ingest_runs/f86/bl10-figures`) |
+| Render (venv ingest + PDF F54): `normalized/images/f54_p009_e003/original.png`, `preview.png`, scale 3–4 | Đúng | đạt (tự skip khi thiếu PDF) |
+| Ảnh ở Form XObject (F54 trang 18) lấy bounds form (141,492–500,695), không phải góc 0,720 | Đúng | đạt (`test_f54_fixture.py`) |
+
+### 6.11 Trạng thái GT/CQ hiện có
+
+| ID | Trạng thái |
+|---|---|
+| GT-01 | Đạt (bảng; caption `Figure 5` thuộc picture qua T-11) |
+| GT-02, GT-03, GT-18, GT-19 | Đạt |
+| GT-04 | Đạt (profile `qs_controller`) |
+| GT-05 | Đạt (applicability; `watermark_candidate` trang 171, T-10 đã sửa điều kiện) |
+| GT-06, GT-10 | Đạt khi có `objects.json` (fixture F54 có); crop render khi có PDF |
+| GT-07 | Chờ BL-09 |
+| GT-08, GT-09, GT-12 | Phần section path đạt (BL-08); `lang` theo element chờ I-16 |
+| GT-11 | Phần trang in (T-06) đạt; manifest ghi đè, `doc_version_mismatch` chưa có |
+| GT-13, GT-15 | Đạt ở mức lõi approval (HA-03, HA-05); gán unit từ builder chờ BL-19 |
+| GT-14 | Lõi phụ thuộc đạt (HA-04); unit trang 40 chờ BL-16, BL-19 |
+| GT-16 | Lõi conflict đạt (HA-06); dữ liệu F86 chờ BL-13 |
+| GT-17 | Đạt cho `tables`, `review_queue`, `normalization_log` của bước bảng; toàn pipeline chờ BL-23 |
+| GT-20 | Đạt (V-01 trên phần tử Docling đã phân loại; chạy lại trên `NormalizedElement` khi có BL-04 đầy đủ) |
+| GT-21 | Chờ BL-25 (V-02) |
+| GT-22 | Phần T-15 đạt (LT-02, LT-04); V-03 chờ BL-25 |
+| GT-23 | Đạt (PI-04) |
+| CQ-01…CQ-08 | Chờ BL-15, BL-16 |
+| RB-01 | Đạt (`test_f86_baseline.py`) |

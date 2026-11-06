@@ -178,9 +178,11 @@ export const streamChatbotResponse = (message, options = {}) => streamSse('/api/
 }, options);
 
 // Chỉ để kiểm thử kênh CRM: widget-backend proxy sang /chat/crm (route chỉ bật khi có
-// CHATBOT_CRM_API_KEY). userId là dữ liệu mẫu, không phải nhân viên đã xác thực.
-export const streamCrmChatbotResponse = (message, { userId, ...options } = {}) => streamSse('/api/chat/crm', {
+// CHATBOT_CRM_API_KEY). userId là dữ liệu mẫu, không phải nhân viên đã xác thực;
+// crmAccessToken (tùy chọn) là token CRM để tool báo cáo gọi API CRM.
+export const streamCrmChatbotResponse = (message, { userId, crmAccessToken, ...options } = {}) => streamSse('/api/chat/crm', {
     user_id: userId,
+    ...(crmAccessToken ? { crm_access_token: crmAccessToken } : {}),
     message: { text: message },
 }, options);
 

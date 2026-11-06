@@ -1,7 +1,11 @@
 """Dựng AgentRunner lúc startup; cấu hình không hợp lệ thì dừng khởi động."""
 
+from zoneinfo import ZoneInfo
+
 from app.core.config import Settings
 from app.modules.chatbot.providers.base import ToolCallingProvider
+from app.modules.chatbot.providers.crm_api import CrmListClient
+from app.modules.chatbot.reporting.datasets import DATASETS
 from app.modules.chatbot.extraction.product_catalog import RegistryProductCatalog
 from app.modules.chatbot.retrieval import Retriever
 from app.modules.chatbot.stages.analysis_stage import AnalysisStage
@@ -9,7 +13,13 @@ from app.modules.chatbot.stages.catalog_lookup_stage import CatalogLookupStage
 from app.modules.chatbot.stages.clarification_resume_stage import ClarificationResumeStage
 from app.modules.chatbot.stages.execution_stage import ExecutionStage
 from app.modules.chatbot.stages.retrieval_pipeline import RetrievalPipeline
-from app.modules.chatbot.tools import ToolConfigurationError, ToolRegistry, build_product_docs_tool
+from app.modules.chatbot.tools import (
+    ToolConfigurationError,
+    ToolRegistry,
+    ToolSpec,
+    build_crm_report_tool,
+    build_product_docs_tool,
+)
 
 from .runner import AgentLimits, AgentRunner
 
@@ -35,8 +45,21 @@ def build_agent_runner(
         ExecutionStage(retriever=retriever),
         CatalogLookupStage(RegistryProductCatalog()),
     )
-    registry = ToolRegistry([
+    tools: list[ToolSpec] = [
         build_product_docs_tool(pipeline, timeout_s=settings.agent_tool_timeout_s),
-    ])
+    ]
+    if settings.crm_report_enabled:
+        client = CrmListClient(
+            settings.crm_api_base_url,
+            timeout_s=settings.crm_api_timeout_s,
+            max_items=settings.crm_report_max_items,
+        )
+        tools.append(build_crm_report_tool(
+            client,
+            DATASETS,
+            tz=ZoneInfo(settings.crm_report_timezone),
+            timeout_s=settings.agent_tool_timeout_s,
+        ))
+    registry = ToolRegistry(tools)
     registry.validate_for(provider.capabilities)
     return AgentRunner(provider, registry, AgentLimits.from_settings(settings))

@@ -48,6 +48,13 @@ Khi thay đổi backend, chạy thêm:
 .\venv\Scripts\python.exe -m pytest backend\tests
 ```
 
+Khi thay đổi `backend/app/modules/doc_ingest/` (tool ingest offline, venv riêng có
+Docling), từ thư mục `backend` chạy thêm:
+
+```powershell
+..\.venv-ingest\Scripts\python.exe -m pytest tests\doc_ingest
+```
+
 Nếu virtual environment không tồn tại, báo rõ thay vì tự cài dependency.
 Báo cáo mọi validation failure; không coi lint/build frontend hiện có là bằng
 chứng backend đã đúng.

@@ -199,6 +199,34 @@ def test_crm_chat_streams_for_service_key_and_records_acting_user():
     assert harness.history.created[0]["channel"] == "crm"
 
 
+def test_crm_access_token_reaches_principal_but_is_never_logged_or_stored(caplog):
+    harness = Harness()
+    seen = []
+
+    class CapturingService(ChatbotService):
+        async def stream_reply(self, inbound, principal, request_context):
+            seen.append(principal)
+            async for part in super().stream_reply(inbound, principal, request_context):
+                yield part
+
+    harness.client.app.app.dependency_overrides[get_chatbot_service] = (
+        lambda: CapturingService(FakeProvider(["ok"]), harness.history)
+    )
+    token = "eyJ.TOKEN-SECRET-VALUE.sig"
+
+    with caplog.at_level(logging.DEBUG):
+        response = harness.crm_chat(harness.keys.issue(), body={**CRM_BODY, "crm_access_token": token})
+
+    assert response.status_code == 200
+    [principal] = seen
+    assert principal.crm_access_token.get_secret_value() == token
+    assert principal.acting_user_id == "employee_456"
+    assert "TOKEN-SECRET-VALUE" not in caplog.text
+    row = harness.sessions.rows[UUID(response.headers["X-Session-ID"])]
+    assert "TOKEN-SECRET-VALUE" not in repr(row)
+    assert "TOKEN-SECRET-VALUE" not in repr(harness.history.created)
+
+
 def test_crm_session_is_resumable_only_by_same_employee():
     harness = Harness()
     key = harness.keys.issue()

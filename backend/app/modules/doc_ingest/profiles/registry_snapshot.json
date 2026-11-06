@@ -1,0 +1,24 @@
+{
+  "source": "backend/app/modules/chatbot/extraction/registry.py",
+  "product_models": [
+    "F54",
+    "F86",
+    "F86E",
+    "F10T",
+    "6AH",
+    "6AHE",
+    "6AV",
+    "6AVE",
+    "10iV",
+    "10iVE"
+  ],
+  "aliases": {
+    "Astro 6AH": "6AH",
+    "Astro 6AV": "6AV"
+  },
+  "control_interface": {
+    "pulse_train": "Pulse Train/xung",
+    "ethercat": "EtherCAT",
+    "mechatrolink": "Mechatrolink"
+  }
+}

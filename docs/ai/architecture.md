@@ -24,6 +24,8 @@ Frontend
       -> AgentRunner ⇄ OpenAIProvider.chat_complete_tools ⇄ ToolRegistry
          -> product_docs_ask = RetrievalPipeline trên RunState con
             (clarification -> analysis -> CatalogLookupStage -> execution, không compose)
+         -> crm_report (khi CRM_REPORT_ENABLED) = ReportQuery -> validate -> CRM API
+            (Bearer crm_access_token | acting_user_id) -> engine tổng hợp -> ReportOutput
   -> HistoryRepository -> Supabase public.chat_history
   -> SSE về frontend
 ```
@@ -51,8 +53,10 @@ stages/       ... + retrieval_pipeline.py (clarification -> analysis -> [catalog
               catalog_lookup_stage.py (tìm model theo bảng capabilities, chỉ pipeline của agent)
 extraction/   registry.py (intents, models, coverage, capabilities), validate_registry.py, product_catalog.py
 agent/        runner.py (AgentRunner), deadline.py, prompts.py, setup.py
-tools/        registry.py (ToolRegistry), schema.py (chuẩn hóa JSON Schema), base.py, product_docs.py
-providers/    openai.py, base.py (ToolCallingProvider + LLMCapabilities)
+tools/        registry.py (ToolRegistry), schema.py (chuẩn hóa JSON Schema), base.py, product_docs.py, crm_report.py
+reporting/    catalog.py (DatasetSpec), datasets/ (tickets), validate.py, dates.py, engine.py
+providers/    openai.py, base.py (ToolCallingProvider + LLMCapabilities), crm_api.py (CrmListClient)
+schemas/system/report.py  contract ReportQuery (enum sinh từ catalog báo cáo)
 ```
 
 Router không tự khởi tạo provider hoặc repository.
@@ -398,13 +402,42 @@ không gọi tool nào — theo dõi câu trả lời từ trí nhớ) và `inva
 `normalized_query` lưu các câu hỏi agent gửi cho `product_docs_ask`. Lỗi agent →
 history `error`, SSE `agent_error`.
 
+**`crm_report`** (thử nghiệm, sau cờ `CRM_REPORT_ENABLED`, mặc định tắt). Số liệu
+tổng hợp từ CRM; v1 chỉ truy vấn tổng hợp (aggregate), một dataset `tickets`,
+chưa có danh sách/chi tiết phiếu.
+
+- LLM chỉ điền `ReportQuery` (`schemas/system/report.py`): `dataset`, `metrics`
+  (1–3), `dimensions` (0–2), `filters` (≤8, AND), `date_range` (`preset` hoặc
+  `start`/`end` dạng ngày, `end` không bao gồm), `time_grain`, `sort`, `limit`
+  (mặc định 10, trần 50). Enum sinh từ catalog; LLM không truyền timezone.
+- `reporting/validate.py` kiểm tra theo catalog của dataset (operator hợp kiểu,
+  giá trị enum, nhãn tiếng Việt, alias model qua `resolve_models`) **trước** khi gọi
+  CRM; lỗi → `tool_invalid_args` kèm giá trị hợp lệ để agent tự sửa.
+- `providers/crm_api.py` gọi `GET {CRM_API_BASE_URL}{source_path}?limit=&offset=`
+  với `Authorization: Bearer <crm_access_token>` (trường tùy chọn của `/chat/crm`,
+  giữ trong `PrincipalContext` dạng `SecretStr`, `exclude=True`: không log, không
+  lưu); không có token thì Bearer là `acting_user_id`, lặp tới `total` hoặc
+  `CRM_REPORT_MAX_ITEMS` (`source_truncated`). **CRM phân quyền và giới hạn phạm vi
+  dữ liệu theo token**; dịch vụ AI không lọc quyền thêm. 401/403 →
+  `crm_auth_failed`; timeout/5xx/body lạ → `crm_unavailable`. Không log token.
+- Item API → record của dataset (`extra="ignore"`): `subject`, `description` và
+  trường không khai báo bị bỏ ngay khi parse, không tới engine hay LLM.
+- `reporting/engine.py` (hàm thuần, chung cho mọi dataset): filter hệ thống
+  (`delete_pending = false`) → filters + date_range → nhóm theo dimensions (+ kỳ
+  theo `CRM_REPORT_TIMEZONE`) → metric theo catalog → điền kỳ trống bằng 0 và
+  `change.delta`/`delta_pct` so với kỳ trước → sort (None cuối) → limit (có
+  `time_grain`: limit áp lên tổ hợp dimension, giữ đủ kỳ). LLM không tự tính.
+- Thêm dataset (vd customers): khai báo `DatasetSpec` (record, fields, metrics,
+  date fields, system filters, `source_path`) trong `reporting/datasets/`; contract,
+  validate, engine và tool không đổi. Chưa hỗ trợ join giữa dataset hay `having`.
+
 **Eval thủ công** (`backend/evals/`): `crm_agent_cases.json` +
 `run_crm_agent_eval.py` chạy `AgentRunner` với OpenAI và Supabase thật (không ghi
 DB, không chạy trong CI) cho hành vi phụ thuộc LLM: đại từ/ngữ cảnh, phủ định và
 "hoặc", tách câu hỏi, làm theo `next_action`, prompt injection.
 
 **Chưa có / ngoài phạm vi:** phân quyền tool theo role/scope, event SSE tiến
-trình, stream token câu trả lời cuối, tool CRM/báo cáo/web search, tool ghi dữ
+trình, stream token câu trả lời cuối, báo cáo dạng danh sách/chi tiết, web search, tool ghi dữ
 liệu (cần xác nhận người dùng), planner LLM, MCP (registry chạy cùng tiến trình; có thể
 thêm adapter MCP sau), provider Ollama/Gemini cho agent.
 
@@ -453,6 +486,183 @@ và các GET `/chatbot/...` của Support Workspace. Module `learning_ai` cung c
 (xem mục dưới). Quyền nhân viên CRM theo `user_id`, ownership cho các GET history, chống xử lý trùng
 theo `Idempotency-Key` và production readiness/schema checks là phạm vi chưa
 hoàn thiện.
+
+## Luồng ingest tài liệu kỹ thuật (`doc_ingest`): thiết kế và trạng thái
+
+Mục tiêu: biến PDF manual (F54, F86, ...) thành element đã chuẩn hóa, rồi thành
+chunk/fact/asset có provenance, qua người duyệt, rồi nạp vào `doc_chunks` để
+`match_doc_chunks` truy xuất. Module nằm ở `backend/app/modules/doc_ingest/`, là
+**tool offline chạy bằng CLI** trong venv riêng `.venv-ingest`
+(`backend/requirements-ingest.txt`: Docling, docling-core, pypdfium2, pydantic, PyYAML).
+Module chatbot và image dịch vụ chat không được import/cài gói này.
+
+**Trạng thái tổng quát (2026-11-03):** xong P-1 Parsing Spike trên F54, khung
+module độc lập, fixture golden F54 (BL-02), khóa baseline F86 (BL-03). **Contract
+C1 đã khóa** (D-02, D-03, D-04 mô hình dữ liệu, D-08, D-11; rev 3 đổi T-01 sang
+biên cột theo khe trắng). Đã có code và test cho: schema, profile cấu hình, chuẩn
+hóa **bảng** (T-01…T-05, T-15), parse mã parameter và ghi chú áp dụng trên cell
+(T-12, T-13), review queue, lõi approval theo unit. **Chưa có pipeline PDF →
+chunk đầy đủ**: chưa có T-08, V-02…V-04, builder, trích fact, CLI review,
+publish. Đã có CLI `run` (PDF → Docling → chuẩn hóa bảng → thư mục chạy + báo cáo
+HTML từng bước) để kiểm thử bằng file thật. Dữ liệu `doc_chunks` vẫn là chunk F86
+biên soạn tay, nạp bằng `chunking_loader/load_csv.py`.
+
+**Cấu trúc và ranh giới module:**
+
+```text
+backend/app/modules/doc_ingest/
+  geometry.py          BBox, parse_pages, overlap_ratio — thuần Python, dùng lại cho S1
+  schemas/             Pydantic extra="forbid": normalized.py (LogicalTable, ApplicabilityCandidate
+                       = ứng viên T-13, Applicability = của fact/BL-17, ReviewItem, LogEntry),
+                       profile.py, review.py (KnowledgeUnit, ApprovalRecord), run.py (RunReport)
+  profile.py           nạp profile YAML (extends, vocabulary_file), profile_hash
+  profiles/            default.yaml, qs_controller.yaml, registry_snapshot.json (chép registry chatbot)
+  normalize/           docling_reader.py (Docling JSON dict -> RawItem, bbox gốc trên-trái; đi vào con
+                       của mọi phần tử nên đọc được caption), coverage.py (T-16: phân loại nhãn,
+                       mục lục giữ nguyên, nhãn chưa hỗ trợ -> unsupported_element),
+                       tables.py (T-01..T-05, T-15 + gọi T-12/T-13), recorder.py (review/log),
+                       pages.py (T-17 xác nhận header/footer theo lặp nhiều trang, chữ trong hình
+                       -> figure_text; T-06 trang in), sections.py (T-07 section path theo số),
+                       figures.py (T-18 nhãn sát hình, T-09 screenshot, T-10 watermark, T-11
+                       caption, T-14 vùng crop), elements.py (ghép NormalizedElement ->
+                       normalized/elements.jsonl)
+  validate/coverage.py V-01 độ phủ text: từ text layer (words.json) so với nội dung giữ lại
+  s0.py                S0: quyết định OCR theo trang (text layer missing/poor), ocr_required
+  parse/profile_probe.py  S0 đo trang bằng pypdfium2 (ký tự, ký tự lỗi, bitmap, path, xoay, page label)
+  parse/pdf_probe.py   page_objects: bitmap (+ px) và nét vector từng trang -> raw/p{n}.objects.json;
+                       đối tượng trong Form XObject lấy bounds của form
+  technical_refs/      params.py (ParamRef, T-12), applicability.py (T-13)
+  review/approval.py   trạng thái unit, luật phục vụ, approval gate, giữ approval (theo id,
+                       id đổi thì khớp duy nhất theo hash), duyệt hàng loạt theo rủi ro,
+                       luật xuất bản (phụ thuộc, conflict)
+  pipeline.py          một lần chạy: chuẩn hóa, ghi data/ingest_runs/{doc_id}/{run_id}/ (contract §1),
+                       trạng thái bước tính từ module có thật, cảnh báo bảng bị cắt bởi tập trang
+  report/html_report.py  report/index.html tự chứa: tổng quan + trạng thái bước, theo trang
+                       (ảnh + khung element + biên cột), theo bảng (lưới Docling thô cạnh bảng logic,
+                       tô màu T-01/T-02/T-05/T-15, ứng viên T-13), review queue, log
+  cli.py               `run --pdf ... | --raw-dir ...` (Docling chỉ import khi cần parse/render PDF)
+  parse/               nơi duy nhất (cùng spike/) được import docling, pypdfium2, PIL
+    docling_runner.py  build_converter (spike dùng chung), convert_pages, render_pages
+    pdf_probe.py       page_label (/PageLabels), image_objects (bitmap nhúng), count_path_objects
+    make_fixture.py    CLI: output spike + PDF -> fixture golden (bỏ ảnh, kèm bitmaps.json)
+  spike/               công cụ đo P-1 (dùng geometry + parse/pdf_probe)
+backend/tests/doc_ingest/
+  conftest.py          marker requires_docling: tự skip khi venv không có Docling
+  fixtures/docling/f54/  p{n}.docling.json + p{n}.bitmaps.json + README (sha256 PDF, version)
+  synthetic.py, f54.py   fixture tổng hợp (SynPage) + helper chạy chuẩn hóa trên F54
+  test_import_boundary.py, test_geometry.py, test_f54_fixture.py, test_f86_baseline.py
+  test_logical_table.py, test_header_classification.py, test_applicability.py,
+  test_approval.py, test_profile_isolation.py   5 nhóm test theo quyết định C1
+backend/tests/chatbot/test_registry_snapshot.py   snapshot từ vựng khớp REGISTRY (venv chính)
+```
+
+- `doc_ingest` chỉ import `app.modules.doc_ingest.*` trong `app` (không
+  `app.core`, `app.db`, chatbot, learning_ai, chunking_loader); phần còn lại của
+  `app` không import `doc_ingest`. `test_import_boundary.py` kiểm cả hai chiều
+  bằng AST.
+- `backend/.dockerignore` loại `app/modules/doc_ingest/` và
+  `requirements-ingest.txt` khỏi image dịch vụ chat.
+- Test chạy ở hai venv (thư mục `backend`):
+  - `.\venv\Scripts\python.exe -m pytest tests`: test thuần của doc_ingest chạy, test `requires_docling` bị skip;
+  - `..\.venv-ingest\Scripts\python.exe -m pytest tests\doc_ingest`: chạy đủ, kể cả validate `DoclingDocument`.
+- Test thuần chỉ đọc fixture JSON, không cần PDF. Fixture sinh lại bằng
+  `make_fixture` (lệnh trong README của fixture).
+- `schemas/`, `profile.py`, `normalize/`, `technical_refs/`, `review/` chỉ dùng
+  pydantic + PyYAML (có sẵn ở cả hai venv) và không import Docling, nên 5 nhóm test
+  C1 (LT, HC, AP, HA, PI; [p1_golden_tests.md §6](reports/p1_golden_tests.md#6-bộ-test-theo-nhóm-quyết-định-c1-rev-3))
+  chạy được ở cả hai venv.
+
+```text
+[P-1] Parsing spike (Docling)         XONG cho F54 (11 trang); báo cáo chờ người duyệt ký
+                                      F86: PDF đã có trong source/, CHƯA chạy (BL-13, D-07)
+[S0]  Hồ sơ tài liệu (đo trang, chọn OCR/cấu hình)   CÓ CODE + TEST (BL-24): OCR theo trang bằng
+                                      RapidOCR backend torch; F86 Operation không có text layer
+[C1]  Contract artifact ingest        ĐÃ KHÓA 2026-11-03 (rev 3)
+[S1]  Chuẩn hóa deterministic T-01..T-15
+      bảng: T-01..T-05, T-15 + T-12/T-13 trên cell   CÓ CODE + TEST (BL-05, BL-06, BL-11 phần bảng, BL-27)
+      T-17 header/footer, T-06 trang in, T-07 section path   CÓ CODE + TEST (BL-07, BL-08)
+      hình: T-18, T-09 screenshot, T-10 watermark, T-11 caption, T-14 crop + render
+                                      CÓ CODE + TEST (BL-10)
+      list (T-08), T-12/T-13 trên text   chưa có code (BL-09, BL-11 phần text)
+[Profile] Profile cấu hình (default, qs_controller)  CÓ CODE + TEST (BL-26, BL-29)
+[T-16] Phân loại nhãn Docling        CÓ CODE + TEST (BL-33): mục lục giữ, nhãn lạ -> review
+[V]   Kiểm bất biến V-01..V-04        V-01 CÓ CODE + TEST (ngưỡng tạm, D-12 mở); V-02..V-04 chưa có
+                                      (BL-25): đối chiếu bảng với text layer, bất biến bảng, cấu trúc trang
+[S2]  Screenshot/hình -> asset        ảnh crop ở normalized/images/ (BL-10); asset + unit duyệt hình,
+                                      lưu storage chưa có code (BL-19, BL-90)
+[S3]  Trích fact (parameter, I/O)     HOLD: chờ S1 + D-04, D-10
+[Build] Chunk builder baseline        HOLD: chờ S1 đạt golden test + thư viện CQ (BL-15, BL-16)
+[Review] Knowledge unit + HITL + CLI  lõi approval có code + test (BL-18, BL-20 phần lõi);
+                                      gán unit từ builder, review_events, CLI chưa có (BL-19, BL-21)
+[Publish] Gói đã duyệt -> Supabase    phạm vi 3, chưa lên kế hoạch (BL-90..BL-94)
+```
+
+**Kiểm thử bằng file PDF (CLI `run`, thư mục `backend`):**
+
+```powershell
+# PDF thật: Docling ~6–19 s/trang, nên chọn trang
+..\.venv-ingest\Scripts\python.exe -m app.modules.doc_ingest.cli run --pdf "<file.pdf>" --pages 11,14,167-171 --doc-id f54 --profile qs_controller
+# Chạy lại chuẩn hóa trên Docling JSON đã lưu (fixture hoặc raw/ của lần chạy trước), không cần Docling
+.\venv\Scripts\python.exe -m app.modules.doc_ingest.cli run --raw-dir tests\doc_ingest\fixtures\docling\f54 --doc-id f54
+```
+
+- Output: `data/ingest_runs/{doc_id}/{run_id}/` (gitignored) gồm `raw/`, `normalized/`,
+  `pages/` (ảnh trang khi có PDF), `run_report.json`, `report/index.html` (mở bằng
+  trình duyệt).
+- Báo cáo có bảng V-01 theo trang (độ phủ, trùng, token thiếu), mục lục (T-16) và phần
+  tử nhãn chưa hỗ trợ. V-01 cần `p{n}.words.json`: tự sinh khi có `--pdf`; `--raw-dir`
+  không có words thì báo "V-01 không chạy".
+- Báo cáo hiển thị bước chưa có code là "chưa triển khai". Applicability là **ứng viên
+  T-13**, không phải fact. ID bảng là định danh của lần chạy; so giữa các lần chạy dùng
+  content hash. Bảng chạm biên của tập trang đã chọn được gắn nhãn "có thể bị cắt".
+- Chưa có upload qua web (cần auth admin, H-9); không chạy được từ dịch vụ chat.
+
+**Spike (`doc_ingest/spike/`):**
+
+| File | Vai trò |
+|---|---|
+| `run_spike.py` | Chạy Docling **một lần** mỗi trang (helper hình học/pdfium lấy từ `geometry.py`, `parse/pdf_probe.py`) (`do_ocr=False`, TableFormer `accurate`, `images_scale=2`), đọc cả lớp `BODY` + `FURNITURE` (footer `Page \| N`), đo phủ bitmap/số path vector trong picture, crop lại picture bằng pypdfium2 ở scale 2/3/4 (đường `page_render_crop`), đọc `/PageLabels`. Xuất `p{n}.json`, `p{n}_items.json`, `p{n}_overlay.png`, `p{n}_tables.html`, `p{n}_pictures/`, `summary.json` |
+| `render_review.py` | Dựng `index.html` và `p{n}_tables.html` để người duyệt so crop bảng/hình với HTML Docling dựng |
+
+Chạy (thư mục `backend`):
+`..\.venv-ingest\Scripts\python.exe -m app.modules.doc_ingest.spike.run_spike --pdf "<pdf>" --doc f54 --pages 9,11,14,18,19,40,167-171 --out ..\docs\ai\doc_ingest_spike\output`.
+PDF nguồn (`docs/ai/doc_ingest_spike/source/`), output spike và
+`data/ingest_runs/` đều gitignored.
+
+Kết luận chính của spike F54 (chi tiết ở
+[reports/parsing_spike.md](reports/parsing_spike.md)):
+
+- Chỉ số cột của TableFormer không tin được (trang 11 đảo cột, trang 169 mất cả
+  cột trống, trang 168 cờ header gắn vào dòng dữ liệu) → S1 dựng bảng từ bbox của
+  cell (biên cột theo khe trắng giữa các cụm cell, contract rev 3), nối bảng qua
+  trang và kế thừa header.
+- PDF không có `/PageLabels`; `printed_page` lấy từ chuỗi số tăng dần ở footer
+  (T-06 rev 2), manifest chỉ để ghi đè; không suy từ offset.
+- Screenshot bị nhận là `table` 0×0; watermark bị nhận là `picture`; caption có
+  thể gắn nhầm vào bảng; `level` của heading luôn bằng 1 nên section path phải
+  dựng từ mẫu đánh số.
+- Mã parameter có dạng đơn/dải/danh sách; D-01 chốt khớp chỉ qua
+  `param_codes int[]` tường minh.
+
+**Nguyên tắc pipeline chung (contract rev 2):** pipeline xử lý mọi PDF được nạp
+mà không biết trước lỗi cấu trúc.
+- Luật T-xx chỉ dùng tín hiệu hình học/cấu trúc với sai số tương đối và không
+  tham chiếu tài liệu cụ thể.
+- Tri thức miền/ngôn ngữ (mẫu mã, cụm từ điều kiện, từ khóa caption, registry
+  model) nằm trong profile cấu hình; profile `default` hoàn toàn chung.
+- Lỗi chưa biết được bắt bằng S0 (đo trước) và V-xx (so với text layer PDF và
+  các bất biến cấu trúc). Kết quả thành mục review / cờ trên knowledge unit,
+  không thành dữ liệu sai im lặng.
+- Lỗi hợp lệ về hình thức không phát hiện tự động hoàn toàn được, nên duyệt bắt
+  buộc theo mức rủi ro vẫn là yêu cầu cứng.
+
+Tài liệu thiết kế (contract C1 đã khóa; S0, V-xx, builder vẫn là đặc tả chưa có code):
+[p1_chunking_impact_assessment.md](reports/p1_chunking_impact_assessment.md)
+(vấn đề, quyết định D-xx, GO/HOLD),
+[p1_normalization_contract.md](reports/p1_normalization_contract.md)
+(`NormalizedElement`, `LogicalTable`, bố cục `data/ingest_runs/{doc_id}/{run_id}/`),
+[p1_golden_tests.md](reports/p1_golden_tests.md) (GT/CQ/RB),
+[p1_implementation_backlog.md](reports/p1_implementation_backlog.md) (BL-xx).
 
 ## Luồng học tri thức (`learning_ai`): thiết kế và trạng thái
 

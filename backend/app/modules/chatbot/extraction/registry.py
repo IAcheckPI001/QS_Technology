@@ -113,20 +113,27 @@ REGISTRY: dict[str, Any] = {
     },
  
     # ----------------------------------------------------------------- entities
+    # Mã canonical = `product_name` của CRM (danh mục đầy đủ), để báo cáo CRM và tra cứu
+    # tài liệu dùng chung một mã. Model chưa có alias chính thức dùng chính mã làm tên.
     "product_models": [
-        "F54", "F86", "F10T", "ASTRO_10S", "ASTRO_6AH", "ASTRO_6AV", "ASTRO_10I"
+        "F54", "F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE",
     ],
+    # So khớp bỏ qua hoa/thường, khoảng trắng, "_" và "-": "Astro 6AH" cũng nhận mã cũ ASTRO_6AH.
     "aliases": {
-        "Astro 10S": "ASTRO_10S", "10S": "ASTRO_10S",
-        "6AH": "ASTRO_6AH", "Astro 6AH": "ASTRO_6AH",
-        "6AV": "ASTRO_6AV", "Astro 6AV": "ASTRO_6AV",
-        "10i": "ASTRO_10I", "Astro 10i": "ASTRO_10I",
+        "Astro 6AH": "6AH",
+        "Astro 6AV": "6AV",
     },
     "ambiguous_aliases": {
-        "Astro 6A": ["ASTRO_6AH", "ASTRO_6AV"],
-        "6A": ["ASTRO_6AH", "ASTRO_6AV"],
-        "Astro 10": ["ASTRO_10S", "ASTRO_10I"],
-        "Astro": ["ASTRO_10S", "ASTRO_6AH", "ASTRO_6AV", "ASTRO_10I"],
+        "10i": ["10iV", "10iVE"], "Astro 10i": ["10iV", "10iVE"],
+        "Astro 10": ["10iV", "10iVE"],
+        "Astro 6A": ["6AH", "6AHE", "6AV", "6AVE"],
+        "6A": ["6AH", "6AHE", "6AV", "6AVE"],
+        "Astro": ["6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE"],
+    },
+    # Tên hiển thị khi hỏi lại/nút bấm; model không có ở đây hiển thị bằng mã.
+    "display_names": {
+        "6AH": "Astro 6AH",
+        "6AV": "Astro 6AV",
     },
     "control_interface": {
         "pulse_train": "Pulse Train/xung",
@@ -152,15 +159,20 @@ REGISTRY: dict[str, Any] = {
     # Phần cứng HỖ TRỢ gì (khác coverage: có TÀI LIỆU gì). Closed world: mọi model
     # đều có một dòng; interface không liệt kê nghĩa là không hỗ trợ. Dùng để tìm
     # model theo tiêu chí bằng code thay vì đọc văn bản RAG.
+    # TẠM: F86E/6AHE/6AVE lấy theo model gốc, 10iV/10iVE theo dòng 10i cũ; chưa có dữ
+    # liệu chính thức (xem docs/ai/current-state.md).
     "capabilities": {
         "control_interface": {
             "F54": ["pulse_train"],
             "F86": ["pulse_train", "ethercat"],
+            "F86E": ["pulse_train", "ethercat"],
             "F10T": ["pulse_train", "ethercat"],
-            "ASTRO_10S": ["pulse_train", "ethercat"],
-            "ASTRO_6AH": ["pulse_train", "ethercat", "mechatrolink"],
-            "ASTRO_6AV": ["pulse_train", "ethercat", "mechatrolink"],
-            "ASTRO_10I": ["pulse_train", "ethercat", "mechatrolink"],
+            "6AH": ["pulse_train", "ethercat", "mechatrolink"],
+            "6AHE": ["pulse_train", "ethercat", "mechatrolink"],
+            "6AV": ["pulse_train", "ethercat", "mechatrolink"],
+            "6AVE": ["pulse_train", "ethercat", "mechatrolink"],
+            "10iV": ["pulse_train", "ethercat", "mechatrolink"],
+            "10iVE": ["pulse_train", "ethercat", "mechatrolink"],
         },
     },
 
@@ -169,7 +181,8 @@ REGISTRY: dict[str, Any] = {
     # list[model]     : model có dữ liệu
     # dict[model, ifs]: [C7] model có dữ liệu, chỉ cho các control_interface liệt kê
     "coverage": {
-        "product_catalog": ["F54", "F86", "F10T", "ASTRO_10S", "ASTRO_6AH", "ASTRO_6AV", "ASTRO_10I"],
+        # Theo doc_chunks sau backend/sql/migrate_product_models_crm.sql (ASTRO_10I -> 10iV).
+        "product_catalog": ["F54", "F86", "F10T", "6AH", "6AV", "10iV"],
         "technical_docs": {"F86": ["pulse_train", "ethercat"]},
         "company_info": None,
     },

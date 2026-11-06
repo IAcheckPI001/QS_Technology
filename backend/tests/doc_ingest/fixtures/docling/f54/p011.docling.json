@@ -1,0 +1,1238 @@
+{
+ "schema_name": "DoclingDocument",
+ "version": "1.10.0",
+ "name": "F54_Operation Manual (English Version)_V.02",
+ "origin": {
+  "mimetype": "application/pdf",
+  "binary_hash": 10649216247643491873,
+  "filename": "F54_Operation Manual (English Version)_V.02.pdf"
+ },
+ "furniture": {
+  "self_ref": "#/furniture",
+  "children": [],
+  "content_layer": "furniture",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "body": {
+  "self_ref": "#/body",
+  "children": [
+   {
+    "$ref": "#/texts/0"
+   },
+   {
+    "$ref": "#/texts/1"
+   },
+   {
+    "$ref": "#/texts/2"
+   },
+   {
+    "$ref": "#/texts/3"
+   },
+   {
+    "$ref": "#/pictures/0"
+   },
+   {
+    "$ref": "#/tables/0"
+   },
+   {
+    "$ref": "#/texts/5"
+   },
+   {
+    "$ref": "#/texts/6"
+   }
+  ],
+  "content_layer": "body",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "groups": [],
+ "texts": [
+  {
+   "self_ref": "#/texts/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 11,
+     "bbox": {
+      "l": 85.104,
+      "t": 756.5880000000001,
+      "r": 142.26,
+      "b": 741.936,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      10
+     ]
+    }
+   ],
+   "orig": "Model: F54",
+   "text": "Model: F54"
+  },
+  {
+   "self_ref": "#/texts/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 11,
+     "bbox": {
+      "l": 344.71,
+      "t": 756.5880000000001,
+      "r": 553.216,
+      "b": 741.936,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      39
+     ]
+    }
+   ],
+   "orig": "Operation Manual (English Version)_V.01",
+   "text": "Operation Manual (English Version)_V.01"
+  },
+  {
+   "self_ref": "#/texts/2",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 11,
+     "bbox": {
+      "l": 85.104,
+      "t": 724.76644,
+      "r": 379.0272800000001,
+      "b": 705.27928,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      37
+     ]
+    }
+   ],
+   "orig": "PART 2: WIRING - CONNECTION - SETTING",
+   "text": "PART 2: WIRING - CONNECTION - SETTING",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/3",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 11,
+     "bbox": {
+      "l": 85.104,
+      "t": 694.048,
+      "r": 203.06000000000012,
+      "b": 679.396,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      24
+     ]
+    }
+   ],
+   "orig": "2.1 Controller I/O ports",
+   "text": "2.1 Controller I/O ports",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/4",
+   "parent": {
+    "$ref": "#/tables/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "caption",
+   "prov": [
+    {
+     "page_no": 11,
+     "bbox": {
+      "l": 251.09,
+      "t": 362.68244,
+      "r": 389.5006,
+      "b": 350.52128,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      34
+     ]
+    }
+   ],
+   "orig": "Figure 5. F54 controller I/O ports",
+   "text": "Figure 5. F54 controller I/O ports"
+  },
+  {
+   "self_ref": "#/texts/5",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 11,
+     "bbox": {
+      "l": 85.104,
+      "t": 49.908000000000015,
+      "r": 175.224,
+      "b": 35.25599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      14
+     ]
+    }
+   ],
+   "orig": "www.qstcnc.com",
+   "text": "www.qstcnc.com",
+   "hyperlink": "http://www.qstcnc.com/"
+  },
+  {
+   "self_ref": "#/texts/6",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 11,
+     "bbox": {
+      "l": 513.7,
+      "t": 49.908000000000015,
+      "r": 553.1080000000001,
+      "b": 35.25599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      8
+     ]
+    }
+   ],
+   "orig": "Page | 4",
+   "text": "Page | 4"
+  }
+ ],
+ "pictures": [
+  {
+   "self_ref": "#/pictures/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 11,
+     "bbox": {
+      "l": 85.47117614746094,
+      "t": 673.483757019043,
+      "r": 553.9993286132812,
+      "b": 374.94091796875,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [],
+   "references": [],
+   "footnotes": [],
+   "image": null,
+   "annotations": []
+  }
+ ],
+ "tables": [
+  {
+   "self_ref": "#/tables/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/4"
+    }
+   ],
+   "content_layer": "body",
+   "label": "table",
+   "prov": [
+    {
+     "page_no": 11,
+     "bbox": {
+      "l": 84.69357299804688,
+      "t": 341.7991943359375,
+      "r": 555.5692749023438,
+      "b": 173.352783203125,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [
+    {
+     "$ref": "#/texts/4"
+    }
+   ],
+   "references": [],
+   "footnotes": [],
+   "data": {
+    "table_cells": [
+     {
+      "bbox": {
+       "l": 127.1,
+       "t": 452.002,
+       "r": 149.468,
+       "b": 466.654,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "Port",
+      "column_header": true,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 346.03,
+       "t": 452.002,
+       "r": 400.44999999999993,
+       "b": 466.654,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Functions",
+      "column_header": true,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 126.62,
+       "t": 467.122,
+       "r": 150.188,
+       "b": 481.774,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "CN1",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 196.85,
+       "t": 467.122,
+       "r": 265.526,
+       "b": 481.774,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "Power supply",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 126.62,
+       "t": 482.242,
+       "r": 150.188,
+       "b": 496.894,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "CN2",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 196.85,
+       "t": 482.242,
+       "r": 456.9500000000001,
+       "b": 496.894,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "Analog output signal port for spindle speed control",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 126.62,
+       "t": 497.362,
+       "r": 150.188,
+       "b": 512.014,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "CN3",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 196.85,
+       "t": 497.362,
+       "r": 261.74600000000004,
+       "b": 512.014,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "MPG Handle",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 126.62,
+       "t": 512.482,
+       "r": 150.188,
+       "b": 527.134,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "CN4",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 196.85,
+       "t": 512.482,
+       "r": 371.45000000000016,
+       "b": 527.134,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "I/O expansion module connection",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 126.62,
+       "t": 527.722,
+       "r": 150.188,
+       "b": 542.374,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "CN5",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 196.85,
+       "t": 527.722,
+       "r": 266.45,
+       "b": 542.374,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "Output signal",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 126.62,
+       "t": 542.842,
+       "r": 150.188,
+       "b": 557.494,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "CN6",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 196.85,
+       "t": 542.842,
+       "r": 263.246,
+       "b": 557.494,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "Input port (1)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 126.62,
+       "t": 557.962,
+       "r": 150.188,
+       "b": 572.614,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "CN7",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 196.85,
+       "t": 557.962,
+       "r": 263.246,
+       "b": 572.614,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "Input port (2)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 126.62,
+       "t": 573.112,
+       "r": 150.188,
+       "b": 587.764,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "CN8",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 196.85,
+       "t": 573.112,
+       "r": 488.362,
+       "b": 587.764,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "Feedback Encoder Z Phase Signal Port for axes (X, Y, Z, A)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 126.62,
+       "t": 588.352,
+       "r": 150.188,
+       "b": 603.004,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 9,
+      "end_row_offset_idx": 10,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "CN9",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 196.85,
+       "t": 588.352,
+       "r": 443.746,
+       "b": 603.004,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 9,
+      "end_row_offset_idx": 10,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "Pul/Dir Signal Connection Port for X, T axis servo",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 123.38,
+       "t": 603.472,
+       "r": 153.30799999999996,
+       "b": 618.124,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 10,
+      "end_row_offset_idx": 11,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "CN10",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 196.85,
+       "t": 603.472,
+       "r": 444.562,
+       "b": 618.124,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 10,
+      "end_row_offset_idx": 11,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "Pul/Dir Signal Connection Port for Z, A axis servo",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     }
+    ],
+    "num_rows": 11,
+    "num_cols": 2,
+    "orientation": "rot_0",
+    "grid": [
+     [
+      {
+       "bbox": {
+        "l": 127.1,
+        "t": 452.002,
+        "r": 149.468,
+        "b": 466.654,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "Port",
+       "column_header": true,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 346.03,
+        "t": 452.002,
+        "r": 400.44999999999993,
+        "b": 466.654,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Functions",
+       "column_header": true,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 196.85,
+        "t": 467.122,
+        "r": 265.526,
+        "b": 481.774,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "Power supply",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 126.62,
+        "t": 467.122,
+        "r": 150.188,
+        "b": 481.774,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "CN1",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 196.85,
+        "t": 482.242,
+        "r": 456.9500000000001,
+        "b": 496.894,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "Analog output signal port for spindle speed control",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 126.62,
+        "t": 482.242,
+        "r": 150.188,
+        "b": 496.894,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "CN2",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 196.85,
+        "t": 497.362,
+        "r": 261.74600000000004,
+        "b": 512.014,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "MPG Handle",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 126.62,
+        "t": 497.362,
+        "r": 150.188,
+        "b": 512.014,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "CN3",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 196.85,
+        "t": 512.482,
+        "r": 371.45000000000016,
+        "b": 527.134,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "I/O expansion module connection",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 126.62,
+        "t": 512.482,
+        "r": 150.188,
+        "b": 527.134,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "CN4",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 196.85,
+        "t": 527.722,
+        "r": 266.45,
+        "b": 542.374,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "Output signal",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 126.62,
+        "t": 527.722,
+        "r": 150.188,
+        "b": 542.374,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "CN5",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 196.85,
+        "t": 542.842,
+        "r": 263.246,
+        "b": 557.494,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "Input port (1)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 126.62,
+        "t": 542.842,
+        "r": 150.188,
+        "b": 557.494,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "CN6",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 196.85,
+        "t": 557.962,
+        "r": 263.246,
+        "b": 572.614,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "Input port (2)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 126.62,
+        "t": 557.962,
+        "r": 150.188,
+        "b": 572.614,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "CN7",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 196.85,
+        "t": 573.112,
+        "r": 488.362,
+        "b": 587.764,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "Feedback Encoder Z Phase Signal Port for axes (X, Y, Z, A)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 126.62,
+        "t": 573.112,
+        "r": 150.188,
+        "b": 587.764,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "CN8",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 196.85,
+        "t": 588.352,
+        "r": 443.746,
+        "b": 603.004,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 9,
+       "end_row_offset_idx": 10,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "Pul/Dir Signal Connection Port for X, T axis servo",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 126.62,
+        "t": 588.352,
+        "r": 150.188,
+        "b": 603.004,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 9,
+       "end_row_offset_idx": 10,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "CN9",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 196.85,
+        "t": 603.472,
+        "r": 444.562,
+        "b": 618.124,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 10,
+       "end_row_offset_idx": 11,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "Pul/Dir Signal Connection Port for Z, A axis servo",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 123.38,
+        "t": 603.472,
+        "r": 153.30799999999996,
+        "b": 618.124,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 10,
+       "end_row_offset_idx": 11,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "CN10",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ]
+    ]
+   },
+   "annotations": []
+  }
+ ],
+ "key_value_items": [],
+ "form_items": [],
+ "pages": {
+  "11": {
+   "size": {
+    "width": 612.0,
+    "height": 792.0
+   },
+   "image": null,
+   "page_no": 11
+  }
+ }
+}

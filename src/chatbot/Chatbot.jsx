@@ -9,6 +9,8 @@ const MAX_REQUEST_LENGTH = 1500;
 // Kiểm thử kênh CRM: VITE_CHATBOT_CHANNEL=crm gửi qua /api/chat/crm với user_id mẫu.
 const IS_CRM_TEST = import.meta.env.VITE_CHATBOT_CHANNEL === 'crm';
 const CRM_TEST_USER_ID = import.meta.env.VITE_CRM_TEST_USER_ID || 'employee_test_001';
+// Token CRM kiểm thử: VITE_* bị đóng gói vào bundle trình duyệt, chỉ dùng ở môi trường kiểm thử.
+const CRM_TEST_TOKEN = import.meta.env.VITE_CRM_TEST_TOKEN || undefined;
 
 function makeMessageId() {
     return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -85,6 +87,7 @@ function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
             console.log("user_id :" + IS_CRM_TEST);
             await stream(message, {
                 userId: IS_CRM_TEST ? CRM_TEST_USER_ID : undefined,
+                crmAccessToken: IS_CRM_TEST ? CRM_TEST_TOKEN : undefined,
                 signal: controller.signal,
                 onChunk: (chunk) => {
                     setMessages((current) => current.map((item) => (

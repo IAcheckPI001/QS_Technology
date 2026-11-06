@@ -1,0 +1,2489 @@
+{
+ "schema_name": "DoclingDocument",
+ "version": "1.10.0",
+ "name": "F86_Operation Manual (English Version)",
+ "origin": {
+  "mimetype": "application/pdf",
+  "binary_hash": 5936226309445889319,
+  "filename": "F86_Operation Manual (English Version).pdf"
+ },
+ "furniture": {
+  "self_ref": "#/furniture",
+  "children": [],
+  "content_layer": "furniture",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "body": {
+  "self_ref": "#/body",
+  "children": [
+   {
+    "$ref": "#/texts/0"
+   },
+   {
+    "$ref": "#/texts/1"
+   },
+   {
+    "$ref": "#/pictures/0"
+   },
+   {
+    "$ref": "#/pictures/1"
+   },
+   {
+    "$ref": "#/texts/77"
+   },
+   {
+    "$ref": "#/texts/78"
+   }
+  ],
+  "content_layer": "body",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "groups": [],
+ "texts": [
+  {
+   "self_ref": "#/texts/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 33.8671875,
+      "t": 753.6774190266927,
+      "r": 122.71875,
+      "b": 741.7016092936198,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      13
+     ]
+    }
+   ],
+   "orig": "1.2 DIMENSION",
+   "text": "1.2 DIMENSION"
+  },
+  {
+   "self_ref": "#/texts/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 280.8984375,
+      "t": 735.7137095133463,
+      "r": 320.34375,
+      "b": 722.5403188069662,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      6
+     ]
+    }
+   ],
+   "orig": "320 mm",
+   "text": "320 mm"
+  },
+  {
+   "self_ref": "#/texts/2",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "caption",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 199.21875,
+      "t": 407.9757893880208,
+      "r": 413.578125,
+      "b": 393.6048177083333,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      40
+     ]
+    }
+   ],
+   "orig": "Figure 1-3. Front view of F86 controller",
+   "text": "Figure 1-3. Front view of F86 controller"
+  },
+  {
+   "self_ref": "#/texts/3",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 154.59375,
+      "t": 663.8588663736979,
+      "r": 209.1796875,
+      "b": 657.0725708007812,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      12
+     ]
+    }
+   ],
+   "orig": "QSTECHNOLOGY",
+   "text": "QSTECHNOLOGY"
+  },
+  {
+   "self_ref": "#/texts/4",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 305.6015625,
+      "t": 664.6572570800781,
+      "r": 321.9375,
+      "b": 657.4717712402344,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "F-86",
+   "text": "F-86"
+  },
+  {
+   "self_ref": "#/texts/5",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 415.5703125,
+      "t": 653.0806376139323,
+      "r": 434.6953125,
+      "b": 645.8951517740885,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "RESET",
+   "text": "RESET"
+  },
+  {
+   "self_ref": "#/texts/6",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 345.4453125,
+      "t": 630.7257995605469,
+      "r": 358.59375,
+      "b": 625.1370849609375,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "CORD",
+   "text": "CORD"
+  },
+  {
+   "self_ref": "#/texts/7",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 381.703125,
+      "t": 630.7257995605469,
+      "r": 395.25,
+      "b": 625.1370849609375,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      6
+     ]
+    }
+   ],
+   "orig": "OFFSET",
+   "text": "OFFSET"
+  },
+  {
+   "self_ref": "#/texts/8",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 400.828125,
+      "t": 630.7257995605469,
+      "r": 413.578125,
+      "b": 625.1370849609375,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "MONTR",
+   "text": "MONTR"
+  },
+  {
+   "self_ref": "#/texts/9",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 436.2890625,
+      "t": 630.7257995605469,
+      "r": 450.6328125,
+      "b": 625.9354756673177,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "PARAM",
+   "text": "PARAM"
+  },
+  {
+   "self_ref": "#/texts/10",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 348.6328125,
+      "t": 618.75,
+      "r": 353.4140625,
+      "b": 612.3628946940104,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "X",
+   "text": "X"
+  },
+  {
+   "self_ref": "#/texts/11",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 402.8203125,
+      "t": 618.75,
+      "r": 407.6015625,
+      "b": 613.1612752278646,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "8",
+   "text": "8"
+  },
+  {
+   "self_ref": "#/texts/12",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 406.0078125,
+      "t": 615.5564371744791,
+      "r": 411.1875,
+      "b": 610.3669230143229,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "@",
+   "text": "@"
+  },
+  {
+   "self_ref": "#/texts/13",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 421.1484375,
+      "t": 618.75,
+      "r": 426.328125,
+      "b": 612.7620849609375,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "9",
+   "text": "9"
+  },
+  {
+   "self_ref": "#/texts/14",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 436.6875,
+      "t": 617.5524088541666,
+      "r": 450.6328125,
+      "b": 611.5645141601562,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      6
+     ]
+    }
+   ],
+   "orig": "Delete",
+   "text": "Delete"
+  },
+  {
+   "self_ref": "#/texts/15",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 366.9609375,
+      "t": 601.9838663736979,
+      "r": 372.140625,
+      "b": 596.3951619466146,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "B",
+   "text": "B"
+  },
+  {
+   "self_ref": "#/texts/16",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 389.2734375,
+      "t": 597.9919230143229,
+      "r": 392.859375,
+      "b": 594.3991902669271,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "&",
+   "text": "&"
+  },
+  {
+   "self_ref": "#/texts/17",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 403.6171875,
+      "t": 600.7862752278646,
+      "r": 409.1953125,
+      "b": 595.1975708007812,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "5",
+   "text": "5"
+  },
+  {
+   "self_ref": "#/texts/18",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 422.7421875,
+      "t": 599.9878946940104,
+      "r": 426.328125,
+      "b": 595.9959513346354,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "6",
+   "text": "6"
+  },
+  {
+   "self_ref": "#/texts/19",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 437.0859375,
+      "t": 597.9919230143229,
+      "r": 450.234375,
+      "b": 592.0040283203125,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "space",
+   "text": "space"
+  },
+  {
+   "self_ref": "#/texts/20",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 437.8828125,
+      "t": 603.1814371744791,
+      "r": 449.4375,
+      "b": 597.1935424804688,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "Back",
+   "text": "Back"
+  },
+  {
+   "self_ref": "#/texts/21",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 366.9609375,
+      "t": 584.0201619466146,
+      "r": 371.7421875,
+      "b": 578.8306274414062,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "C",
+   "text": "C"
+  },
+  {
+   "self_ref": "#/texts/22",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 403.21875,
+      "t": 584.0201619466146,
+      "r": 409.59375,
+      "b": 576.8346761067709,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "2",
+   "text": "2"
+  },
+  {
+   "self_ref": "#/texts/23",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 438.28125,
+      "t": 586.8145141601562,
+      "r": 449.4375,
+      "b": 580.8265991210938,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "Shift",
+   "text": "Shift"
+  },
+  {
+   "self_ref": "#/texts/24",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 352.21875,
+      "t": 580.0282185872396,
+      "r": 356.203125,
+      "b": 576.4354654947916,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "W",
+   "text": "W"
+  },
+  {
+   "self_ref": "#/texts/25",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 349.828125,
+      "t": 566.0564371744791,
+      "r": 353.4140625,
+      "b": 561.6653035481771,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "G",
+   "text": "G"
+  },
+  {
+   "self_ref": "#/texts/26",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 367.359375,
+      "t": 566.4556274414062,
+      "r": 370.546875,
+      "b": 562.4637044270834,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "F",
+   "text": "F"
+  },
+  {
+   "self_ref": "#/texts/27",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 403.21875,
+      "t": 566.8548380533854,
+      "r": 409.59375,
+      "b": 559.6693522135416,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "0",
+   "text": "0"
+  },
+  {
+   "self_ref": "#/texts/28",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 436.2890625,
+      "t": 566.8548380533854,
+      "r": 450.6328125,
+      "b": 559.6693522135416,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "Space",
+   "text": "Space"
+  },
+  {
+   "self_ref": "#/texts/29",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 527.53125,
+      "t": 568.4515991210938,
+      "r": 539.8828125,
+      "b": 529.3306274414062,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      6
+     ]
+    }
+   ],
+   "orig": "185 mm",
+   "text": "185 mm"
+  },
+  {
+   "self_ref": "#/texts/30",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 347.4375,
+      "t": 550.0887044270834,
+      "r": 355.0078125,
+      "b": 542.9032185872396,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "M",
+   "text": "M"
+  },
+  {
+   "self_ref": "#/texts/31",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 366.1640625,
+      "t": 550.0887044270834,
+      "r": 372.5390625,
+      "b": 542.9032185872396,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "S",
+   "text": "S"
+  },
+  {
+   "self_ref": "#/texts/32",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 420.75,
+      "t": 550.8870849609375,
+      "r": 427.125,
+      "b": 543.7015991210938,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "H",
+   "text": "H"
+  },
+  {
+   "self_ref": "#/texts/33",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 437.0859375,
+      "t": 551.6854654947916,
+      "r": 449.4375,
+      "b": 545.6975708007812,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "Enter",
+   "text": "Enter"
+  },
+  {
+   "self_ref": "#/texts/34",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 349.828125,
+      "t": 532.524190266927,
+      "r": 355.0078125,
+      "b": 526.9354654947917,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "O",
+   "text": "O"
+  },
+  {
+   "self_ref": "#/texts/35",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 366.9609375,
+      "t": 532.9233805338542,
+      "r": 372.5390625,
+      "b": 527.3346761067708,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "N",
+   "text": "N"
+  },
+  {
+   "self_ref": "#/texts/36",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 382.8984375,
+      "t": 535.3185424804688,
+      "r": 394.8515625,
+      "b": 526.5362752278645,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "Page",
+   "text": "Page"
+  },
+  {
+   "self_ref": "#/texts/37",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 384.4921875,
+      "t": 528.9314371744792,
+      "r": 392.859375,
+      "b": 522.9435424804688,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      2
+     ]
+    }
+   ],
+   "orig": "Up",
+   "text": "Up"
+  },
+  {
+   "self_ref": "#/texts/38",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 418.7578125,
+      "t": 529.7298177083333,
+      "r": 431.90625,
+      "b": 521.7459513346355,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "Down",
+   "text": "Down"
+  },
+  {
+   "self_ref": "#/texts/39",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 419.15625,
+      "t": 534.5201416015625,
+      "r": 431.5078125,
+      "b": 526.5362752278645,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "Page",
+   "text": "Page"
+  },
+  {
+   "self_ref": "#/texts/40",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 438.6796875,
+      "t": 534.9193522135417,
+      "r": 449.0390625,
+      "b": 529.3306274414062,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "Find",
+   "text": "Find"
+  },
+  {
+   "self_ref": "#/texts/41",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 366.1640625,
+      "t": 516.157246907552,
+      "r": 372.9375,
+      "b": 508.9717610677083,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "R",
+   "text": "R"
+  },
+  {
+   "self_ref": "#/texts/42",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 437.0859375,
+      "t": 516.5564371744792,
+      "r": 450.234375,
+      "b": 510.56854248046875,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "Home",
+   "text": "Home"
+  },
+  {
+   "self_ref": "#/texts/43",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 438.6796875,
+      "t": 511.76611328125,
+      "r": 449.0390625,
+      "b": 505.77821858723956,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "End",
+   "text": "End"
+  },
+  {
+   "self_ref": "#/texts/44",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 148.21875,
+      "t": 487.01611328125,
+      "r": 158.9765625,
+      "b": 482.62497965494794,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "AUTO",
+   "text": "AUTO"
+  },
+  {
+   "self_ref": "#/texts/45",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 201.609375,
+      "t": 494.99997965494794,
+      "r": 213.9609375,
+      "b": 487.8144938151042,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "m",
+   "text": "m"
+  },
+  {
+   "self_ref": "#/texts/46",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 203.203125,
+      "t": 487.8144938151042,
+      "r": 212.765625,
+      "b": 481.82659912109375,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "JOG",
+   "text": "JOG"
+  },
+  {
+   "self_ref": "#/texts/47",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 217.546875,
+      "t": 488.2137044270833,
+      "r": 234.6796875,
+      "b": 481.4274088541667,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      7
+     ]
+    }
+   ],
+   "orig": "INC JOG",
+   "text": "INC JOG"
+  },
+  {
+   "self_ref": "#/texts/48",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 219.9375,
+      "t": 494.99997965494794,
+      "r": 232.2890625,
+      "b": 487.41530354817706,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "i",
+   "text": "i"
+  },
+  {
+   "self_ref": "#/texts/49",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 238.265625,
+      "t": 487.41530354817706,
+      "r": 250.6171875,
+      "b": 481.82659912109375,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "HOME",
+   "text": "HOME"
+  },
+  {
+   "self_ref": "#/texts/50",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 304.8046875,
+      "t": 489.8104654947917,
+      "r": 309.984375,
+      "b": 483.82257080078125,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "A",
+   "text": "A"
+  },
+  {
+   "self_ref": "#/texts/51",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 319.1484375,
+      "t": 490.20965576171875,
+      "r": 332.296875,
+      "b": 482.62497965494794,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "5th",
+   "text": "5th"
+  },
+  {
+   "self_ref": "#/texts/52",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 337.875,
+      "t": 490.20965576171875,
+      "r": 351.0234375,
+      "b": 482.62497965494794,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "6th",
+   "text": "6th"
+  },
+  {
+   "self_ref": "#/texts/53",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 365.765625,
+      "t": 487.01611328125,
+      "r": 375.7265625,
+      "b": 481.4274088541667,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "CCW",
+   "text": "CCW"
+  },
+  {
+   "self_ref": "#/texts/54",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 418.7578125,
+      "t": 494.6007893880208,
+      "r": 431.5078125,
+      "b": 486.61692301432294,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "AUX4",
+   "text": "AUX4"
+  },
+  {
+   "self_ref": "#/texts/55",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 437.484375,
+      "t": 493.40321858723956,
+      "r": 449.8359375,
+      "b": 487.41530354817706,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "AUX3",
+   "text": "AUX3"
+  },
+  {
+   "self_ref": "#/texts/56",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 262.5703125,
+      "t": 474.24192301432294,
+      "r": 275.3203125,
+      "b": 464.66127522786456,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "X",
+   "text": "X"
+  },
+  {
+   "self_ref": "#/texts/57",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 282.09375,
+      "t": 469.8507893880208,
+      "r": 295.640625,
+      "b": 463.86289469401044,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "Rapid",
+   "text": "Rapid"
+  },
+  {
+   "self_ref": "#/texts/58",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 303.609375,
+      "t": 473.8427327473958,
+      "r": 314.765625,
+      "b": 465.45965576171875,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "X",
+   "text": "X"
+  },
+  {
+   "self_ref": "#/texts/59",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 419.5546875,
+      "t": 473.04433186848956,
+      "r": 431.5078125,
+      "b": 467.0564371744792,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "AUX1",
+   "text": "AUX1"
+  },
+  {
+   "self_ref": "#/texts/60",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 437.484375,
+      "t": 473.44354248046875,
+      "r": 449.8359375,
+      "b": 467.45562744140625,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "AUX2",
+   "text": "AUX2"
+  },
+  {
+   "self_ref": "#/texts/61",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 175.3125,
+      "t": 448.2943522135417,
+      "r": 193.640625,
+      "b": 442.7056477864583,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      9
+     ]
+    }
+   ],
+   "orig": "FEED HOLD",
+   "text": "FEED HOLD"
+  },
+  {
+   "self_ref": "#/texts/62",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 219.140625,
+      "t": 451.48789469401044,
+      "r": 231.4921875,
+      "b": 444.3024088541667,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "w",
+   "text": "w"
+  },
+  {
+   "self_ref": "#/texts/63",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 237.46875,
+      "t": 451.48789469401044,
+      "r": 249.0234375,
+      "b": 444.3024088541667,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "w",
+   "text": "w"
+  },
+  {
+   "self_ref": "#/texts/64",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 286.4765625,
+      "t": 454.6814371744792,
+      "r": 291.2578125,
+      "b": 448.2943522135417,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "Y",
+   "text": "Y"
+  },
+  {
+   "self_ref": "#/texts/65",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 304.0078125,
+      "t": 455.08062744140625,
+      "r": 310.78125,
+      "b": 447.0967610677083,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "A",
+   "text": "A"
+  },
+  {
+   "self_ref": "#/texts/66",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 319.1484375,
+      "t": 454.6814371744792,
+      "r": 331.8984375,
+      "b": 447.0967610677083,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "5th",
+   "text": "5th"
+  },
+  {
+   "self_ref": "#/texts/67",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 337.4765625,
+      "t": 454.6814371744792,
+      "r": 350.2265625,
+      "b": 447.0967610677083,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "6th",
+   "text": "6th"
+  },
+  {
+   "self_ref": "#/texts/68",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 419.953125,
+      "t": 454.28224690755206,
+      "r": 428.71875,
+      "b": 447.8951416015625,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "[0]",
+   "text": "[0]"
+  },
+  {
+   "self_ref": "#/texts/69",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "caption",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 200.015625,
+      "t": 110.17740885416663,
+      "r": 412.78125,
+      "b": 95.806396484375,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      39
+     ]
+    }
+   ],
+   "orig": "Figure 1-4. Back view of F86 controller",
+   "text": "Figure 1-4. Back view of F86 controller"
+  },
+  {
+   "self_ref": "#/texts/70",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 446.6484375,
+      "t": 362.4677327473958,
+      "r": 451.4296875,
+      "b": 357.2781982421875,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "21.",
+   "text": "21."
+  },
+  {
+   "self_ref": "#/texts/71",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 414.375,
+      "t": 277.83870442708337,
+      "r": 421.1484375,
+      "b": 273.04838053385413,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "CNB",
+   "text": "CNB"
+  },
+  {
+   "self_ref": "#/texts/72",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 429.9140625,
+      "t": 251.89111328125,
+      "r": 435.890625,
+      "b": 247.49995930989587,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "BAT",
+   "text": "BAT"
+  },
+  {
+   "self_ref": "#/texts/73",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 307.9921875,
+      "t": 242.31046549479163,
+      "r": 321.140625,
+      "b": 237.9193115234375,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "QSFOG",
+   "text": "QSFOG"
+  },
+  {
+   "self_ref": "#/texts/74",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 327.515625,
+      "t": 242.70963541666663,
+      "r": 348.234375,
+      "b": 237.5201416015625,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      16
+     ]
+    }
+   ],
+   "orig": "Motion Cortoller",
+   "text": "Motion Cortoller"
+  },
+  {
+   "self_ref": "#/texts/75",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 304.40625,
+      "t": 238.31852213541663,
+      "r": 316.7578125,
+      "b": 230.33463541666663,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "△",
+   "text": "△"
+  },
+  {
+   "self_ref": "#/texts/76",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 425.53125,
+      "t": 221.1531982421875,
+      "r": 432.3046875,
+      "b": 216.7620849609375,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      3
+     ]
+    }
+   ],
+   "orig": "ANT",
+   "text": "ANT"
+  },
+  {
+   "self_ref": "#/texts/77",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 34.265625,
+      "t": 27.54435221354163,
+      "r": 208.78125,
+      "b": 14.370930989583371,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      21
+     ]
+    }
+   ],
+   "orig": "QS TECHNOLOGY CO.,LTD",
+   "text": "QS TECHNOLOGY CO.,LTD"
+  },
+  {
+   "self_ref": "#/texts/78",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 513.984375,
+      "t": 27.14510091145837,
+      "r": 559.0078125,
+      "b": 14.770100911458371,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      6
+     ]
+    }
+   ],
+   "orig": "PAGE 6",
+   "text": "PAGE 6"
+  }
+ ],
+ "pictures": [
+  {
+   "self_ref": "#/pictures/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/2"
+    },
+    {
+     "$ref": "#/texts/3"
+    },
+    {
+     "$ref": "#/texts/4"
+    },
+    {
+     "$ref": "#/texts/5"
+    },
+    {
+     "$ref": "#/texts/6"
+    },
+    {
+     "$ref": "#/texts/7"
+    },
+    {
+     "$ref": "#/texts/8"
+    },
+    {
+     "$ref": "#/texts/9"
+    },
+    {
+     "$ref": "#/texts/10"
+    },
+    {
+     "$ref": "#/texts/11"
+    },
+    {
+     "$ref": "#/texts/12"
+    },
+    {
+     "$ref": "#/texts/13"
+    },
+    {
+     "$ref": "#/texts/14"
+    },
+    {
+     "$ref": "#/texts/15"
+    },
+    {
+     "$ref": "#/texts/16"
+    },
+    {
+     "$ref": "#/texts/17"
+    },
+    {
+     "$ref": "#/texts/18"
+    },
+    {
+     "$ref": "#/texts/19"
+    },
+    {
+     "$ref": "#/texts/20"
+    },
+    {
+     "$ref": "#/texts/21"
+    },
+    {
+     "$ref": "#/texts/22"
+    },
+    {
+     "$ref": "#/texts/23"
+    },
+    {
+     "$ref": "#/texts/24"
+    },
+    {
+     "$ref": "#/texts/25"
+    },
+    {
+     "$ref": "#/texts/26"
+    },
+    {
+     "$ref": "#/texts/27"
+    },
+    {
+     "$ref": "#/texts/28"
+    },
+    {
+     "$ref": "#/texts/29"
+    },
+    {
+     "$ref": "#/texts/30"
+    },
+    {
+     "$ref": "#/texts/31"
+    },
+    {
+     "$ref": "#/texts/32"
+    },
+    {
+     "$ref": "#/texts/33"
+    },
+    {
+     "$ref": "#/texts/34"
+    },
+    {
+     "$ref": "#/texts/35"
+    },
+    {
+     "$ref": "#/texts/36"
+    },
+    {
+     "$ref": "#/texts/37"
+    },
+    {
+     "$ref": "#/texts/38"
+    },
+    {
+     "$ref": "#/texts/39"
+    },
+    {
+     "$ref": "#/texts/40"
+    },
+    {
+     "$ref": "#/texts/41"
+    },
+    {
+     "$ref": "#/texts/42"
+    },
+    {
+     "$ref": "#/texts/43"
+    },
+    {
+     "$ref": "#/texts/44"
+    },
+    {
+     "$ref": "#/texts/45"
+    },
+    {
+     "$ref": "#/texts/46"
+    },
+    {
+     "$ref": "#/texts/47"
+    },
+    {
+     "$ref": "#/texts/48"
+    },
+    {
+     "$ref": "#/texts/49"
+    },
+    {
+     "$ref": "#/texts/50"
+    },
+    {
+     "$ref": "#/texts/51"
+    },
+    {
+     "$ref": "#/texts/52"
+    },
+    {
+     "$ref": "#/texts/53"
+    },
+    {
+     "$ref": "#/texts/54"
+    },
+    {
+     "$ref": "#/texts/55"
+    },
+    {
+     "$ref": "#/texts/56"
+    },
+    {
+     "$ref": "#/texts/57"
+    },
+    {
+     "$ref": "#/texts/58"
+    },
+    {
+     "$ref": "#/texts/59"
+    },
+    {
+     "$ref": "#/texts/60"
+    },
+    {
+     "$ref": "#/texts/61"
+    },
+    {
+     "$ref": "#/texts/62"
+    },
+    {
+     "$ref": "#/texts/63"
+    },
+    {
+     "$ref": "#/texts/64"
+    },
+    {
+     "$ref": "#/texts/65"
+    },
+    {
+     "$ref": "#/texts/66"
+    },
+    {
+     "$ref": "#/texts/67"
+    },
+    {
+     "$ref": "#/texts/68"
+    }
+   ],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 128.58412170410156,
+      "t": 720.0862350463867,
+      "r": 538.4689331054688,
+      "b": 422.1798400878906,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [
+    {
+     "$ref": "#/texts/2"
+    }
+   ],
+   "references": [],
+   "footnotes": [],
+   "annotations": [],
+   "image": null
+  },
+  {
+   "self_ref": "#/pictures/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/69"
+    },
+    {
+     "$ref": "#/texts/70"
+    },
+    {
+     "$ref": "#/texts/71"
+    },
+    {
+     "$ref": "#/texts/72"
+    },
+    {
+     "$ref": "#/texts/73"
+    },
+    {
+     "$ref": "#/texts/74"
+    },
+    {
+     "$ref": "#/texts/75"
+    },
+    {
+     "$ref": "#/texts/76"
+    }
+   ],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 8,
+     "bbox": {
+      "l": 130.144287109375,
+      "t": 376.8625793457031,
+      "r": 467.7058410644531,
+      "b": 132.6246337890625,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [
+    {
+     "$ref": "#/texts/69"
+    }
+   ],
+   "references": [],
+   "footnotes": [],
+   "annotations": [],
+   "image": null
+  }
+ ],
+ "tables": [],
+ "key_value_items": [],
+ "form_items": [],
+ "pages": {
+  "8": {
+   "size": {
+    "width": 612.0,
+    "height": 792.0
+   },
+   "page_no": 8,
+   "image": null
+  }
+ }
+}

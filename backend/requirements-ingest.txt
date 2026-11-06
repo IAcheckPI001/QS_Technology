@@ -1,0 +1,8 @@
+# Tool ingest offline (doc_ingest). Cài vào venv riêng: ..\.venv-ingest
+# Không cài vào venv/image của dịch vụ chat.
+docling==2.145.0
+docling-core==2.105.0
+pypdfium2==5.14.0
+pydantic==2.14.2
+PyYAML==6.0.3
+pytest==9.1.1

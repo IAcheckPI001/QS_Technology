@@ -41,7 +41,7 @@ với trang web (reverse proxy `/api`) và bật `COOKIE_SECURE=true`.
 |---|---|
 | `POST /api/chat` `{message: {text}, client_context?}` | Trả `text/event-stream` của dịch vụ AI. Session hết hạn → tự mở hội thoại mới một lần |
 | `GET /api/chat/history` | `{messages: [...]}` của hội thoại hiện tại; chưa có thì rỗng |
-| `POST /api/chat/crm` `{user_id, message: {text}}` | **Chỉ để kiểm thử** kênh CRM (xem dưới) |
+| `POST /api/chat/crm` `{user_id, crm_access_token?, message: {text}}` | **Chỉ để kiểm thử** kênh CRM (xem dưới) |
 | `POST /api/chat/reset` | Xoá cookie session website và CRM (cuộc trò chuyện mới), 204 |
 | `GET /health` | `{status: "ok"}` |
 
@@ -66,7 +66,11 @@ dùng ở môi trường kiểm thử, không bật production. Đổi `user_id`
 dịch vụ AI trả `session_not_found` và route tự mở hội thoại mới.
 
 Widget dùng route này khi build với `VITE_CHATBOT_CHANNEL=crm`, `user_id` lấy từ
-`VITE_CRM_TEST_USER_ID` (mặc định `employee_test_001`).
+`VITE_CRM_TEST_USER_ID` (mặc định `employee_test_001`). `crm_access_token` (tùy chọn,
+1–4096 ký tự) lấy từ `VITE_CRM_TEST_TOKEN` và được chuyển tiếp nguyên văn cho tool báo
+cáo gọi API CRM; route không log giá trị này. Các biến `VITE_*` đặt trong `.env` ở
+**gốc repo** (Vite không đọc `widget-backend/.env`) và bị đóng gói vào bundle trình
+duyệt: token chỉ dùng cho môi trường kiểm thử.
 
 Log mỗi request chỉ có metadata (`request_id`, route, status, outcome, thời gian);
 không log key, nội dung tin nhắn, `visitor_id` hay `session_id`.

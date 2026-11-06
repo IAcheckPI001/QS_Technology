@@ -1,0 +1,928 @@
+{
+ "schema_name": "DoclingDocument",
+ "version": "1.10.0",
+ "name": "F54_Operation Manual (English Version)_V.02",
+ "origin": {
+  "mimetype": "application/pdf",
+  "binary_hash": 10649216247643491873,
+  "filename": "F54_Operation Manual (English Version)_V.02.pdf"
+ },
+ "furniture": {
+  "self_ref": "#/furniture",
+  "children": [],
+  "content_layer": "furniture",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "body": {
+  "self_ref": "#/body",
+  "children": [
+   {
+    "$ref": "#/texts/0"
+   },
+   {
+    "$ref": "#/texts/1"
+   },
+   {
+    "$ref": "#/texts/2"
+   },
+   {
+    "$ref": "#/groups/0"
+   },
+   {
+    "$ref": "#/texts/8"
+   },
+   {
+    "$ref": "#/groups/1"
+   },
+   {
+    "$ref": "#/texts/21"
+   },
+   {
+    "$ref": "#/texts/22"
+   },
+   {
+    "$ref": "#/pictures/0"
+   },
+   {
+    "$ref": "#/texts/24"
+   },
+   {
+    "$ref": "#/texts/25"
+   }
+  ],
+  "content_layer": "body",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "groups": [
+  {
+   "self_ref": "#/groups/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/3"
+    },
+    {
+     "$ref": "#/texts/4"
+    },
+    {
+     "$ref": "#/texts/5"
+    },
+    {
+     "$ref": "#/texts/6"
+    },
+    {
+     "$ref": "#/texts/7"
+    }
+   ],
+   "content_layer": "body",
+   "name": "list",
+   "label": "list"
+  },
+  {
+   "self_ref": "#/groups/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/9"
+    },
+    {
+     "$ref": "#/texts/10"
+    },
+    {
+     "$ref": "#/texts/11"
+    },
+    {
+     "$ref": "#/texts/12"
+    },
+    {
+     "$ref": "#/texts/13"
+    },
+    {
+     "$ref": "#/texts/14"
+    },
+    {
+     "$ref": "#/texts/15"
+    },
+    {
+     "$ref": "#/texts/16"
+    },
+    {
+     "$ref": "#/texts/17"
+    },
+    {
+     "$ref": "#/texts/18"
+    },
+    {
+     "$ref": "#/texts/19"
+    },
+    {
+     "$ref": "#/texts/20"
+    }
+   ],
+   "content_layer": "body",
+   "name": "list",
+   "label": "list"
+  }
+ ],
+ "texts": [
+  {
+   "self_ref": "#/texts/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 85.104,
+      "t": 756.5880000000001,
+      "r": 142.26,
+      "b": 741.936,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      10
+     ]
+    }
+   ],
+   "orig": "Model: F54",
+   "text": "Model: F54"
+  },
+  {
+   "self_ref": "#/texts/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 344.71,
+      "t": 756.5880000000001,
+      "r": 553.216,
+      "b": 741.936,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      39
+     ]
+    }
+   ],
+   "orig": "Operation Manual (English Version)_V.01",
+   "text": "Operation Manual (English Version)_V.01"
+  },
+  {
+   "self_ref": "#/texts/2",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 85.104,
+      "t": 724.768,
+      "r": 320.09000000000003,
+      "b": 710.116,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      43
+     ]
+    }
+   ],
+   "orig": "How to configure the parameter from 0 to 1:",
+   "text": "How to configure the parameter from 0 to 1:",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/3",
+   "parent": {
+    "$ref": "#/groups/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 103.1,
+      "t": 699.808,
+      "r": 513.1039999999998,
+      "b": 668.116,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      86
+     ]
+    }
+   ],
+   "orig": "- From the PARAMETER screen, use the arrows keys to select the parameter to configure.",
+   "text": "From the PARAMETER screen, use the arrows keys to select the parameter to configure.",
+   "enumerated": false,
+   "marker": "-"
+  },
+  {
+   "self_ref": "#/texts/4",
+   "parent": {
+    "$ref": "#/groups/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 103.1,
+      "t": 665.8480000000001,
+      "r": 535.868,
+      "b": 634.156,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      100
+     ]
+    }
+   ],
+   "orig": "- Then enter number 1 and press OK. A prompt will appear on the screen asking for the user password.",
+   "text": "Then enter number 1 and press OK. A prompt will appear on the screen asking for the user password.",
+   "enumerated": false,
+   "marker": "-"
+  },
+  {
+   "self_ref": "#/texts/5",
+   "parent": {
+    "$ref": "#/groups/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 103.1,
+      "t": 631.888,
+      "r": 257.25199999999995,
+      "b": 617.236,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      27
+     ]
+    }
+   ],
+   "orig": "- Enter \"1415\" and press OK",
+   "text": "Enter \"1415\" and press OK",
+   "enumerated": false,
+   "marker": "-"
+  },
+  {
+   "self_ref": "#/texts/6",
+   "parent": {
+    "$ref": "#/groups/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 103.1,
+      "t": 614.9680000000001,
+      "r": 334.32800000000003,
+      "b": 600.316,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      42
+     ]
+    }
+   ],
+   "orig": "- Next, enter number 1 again and press OK.",
+   "text": "Next, enter number 1 again and press OK.",
+   "enumerated": false,
+   "marker": "-"
+  },
+  {
+   "self_ref": "#/texts/7",
+   "parent": {
+    "$ref": "#/groups/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 103.1,
+      "t": 597.928,
+      "r": 402.992,
+      "b": 583.276,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      55
+     ]
+    }
+   ],
+   "orig": "- Press RESET button to save the configured parameters.",
+   "text": "Press RESET button to save the configured parameters.",
+   "enumerated": false,
+   "marker": "-"
+  },
+  {
+   "self_ref": "#/texts/8",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 85.104,
+      "t": 572.9680000000001,
+      "r": 247.25,
+      "b": 558.316,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      29
+     ]
+    }
+   ],
+   "orig": "Parameter stauts description:",
+   "text": "Parameter stauts description:",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/9",
+   "parent": {
+    "$ref": "#/groups/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 103.1,
+      "t": 547.9780000000001,
+      "r": 450.84799999999996,
+      "b": 533.326,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      64
+     ]
+    }
+   ],
+   "orig": "- M1920: Homing sensor status configuration parameter for X axis",
+   "text": "M1920: Homing sensor status configuration parameter for X axis",
+   "enumerated": false,
+   "marker": "-"
+  },
+  {
+   "self_ref": "#/texts/10",
+   "parent": {
+    "$ref": "#/groups/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 139.1,
+      "t": 531.058,
+      "r": 366.478,
+      "b": 516.406,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      41
+     ]
+    }
+   ],
+   "orig": "o M1920 = 0 : Normally closed sensor (NC)",
+   "text": "o M1920 = 0 : Normally closed sensor (NC)",
+   "enumerated": false,
+   "marker": ""
+  },
+  {
+   "self_ref": "#/texts/11",
+   "parent": {
+    "$ref": "#/groups/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 139.1,
+      "t": 514.018,
+      "r": 358.438,
+      "b": 499.366,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      39
+     ]
+    }
+   ],
+   "orig": "o M1920 = 1 : Normally open sensor (NO)",
+   "text": "o M1920 = 1 : Normally open sensor (NO)",
+   "enumerated": false,
+   "marker": ""
+  },
+  {
+   "self_ref": "#/texts/12",
+   "parent": {
+    "$ref": "#/groups/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 103.1,
+      "t": 497.09799999999996,
+      "r": 450.64399999999995,
+      "b": 482.44599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      64
+     ]
+    }
+   ],
+   "orig": "- M1921: Homing sensor status configuration parameter for Y axis",
+   "text": "M1921: Homing sensor status configuration parameter for Y axis",
+   "enumerated": false,
+   "marker": "-"
+  },
+  {
+   "self_ref": "#/texts/13",
+   "parent": {
+    "$ref": "#/groups/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 139.1,
+      "t": 480.058,
+      "r": 362.894,
+      "b": 465.406,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      40
+     ]
+    }
+   ],
+   "orig": "o M1921 = 0 : Normally closed sensor (NC",
+   "text": "o M1921 = 0 : Normally closed sensor (NC",
+   "enumerated": false,
+   "marker": ""
+  },
+  {
+   "self_ref": "#/texts/14",
+   "parent": {
+    "$ref": "#/groups/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 139.1,
+      "t": 463.138,
+      "r": 358.37000000000006,
+      "b": 448.486,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      39
+     ]
+    }
+   ],
+   "orig": "o M1921 = 1 : Normally open sensor (NO)",
+   "text": "o M1921 = 1 : Normally open sensor (NO)",
+   "enumerated": false,
+   "marker": ""
+  },
+  {
+   "self_ref": "#/texts/15",
+   "parent": {
+    "$ref": "#/groups/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 103.1,
+      "t": 446.21799999999996,
+      "r": 450.40399999999994,
+      "b": 431.566,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      64
+     ]
+    }
+   ],
+   "orig": "- M1922: Homing sensor status configuration parameter for Z axis",
+   "text": "M1922: Homing sensor status configuration parameter for Z axis",
+   "enumerated": false,
+   "marker": "-"
+  },
+  {
+   "self_ref": "#/texts/16",
+   "parent": {
+    "$ref": "#/groups/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 139.1,
+      "t": 429.178,
+      "r": 362.894,
+      "b": 414.526,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      40
+     ]
+    }
+   ],
+   "orig": "o M1922 = 0 : Normally closed sensor (NC",
+   "text": "o M1922 = 0 : Normally closed sensor (NC",
+   "enumerated": false,
+   "marker": ""
+  },
+  {
+   "self_ref": "#/texts/17",
+   "parent": {
+    "$ref": "#/groups/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 139.1,
+      "t": 412.258,
+      "r": 358.37000000000006,
+      "b": 397.606,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      39
+     ]
+    }
+   ],
+   "orig": "o M1922 = 1 : Normally open sensor (NO)",
+   "text": "o M1922 = 1 : Normally open sensor (NO)",
+   "enumerated": false,
+   "marker": ""
+  },
+  {
+   "self_ref": "#/texts/18",
+   "parent": {
+    "$ref": "#/groups/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 103.1,
+      "t": 395.21799999999996,
+      "r": 451.2199999999999,
+      "b": 380.566,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      64
+     ]
+    }
+   ],
+   "orig": "- M1923: Homing sensor status configuration parameter for A axis",
+   "text": "M1923: Homing sensor status configuration parameter for A axis",
+   "enumerated": false,
+   "marker": "-"
+  },
+  {
+   "self_ref": "#/texts/19",
+   "parent": {
+    "$ref": "#/groups/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 139.1,
+      "t": 378.27799999999996,
+      "r": 362.894,
+      "b": 363.626,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      40
+     ]
+    }
+   ],
+   "orig": "o M1923 = 0 : Normally closed sensor (NC",
+   "text": "o M1923 = 0 : Normally closed sensor (NC",
+   "enumerated": false,
+   "marker": ""
+  },
+  {
+   "self_ref": "#/texts/20",
+   "parent": {
+    "$ref": "#/groups/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "list_item",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 139.1,
+      "t": 361.35799999999995,
+      "r": 358.37000000000006,
+      "b": 346.70599999999996,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      39
+     ]
+    }
+   ],
+   "orig": "o M1923 = 1 : Normally open sensor (NO)",
+   "text": "o M1923 = 1 : Normally open sensor (NO)",
+   "enumerated": false,
+   "marker": ""
+  },
+  {
+   "self_ref": "#/texts/21",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 85.104,
+      "t": 336.39799999999997,
+      "r": 293.924,
+      "b": 321.746,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      38
+     ]
+    }
+   ],
+   "orig": "2.3.3 Automatic tool setter connection",
+   "text": "2.3.3 Automatic tool setter connection",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/22",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 85.104,
+      "t": 315.39799999999997,
+      "r": 553.8360000000002,
+      "b": 266.78600000000006,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      211
+     ]
+    }
+   ],
+   "orig": "Before installing the automatic tool setter, installers must identify the type of tool setter, wire colors and the functions of the signal wires. Connections should be made according to the wiring diagram below.",
+   "text": "Before installing the automatic tool setter, installers must identify the type of tool setter, wire colors and the functions of the signal wires. Connections should be made according to the wiring diagram below."
+  },
+  {
+   "self_ref": "#/texts/23",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "caption",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 238.01,
+      "t": 126.01243999999997,
+      "r": 402.46592000000015,
+      "b": 113.85127999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      39
+     ]
+    }
+   ],
+   "orig": "Figure 16. Automatic tool setter deivce",
+   "text": "Figure 16. Automatic tool setter deivce"
+  },
+  {
+   "self_ref": "#/texts/24",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 85.104,
+      "t": 49.908000000000015,
+      "r": 175.224,
+      "b": 35.25599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      14
+     ]
+    }
+   ],
+   "orig": "www.qstcnc.com",
+   "text": "www.qstcnc.com",
+   "hyperlink": "http://www.qstcnc.com/"
+  },
+  {
+   "self_ref": "#/texts/25",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 507.34,
+      "t": 49.908000000000015,
+      "r": 553.1080000000001,
+      "b": 35.25599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      9
+     ]
+    }
+   ],
+   "orig": "Page | 12",
+   "text": "Page | 12"
+  }
+ ],
+ "pictures": [
+  {
+   "self_ref": "#/pictures/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/23"
+    }
+   ],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 19,
+     "bbox": {
+      "l": 194.37985229492188,
+      "t": 255.9649658203125,
+      "r": 447.0207824707031,
+      "b": 136.0494384765625,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [
+    {
+     "$ref": "#/texts/23"
+    }
+   ],
+   "references": [],
+   "footnotes": [],
+   "image": null,
+   "annotations": []
+  }
+ ],
+ "tables": [],
+ "key_value_items": [],
+ "form_items": [],
+ "pages": {
+  "19": {
+   "size": {
+    "width": 612.0,
+    "height": 792.0
+   },
+   "image": null,
+   "page_no": 19
+  }
+ }
+}

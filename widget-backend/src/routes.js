@@ -14,6 +14,7 @@ import {
 } from './cookies.js';
 
 const MAX_BODY_BYTES = 16 * 1024;
+const MAX_CRM_TOKEN_CHARS = 4096;
 
 class HttpError extends Error {
     constructor(status, code, message) {
@@ -132,6 +133,17 @@ export function createRouter({ config, ai, logger = console }) {
         );
     }
 
+    // Token CRM của nhân viên (tùy chọn) để tool báo cáo gọi API CRM. Không log giá trị.
+    function readCrmAccessToken(payload) {
+        const raw = payload?.crm_access_token;
+        if (raw === undefined || raw === null) return undefined;
+        const token = typeof raw === 'string' ? raw.trim() : '';
+        if (!token || token.length > MAX_CRM_TOKEN_CHARS) {
+            throw new HttpError(400, 'invalid_request', `crm_access_token must be 1-${MAX_CRM_TOKEN_CHARS} characters.`);
+        }
+        return token;
+    }
+
     function readMessageText(payload) {
         const text = payload?.message?.text;
         if (typeof text !== 'string' || !text.trim()) {
@@ -216,8 +228,11 @@ export function createRouter({ config, ai, logger = console }) {
         const text = readMessageText(payload);
         const userId = typeof payload?.user_id === 'string' ? payload.user_id.trim() : '';
         if (!userId || userId.length > 128) {
+            // Chỉ log độ dài, không log giá trị (có thể là token).
+            logger.info(`crm chat rejected user_id request_id=${ctx.requestId} length=${userId.length}`);
             throw new HttpError(400, 'invalid_request', 'user_id is required (1-128 characters).');
         }
+        const crmAccessToken = readCrmAccessToken(payload);
         const idempotencyKey = isUuid(req.headers['idempotency-key']) ? req.headers['idempotency-key'] : undefined;
 
         // Đổi user_id giữa các lượt: dịch vụ AI trả session_not_found → proxyChat mở session mới.
@@ -226,6 +241,7 @@ export function createRouter({ config, ai, logger = console }) {
             send: (sessionId, signal) => ai.chatCrm({
                 sessionId,
                 userId,
+                crmAccessToken,
                 message: { text },
                 idempotencyKey,
                 signal,

@@ -1,0 +1,4606 @@
+{
+ "schema_name": "DoclingDocument",
+ "version": "1.10.0",
+ "name": "F54_Operation Manual (English Version)_V.02",
+ "origin": {
+  "mimetype": "application/pdf",
+  "binary_hash": 10649216247643491873,
+  "filename": "F54_Operation Manual (English Version)_V.02.pdf"
+ },
+ "furniture": {
+  "self_ref": "#/furniture",
+  "children": [],
+  "content_layer": "furniture",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "body": {
+  "self_ref": "#/body",
+  "children": [
+   {
+    "$ref": "#/texts/0"
+   },
+   {
+    "$ref": "#/texts/1"
+   },
+   {
+    "$ref": "#/tables/0"
+   },
+   {
+    "$ref": "#/texts/2"
+   },
+   {
+    "$ref": "#/texts/3"
+   }
+  ],
+  "content_layer": "body",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "groups": [],
+ "texts": [
+  {
+   "self_ref": "#/texts/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 168,
+     "bbox": {
+      "l": 85.104,
+      "t": 756.5880000000001,
+      "r": 142.26,
+      "b": 741.936,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      10
+     ]
+    }
+   ],
+   "orig": "Model: F54",
+   "text": "Model: F54"
+  },
+  {
+   "self_ref": "#/texts/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 168,
+     "bbox": {
+      "l": 344.71,
+      "t": 756.5880000000001,
+      "r": 553.216,
+      "b": 741.936,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      39
+     ]
+    }
+   ],
+   "orig": "Operation Manual (English Version)_V.01",
+   "text": "Operation Manual (English Version)_V.01"
+  },
+  {
+   "self_ref": "#/texts/2",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 168,
+     "bbox": {
+      "l": 85.104,
+      "t": 49.908000000000015,
+      "r": 175.224,
+      "b": 35.25599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      14
+     ]
+    }
+   ],
+   "orig": "www.qstcnc.com",
+   "text": "www.qstcnc.com",
+   "hyperlink": "http://www.qstcnc.com/"
+  },
+  {
+   "self_ref": "#/texts/3",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 168,
+     "bbox": {
+      "l": 500.86,
+      "t": 49.908000000000015,
+      "r": 553.096,
+      "b": 35.25599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      10
+     ]
+    }
+   ],
+   "orig": "Page | 161",
+   "text": "Page | 161"
+  }
+ ],
+ "pictures": [],
+ "tables": [
+  {
+   "self_ref": "#/tables/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "table",
+   "prov": [
+    {
+     "page_no": 168,
+     "bbox": {
+      "l": 84.40935516357422,
+      "t": 725.0137252807617,
+      "r": 556.1465454101562,
+      "b": 70.6727294921875,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [],
+   "references": [],
+   "footnotes": [],
+   "data": {
+    "table_cells": [
+     {
+      "bbox": {
+       "l": 87.73961007595062,
+       "t": 81.69143386930227,
+       "r": 152.80393862724304,
+       "b": 92.71189073473215,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4140 - #4147",
+      "column_header": true,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.92586541175842,
+       "t": 81.54554096609354,
+       "r": 230.54527926445007,
+       "b": 93.14658005535603,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis type",
+      "column_header": true,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 392.3878936767578,
+       "t": 67.98891400173306,
+       "r": 443.88634967803955,
+       "b": 102.821348965168,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0: Linear 1: Rotary 1 2: Rotary 2",
+      "column_header": true,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 504.27636432647705,
+       "t": 81.2464510127902,
+       "r": 512.3315734863281,
+       "b": 92.57470287382603,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": true,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 87.8662982583046,
+       "t": 148.76470574736595,
+       "r": 152.6052324771881,
+       "b": 161.09295573830605,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4150 - #4157",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.5761363506317,
+       "t": 149.54335021972656,
+       "r": 271.33217120170593,
+       "b": 161.95244771242142,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis encoder port",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 394.06278705596924,
+       "t": 109.62739104032516,
+       "r": 443.00695610046387,
+       "b": 194.67906033992767,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0: Disable 1: port 1 2: port 2 3: port 3 4: port 4 5: port 5 6: port 6",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 504.51634216308594,
+       "t": 149.1433129608631,
+       "r": 512.2134695053101,
+       "b": 160.7421227991581,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.54536098241806,
+       "t": 215.7854038476944,
+       "r": 151.6075098514557,
+       "b": 227.96659636497498,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4160 - #4167",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 188.23412013053894,
+       "t": 215.55224612355232,
+       "r": 286.80843472480774,
+       "b": 228.1987015902996,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis encoder multiply",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 403.15777826309204,
+       "t": 203.67923110723495,
+       "r": 432.2905812263489,
+       "b": 232.7564600110054,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0: X1 1: X2 2: X4",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 504.5295367240906,
+       "t": 215.0764679312706,
+       "r": 511.6230902671814,
+       "b": 227.41272860765457,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 87.81715801358223,
+       "t": 244.29820102453232,
+       "r": 119.15744233131409,
+       "b": 256.0008963942528,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8010",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 186.9519407749176,
+       "t": 244.17240792512894,
+       "r": 293.5139443874359,
+       "b": 255.77616840600967,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Init rapid override (%)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 504.38124561309814,
+       "t": 244.31398850679398,
+       "r": 511.1037197113037,
+       "b": 256.0758187174797,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "3",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.46100828051567,
+       "t": 257.1472430229187,
+       "r": 119.35964405536652,
+       "b": 268.74702739715576,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8011",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.00965642929077,
+       "t": 257.4476729631424,
+       "r": 311.7641181945801,
+       "b": 268.93990755081177,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Init federate override (%)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 502.892201423645,
+       "t": 257.29046082496643,
+       "r": 512.2016534805298,
+       "b": 269.02695310115814,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "5",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.36552354693413,
+       "t": 273.060245513916,
+       "r": 122.93989956378937,
+       "b": 284.62896168231964,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8013",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.95336997509003,
+       "t": 271.678587436676,
+       "r": 318.8979868888855,
+       "b": 283.2224724292755,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Feedrate default (mm/min)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 494.3745074272156,
+       "t": 272.49973142147064,
+       "r": 518.5660176277161,
+       "b": 284.1536999940872,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "3000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.0082516670227,
+       "t": 285.00501561164856,
+       "r": 156.9227727651596,
+       "b": 296.75904953479767,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8080 - #8087",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.37995100021362,
+       "t": 285.57472932338715,
+       "r": 337.9596824645996,
+       "b": 297.06984853744507,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis position loop gain (1/sec)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 501.03216218948364,
+       "t": 285.44677275419235,
+       "r": 515.9671673774719,
+       "b": 297.10074132680893,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.92538684606552,
+       "t": 297.5904846191406,
+       "r": 158.27333736419678,
+       "b": 309.34214067459106,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8090 - #8097",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.01721727848053,
+       "t": 297.95790416002274,
+       "r": 312.70565843582153,
+       "b": 309.58871775865555,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis dir signal delay (0.1us)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 503.15406703948975,
+       "t": 297.8539016842842,
+       "r": 514.9235029220581,
+       "b": 309.5334420800209,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "200",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.18055880069733,
+       "t": 311.9269608259201,
+       "r": 155.96154618263245,
+       "b": 335.0384315252304,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8150, #8152 #8154",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.8877136707306,
+       "t": 311.99030566215515,
+       "r": 351.8641052246094,
+       "b": 335.84055256843567,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Radius minimum limit federate (um) (1 st ,2 nd ,3 rd )",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 466.5251216888428,
+       "t": 312.68259650468826,
+       "r": 548.1373357772827,
+       "b": 325.8516955971718,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "1000/5000/10000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.27292776107788,
+       "t": 339.6226875782013,
+       "r": 152.56775879859924,
+       "b": 363.94952154159546,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 9,
+      "end_row_offset_idx": 10,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8151, #8153 #8155",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 188.14109003543854,
+       "t": 339.625923037529,
+       "r": 350.95660638809204,
+       "b": 364.30436956882477,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 9,
+      "end_row_offset_idx": 10,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Radius maximum limit federate (um) (1 st ,2 nd ,3 rd )",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 466.7143750190735,
+       "t": 341.54562240839005,
+       "r": 546.3541007041931,
+       "b": 353.5515154004097,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 9,
+      "end_row_offset_idx": 10,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "1000/3000/6000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.20654702186584,
+       "t": 367.11627608537674,
+       "r": 150.2917673587799,
+       "b": 390.4399227499962,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 10,
+      "end_row_offset_idx": 11,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8170, #8172 #8174",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.09293127059937,
+       "t": 365.64400565624237,
+       "r": 355.2355546951294,
+       "b": 390.07094395160675,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 10,
+      "end_row_offset_idx": 11,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Segment length limit federate (um) (1 st ,2 nd ,3 rd )",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 468.4743437767029,
+       "t": 368.30103892087936,
+       "r": 542.3063807487488,
+       "b": 380.5461999773979,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 10,
+      "end_row_offset_idx": 11,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "500/2000/6000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.14181911945343,
+       "t": 393.23138350248337,
+       "r": 150.75979447364807,
+       "b": 417.265642285347,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 11,
+      "end_row_offset_idx": 12,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8171, #8173 #8175",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 186.47680294513702,
+       "t": 391.6821442246437,
+       "r": 370.3052906990051,
+       "b": 411.87045538425446,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 11,
+      "end_row_offset_idx": 12,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Auto interpolation limit rate (mm/min)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 468.37936544418335,
+       "t": 394.16921842098236,
+       "r": 541.324300289154,
+       "b": 406.08483040332794,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 11,
+      "end_row_offset_idx": 12,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "2000/4000/6000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.38907998800278,
+       "t": 425.1227798461914,
+       "r": 152.32125401496887,
+       "b": 436.88527274131775,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 12,
+      "end_row_offset_idx": 13,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8180 - #8187",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 188.43146181106567,
+       "t": 420.72310090065,
+       "r": 334.97371673583984,
+       "b": 444.1576497554779,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 12,
+      "end_row_offset_idx": 13,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis short segment acceleration (mm/s/s)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 499.8165464401245,
+       "t": 425.0681278705597,
+       "r": 515.5784482955933,
+       "b": 436.69886350631714,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 12,
+      "end_row_offset_idx": 13,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "1000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.42246025800705,
+       "t": 447.6578320264816,
+       "r": 154.30879378318787,
+       "b": 459.39498698711395,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 13,
+      "end_row_offset_idx": 14,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8190 - #8197",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.78245961666107,
+       "t": 447.5563243627548,
+       "r": 310.1668448448181,
+       "b": 459.107381939888,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 13,
+      "end_row_offset_idx": 14,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis G00 backlash time (ms)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 501.1231737136841,
+       "t": 448.1309107542038,
+       "r": 513.9562768936157,
+       "b": 459.7199362516403,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 13,
+      "end_row_offset_idx": 14,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "50",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.73892575502396,
+       "t": 460.9726437330246,
+       "r": 155.13220191001892,
+       "b": 472.7633591890335,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 14,
+      "end_row_offset_idx": 15,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#8200 - #8207",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.10425078868866,
+       "t": 461.2109762430191,
+       "r": 315.4100933074951,
+       "b": 472.67003762722015,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 14,
+      "end_row_offset_idx": 15,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis G01 backlash time (ms)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 501.47140884399414,
+       "t": 461.98432898521423,
+       "r": 514.3760271072388,
+       "b": 473.66729974746704,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 14,
+      "end_row_offset_idx": 15,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "50",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.7620021700859,
+       "t": 474.466380238533,
+       "r": 166.52103519439697,
+       "b": 486.5501581430435,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 15,
+      "end_row_offset_idx": 16,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12000 - #12007",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.79718041419983,
+       "t": 474.79000413417816,
+       "r": 294.5161964893341,
+       "b": 486.4242480993271,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 15,
+      "end_row_offset_idx": 16,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis pitch mount (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 492.03015184402466,
+       "t": 475.4610695838928,
+       "r": 522.4408297538757,
+       "b": 487.20188879966736,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 15,
+      "end_row_offset_idx": 16,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "10000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.92148333787918,
+       "t": 487.4899226427078,
+       "r": 168.69967103004456,
+       "b": 499.5181130170822,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 16,
+      "end_row_offset_idx": 17,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12010 - #12017",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.62680745124817,
+       "t": 487.7894949913025,
+       "r": 290.852525472641,
+       "b": 499.5476219654083,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 16,
+      "end_row_offset_idx": 17,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis pulse/mm (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 497.35296154022217,
+       "t": 488.6574556827545,
+       "r": 518.4502487182617,
+       "b": 500.32124757766724,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 16,
+      "end_row_offset_idx": 17,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "1000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.53407949209213,
+       "t": 501.95047676563263,
+       "r": 167.52593183517456,
+       "b": 514.5482639074326,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 17,
+      "end_row_offset_idx": 18,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12020 - #12027",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 186.27782249450684,
+       "t": 502.0239567756653,
+       "r": 354.0758399963379,
+       "b": 524.8886749744415,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 17,
+      "end_row_offset_idx": 18,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis rapid travel acceleration (m/s/s) G00",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 494.5505380630493,
+       "t": 503.51039695739746,
+       "r": 520.0378723144531,
+       "b": 515.2391319274902,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 17,
+      "end_row_offset_idx": 18,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "1000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.63993489742279,
+       "t": 529.249957203865,
+       "r": 167.0720558166504,
+       "b": 541.0565770864487,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 18,
+      "end_row_offset_idx": 19,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12030 - #12037",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 186.17502307891846,
+       "t": 528.8992412090302,
+       "r": 352.5685091018677,
+       "b": 540.5670092105865,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 18,
+      "end_row_offset_idx": 19,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis cutting acceleration (m/s/s) G01",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 496.76443910598755,
+       "t": 530.0579254627228,
+       "r": 517.3823895454407,
+       "b": 541.7504076957703,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 18,
+      "end_row_offset_idx": 19,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "500",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.59149271249771,
+       "t": 542.3663144111633,
+       "r": 166.35842418670654,
+       "b": 554.0914630889893,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 19,
+      "end_row_offset_idx": 20,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12040 - #12047",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 186.84039187431335,
+       "t": 541.8186252117157,
+       "r": 326.4004030227661,
+       "b": 553.5446314811707,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 19,
+      "end_row_offset_idx": 20,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis max jog rapid (mm/min)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 492.26275873184204,
+       "t": 543.2634332180023,
+       "r": 522.596182346344,
+       "b": 554.9902970790863,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 19,
+      "end_row_offset_idx": 20,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "12000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.2698963880539,
+       "t": 556.5222285985947,
+       "r": 166.57087349891663,
+       "b": 568.306005358696,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 20,
+      "end_row_offset_idx": 21,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12050 - #12057",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.24652552604675,
+       "t": 556.2929787635803,
+       "r": 314.1470305919647,
+       "b": 568.0762097835541,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 20,
+      "end_row_offset_idx": 21,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Max jog federate (mm/min)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 495.3060040473938,
+       "t": 556.8318581581116,
+       "r": 519.3463253974915,
+       "b": 568.7090344429016,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 20,
+      "end_row_offset_idx": 21,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "6000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.254574239254,
+       "t": 570.0713187456131,
+       "r": 166.09097409248352,
+       "b": 581.8593055009842,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 21,
+      "end_row_offset_idx": 22,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12060 - #12067",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.0298421382904,
+       "t": 569.9720330238342,
+       "r": 324.49475955963135,
+       "b": 581.7868390083313,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 21,
+      "end_row_offset_idx": 22,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis max auto rapid (mm/min)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 491.45133543014526,
+       "t": 570.124957203865,
+       "r": 523.1082100868225,
+       "b": 582.0715984106064,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 21,
+      "end_row_offset_idx": 22,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "12000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 87.92748838663101,
+       "t": 583.7254248857498,
+       "r": 166.68706440925598,
+       "b": 595.4805113077164,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 22,
+      "end_row_offset_idx": 23,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12070 - #12077",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.6880509853363,
+       "t": 583.4531005620956,
+       "r": 341.03584384918213,
+       "b": 595.2141901254654,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 22,
+      "end_row_offset_idx": 23,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis max auto federate (mm/min)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 494.4342346191406,
+       "t": 583.4300625324249,
+       "r": 522.1126537322998,
+       "b": 595.2755858898163,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 22,
+      "end_row_offset_idx": 23,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "12000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.35489439964294,
+       "t": 598.4194388389587,
+       "r": 166.74575769901276,
+       "b": 610.0873627662659,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 23,
+      "end_row_offset_idx": 24,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12080 - #12087",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.26877903938293,
+       "t": 597.8981010913849,
+       "r": 348.3271188735962,
+       "b": 609.5795905590057,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 23,
+      "end_row_offset_idx": 24,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis loss pulse check window (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 501.9308271408081,
+       "t": 598.1982971429825,
+       "r": 514.1375122070312,
+       "b": 610.0318921804428,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 23,
+      "end_row_offset_idx": 24,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.47399359941483,
+       "t": 611.2929027080536,
+       "r": 166.79183316230774,
+       "b": 622.953654050827,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 24,
+      "end_row_offset_idx": 25,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12090 - #12097",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 188.31841480731964,
+       "t": 610.9672127962112,
+       "r": 347.3902769088745,
+       "b": 622.645271897316,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 24,
+      "end_row_offset_idx": 25,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis homing federate 1 st (mm/min)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 495.88619899749756,
+       "t": 611.1840275526047,
+       "r": 520.0240869522095,
+       "b": 622.8550699949265,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 24,
+      "end_row_offset_idx": 25,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "2000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 88.0614385008812,
+       "t": 625.0098469257355,
+       "r": 167.28028512001038,
+       "b": 636.7094237804413,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 25,
+      "end_row_offset_idx": 26,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12100 - #12107",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.22497534751892,
+       "t": 625.0953722000122,
+       "r": 350.5839796066284,
+       "b": 636.6656086444855,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 25,
+      "end_row_offset_idx": 26,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis homing federate 2 nd (mm/min)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 499.33121728897095,
+       "t": 624.8153295516968,
+       "r": 516.748037815094,
+       "b": 636.451990365982,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 25,
+      "end_row_offset_idx": 26,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "200",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 87.87585657835007,
+       "t": 638.7442548274994,
+       "r": 166.65713047981262,
+       "b": 650.53107213974,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 26,
+      "end_row_offset_idx": 27,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12110 - #12117",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 186.75913560390472,
+       "t": 638.2292710542679,
+       "r": 347.74925899505615,
+       "b": 649.7419708967209,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 26,
+      "end_row_offset_idx": 27,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis homing federate 3 rd (mm/min)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 499.68918657302856,
+       "t": 638.5335211753845,
+       "r": 516.1734414100647,
+       "b": 650.2121260166168,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 26,
+      "end_row_offset_idx": 27,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "100",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 87.91974818706512,
+       "t": 652.8432171344757,
+       "r": 166.06793987751007,
+       "b": 664.7713031768799,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 27,
+      "end_row_offset_idx": 28,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12120 - #12127",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.51476335525513,
+       "t": 653.0428410768509,
+       "r": 296.7122187614441,
+       "b": 664.6083997488022,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 27,
+      "end_row_offset_idx": 28,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis home offset (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 500.8897228240967,
+       "t": 652.707249879837,
+       "r": 515.2218856811523,
+       "b": 664.4897792339325,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 27,
+      "end_row_offset_idx": 28,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 87.76558774709702,
+       "t": 665.7864577770233,
+       "r": 166.50605416297913,
+       "b": 677.4222609996796,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 28,
+      "end_row_offset_idx": 29,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12130 - #12137",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.73330354690552,
+       "t": 665.6934480667114,
+       "r": 329.26201915740967,
+       "b": 677.1692714691162,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 28,
+      "end_row_offset_idx": 29,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis MPG acceleration (mm/s/s)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 496.93788146972656,
+       "t": 665.6907193660736,
+       "r": 519.2340450286865,
+       "b": 677.6942734718323,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 28,
+      "end_row_offset_idx": 29,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "1000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 87.63024151325226,
+       "t": 680.1109277009964,
+       "r": 166.62209033966064,
+       "b": 691.7466529607773,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 29,
+      "end_row_offset_idx": 30,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12140 - #12147",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.3393235206604,
+       "t": 679.3378868103027,
+       "r": 330.0891408920288,
+       "b": 690.9495215415955,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 29,
+      "end_row_offset_idx": 30,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis MPG max speed (mm/min)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 496.17113399505615,
+       "t": 679.4464501142502,
+       "r": 519.8182067871094,
+       "b": 691.3700922727585,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 29,
+      "end_row_offset_idx": 30,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "8000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 87.50501626729965,
+       "t": 694.81125664711,
+       "r": 166.2980921268463,
+       "b": 706.932612657547,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 30,
+      "end_row_offset_idx": 31,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12150 - #12157",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 188.49781441688538,
+       "t": 694.5772510766983,
+       "r": 300.2068221569061,
+       "b": 706.6296099424362,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 30,
+      "end_row_offset_idx": 31,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis backlash G00 (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 501.509557723999,
+       "t": 694.649366736412,
+       "r": 513.2052278518677,
+       "b": 706.9426308870316,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 30,
+      "end_row_offset_idx": 31,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 86.75322872400284,
+       "t": 708.1337866783142,
+       "r": 167.20328402519226,
+       "b": 720.3994519710541,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 31,
+      "end_row_offset_idx": 32,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#12160 - #12167",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 187.01735091209412,
+       "t": 708.14513027668,
+       "r": 295.9427282810211,
+       "b": 719.9360016584396,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 31,
+      "end_row_offset_idx": 32,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis backlash G01 (BLU)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 501.8289279937744,
+       "t": 708.0808109045029,
+       "r": 512.6063804626465,
+       "b": 720.5390444993973,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 31,
+      "end_row_offset_idx": 32,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     }
+    ],
+    "num_rows": 32,
+    "num_cols": 4,
+    "orientation": "rot_0",
+    "grid": [
+     [
+      {
+       "bbox": {
+        "l": 87.73961007595062,
+        "t": 81.69143386930227,
+        "r": 152.80393862724304,
+        "b": 92.71189073473215,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4140 - #4147",
+       "column_header": true,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.92586541175842,
+        "t": 81.54554096609354,
+        "r": 230.54527926445007,
+        "b": 93.14658005535603,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis type",
+       "column_header": true,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 392.3878936767578,
+        "t": 67.98891400173306,
+        "r": 443.88634967803955,
+        "b": 102.821348965168,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0: Linear 1: Rotary 1 2: Rotary 2",
+       "column_header": true,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 504.27636432647705,
+        "t": 81.2464510127902,
+        "r": 512.3315734863281,
+        "b": 92.57470287382603,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": true,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 87.8662982583046,
+        "t": 148.76470574736595,
+        "r": 152.6052324771881,
+        "b": 161.09295573830605,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4150 - #4157",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.5761363506317,
+        "t": 149.54335021972656,
+        "r": 271.33217120170593,
+        "b": 161.95244771242142,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis encoder port",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 394.06278705596924,
+        "t": 109.62739104032516,
+        "r": 443.00695610046387,
+        "b": 194.67906033992767,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0: Disable 1: port 1 2: port 2 3: port 3 4: port 4 5: port 5 6: port 6",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 504.51634216308594,
+        "t": 149.1433129608631,
+        "r": 512.2134695053101,
+        "b": 160.7421227991581,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.54536098241806,
+        "t": 215.7854038476944,
+        "r": 151.6075098514557,
+        "b": 227.96659636497498,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4160 - #4167",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 188.23412013053894,
+        "t": 215.55224612355232,
+        "r": 286.80843472480774,
+        "b": 228.1987015902996,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis encoder multiply",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 403.15777826309204,
+        "t": 203.67923110723495,
+        "r": 432.2905812263489,
+        "b": 232.7564600110054,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0: X1 1: X2 2: X4",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 504.5295367240906,
+        "t": 215.0764679312706,
+        "r": 511.6230902671814,
+        "b": 227.41272860765457,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 87.81715801358223,
+        "t": 244.29820102453232,
+        "r": 119.15744233131409,
+        "b": 256.0008963942528,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8010",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 186.9519407749176,
+        "t": 244.17240792512894,
+        "r": 293.5139443874359,
+        "b": 255.77616840600967,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Init rapid override (%)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 504.38124561309814,
+        "t": 244.31398850679398,
+        "r": 511.1037197113037,
+        "b": 256.0758187174797,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "3",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.46100828051567,
+        "t": 257.1472430229187,
+        "r": 119.35964405536652,
+        "b": 268.74702739715576,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8011",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.00965642929077,
+        "t": 257.4476729631424,
+        "r": 311.7641181945801,
+        "b": 268.93990755081177,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Init federate override (%)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 502.892201423645,
+        "t": 257.29046082496643,
+        "r": 512.2016534805298,
+        "b": 269.02695310115814,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "5",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.36552354693413,
+        "t": 273.060245513916,
+        "r": 122.93989956378937,
+        "b": 284.62896168231964,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8013",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.95336997509003,
+        "t": 271.678587436676,
+        "r": 318.8979868888855,
+        "b": 283.2224724292755,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Feedrate default (mm/min)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 494.3745074272156,
+        "t": 272.49973142147064,
+        "r": 518.5660176277161,
+        "b": 284.1536999940872,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "3000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.0082516670227,
+        "t": 285.00501561164856,
+        "r": 156.9227727651596,
+        "b": 296.75904953479767,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8080 - #8087",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.37995100021362,
+        "t": 285.57472932338715,
+        "r": 337.9596824645996,
+        "b": 297.06984853744507,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis position loop gain (1/sec)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 501.03216218948364,
+        "t": 285.44677275419235,
+        "r": 515.9671673774719,
+        "b": 297.10074132680893,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.92538684606552,
+        "t": 297.5904846191406,
+        "r": 158.27333736419678,
+        "b": 309.34214067459106,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8090 - #8097",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.01721727848053,
+        "t": 297.95790416002274,
+        "r": 312.70565843582153,
+        "b": 309.58871775865555,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis dir signal delay (0.1us)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 503.15406703948975,
+        "t": 297.8539016842842,
+        "r": 514.9235029220581,
+        "b": 309.5334420800209,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "200",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.18055880069733,
+        "t": 311.9269608259201,
+        "r": 155.96154618263245,
+        "b": 335.0384315252304,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8150, #8152 #8154",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.8877136707306,
+        "t": 311.99030566215515,
+        "r": 351.8641052246094,
+        "b": 335.84055256843567,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Radius minimum limit federate (um) (1 st ,2 nd ,3 rd )",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 466.5251216888428,
+        "t": 312.68259650468826,
+        "r": 548.1373357772827,
+        "b": 325.8516955971718,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "1000/5000/10000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.27292776107788,
+        "t": 339.6226875782013,
+        "r": 152.56775879859924,
+        "b": 363.94952154159546,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 9,
+       "end_row_offset_idx": 10,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8151, #8153 #8155",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 188.14109003543854,
+        "t": 339.625923037529,
+        "r": 350.95660638809204,
+        "b": 364.30436956882477,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 9,
+       "end_row_offset_idx": 10,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Radius maximum limit federate (um) (1 st ,2 nd ,3 rd )",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 9,
+       "end_row_offset_idx": 10,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 466.7143750190735,
+        "t": 341.54562240839005,
+        "r": 546.3541007041931,
+        "b": 353.5515154004097,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 9,
+       "end_row_offset_idx": 10,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "1000/3000/6000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.20654702186584,
+        "t": 367.11627608537674,
+        "r": 150.2917673587799,
+        "b": 390.4399227499962,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 10,
+       "end_row_offset_idx": 11,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8170, #8172 #8174",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.09293127059937,
+        "t": 365.64400565624237,
+        "r": 355.2355546951294,
+        "b": 390.07094395160675,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 10,
+       "end_row_offset_idx": 11,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Segment length limit federate (um) (1 st ,2 nd ,3 rd )",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 10,
+       "end_row_offset_idx": 11,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 468.4743437767029,
+        "t": 368.30103892087936,
+        "r": 542.3063807487488,
+        "b": 380.5461999773979,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 10,
+       "end_row_offset_idx": 11,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "500/2000/6000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.14181911945343,
+        "t": 393.23138350248337,
+        "r": 150.75979447364807,
+        "b": 417.265642285347,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 11,
+       "end_row_offset_idx": 12,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8171, #8173 #8175",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 186.47680294513702,
+        "t": 391.6821442246437,
+        "r": 370.3052906990051,
+        "b": 411.87045538425446,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 11,
+       "end_row_offset_idx": 12,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Auto interpolation limit rate (mm/min)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 11,
+       "end_row_offset_idx": 12,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 468.37936544418335,
+        "t": 394.16921842098236,
+        "r": 541.324300289154,
+        "b": 406.08483040332794,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 11,
+       "end_row_offset_idx": 12,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "2000/4000/6000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.38907998800278,
+        "t": 425.1227798461914,
+        "r": 152.32125401496887,
+        "b": 436.88527274131775,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 12,
+       "end_row_offset_idx": 13,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8180 - #8187",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 188.43146181106567,
+        "t": 420.72310090065,
+        "r": 334.97371673583984,
+        "b": 444.1576497554779,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 12,
+       "end_row_offset_idx": 13,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis short segment acceleration (mm/s/s)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 12,
+       "end_row_offset_idx": 13,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 499.8165464401245,
+        "t": 425.0681278705597,
+        "r": 515.5784482955933,
+        "b": 436.69886350631714,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 12,
+       "end_row_offset_idx": 13,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "1000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.42246025800705,
+        "t": 447.6578320264816,
+        "r": 154.30879378318787,
+        "b": 459.39498698711395,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 13,
+       "end_row_offset_idx": 14,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8190 - #8197",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.78245961666107,
+        "t": 447.5563243627548,
+        "r": 310.1668448448181,
+        "b": 459.107381939888,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 13,
+       "end_row_offset_idx": 14,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis G00 backlash time (ms)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 13,
+       "end_row_offset_idx": 14,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 501.1231737136841,
+        "t": 448.1309107542038,
+        "r": 513.9562768936157,
+        "b": 459.7199362516403,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 13,
+       "end_row_offset_idx": 14,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "50",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.73892575502396,
+        "t": 460.9726437330246,
+        "r": 155.13220191001892,
+        "b": 472.7633591890335,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 14,
+       "end_row_offset_idx": 15,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#8200 - #8207",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.10425078868866,
+        "t": 461.2109762430191,
+        "r": 315.4100933074951,
+        "b": 472.67003762722015,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 14,
+       "end_row_offset_idx": 15,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis G01 backlash time (ms)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 14,
+       "end_row_offset_idx": 15,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 501.47140884399414,
+        "t": 461.98432898521423,
+        "r": 514.3760271072388,
+        "b": 473.66729974746704,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 14,
+       "end_row_offset_idx": 15,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "50",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.7620021700859,
+        "t": 474.466380238533,
+        "r": 166.52103519439697,
+        "b": 486.5501581430435,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 15,
+       "end_row_offset_idx": 16,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12000 - #12007",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.79718041419983,
+        "t": 474.79000413417816,
+        "r": 294.5161964893341,
+        "b": 486.4242480993271,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 15,
+       "end_row_offset_idx": 16,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis pitch mount (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 15,
+       "end_row_offset_idx": 16,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 492.03015184402466,
+        "t": 475.4610695838928,
+        "r": 522.4408297538757,
+        "b": 487.20188879966736,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 15,
+       "end_row_offset_idx": 16,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "10000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.92148333787918,
+        "t": 487.4899226427078,
+        "r": 168.69967103004456,
+        "b": 499.5181130170822,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 16,
+       "end_row_offset_idx": 17,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12010 - #12017",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.62680745124817,
+        "t": 487.7894949913025,
+        "r": 290.852525472641,
+        "b": 499.5476219654083,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 16,
+       "end_row_offset_idx": 17,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis pulse/mm (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 16,
+       "end_row_offset_idx": 17,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 497.35296154022217,
+        "t": 488.6574556827545,
+        "r": 518.4502487182617,
+        "b": 500.32124757766724,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 16,
+       "end_row_offset_idx": 17,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "1000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.53407949209213,
+        "t": 501.95047676563263,
+        "r": 167.52593183517456,
+        "b": 514.5482639074326,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 17,
+       "end_row_offset_idx": 18,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12020 - #12027",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 186.27782249450684,
+        "t": 502.0239567756653,
+        "r": 354.0758399963379,
+        "b": 524.8886749744415,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 17,
+       "end_row_offset_idx": 18,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis rapid travel acceleration (m/s/s) G00",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 17,
+       "end_row_offset_idx": 18,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 494.5505380630493,
+        "t": 503.51039695739746,
+        "r": 520.0378723144531,
+        "b": 515.2391319274902,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 17,
+       "end_row_offset_idx": 18,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "1000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.63993489742279,
+        "t": 529.249957203865,
+        "r": 167.0720558166504,
+        "b": 541.0565770864487,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 18,
+       "end_row_offset_idx": 19,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12030 - #12037",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 186.17502307891846,
+        "t": 528.8992412090302,
+        "r": 352.5685091018677,
+        "b": 540.5670092105865,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 18,
+       "end_row_offset_idx": 19,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis cutting acceleration (m/s/s) G01",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 18,
+       "end_row_offset_idx": 19,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 496.76443910598755,
+        "t": 530.0579254627228,
+        "r": 517.3823895454407,
+        "b": 541.7504076957703,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 18,
+       "end_row_offset_idx": 19,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "500",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.59149271249771,
+        "t": 542.3663144111633,
+        "r": 166.35842418670654,
+        "b": 554.0914630889893,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 19,
+       "end_row_offset_idx": 20,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12040 - #12047",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 186.84039187431335,
+        "t": 541.8186252117157,
+        "r": 326.4004030227661,
+        "b": 553.5446314811707,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 19,
+       "end_row_offset_idx": 20,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis max jog rapid (mm/min)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 19,
+       "end_row_offset_idx": 20,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 492.26275873184204,
+        "t": 543.2634332180023,
+        "r": 522.596182346344,
+        "b": 554.9902970790863,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 19,
+       "end_row_offset_idx": 20,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "12000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.2698963880539,
+        "t": 556.5222285985947,
+        "r": 166.57087349891663,
+        "b": 568.306005358696,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 20,
+       "end_row_offset_idx": 21,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12050 - #12057",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.24652552604675,
+        "t": 556.2929787635803,
+        "r": 314.1470305919647,
+        "b": 568.0762097835541,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 20,
+       "end_row_offset_idx": 21,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Max jog federate (mm/min)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 20,
+       "end_row_offset_idx": 21,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 495.3060040473938,
+        "t": 556.8318581581116,
+        "r": 519.3463253974915,
+        "b": 568.7090344429016,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 20,
+       "end_row_offset_idx": 21,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "6000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.254574239254,
+        "t": 570.0713187456131,
+        "r": 166.09097409248352,
+        "b": 581.8593055009842,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 21,
+       "end_row_offset_idx": 22,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12060 - #12067",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.0298421382904,
+        "t": 569.9720330238342,
+        "r": 324.49475955963135,
+        "b": 581.7868390083313,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 21,
+       "end_row_offset_idx": 22,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis max auto rapid (mm/min)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 21,
+       "end_row_offset_idx": 22,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 491.45133543014526,
+        "t": 570.124957203865,
+        "r": 523.1082100868225,
+        "b": 582.0715984106064,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 21,
+       "end_row_offset_idx": 22,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "12000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 87.92748838663101,
+        "t": 583.7254248857498,
+        "r": 166.68706440925598,
+        "b": 595.4805113077164,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 22,
+       "end_row_offset_idx": 23,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12070 - #12077",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.6880509853363,
+        "t": 583.4531005620956,
+        "r": 341.03584384918213,
+        "b": 595.2141901254654,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 22,
+       "end_row_offset_idx": 23,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis max auto federate (mm/min)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 22,
+       "end_row_offset_idx": 23,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 494.4342346191406,
+        "t": 583.4300625324249,
+        "r": 522.1126537322998,
+        "b": 595.2755858898163,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 22,
+       "end_row_offset_idx": 23,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "12000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.35489439964294,
+        "t": 598.4194388389587,
+        "r": 166.74575769901276,
+        "b": 610.0873627662659,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 23,
+       "end_row_offset_idx": 24,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12080 - #12087",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.26877903938293,
+        "t": 597.8981010913849,
+        "r": 348.3271188735962,
+        "b": 609.5795905590057,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 23,
+       "end_row_offset_idx": 24,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis loss pulse check window (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 23,
+       "end_row_offset_idx": 24,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 501.9308271408081,
+        "t": 598.1982971429825,
+        "r": 514.1375122070312,
+        "b": 610.0318921804428,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 23,
+       "end_row_offset_idx": 24,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.47399359941483,
+        "t": 611.2929027080536,
+        "r": 166.79183316230774,
+        "b": 622.953654050827,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 24,
+       "end_row_offset_idx": 25,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12090 - #12097",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 188.31841480731964,
+        "t": 610.9672127962112,
+        "r": 347.3902769088745,
+        "b": 622.645271897316,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 24,
+       "end_row_offset_idx": 25,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis homing federate 1 st (mm/min)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 24,
+       "end_row_offset_idx": 25,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 495.88619899749756,
+        "t": 611.1840275526047,
+        "r": 520.0240869522095,
+        "b": 622.8550699949265,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 24,
+       "end_row_offset_idx": 25,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "2000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 88.0614385008812,
+        "t": 625.0098469257355,
+        "r": 167.28028512001038,
+        "b": 636.7094237804413,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 25,
+       "end_row_offset_idx": 26,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12100 - #12107",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.22497534751892,
+        "t": 625.0953722000122,
+        "r": 350.5839796066284,
+        "b": 636.6656086444855,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 25,
+       "end_row_offset_idx": 26,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis homing federate 2 nd (mm/min)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 25,
+       "end_row_offset_idx": 26,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 499.33121728897095,
+        "t": 624.8153295516968,
+        "r": 516.748037815094,
+        "b": 636.451990365982,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 25,
+       "end_row_offset_idx": 26,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "200",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 87.87585657835007,
+        "t": 638.7442548274994,
+        "r": 166.65713047981262,
+        "b": 650.53107213974,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 26,
+       "end_row_offset_idx": 27,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12110 - #12117",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 186.75913560390472,
+        "t": 638.2292710542679,
+        "r": 347.74925899505615,
+        "b": 649.7419708967209,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 26,
+       "end_row_offset_idx": 27,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis homing federate 3 rd (mm/min)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 26,
+       "end_row_offset_idx": 27,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 499.68918657302856,
+        "t": 638.5335211753845,
+        "r": 516.1734414100647,
+        "b": 650.2121260166168,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 26,
+       "end_row_offset_idx": 27,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "100",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 87.91974818706512,
+        "t": 652.8432171344757,
+        "r": 166.06793987751007,
+        "b": 664.7713031768799,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 27,
+       "end_row_offset_idx": 28,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12120 - #12127",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.51476335525513,
+        "t": 653.0428410768509,
+        "r": 296.7122187614441,
+        "b": 664.6083997488022,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 27,
+       "end_row_offset_idx": 28,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis home offset (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 27,
+       "end_row_offset_idx": 28,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 500.8897228240967,
+        "t": 652.707249879837,
+        "r": 515.2218856811523,
+        "b": 664.4897792339325,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 27,
+       "end_row_offset_idx": 28,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 87.76558774709702,
+        "t": 665.7864577770233,
+        "r": 166.50605416297913,
+        "b": 677.4222609996796,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 28,
+       "end_row_offset_idx": 29,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12130 - #12137",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.73330354690552,
+        "t": 665.6934480667114,
+        "r": 329.26201915740967,
+        "b": 677.1692714691162,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 28,
+       "end_row_offset_idx": 29,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis MPG acceleration (mm/s/s)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 28,
+       "end_row_offset_idx": 29,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 496.93788146972656,
+        "t": 665.6907193660736,
+        "r": 519.2340450286865,
+        "b": 677.6942734718323,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 28,
+       "end_row_offset_idx": 29,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "1000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 87.63024151325226,
+        "t": 680.1109277009964,
+        "r": 166.62209033966064,
+        "b": 691.7466529607773,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 29,
+       "end_row_offset_idx": 30,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12140 - #12147",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.3393235206604,
+        "t": 679.3378868103027,
+        "r": 330.0891408920288,
+        "b": 690.9495215415955,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 29,
+       "end_row_offset_idx": 30,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis MPG max speed (mm/min)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 29,
+       "end_row_offset_idx": 30,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 496.17113399505615,
+        "t": 679.4464501142502,
+        "r": 519.8182067871094,
+        "b": 691.3700922727585,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 29,
+       "end_row_offset_idx": 30,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "8000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 87.50501626729965,
+        "t": 694.81125664711,
+        "r": 166.2980921268463,
+        "b": 706.932612657547,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 30,
+       "end_row_offset_idx": 31,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12150 - #12157",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 188.49781441688538,
+        "t": 694.5772510766983,
+        "r": 300.2068221569061,
+        "b": 706.6296099424362,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 30,
+       "end_row_offset_idx": 31,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis backlash G00 (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 30,
+       "end_row_offset_idx": 31,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 501.509557723999,
+        "t": 694.649366736412,
+        "r": 513.2052278518677,
+        "b": 706.9426308870316,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 30,
+       "end_row_offset_idx": 31,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 86.75322872400284,
+        "t": 708.1337866783142,
+        "r": 167.20328402519226,
+        "b": 720.3994519710541,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 31,
+       "end_row_offset_idx": 32,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#12160 - #12167",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 187.01735091209412,
+        "t": 708.14513027668,
+        "r": 295.9427282810211,
+        "b": 719.9360016584396,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 31,
+       "end_row_offset_idx": 32,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis backlash G01 (BLU)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 31,
+       "end_row_offset_idx": 32,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 501.8289279937744,
+        "t": 708.0808109045029,
+        "r": 512.6063804626465,
+        "b": 720.5390444993973,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 31,
+       "end_row_offset_idx": 32,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ]
+    ]
+   },
+   "annotations": []
+  }
+ ],
+ "key_value_items": [],
+ "form_items": [],
+ "pages": {
+  "168": {
+   "size": {
+    "width": 612.0,
+    "height": 792.0
+   },
+   "image": null,
+   "page_no": 168
+  }
+ }
+}

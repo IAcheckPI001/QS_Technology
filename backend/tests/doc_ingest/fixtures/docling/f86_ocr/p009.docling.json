@@ -1,0 +1,633 @@
+{
+ "schema_name": "DoclingDocument",
+ "version": "1.10.0",
+ "name": "F86_Operation Manual (English Version)",
+ "origin": {
+  "mimetype": "application/pdf",
+  "binary_hash": 5936226309445889319,
+  "filename": "F86_Operation Manual (English Version).pdf"
+ },
+ "furniture": {
+  "self_ref": "#/furniture",
+  "children": [],
+  "content_layer": "furniture",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "body": {
+  "self_ref": "#/body",
+  "children": [
+   {
+    "$ref": "#/pictures/0"
+   },
+   {
+    "$ref": "#/texts/3"
+   },
+   {
+    "$ref": "#/pictures/1"
+   },
+   {
+    "$ref": "#/pictures/2"
+   },
+   {
+    "$ref": "#/texts/14"
+   },
+   {
+    "$ref": "#/texts/15"
+   }
+  ],
+  "content_layer": "body",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "groups": [],
+ "texts": [
+  {
+   "self_ref": "#/texts/0",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "caption",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 202.0078125,
+      "t": 614.3588663736979,
+      "r": 409.9921875,
+      "b": 600.3870849609375,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      39
+     ]
+    }
+   ],
+   "orig": "Figure 1-5. Side view of F86 controller",
+   "text": "Figure 1-5. Side view of F86 controller"
+  },
+  {
+   "self_ref": "#/texts/1",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 518.3671875,
+      "t": 678.2298380533854,
+      "r": 527.9296875,
+      "b": 651.4838663736979,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "45 mm",
+   "text": "45 mm"
+  },
+  {
+   "self_ref": "#/texts/2",
+   "parent": {
+    "$ref": "#/pictures/0"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 509.6015625,
+      "t": 637.5120951334635,
+      "r": 517.171875,
+      "b": 630.7257995605469,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "4",
+   "text": "4"
+  },
+  {
+   "self_ref": "#/texts/3",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 280.5,
+      "t": 564.4596761067709,
+      "r": 313.96875,
+      "b": 553.6814371744791,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      6
+     ]
+    }
+   ],
+   "orig": "320 mm",
+   "text": "320 mm"
+  },
+  {
+   "self_ref": "#/texts/4",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "caption",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 160.96875,
+      "t": 196.80240885416663,
+      "r": 417.1640625,
+      "b": 183.22981770833337,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      47
+     ]
+    }
+   ],
+   "orig": "Figure 1-6. Details dimension of F86 controller",
+   "text": "Figure 1-6. Details dimension of F86 controller"
+  },
+  {
+   "self_ref": "#/texts/5",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 292.0546875,
+      "t": 528.9314371744792,
+      "r": 302.4140625,
+      "b": 518.5524088541667,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "O",
+   "text": "O"
+  },
+  {
+   "self_ref": "#/texts/6",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 498.84375,
+      "t": 503.383056640625,
+      "r": 524.7421875,
+      "b": 500.5887044270833,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      4
+     ]
+    }
+   ],
+   "orig": "4-M4",
+   "text": "4-M4"
+  },
+  {
+   "self_ref": "#/texts/7",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 104.390625,
+      "t": 492.20562744140625,
+      "r": 113.15625,
+      "b": 482.62497965494794,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "O",
+   "text": "O"
+  },
+  {
+   "self_ref": "#/texts/8",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 64.9453125,
+      "t": 403.9838460286458,
+      "r": 75.703125,
+      "b": 370.4515787760417,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      6
+     ]
+    }
+   ],
+   "orig": "320 mm",
+   "text": "320 mm"
+  },
+  {
+   "self_ref": "#/texts/9",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 537.890625,
+      "t": 404.383056640625,
+      "r": 546.65625,
+      "b": 372.0483805338542,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      6
+     ]
+    }
+   ],
+   "orig": "165 mm",
+   "text": "165 mm"
+  },
+  {
+   "self_ref": "#/texts/10",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 537.890625,
+      "t": 281.4314371744792,
+      "r": 546.65625,
+      "b": 252.68949381510413,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      5
+     ]
+    }
+   ],
+   "orig": "40 mm",
+   "text": "40 mm"
+  },
+  {
+   "self_ref": "#/texts/11",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 292.0546875,
+      "t": 257.08060709635413,
+      "r": 302.4140625,
+      "b": 246.70157877604163,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      1
+     ]
+    }
+   ],
+   "orig": "O",
+   "text": "O"
+  },
+  {
+   "self_ref": "#/texts/12",
+   "parent": {
+    "$ref": "#/pictures/1"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 280.8984375,
+      "t": 218.758056640625,
+      "r": 313.96875,
+      "b": 207.97981770833337,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      6
+     ]
+    }
+   ],
+   "orig": "316 mm",
+   "text": "316 mm"
+  },
+  {
+   "self_ref": "#/texts/13",
+   "parent": {
+    "$ref": "#/pictures/2"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "text",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 515.1796875,
+      "t": 173.649169921875,
+      "r": 526.734375,
+      "b": 103.39111328125,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      13
+     ]
+    }
+   ],
+   "orig": "QS TECHNOLOGY",
+   "text": "QS TECHNOLOGY"
+  },
+  {
+   "self_ref": "#/texts/14",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 34.265625,
+      "t": 27.54435221354163,
+      "r": 207.984375,
+      "b": 14.770100911458371,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      21
+     ]
+    }
+   ],
+   "orig": "QS TECHNOLOGY CO.,LTD",
+   "text": "QS TECHNOLOGY CO.,LTD"
+  },
+  {
+   "self_ref": "#/texts/15",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 513.5859375,
+      "t": 27.54435221354163,
+      "r": 559.0078125,
+      "b": 13.971761067708371,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      6
+     ]
+    }
+   ],
+   "orig": "PAGE 7",
+   "text": "PAGE 7"
+  }
+ ],
+ "pictures": [
+  {
+   "self_ref": "#/pictures/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/0"
+    },
+    {
+     "$ref": "#/texts/1"
+    },
+    {
+     "$ref": "#/texts/2"
+    }
+   ],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 88.09215545654297,
+      "t": 700.6894836425781,
+      "r": 526.9308471679688,
+      "b": 629.9014282226562,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [
+    {
+     "$ref": "#/texts/0"
+    }
+   ],
+   "references": [],
+   "footnotes": [],
+   "annotations": [],
+   "image": null
+  },
+  {
+   "self_ref": "#/pictures/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/4"
+    },
+    {
+     "$ref": "#/texts/5"
+    },
+    {
+     "$ref": "#/texts/6"
+    },
+    {
+     "$ref": "#/texts/7"
+    },
+    {
+     "$ref": "#/texts/8"
+    },
+    {
+     "$ref": "#/texts/9"
+    },
+    {
+     "$ref": "#/texts/10"
+    },
+    {
+     "$ref": "#/texts/11"
+    },
+    {
+     "$ref": "#/texts/12"
+    }
+   ],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 65.39152526855469,
+      "t": 561.8000030517578,
+      "r": 546.6926879882812,
+      "b": 209.48468017578125,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [
+    {
+     "$ref": "#/texts/4"
+    }
+   ],
+   "references": [],
+   "footnotes": [],
+   "annotations": [],
+   "image": null
+  },
+  {
+   "self_ref": "#/pictures/2",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [
+    {
+     "$ref": "#/texts/13"
+    }
+   ],
+   "content_layer": "body",
+   "label": "picture",
+   "prov": [
+    {
+     "page_no": 9,
+     "bbox": {
+      "l": 515.719482421875,
+      "t": 202.19940185546875,
+      "r": 591.9545288085938,
+      "b": 73.6697998046875,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [],
+   "references": [],
+   "footnotes": [],
+   "annotations": [],
+   "image": null
+  }
+ ],
+ "tables": [],
+ "key_value_items": [],
+ "form_items": [],
+ "pages": {
+  "9": {
+   "size": {
+    "width": 612.0,
+    "height": 792.0
+   },
+   "page_no": 9,
+   "image": null
+  }
+ }
+}

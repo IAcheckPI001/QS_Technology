@@ -8,7 +8,7 @@ tin vì tin key). Khách website ẩn danh do website backend tự quản lý.
 
 from typing import Literal
 
-from pydantic import AwareDatetime, Field, model_validator
+from pydantic import AwareDatetime, Field, SecretStr, model_validator
 
 from app.modules.chatbot.schemas.default import Branch, ChannelType, Identifier, SystemModel
 
@@ -27,6 +27,9 @@ class PrincipalContext(SystemModel):
     authn_method: AuthnMethod
     credential_id: Identifier | None = None   # key_id của service key (audit, thu hồi)
     acting_user_id: Identifier | None = None  # nhân viên mà service đang chat thay
+    # Credential CRM của nhân viên, chỉ để tool gọi API CRM trong request này. exclude:
+    # không có trong model_dump/JSON (snapshot, history, chat_sessions); SecretStr: repr che.
+    crm_access_token: SecretStr | None = Field(default=None, exclude=True, repr=False)
 
     @model_validator(mode="after")
     def _consistent_with_type(self) -> "PrincipalContext":
@@ -36,9 +39,17 @@ class PrincipalContext(SystemModel):
             raise ValueError("service principal cannot carry roles")
         return self
 
-    def acting_for(self, user_id: str) -> "PrincipalContext":
+    def acting_for(
+        self,
+        user_id: str,
+        crm_access_token: SecretStr | None = None,
+    ) -> "PrincipalContext":
         """Principal thay mặt `user_id`; dựng lại để validator chạy lại."""
-        return PrincipalContext(**{**self.model_dump(), "acting_user_id": user_id})
+        return PrincipalContext(**{
+            **self.model_dump(),
+            "acting_user_id": user_id,
+            "crm_access_token": crm_access_token,
+        })
 
 
 class RequestContext(SystemModel):

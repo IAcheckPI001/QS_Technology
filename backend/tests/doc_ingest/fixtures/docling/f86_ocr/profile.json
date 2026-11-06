@@ -1,0 +1,279 @@
+{
+ "ocr_mode": "auto",
+ "page_labels_present": false,
+ "pages": [
+  {
+   "page": 5,
+   "text_chars": 0,
+   "bad_char_ratio": 0.0,
+   "rotation": 0,
+   "bitmap_area_ratio": 0.346,
+   "vector_path_count": 1,
+   "page_label": null,
+   "text_layer": "missing",
+   "ocr": true,
+   "ocr_applied": true,
+   "docling_config": {
+    "do_ocr": true,
+    "engine": "rapidocr",
+    "backend": "torch",
+    "lang": [
+     "en"
+    ],
+    "force_full_page_ocr": true
+   }
+  },
+  {
+   "page": 6,
+   "text_chars": 0,
+   "bad_char_ratio": 0.0,
+   "rotation": 0,
+   "bitmap_area_ratio": 0.227,
+   "vector_path_count": 2,
+   "page_label": null,
+   "text_layer": "missing",
+   "ocr": true,
+   "ocr_applied": true,
+   "docling_config": {
+    "do_ocr": true,
+    "engine": "rapidocr",
+    "backend": "torch",
+    "lang": [
+     "en"
+    ],
+    "force_full_page_ocr": true
+   }
+  },
+  {
+   "page": 7,
+   "text_chars": 0,
+   "bad_char_ratio": 0.0,
+   "rotation": 0,
+   "bitmap_area_ratio": 0.425,
+   "vector_path_count": 1,
+   "page_label": null,
+   "text_layer": "missing",
+   "ocr": true,
+   "ocr_applied": true,
+   "docling_config": {
+    "do_ocr": true,
+    "engine": "rapidocr",
+    "backend": "torch",
+    "lang": [
+     "en"
+    ],
+    "force_full_page_ocr": true
+   }
+  },
+  {
+   "page": 8,
+   "text_chars": 0,
+   "bad_char_ratio": 0.0,
+   "rotation": 0,
+   "bitmap_area_ratio": 0.215,
+   "vector_path_count": 29,
+   "page_label": null,
+   "text_layer": "missing",
+   "ocr": true,
+   "ocr_applied": true,
+   "docling_config": {
+    "do_ocr": true,
+    "engine": "rapidocr",
+    "backend": "torch",
+    "lang": [
+     "en"
+    ],
+    "force_full_page_ocr": true
+   }
+  },
+  {
+   "page": 9,
+   "text_chars": 0,
+   "bad_char_ratio": 0.0,
+   "rotation": 0,
+   "bitmap_area_ratio": 0.075,
+   "vector_path_count": 1846,
+   "page_label": null,
+   "text_layer": "missing",
+   "ocr": true,
+   "ocr_applied": true,
+   "docling_config": {
+    "do_ocr": true,
+    "engine": "rapidocr",
+    "backend": "torch",
+    "lang": [
+     "en"
+    ],
+    "force_full_page_ocr": true
+   }
+  },
+  {
+   "page": 10,
+   "text_chars": 0,
+   "bad_char_ratio": 0.0,
+   "rotation": 0,
+   "bitmap_area_ratio": 0.066,
+   "vector_path_count": 1286,
+   "page_label": null,
+   "text_layer": "missing",
+   "ocr": true,
+   "ocr_applied": true,
+   "docling_config": {
+    "do_ocr": true,
+    "engine": "rapidocr",
+    "backend": "torch",
+    "lang": [
+     "en"
+    ],
+    "force_full_page_ocr": true
+   }
+  },
+  {
+   "page": 11,
+   "text_chars": 0,
+   "bad_char_ratio": 0.0,
+   "rotation": 0,
+   "bitmap_area_ratio": 0.234,
+   "vector_path_count": 2,
+   "page_label": null,
+   "text_layer": "missing",
+   "ocr": true,
+   "ocr_applied": true,
+   "docling_config": {
+    "do_ocr": true,
+    "engine": "rapidocr",
+    "backend": "torch",
+    "lang": [
+     "en"
+    ],
+    "force_full_page_ocr": true
+   }
+  },
+  {
+   "page": 12,
+   "text_chars": 0,
+   "bad_char_ratio": 0.0,
+   "rotation": 0,
+   "bitmap_area_ratio": 0.188,
+   "vector_path_count": 57,
+   "page_label": null,
+   "text_layer": "missing",
+   "ocr": true,
+   "ocr_applied": true,
+   "docling_config": {
+    "do_ocr": true,
+    "engine": "rapidocr",
+    "backend": "torch",
+    "lang": [
+     "en"
+    ],
+    "force_full_page_ocr": true
+   }
+  },
+  {
+   "page": 13,
+   "text_chars": 2,
+   "bad_char_ratio": 0.0,
+   "rotation": 0,
+   "bitmap_area_ratio": 0.149,
+   "vector_path_count": 922,
+   "page_label": null,
+   "text_layer": "missing",
+   "ocr": true,
+   "ocr_applied": true,
+   "docling_config": {
+    "do_ocr": true,
+    "engine": "rapidocr",
+    "backend": "torch",
+    "lang": [
+     "en"
+    ],
+    "force_full_page_ocr": true
+   }
+  },
+  {
+   "page": 14,
+   "text_chars": 0,
+   "bad_char_ratio": 0.0,
+   "rotation": 0,
+   "bitmap_area_ratio": 0.119,
+   "vector_path_count": 922,
+   "page_label": null,
+   "text_layer": "missing",
+   "ocr": true,
+   "ocr_applied": true,
+   "docling_config": {
+    "do_ocr": true,
+    "engine": "rapidocr",
+    "backend": "torch",
+    "lang": [
+     "en"
+    ],
+    "force_full_page_ocr": true
+   }
+  },
+  {
+   "page": 15,
+   "text_chars": 0,
+   "bad_char_ratio": 0.0,
+   "rotation": 0,
+   "bitmap_area_ratio": 0.216,
+   "vector_path_count": 42,
+   "page_label": null,
+   "text_layer": "missing",
+   "ocr": true,
+   "ocr_applied": true,
+   "docling_config": {
+    "do_ocr": true,
+    "engine": "rapidocr",
+    "backend": "torch",
+    "lang": [
+     "en"
+    ],
+    "force_full_page_ocr": true
+   }
+  },
+  {
+   "page": 16,
+   "text_chars": 0,
+   "bad_char_ratio": 0.0,
+   "rotation": 0,
+   "bitmap_area_ratio": 0.057,
+   "vector_path_count": 133,
+   "page_label": null,
+   "text_layer": "missing",
+   "ocr": true,
+   "ocr_applied": true,
+   "docling_config": {
+    "do_ocr": true,
+    "engine": "rapidocr",
+    "backend": "torch",
+    "lang": [
+     "en"
+    ],
+    "force_full_page_ocr": true
+   }
+  },
+  {
+   "page": 17,
+   "text_chars": 0,
+   "bad_char_ratio": 0.0,
+   "rotation": 0,
+   "bitmap_area_ratio": 0.085,
+   "vector_path_count": 152,
+   "page_label": null,
+   "text_layer": "missing",
+   "ocr": true,
+   "ocr_applied": true,
+   "docling_config": {
+    "do_ocr": true,
+    "engine": "rapidocr",
+    "backend": "torch",
+    "lang": [
+     "en"
+    ],
+    "force_full_page_ocr": true
+   }
+  }
+ ]
+}

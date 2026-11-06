@@ -1,0 +1,3831 @@
+{
+ "schema_name": "DoclingDocument",
+ "version": "1.10.0",
+ "name": "F54_Operation Manual (English Version)_V.02",
+ "origin": {
+  "mimetype": "application/pdf",
+  "binary_hash": 10649216247643491873,
+  "filename": "F54_Operation Manual (English Version)_V.02.pdf"
+ },
+ "furniture": {
+  "self_ref": "#/furniture",
+  "children": [],
+  "content_layer": "furniture",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "body": {
+  "self_ref": "#/body",
+  "children": [
+   {
+    "$ref": "#/texts/0"
+   },
+   {
+    "$ref": "#/texts/1"
+   },
+   {
+    "$ref": "#/texts/2"
+   },
+   {
+    "$ref": "#/texts/3"
+   },
+   {
+    "$ref": "#/tables/0"
+   },
+   {
+    "$ref": "#/texts/4"
+   },
+   {
+    "$ref": "#/texts/5"
+   }
+  ],
+  "content_layer": "body",
+  "name": "_root_",
+  "label": "unspecified"
+ },
+ "groups": [],
+ "texts": [
+  {
+   "self_ref": "#/texts/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 167,
+     "bbox": {
+      "l": 85.104,
+      "t": 756.5880000000001,
+      "r": 142.26,
+      "b": 741.936,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      10
+     ]
+    }
+   ],
+   "orig": "Model: F54",
+   "text": "Model: F54"
+  },
+  {
+   "self_ref": "#/texts/1",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_header",
+   "prov": [
+    {
+     "page_no": 167,
+     "bbox": {
+      "l": 344.71,
+      "t": 756.5880000000001,
+      "r": 553.216,
+      "b": 741.936,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      39
+     ]
+    }
+   ],
+   "orig": "Operation Manual (English Version)_V.01",
+   "text": "Operation Manual (English Version)_V.01"
+  },
+  {
+   "self_ref": "#/texts/2",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 167,
+     "bbox": {
+      "l": 85.104,
+      "t": 724.76644,
+      "r": 276.9381200000001,
+      "b": 705.27928,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      23
+     ]
+    }
+   ],
+   "orig": "PART 5 PARAMETERS TABLE",
+   "text": "PART 5 PARAMETERS TABLE",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/3",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "section_header",
+   "prov": [
+    {
+     "page_no": 167,
+     "bbox": {
+      "l": 85.104,
+      "t": 694.048,
+      "r": 186.428,
+      "b": 679.396,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      19
+     ]
+    }
+   ],
+   "orig": "5.1 Axis parameters",
+   "text": "5.1 Axis parameters",
+   "level": 1
+  },
+  {
+   "self_ref": "#/texts/4",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 167,
+     "bbox": {
+      "l": 85.104,
+      "t": 49.908000000000015,
+      "r": 175.224,
+      "b": 35.25599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      14
+     ]
+    }
+   ],
+   "orig": "www.qstcnc.com",
+   "text": "www.qstcnc.com",
+   "hyperlink": "http://www.qstcnc.com/"
+  },
+  {
+   "self_ref": "#/texts/5",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "furniture",
+   "label": "page_footer",
+   "prov": [
+    {
+     "page_no": 167,
+     "bbox": {
+      "l": 500.86,
+      "t": 49.908000000000015,
+      "r": 553.096,
+      "b": 35.25599999999997,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      10
+     ]
+    }
+   ],
+   "orig": "Page | 160",
+   "text": "Page | 160"
+  }
+ ],
+ "pictures": [],
+ "tables": [
+  {
+   "self_ref": "#/tables/0",
+   "parent": {
+    "$ref": "#/body"
+   },
+   "children": [],
+   "content_layer": "body",
+   "label": "table",
+   "prov": [
+    {
+     "page_no": 167,
+     "bbox": {
+      "l": 84.0931625366211,
+      "t": 673.0436019897461,
+      "r": 556.3799438476562,
+      "b": 101.036865234375,
+      "coord_origin": "BOTTOMLEFT"
+     },
+     "charspan": [
+      0,
+      0
+     ]
+    }
+   ],
+   "captions": [],
+   "references": [],
+   "footnotes": [],
+   "data": {
+    "table_cells": [
+     {
+      "bbox": {
+       "l": 108.62,
+       "t": 118.77343999999994,
+       "r": 160.81712,
+       "b": 132.25328000000002,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "Parameter",
+      "column_header": true,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 250.85,
+       "t": 118.77343999999994,
+       "r": 309.41720000000015,
+       "b": 132.25328000000002,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Description",
+      "column_header": true,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 391.39,
+       "t": 118.77343999999994,
+       "r": 447.79336,
+       "b": 132.25328000000002,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "Work range",
+      "column_header": true,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 490.9,
+       "t": 118.77343999999994,
+       "r": 527.92816,
+       "b": 132.25328000000002,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 0,
+      "end_row_offset_idx": 1,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "Default",
+      "column_header": true,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 142.70000000000005,
+       "r": 154.51664000000005,
+       "b": 153.74,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#0000 - #0007",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 142.70000000000005,
+       "r": 280.91936,
+       "b": 153.74,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis enable(AX.ENA)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 394.99,
+       "t": 135.98000000000002,
+       "r": 444.16792000000004,
+       "b": 160.46000000000004,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0:Disable - 1:Enable",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 142.70000000000005,
+       "r": 512.33728,
+       "b": 153.74,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 1,
+      "end_row_offset_idx": 2,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 169.70000000000005,
+       "r": 154.51664000000005,
+       "b": 180.74,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#0008 - #0015",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 169.70000000000005,
+       "r": 287.15695999999997,
+       "b": 180.74,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis direction(AX.DIR)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 394.99,
+       "t": 162.98000000000002,
+       "r": 444.16792000000004,
+       "b": 187.46000000000004,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0:Disable - 1:Enable",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 169.70000000000005,
+       "r": 512.33728,
+       "b": 180.74,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 2,
+      "end_row_offset_idx": 3,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 196.82000000000005,
+       "r": 154.51664000000005,
+       "b": 207.86,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#0016 - #0023",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 196.82000000000005,
+       "r": 362.03023999999994,
+       "b": 207.86,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis soft limit disable feature(AX.SODI)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 394.99,
+       "t": 190.10000000000002,
+       "r": 444.16792000000004,
+       "b": 214.58000000000004,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0:Disable - 1:Enable",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 196.82000000000005,
+       "r": 512.33728,
+       "b": 207.86,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 3,
+      "end_row_offset_idx": 4,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 223.94000000000005,
+       "r": 154.51664000000005,
+       "b": 234.98000000000002,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#0024 - #0031",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 223.94000000000005,
+       "r": 319.41583999999995,
+       "b": 234.98000000000002,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis home direction(AX.HDR)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 385.99,
+       "t": 217.22000000000003,
+       "r": 453.13912000000005,
+       "b": 241.70000000000005,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0: Forward - 1: Reverse",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 223.94000000000005,
+       "r": 512.33728,
+       "b": 234.98000000000002,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 4,
+      "end_row_offset_idx": 5,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 251.09000000000003,
+       "r": 154.51664000000005,
+       "b": 262.13,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#0032 - #0039",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 251.09000000000003,
+       "r": 310.27472000000006,
+       "b": 262.13,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis home offset(AX.HDRF)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 394.99,
+       "t": 244.37,
+       "r": 444.16792000000004,
+       "b": 268.85,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0:Disable - 1:Enable",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 251.09000000000003,
+       "r": 512.33728,
+       "b": 262.13,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 5,
+      "end_row_offset_idx": 6,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 278.21000000000004,
+       "r": 154.51664000000005,
+       "b": 289.25,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#0040 - #0047",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 278.21000000000004,
+       "r": 299.01392,
+       "b": 289.25,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis home fast(AX.HFAS)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 394.99,
+       "t": 271.49,
+       "r": 444.16792000000004,
+       "b": 295.96999999999997,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0:Disable - 1:Enable",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 278.21000000000004,
+       "r": 512.33728,
+       "b": 289.25,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 6,
+      "end_row_offset_idx": 7,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "1",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 305.33000000000004,
+       "r": 154.51664000000005,
+       "b": 316.37,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#0056 - #0063",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 305.33000000000004,
+       "r": 301.17775999999986,
+       "b": 316.37,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "MPG direction(MPG.DIR)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 385.99,
+       "t": 298.61,
+       "r": 453.13912000000005,
+       "b": 323.09,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0: Forward - 1: Reverse",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 305.33000000000004,
+       "r": 512.33728,
+       "b": 316.37,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 7,
+      "end_row_offset_idx": 8,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 332.45000000000005,
+       "r": 154.51664000000005,
+       "b": 343.49,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#0088 - #0095",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 332.45000000000005,
+       "r": 295.7791999999999,
+       "b": 343.49,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis pulse logic(AX.PLG)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 383.71,
+       "t": 325.73,
+       "r": 455.30870000000004,
+       "b": 350.21,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0: Low level - 1: High level",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 332.45000000000005,
+       "r": 512.33728,
+       "b": 343.49,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 8,
+      "end_row_offset_idx": 9,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 359.57000000000005,
+       "r": 154.51664000000005,
+       "b": 370.61,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 9,
+      "end_row_offset_idx": 10,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#0128 - #0135",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 359.57000000000005,
+       "r": 311.9748799999999,
+       "b": 370.61,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 9,
+      "end_row_offset_idx": 10,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Encoder direction(ENC.DIR)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 394.99,
+       "t": 352.85,
+       "r": 444.16792000000004,
+       "b": 377.33,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 9,
+      "end_row_offset_idx": 10,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0:Disable - 1:Enable",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 359.57000000000005,
+       "r": 512.33728,
+       "b": 370.61,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 9,
+      "end_row_offset_idx": 10,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 379.97,
+       "r": 118.40207999999998,
+       "b": 391.01,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 10,
+      "end_row_offset_idx": 11,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4000",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 379.97,
+       "r": 356.58752000000004,
+       "b": 391.01,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 10,
+      "end_row_offset_idx": 11,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Motion corner velocity control model",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 408.79,
+       "t": 379.97,
+       "r": 430.46728,
+       "b": 391.01,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 10,
+      "end_row_offset_idx": 11,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0 - 5",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 379.97,
+       "r": 512.33728,
+       "b": 391.01,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 10,
+      "end_row_offset_idx": 11,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 393.65000000000003,
+       "r": 118.40207999999998,
+       "b": 404.69,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 11,
+      "end_row_offset_idx": 12,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4001",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 393.65000000000003,
+       "r": 335.61152000000016,
+       "b": 404.69,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 11,
+      "end_row_offset_idx": 12,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Motion corner smooth max level",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 404.23,
+       "t": 393.65000000000003,
+       "r": 434.89768000000004,
+       "b": 404.69,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 11,
+      "end_row_offset_idx": 12,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "1 - 100",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 393.65000000000003,
+       "r": 512.33728,
+       "b": 404.69,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 11,
+      "end_row_offset_idx": 12,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "1",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 407.23,
+       "r": 118.40207999999998,
+       "b": 418.27,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 12,
+      "end_row_offset_idx": 13,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4002",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 407.23,
+       "r": 334.0548800000001,
+       "b": 418.27,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 12,
+      "end_row_offset_idx": 13,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Motion corner smooth min level",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 404.23,
+       "t": 407.23,
+       "r": 434.89768000000004,
+       "b": 418.27,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 12,
+      "end_row_offset_idx": 13,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "1 - 100",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 407.23,
+       "r": 512.33728,
+       "b": 418.27,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 12,
+      "end_row_offset_idx": 13,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "1",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 420.91,
+       "r": 118.40207999999998,
+       "b": 431.95,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 13,
+      "end_row_offset_idx": 14,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4003",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 420.91,
+       "r": 346.62944000000005,
+       "b": 431.95,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 13,
+      "end_row_offset_idx": 14,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Motion ARC refill buffer percent(%)",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 406.99,
+       "t": 420.91,
+       "r": 432.1472600000001,
+       "b": 431.95,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 13,
+      "end_row_offset_idx": 14,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0 - 50",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 420.91,
+       "r": 512.33728,
+       "b": 431.95,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 13,
+      "end_row_offset_idx": 14,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 434.59000000000003,
+       "r": 154.51664000000005,
+       "b": 445.63,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 14,
+      "end_row_offset_idx": 15,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4010 - #4017",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 434.59000000000003,
+       "r": 282.13375999999994,
+       "b": 445.63,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 14,
+      "end_row_offset_idx": 15,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis zero digit visible",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 398.71,
+       "t": 434.59000000000003,
+       "r": 440.5280800000001,
+       "b": 445.63,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 14,
+      "end_row_offset_idx": 15,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0 - 99999",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 434.59000000000003,
+       "r": 512.33728,
+       "b": 445.63,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 14,
+      "end_row_offset_idx": 15,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 461.71000000000004,
+       "r": 154.51664000000005,
+       "b": 472.75,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 15,
+      "end_row_offset_idx": 16,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4020 - #4027",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 461.71000000000004,
+       "r": 266.4900799999999,
+       "b": 472.75,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 15,
+      "end_row_offset_idx": 16,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis homing type",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 396.19,
+       "t": 448.27000000000004,
+       "r": 442.93336000000005,
+       "b": 486.19,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 15,
+      "end_row_offset_idx": 16,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0: DOG on 1: DOG off 2: INDEX",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 461.71000000000004,
+       "r": 512.33728,
+       "b": 472.75,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 15,
+      "end_row_offset_idx": 16,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 488.83000000000004,
+       "r": 118.40207999999998,
+       "b": 499.87,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 16,
+      "end_row_offset_idx": 17,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4030",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 488.83000000000004,
+       "r": 314.02832000000006,
+       "b": 499.87,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 16,
+      "end_row_offset_idx": 17,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis home search dog times",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 408.79,
+       "t": 488.83000000000004,
+       "r": 430.46728,
+       "b": 499.87,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 16,
+      "end_row_offset_idx": 17,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0 - 5",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 488.83000000000004,
+       "r": 512.33728,
+       "b": 499.87,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 16,
+      "end_row_offset_idx": 17,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 502.51000000000005,
+       "r": 154.51664000000005,
+       "b": 513.55,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 17,
+      "end_row_offset_idx": 18,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4040 - #4047",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 502.51000000000005,
+       "r": 235.55599999999995,
+       "b": 513.55,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 17,
+      "end_row_offset_idx": 18,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis name",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 403.15,
+       "t": 502.51000000000005,
+       "r": 435.98726000000005,
+       "b": 513.55,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 17,
+      "end_row_offset_idx": 18,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "65 - 90",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 502.51000000000005,
+       "r": 512.33728,
+       "b": 513.55,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 17,
+      "end_row_offset_idx": 18,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 536.35,
+       "r": 154.51664000000005,
+       "b": 547.39,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 18,
+      "end_row_offset_idx": 19,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4050 - #4057",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 536.35,
+       "r": 262.18448,
+       "b": 547.39,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 18,
+      "end_row_offset_idx": 19,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis sensor type",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 391.39,
+       "t": 516.19,
+       "r": 447.83752,
+       "b": 567.55,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 18,
+      "end_row_offset_idx": 19,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0: NU type 1: ENC type 2: RULE type 3: ABS type",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 536.35,
+       "r": 512.33728,
+       "b": 547.39,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 18,
+      "end_row_offset_idx": 19,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 583.66,
+       "r": 154.51664000000005,
+       "b": 594.7,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 19,
+      "end_row_offset_idx": 20,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4060 - #4067",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 583.66,
+       "r": 251.87311999999994,
+       "b": 594.7,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 19,
+      "end_row_offset_idx": 20,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis pulse out",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 382.15,
+       "t": 570.19,
+       "r": 457.1005600000001,
+       "b": 608.14,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 19,
+      "end_row_offset_idx": 20,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0: Pul/Dir type 1: CW/CCW type 2: A/B type",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 583.66,
+       "r": 512.33728,
+       "b": 594.7,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 19,
+      "end_row_offset_idx": 20,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 624.22,
+       "r": 154.51664000000005,
+       "b": 635.26,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 20,
+      "end_row_offset_idx": 21,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4070 - #4077",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 624.22,
+       "r": 248.93647999999996,
+       "b": 635.26,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 20,
+      "end_row_offset_idx": 21,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis backlash",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 385.15,
+       "t": 610.78,
+       "r": 454.1058400000001,
+       "b": 648.5799999999999,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 20,
+      "end_row_offset_idx": 21,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0: Disable 1: Lin GW type 2: Box GW type",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 624.22,
+       "r": 512.33728,
+       "b": 635.26,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 20,
+      "end_row_offset_idx": 21,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 90.504,
+       "t": 664.66,
+       "r": 154.51664000000005,
+       "b": 675.7,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 21,
+      "end_row_offset_idx": 22,
+      "start_col_offset_idx": 0,
+      "end_col_offset_idx": 1,
+      "text": "#4080 - #4087",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 189.74,
+       "t": 664.66,
+       "r": 267.96943999999996,
+       "b": 675.7,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 21,
+      "end_row_offset_idx": 22,
+      "start_col_offset_idx": 1,
+      "end_col_offset_idx": 2,
+      "text": "Axis alarm sensor",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 395.71,
+       "t": 651.22,
+       "r": 443.53528000000006,
+       "b": 689.14,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 21,
+      "end_row_offset_idx": 22,
+      "start_col_offset_idx": 2,
+      "end_col_offset_idx": 3,
+      "text": "0: Disable 1: NC type 2: NO type",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     },
+     {
+      "bbox": {
+       "l": 506.74,
+       "t": 664.66,
+       "r": 512.33728,
+       "b": 675.7,
+       "coord_origin": "TOPLEFT"
+      },
+      "row_span": 1,
+      "col_span": 1,
+      "start_row_offset_idx": 21,
+      "end_row_offset_idx": 22,
+      "start_col_offset_idx": 3,
+      "end_col_offset_idx": 4,
+      "text": "0",
+      "column_header": false,
+      "row_header": false,
+      "row_section": false,
+      "fillable": false
+     }
+    ],
+    "num_rows": 22,
+    "num_cols": 4,
+    "orientation": "rot_0",
+    "grid": [
+     [
+      {
+       "bbox": {
+        "l": 108.62,
+        "t": 118.77343999999994,
+        "r": 160.81712,
+        "b": 132.25328000000002,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "Parameter",
+       "column_header": true,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 250.85,
+        "t": 118.77343999999994,
+        "r": 309.41720000000015,
+        "b": 132.25328000000002,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Description",
+       "column_header": true,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 391.39,
+        "t": 118.77343999999994,
+        "r": 447.79336,
+        "b": 132.25328000000002,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "Work range",
+       "column_header": true,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 490.9,
+        "t": 118.77343999999994,
+        "r": 527.92816,
+        "b": 132.25328000000002,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 0,
+       "end_row_offset_idx": 1,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "Default",
+       "column_header": true,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 142.70000000000005,
+        "r": 154.51664000000005,
+        "b": 153.74,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#0000 - #0007",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 142.70000000000005,
+        "r": 280.91936,
+        "b": 153.74,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis enable(AX.ENA)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 394.99,
+        "t": 135.98000000000002,
+        "r": 444.16792000000004,
+        "b": 160.46000000000004,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0:Disable - 1:Enable",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 142.70000000000005,
+        "r": 512.33728,
+        "b": 153.74,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 1,
+       "end_row_offset_idx": 2,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 169.70000000000005,
+        "r": 154.51664000000005,
+        "b": 180.74,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#0008 - #0015",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 169.70000000000005,
+        "r": 287.15695999999997,
+        "b": 180.74,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis direction(AX.DIR)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 394.99,
+        "t": 162.98000000000002,
+        "r": 444.16792000000004,
+        "b": 187.46000000000004,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0:Disable - 1:Enable",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 169.70000000000005,
+        "r": 512.33728,
+        "b": 180.74,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 2,
+       "end_row_offset_idx": 3,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 196.82000000000005,
+        "r": 154.51664000000005,
+        "b": 207.86,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#0016 - #0023",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 196.82000000000005,
+        "r": 362.03023999999994,
+        "b": 207.86,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis soft limit disable feature(AX.SODI)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 394.99,
+        "t": 190.10000000000002,
+        "r": 444.16792000000004,
+        "b": 214.58000000000004,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0:Disable - 1:Enable",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 196.82000000000005,
+        "r": 512.33728,
+        "b": 207.86,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 3,
+       "end_row_offset_idx": 4,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 223.94000000000005,
+        "r": 154.51664000000005,
+        "b": 234.98000000000002,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#0024 - #0031",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 223.94000000000005,
+        "r": 319.41583999999995,
+        "b": 234.98000000000002,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis home direction(AX.HDR)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 385.99,
+        "t": 217.22000000000003,
+        "r": 453.13912000000005,
+        "b": 241.70000000000005,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0: Forward - 1: Reverse",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 223.94000000000005,
+        "r": 512.33728,
+        "b": 234.98000000000002,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 4,
+       "end_row_offset_idx": 5,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 251.09000000000003,
+        "r": 154.51664000000005,
+        "b": 262.13,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#0032 - #0039",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 251.09000000000003,
+        "r": 310.27472000000006,
+        "b": 262.13,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis home offset(AX.HDRF)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 394.99,
+        "t": 244.37,
+        "r": 444.16792000000004,
+        "b": 268.85,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0:Disable - 1:Enable",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 251.09000000000003,
+        "r": 512.33728,
+        "b": 262.13,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 5,
+       "end_row_offset_idx": 6,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 278.21000000000004,
+        "r": 154.51664000000005,
+        "b": 289.25,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#0040 - #0047",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 278.21000000000004,
+        "r": 299.01392,
+        "b": 289.25,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis home fast(AX.HFAS)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 394.99,
+        "t": 271.49,
+        "r": 444.16792000000004,
+        "b": 295.96999999999997,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0:Disable - 1:Enable",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 278.21000000000004,
+        "r": 512.33728,
+        "b": 289.25,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 6,
+       "end_row_offset_idx": 7,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "1",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 305.33000000000004,
+        "r": 154.51664000000005,
+        "b": 316.37,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#0056 - #0063",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 305.33000000000004,
+        "r": 301.17775999999986,
+        "b": 316.37,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "MPG direction(MPG.DIR)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 385.99,
+        "t": 298.61,
+        "r": 453.13912000000005,
+        "b": 323.09,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0: Forward - 1: Reverse",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 305.33000000000004,
+        "r": 512.33728,
+        "b": 316.37,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 7,
+       "end_row_offset_idx": 8,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 332.45000000000005,
+        "r": 154.51664000000005,
+        "b": 343.49,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#0088 - #0095",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 332.45000000000005,
+        "r": 295.7791999999999,
+        "b": 343.49,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis pulse logic(AX.PLG)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 383.71,
+        "t": 325.73,
+        "r": 455.30870000000004,
+        "b": 350.21,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0: Low level - 1: High level",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 332.45000000000005,
+        "r": 512.33728,
+        "b": 343.49,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 8,
+       "end_row_offset_idx": 9,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 359.57000000000005,
+        "r": 154.51664000000005,
+        "b": 370.61,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 9,
+       "end_row_offset_idx": 10,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#0128 - #0135",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 359.57000000000005,
+        "r": 311.9748799999999,
+        "b": 370.61,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 9,
+       "end_row_offset_idx": 10,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Encoder direction(ENC.DIR)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 394.99,
+        "t": 352.85,
+        "r": 444.16792000000004,
+        "b": 377.33,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 9,
+       "end_row_offset_idx": 10,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0:Disable - 1:Enable",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 359.57000000000005,
+        "r": 512.33728,
+        "b": 370.61,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 9,
+       "end_row_offset_idx": 10,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 379.97,
+        "r": 118.40207999999998,
+        "b": 391.01,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 10,
+       "end_row_offset_idx": 11,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4000",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 379.97,
+        "r": 356.58752000000004,
+        "b": 391.01,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 10,
+       "end_row_offset_idx": 11,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Motion corner velocity control model",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 408.79,
+        "t": 379.97,
+        "r": 430.46728,
+        "b": 391.01,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 10,
+       "end_row_offset_idx": 11,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0 - 5",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 379.97,
+        "r": 512.33728,
+        "b": 391.01,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 10,
+       "end_row_offset_idx": 11,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 393.65000000000003,
+        "r": 118.40207999999998,
+        "b": 404.69,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 11,
+       "end_row_offset_idx": 12,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4001",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 393.65000000000003,
+        "r": 335.61152000000016,
+        "b": 404.69,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 11,
+       "end_row_offset_idx": 12,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Motion corner smooth max level",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 404.23,
+        "t": 393.65000000000003,
+        "r": 434.89768000000004,
+        "b": 404.69,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 11,
+       "end_row_offset_idx": 12,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "1 - 100",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 393.65000000000003,
+        "r": 512.33728,
+        "b": 404.69,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 11,
+       "end_row_offset_idx": 12,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "1",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 407.23,
+        "r": 118.40207999999998,
+        "b": 418.27,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 12,
+       "end_row_offset_idx": 13,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4002",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 407.23,
+        "r": 334.0548800000001,
+        "b": 418.27,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 12,
+       "end_row_offset_idx": 13,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Motion corner smooth min level",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 404.23,
+        "t": 407.23,
+        "r": 434.89768000000004,
+        "b": 418.27,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 12,
+       "end_row_offset_idx": 13,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "1 - 100",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 407.23,
+        "r": 512.33728,
+        "b": 418.27,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 12,
+       "end_row_offset_idx": 13,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "1",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 420.91,
+        "r": 118.40207999999998,
+        "b": 431.95,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 13,
+       "end_row_offset_idx": 14,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4003",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 420.91,
+        "r": 346.62944000000005,
+        "b": 431.95,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 13,
+       "end_row_offset_idx": 14,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Motion ARC refill buffer percent(%)",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 406.99,
+        "t": 420.91,
+        "r": 432.1472600000001,
+        "b": 431.95,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 13,
+       "end_row_offset_idx": 14,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0 - 50",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 420.91,
+        "r": 512.33728,
+        "b": 431.95,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 13,
+       "end_row_offset_idx": 14,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 434.59000000000003,
+        "r": 154.51664000000005,
+        "b": 445.63,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 14,
+       "end_row_offset_idx": 15,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4010 - #4017",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 434.59000000000003,
+        "r": 282.13375999999994,
+        "b": 445.63,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 14,
+       "end_row_offset_idx": 15,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis zero digit visible",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 398.71,
+        "t": 434.59000000000003,
+        "r": 440.5280800000001,
+        "b": 445.63,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 14,
+       "end_row_offset_idx": 15,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0 - 99999",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 434.59000000000003,
+        "r": 512.33728,
+        "b": 445.63,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 14,
+       "end_row_offset_idx": 15,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 461.71000000000004,
+        "r": 154.51664000000005,
+        "b": 472.75,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 15,
+       "end_row_offset_idx": 16,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4020 - #4027",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 461.71000000000004,
+        "r": 266.4900799999999,
+        "b": 472.75,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 15,
+       "end_row_offset_idx": 16,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis homing type",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 396.19,
+        "t": 448.27000000000004,
+        "r": 442.93336000000005,
+        "b": 486.19,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 15,
+       "end_row_offset_idx": 16,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0: DOG on 1: DOG off 2: INDEX",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 461.71000000000004,
+        "r": 512.33728,
+        "b": 472.75,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 15,
+       "end_row_offset_idx": 16,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 488.83000000000004,
+        "r": 118.40207999999998,
+        "b": 499.87,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 16,
+       "end_row_offset_idx": 17,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4030",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 488.83000000000004,
+        "r": 314.02832000000006,
+        "b": 499.87,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 16,
+       "end_row_offset_idx": 17,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis home search dog times",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 408.79,
+        "t": 488.83000000000004,
+        "r": 430.46728,
+        "b": 499.87,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 16,
+       "end_row_offset_idx": 17,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0 - 5",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 488.83000000000004,
+        "r": 512.33728,
+        "b": 499.87,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 16,
+       "end_row_offset_idx": 17,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 502.51000000000005,
+        "r": 154.51664000000005,
+        "b": 513.55,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 17,
+       "end_row_offset_idx": 18,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4040 - #4047",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 502.51000000000005,
+        "r": 235.55599999999995,
+        "b": 513.55,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 17,
+       "end_row_offset_idx": 18,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis name",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 403.15,
+        "t": 502.51000000000005,
+        "r": 435.98726000000005,
+        "b": 513.55,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 17,
+       "end_row_offset_idx": 18,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "65 - 90",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 502.51000000000005,
+        "r": 512.33728,
+        "b": 513.55,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 17,
+       "end_row_offset_idx": 18,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 536.35,
+        "r": 154.51664000000005,
+        "b": 547.39,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 18,
+       "end_row_offset_idx": 19,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4050 - #4057",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 536.35,
+        "r": 262.18448,
+        "b": 547.39,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 18,
+       "end_row_offset_idx": 19,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis sensor type",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 391.39,
+        "t": 516.19,
+        "r": 447.83752,
+        "b": 567.55,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 18,
+       "end_row_offset_idx": 19,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0: NU type 1: ENC type 2: RULE type 3: ABS type",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 536.35,
+        "r": 512.33728,
+        "b": 547.39,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 18,
+       "end_row_offset_idx": 19,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 583.66,
+        "r": 154.51664000000005,
+        "b": 594.7,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 19,
+       "end_row_offset_idx": 20,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4060 - #4067",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 583.66,
+        "r": 251.87311999999994,
+        "b": 594.7,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 19,
+       "end_row_offset_idx": 20,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis pulse out",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 382.15,
+        "t": 570.19,
+        "r": 457.1005600000001,
+        "b": 608.14,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 19,
+       "end_row_offset_idx": 20,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0: Pul/Dir type 1: CW/CCW type 2: A/B type",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 583.66,
+        "r": 512.33728,
+        "b": 594.7,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 19,
+       "end_row_offset_idx": 20,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 624.22,
+        "r": 154.51664000000005,
+        "b": 635.26,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 20,
+       "end_row_offset_idx": 21,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4070 - #4077",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 624.22,
+        "r": 248.93647999999996,
+        "b": 635.26,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 20,
+       "end_row_offset_idx": 21,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis backlash",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 385.15,
+        "t": 610.78,
+        "r": 454.1058400000001,
+        "b": 648.5799999999999,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 20,
+       "end_row_offset_idx": 21,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0: Disable 1: Lin GW type 2: Box GW type",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 624.22,
+        "r": 512.33728,
+        "b": 635.26,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 20,
+       "end_row_offset_idx": 21,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ],
+     [
+      {
+       "bbox": {
+        "l": 90.504,
+        "t": 664.66,
+        "r": 154.51664000000005,
+        "b": 675.7,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 21,
+       "end_row_offset_idx": 22,
+       "start_col_offset_idx": 0,
+       "end_col_offset_idx": 1,
+       "text": "#4080 - #4087",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 189.74,
+        "t": 664.66,
+        "r": 267.96943999999996,
+        "b": 675.7,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 21,
+       "end_row_offset_idx": 22,
+       "start_col_offset_idx": 1,
+       "end_col_offset_idx": 2,
+       "text": "Axis alarm sensor",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 395.71,
+        "t": 651.22,
+        "r": 443.53528000000006,
+        "b": 689.14,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 21,
+       "end_row_offset_idx": 22,
+       "start_col_offset_idx": 2,
+       "end_col_offset_idx": 3,
+       "text": "0: Disable 1: NC type 2: NO type",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      },
+      {
+       "bbox": {
+        "l": 506.74,
+        "t": 664.66,
+        "r": 512.33728,
+        "b": 675.7,
+        "coord_origin": "TOPLEFT"
+       },
+       "row_span": 1,
+       "col_span": 1,
+       "start_row_offset_idx": 21,
+       "end_row_offset_idx": 22,
+       "start_col_offset_idx": 3,
+       "end_col_offset_idx": 4,
+       "text": "0",
+       "column_header": false,
+       "row_header": false,
+       "row_section": false,
+       "fillable": false
+      }
+     ]
+    ]
+   },
+   "annotations": []
+  }
+ ],
+ "key_value_items": [],
+ "form_items": [],
+ "pages": {
+  "167": {
+   "size": {
+    "width": 612.0,
+    "height": 792.0
+   },
+   "image": null,
+   "page_no": 167
+  }
+ }
+}

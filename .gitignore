@@ -104,3 +104,8 @@ Thumbs.db
 **/venv/
 **/env/
 **/.venv/
+# Doc ingest (PDF nguồn, output spike, run dir, venv riêng có Docling)
+docs/ai/doc_ingest_spike/source/
+docs/ai/doc_ingest_spike/output/
+data/ingest_runs/
+.venv-ingest/

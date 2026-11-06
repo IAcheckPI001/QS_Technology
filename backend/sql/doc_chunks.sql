@@ -11,8 +11,9 @@ create table if not exists doc_chunks (
   domain        text   not null check (domain in ('technical_docs','company_info','product_catalog')),
   scopes        text[] not null default '{}'
                 check (scopes <@ array['installation','operation','configuration','maintenance']),
+  -- Mã = product_name của CRM; bảng đã có thì chạy migrate_product_models_crm.sql.
   product_models    text[] not null default '{}'
-                check (product_models <@ array['F54','F86','F10T','ASTRO_10S','ASTRO_6AH','ASTRO_6AV','ASTRO_10I']),
+                check (product_models <@ array['F54','F86','F86E','F10T','6AH','6AHE','6AV','6AVE','10iV','10iVE']),
   control_interface text[] not null default '{}',
   spec_attributes   text[] not null default '{}',
   chunk_type    text not null,

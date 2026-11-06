@@ -1,0 +1,6 @@
+# Profile miền bộ điều khiển QS: kế thừa default, thêm mẫu mã parameter/IO/connector.
+# Key khai báo ở đây thay thế nguyên giá trị của default (thresholds gộp theo từng khóa).
+name: qs_controller
+extends: default
+code_patterns: ['^#\d', '^M\d{4}', '^[XY]\d{2,3}$', '^CN\d+$']
+param_prefixes: ["#", "M"]

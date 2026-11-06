@@ -29,11 +29,14 @@ ALLOWED_SCOPES = {
 ALLOWED_MODELS = {
     "F54",
     "F86",
+    "F86E",
     "F10T",
-    "ASTRO_10S",
-    "ASTRO_6AH",
-    "ASTRO_6AV",
-    "ASTRO_10I",
+    "6AH",
+    "6AHE",
+    "6AV",
+    "6AVE",
+    "10iV",
+    "10iVE",
 }
 
 REQUIRED_COLUMNS = {

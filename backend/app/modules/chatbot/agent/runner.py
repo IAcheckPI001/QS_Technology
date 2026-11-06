@@ -144,6 +144,11 @@ class AgentRunner:
         sources = SourceAllocator.for_state(state)
         self.plan(state, specs)
         messages = self.build_messages(state, specs)
+        # Chỉ metadata: không log nội dung tin nhắn, argument hay output của tool.
+        logger.info(
+            "agent turn start tools=%s acting_user=%s",
+            ",".join(sorted(allowed)) or "-", state.principal.acting_user_id is not None,
+        )
 
         step = 0
         tool_calls_used = 0
@@ -261,6 +266,11 @@ class AgentRunner:
             step=step, kind="llm", name=tool_choice, status="ok",
             latency_ms=latency_ms, finish_reason=turn.finish_reason,
         ))
+        logger.info(
+            "agent llm step=%d tool_choice=%s finish=%s tool_calls=%s latency_ms=%d",
+            step, tool_choice, turn.finish_reason,
+            ",".join(call.name for call in turn.tool_calls) or "-", latency_ms,
+        )
         state.stats.record(LLMCall(
             stage=LLMStage.THINK,
             iteration=step,
@@ -409,6 +419,12 @@ class AgentRunner:
             status=status or ("ok" if outcome.ok else outcome.error_code or "tool_failed"),
             latency_ms=outcome.latency_ms,
         ))
+        # error_detail do tool viết (chỉ lý do, không chứa dữ liệu nhạy cảm).
+        logger.info(
+            "agent tool step=%d tool=%s status=%s latency_ms=%d detail=%s",
+            step, outcome.name, status or ("ok" if outcome.ok else outcome.error_code),
+            outcome.latency_ms, (outcome.error_detail or "-")[:300],
+        )
 
     def _drop_unknown_citations(self, state: RunState, answer: str) -> str:
         """Bỏ [S#] không phải nguồn đã trả cho agent trong lượt (LLM bịa hoặc nhớ nhầm)."""
