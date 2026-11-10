@@ -77,7 +77,15 @@ def validate_query(
 
     date_field, start, end = _date_range(errors, spec, query.date_range, now, tz)
     periods: tuple[str, ...] = ()
-    if query.time_grain is not None:
+    if (
+        query.time_grain is not None and spec.report is not None and date_field is not None
+        and spec.report.period_dimension(date_field, query.time_grain) is None
+    ):
+        errors.append(
+            f"time_grain {query.time_grain} is not available for {spec.name}.{date_field}; "
+            f"allowed: {_period_options(spec)}"
+        )
+    elif query.time_grain is not None:
         if start is None:
             errors.append("time_grain requires date_range with a start (preset or start date)")
         else:
@@ -112,6 +120,17 @@ def validate_query(
         now=now,
         tz=tz,
     )
+
+
+def _period_options(spec: DatasetSpec) -> str:
+    assert spec.report is not None
+    options = [
+        f"{field} {grain}"
+        for field in spec.date_fields
+        for grain in ("day", "week", "month")
+        if spec.report.period_dimension(field, grain) is not None
+    ]
+    return ", ".join(options) or "none"
 
 
 def _check_names(errors: list[str], label: str, names: tuple[str, ...], allowed: list[str]) -> None:
@@ -158,7 +177,7 @@ def _scalar(name: str, field: FieldSpec, raw: Any) -> Any:
     if not text:
         raise ReportQueryError(f"{name} needs a non-empty value")
     if field.type == "string":
-        return text.casefold()
+        return text.casefold() if field.casefold else text
     normalized = field.normalize(text) if field.normalize else (text if text in field.values else None)
     if normalized is None or normalized not in field.values:
         allowed = ", ".join(
@@ -166,6 +185,22 @@ def _scalar(name: str, field: FieldSpec, raw: Any) -> Any:
         )
         raise ReportQueryError(f"{name}: unknown value {text!r}; allowed: {allowed}")
     return normalized
+
+
+def date_range_of(
+    errors: list[str],
+    spec: DatasetSpec,
+    date_range: ReportDateRange | None,
+    now: datetime,
+    tz: tzinfo,
+) -> tuple[str | None, datetime | None, datetime | None]:
+    """Khoảng ngày đã chuẩn hóa [start, end) theo múi giờ; lỗi được thêm vào `errors`."""
+    return _date_range(errors, spec, date_range, now, tz)
+
+
+def condition_of(spec: DatasetSpec, name: str, operator: str, raw: Any) -> Condition:
+    """Một filter đã kiểm tra theo catalog; raise ReportQueryError nếu sai."""
+    return _condition(spec, name, operator, raw)
 
 
 def _date_range(

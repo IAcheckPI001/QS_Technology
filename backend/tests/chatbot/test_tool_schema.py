@@ -167,11 +167,11 @@ def test_agent_setup_registers_product_docs_tool():
     assert runner.tool_names == ["product_docs_ask"]
 
 
-def test_agent_setup_registers_crm_report_when_enabled():
+def test_agent_setup_registers_crm_tools_when_enabled():
     settings = _settings(CRM_REPORT_ENABLED=True, CRM_API_BASE_URL="https://crm.test")
     runner = build_agent_runner(ScriptedToolProvider(), retriever=object(), settings=settings)
 
-    assert runner.tool_names == ["product_docs_ask", "crm_report"]
+    assert runner.tool_names == ["product_docs_ask", "crm_report", "crm_records"]
 
 
 def _settings(**overrides) -> Settings:

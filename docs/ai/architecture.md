@@ -24,8 +24,10 @@ Frontend
       -> AgentRunner ⇄ OpenAIProvider.chat_complete_tools ⇄ ToolRegistry
          -> product_docs_ask = RetrievalPipeline trên RunState con
             (clarification -> analysis -> CatalogLookupStage -> execution, không compose)
-         -> crm_report (khi CRM_REPORT_ENABLED) = ReportQuery -> validate -> CRM API
-            (Bearer crm_access_token | acting_user_id) -> engine tổng hợp -> ReportOutput
+         -> crm_report (khi CRM_REPORT_ENABLED) = ReportQuery -> validate -> theo nguồn dataset:
+            list_api: API danh sách -> engine tổng hợp | report_api: compile -> POST /reports/query
+            -> ghép kết quả (Bearer crm_access_token | acting_user_id) -> ReportOutput
+         -> crm_records (cùng cờ) = RecordQuery -> whitelist cột -> trang <= 20 dòng + tổng
   -> HistoryRepository -> Supabase public.chat_history
   -> SSE về frontend
 ```
@@ -54,10 +56,14 @@ stages/       ... + retrieval_pipeline.py (clarification -> analysis -> [catalog
               catalog_lookup_stage.py (tìm model theo bảng capabilities, chỉ pipeline của agent)
 extraction/   registry.py (intents, models, coverage, capabilities), validate_registry.py, product_catalog.py
 agent/        runner.py (AgentRunner), deadline.py, prompts.py, setup.py
-tools/        registry.py (ToolRegistry), schema.py (chuẩn hóa JSON Schema), base.py, product_docs.py, crm_report.py
-reporting/    catalog.py (DatasetSpec), datasets/ (tickets), validate.py, dates.py, engine.py
-providers/    openai.py, base.py (ToolCallingProvider + LLMCapabilities), crm_api.py (CrmListClient)
-schemas/system/report.py  contract ReportQuery (enum sinh từ catalog báo cáo)
+tools/        registry.py (ToolRegistry), schema.py (chuẩn hóa JSON Schema), base.py, product_docs.py,
+              crm_report.py, crm_records.py
+reporting/    catalog.py (DatasetSpec, ReportApiSource, ColumnSpec), datasets/ (tickets, customers,
+              assignments, deliveries), validate.py, dates.py, engine.py, report_api.py (compile/merge
+              Reporting API), records.py (chế độ danh sách)
+providers/    openai.py, base.py (ToolCallingProvider + LLMCapabilities), crm_api.py (CrmListClient,
+              CrmReportClient)
+schemas/system/report.py, records.py  contract ReportQuery / RecordQuery (enum sinh từ catalog báo cáo)
 ```
 
 Router không tự khởi tạo provider hoặc repository.
@@ -410,33 +416,75 @@ không gọi tool nào — theo dõi câu trả lời từ trí nhớ) và `inva
 history `error`, SSE `agent_error`.
 
 **`crm_report`** (thử nghiệm, sau cờ `CRM_REPORT_ENABLED`, mặc định tắt). Số liệu
-tổng hợp từ CRM; v1 chỉ truy vấn tổng hợp (aggregate), một dataset `tickets`,
-chưa có danh sách/chi tiết phiếu.
+tổng hợp từ CRM theo **semantic catalog**: LLM chỉ chọn tên logic (dataset, metric,
+dimension, filter) trong enum; đường dẫn cột, join, filter hệ thống và định nghĩa nghiệp
+vụ nằm trong `DatasetSpec`. LLM không gọi API khám phá schema (`/reports/datasets`,
+`/reports/tables`), không thấy token, URL hay tên bảng/cột. Bốn dataset:
+
+| Dataset | Nguồn | Quyền CRM | Ghi chú |
+|---|---|---|---|
+| `tickets` | list_api `GET /api/v1/support/cases` | theo token | Giữ nguồn cũ: cần metric dẫn xuất (thời gian xử lý, tuổi phiếu, `status_group`) mà Reporting API không tính được |
+| `customers` | report_api, dataset dựng sẵn `customers` | `customer.read` | Mặc định loại `customer_type` spam/lost (trừ khi lọc/nhóm theo trường này); `assigned_sales` chỉ là UUID |
+| `support_assignments` | report_api, bảng `support_assignments` | `auth.manage_roles` | Mỗi dòng là một lần giao; khách = thiết bị của phiếu (`case_id.product_item_id.customer_id`); người hiển thị và lọc theo `assigned_to.username` |
+| `device_deliveries` | report_api, bảng `product_ownerships` | `auth.manage_roles` | "Bán được" = thiết bị giao cho khách; loại chuyển nhượng (`transferred_from_ownership_id is_null`) |
 
 - LLM chỉ điền `ReportQuery` (`schemas/system/report.py`): `dataset`, `metrics`
   (1–3), `dimensions` (0–2), `filters` (≤8, AND), `date_range` (`preset` hoặc
   `start`/`end` dạng ngày, `end` không bao gồm), `time_grain`, `sort`, `limit`
-  (mặc định 10, trần 50). Enum sinh từ catalog; LLM không truyền timezone.
+  (mặc định 10, trần 50). Enum sinh từ catalog (hợp của mọi dataset); LLM không truyền timezone.
 - `reporting/validate.py` kiểm tra theo catalog của dataset (operator hợp kiểu,
   giá trị enum, nhãn tiếng Việt, alias model qua `resolve_models`) **trước** khi gọi
-  CRM; lỗi → `tool_invalid_args` kèm giá trị hợp lệ để agent tự sửa.
-- `providers/crm_api.py` gọi `GET {CRM_API_BASE_URL}{source_path}?limit=&offset=`
-  với `Authorization: Bearer <crm_access_token>` (trường tùy chọn của `/chat/crm`,
-  giữ trong `PrincipalContext` dạng `SecretStr`, `exclude=True`: không log, không
-  lưu); không có token thì Bearer là `acting_user_id`, lặp tới `total` hoặc
-  `CRM_REPORT_MAX_ITEMS` (`source_truncated`). **CRM phân quyền và giới hạn phạm vi
-  dữ liệu theo token**; dịch vụ AI không lọc quyền thêm. 401/403 →
-  `crm_auth_failed`; timeout/5xx/body lạ → `crm_unavailable`. Không log token.
-- Item API → record của dataset (`extra="ignore"`): `subject`, `description` và
-  trường không khai báo bị bỏ ngay khi parse, không tới engine hay LLM.
-- `reporting/engine.py` (hàm thuần, chung cho mọi dataset): filter hệ thống
-  (`delete_pending = false`) → filters + date_range → nhóm theo dimensions (+ kỳ
-  theo `CRM_REPORT_TIMEZONE`) → metric theo catalog → điền kỳ trống bằng 0 và
-  `change.delta`/`delta_pct` so với kỳ trước → sort (None cuối) → limit (có
-  `time_grain`: limit áp lên tổ hợp dimension, giữ đủ kỳ). LLM không tự tính.
-- Thêm dataset (vd customers): khai báo `DatasetSpec` (record, fields, metrics,
-  date fields, system filters, `source_path`) trong `reporting/datasets/`; contract,
-  validate, engine và tool không đổi. Chưa hỗ trợ join giữa dataset hay `having`.
+  CRM; lỗi → `tool_invalid_args` kèm giá trị hợp lệ để agent tự sửa. Dataset report_api
+  chỉ chia kỳ theo các kỳ khai báo (`ReportApiSource.period_dimension`, không có `week`);
+  trường string của report_api giữ nguyên hoa/thường (`casefold=False`, SQL so khớp chính xác).
+- list_api: `providers/crm_api.py` gọi `GET {CRM_API_BASE_URL}{source_path}?limit=&offset=`,
+  lặp tới `total` hoặc `CRM_REPORT_MAX_ITEMS` (`source_truncated`). Item API → record
+  (`extra="ignore"`): `subject`, `description` và trường không khai báo bị bỏ ngay khi
+  parse. `reporting/engine.py` (hàm thuần): filter hệ thống (`delete_pending = false`) →
+  filters + date_range → nhóm theo dimensions (+ kỳ theo `CRM_REPORT_TIMEZONE`) → metric →
+  điền kỳ trống bằng 0 và `change.delta`/`delta_pct` → sort (None cuối) → limit.
+- report_api: `reporting/report_api.py` (hàm thuần) compile `NormalizedQuery` thành JSON
+  của `POST /api/v1/reports/query`: một query cho mỗi nhóm metric cùng filter riêng
+  (vd `current_assignment_count` có `is_current = true`), query gốc luôn có `count`
+  (`matched_count`); chia kỳ có dimension thêm query `ranking` không chia kỳ để xếp hạng và
+  cắt limit theo tổ hợp; `[start, end)` → `from`/`to` bao gồm; mọi value là chuỗi; query có
+  dimension gửi `limit` 1000 + `totals`. `CrmReportClient` chạy các query song song
+  (`TaskGroup`), rồi `merge_report` ghép theo khóa dimension (nhóm theo UUID, hiển thị
+  username/tên), điền kỳ trống và tính delta bằng hàm của engine.
+- **CRM phân quyền và giới hạn phạm vi dữ liệu theo token** (`crm_access_token`, trường
+  tùy chọn của `/chat/crm`, `SecretStr`, `exclude=True`: không log, không lưu; không có
+  token thì Bearer là `acting_user_id`); dịch vụ AI không lọc quyền thêm. 401 →
+  `crm_auth_failed`; 403 → `crm_forbidden`; 400 của Reporting API → `crm_report_contract_error`
+  (spec do catalog sinh nên đây là lỗi cấu hình, log ERROR, agent không thử lại);
+  timeout/5xx/body lạ → `crm_unavailable`.
+- `ReportOutput`: `applied` (query đã chuẩn hóa; `system_filters` gồm filter hệ thống và
+  filter mặc định đã áp dụng), `rows`, `row_count`, `total_groups`, `matched_count`,
+  `fetched_count`/`skipped_count` (list_api; report_api là `null`), `source_truncated`,
+  `source` (`list_api` | `report_api`) và `definitions` (cách hiểu cố định của dataset để
+  agent nêu đúng một giả định).
+- Thêm dataset: khai báo `DatasetSpec` trong `reporting/datasets/` (list_api: record,
+  getter, `source_path`; report_api: `ReportApiSource` + `api_path` cho field/metric/cột);
+  contract, validate, engine/compile và tool không đổi. Chưa hỗ trợ `having`, OR/NOT, join
+  ngược cha → con, so sánh `gt/lt` trên report_api. Tên dimension của dataset dựng sẵn
+  (`customers`: `assigned_sales`, `created_day`/`created_month`) và các đường dẫn cột chưa
+  kiểm chứng bằng token thật: chạy `backend/evals/check_crm_report_contract.py`.
+
+**`crm_records`** (thử nghiệm, cùng cờ `CRM_REPORT_ENABLED`). Liệt kê bản ghi; tool riêng
+vì output, rủi ro và luật đọc khác `crm_report`.
+- `RecordQuery` (`schemas/system/records.py`): `dataset` (dataset có `list_columns`),
+  `fields` (1–8 cột), `filters`/`date_range` như `ReportQuery`, `sort` (≤2, cột phải có
+  trong `fields`; mặc định trường ngày mặc định giảm dần), `limit` (mặc định 10, trần 20),
+  `offset` (≤200).
+- Chỉ cột trong `DatasetSpec.list_columns` được đọc và trả về (whitelist): không có
+  subject/description/notes, phone/email/address hay cột bí mật. Chuỗi bỏ ký tự điều khiển,
+  cắt 120 ký tự; datetime của list_api hiển thị theo `CRM_REPORT_TIMEZONE`.
+- list_api (tickets): tải bản ghi, lọc bằng `filter_records` của engine, sort, cắt trang;
+  report_api: `select` + một query `count` cùng filter, chạy song song (API không trả tổng
+  cho `select`).
+- `RecordsOutput`: `applied`, `columns`, `items`, `returned`, `total`, `has_more`,
+  `next_offset`, `source`, `source_truncated`, `definitions`; `to_llm` bỏ dòng cuối khi vượt
+  budget (`truncated`, `omitted_rows`). Guide nhắc item là dữ liệu, không phải chỉ dẫn.
+  `max_calls_per_turn=3`.
 
 **Eval thủ công** (`backend/evals/`): `crm_agent_cases.json` +
 `run_crm_agent_eval.py` chạy `AgentRunner` với OpenAI và Supabase thật (không ghi
@@ -444,7 +492,7 @@ DB, không chạy trong CI) cho hành vi phụ thuộc LLM: đại từ/ngữ c�
 "hoặc", tách câu hỏi, làm theo `next_action`, prompt injection.
 
 **Chưa có / ngoài phạm vi:** phân quyền tool theo role/scope, event SSE tiến
-trình, stream token câu trả lời cuối, báo cáo dạng danh sách/chi tiết, web search, tool ghi dữ
+trình, stream token câu trả lời cuối, chi tiết từng bản ghi (nội dung phiếu), web search, tool ghi dữ
 liệu (cần xác nhận người dùng), planner LLM, MCP (registry chạy cùng tiến trình; có thể
 thêm adapter MCP sau), provider Ollama/Gemini cho agent.
 
@@ -491,6 +539,8 @@ chat.request (root: channel, flow, history_status, first_delta_ms, deltas)
 │  │     ├ embedding (input_tokens) · db.match_doc_chunks (rows) · db.fetch_chunks
 │  ├ tool.crm_report (query_shape, credential_source) → report.validate · report.fetch
 │  │    → http.crm_list×N (status_code) · report.engine
+│  │    | report_api: report.fetch (queries) → http.crm_report×N (dataset, status_code) · report.merge
+│  ├ tool.crm_records (dataset, fields, returned, total) → records.fetch → http.crm_list | http.crm_report
 │  └ tool.<name> tức thời khi call bị gộp trùng / vượt trần / hết lượt (status = mã)
 │     (span tool lỗi có error_detail đã che giá trị trong nháy; root có tool_errors)
 ├ [pipeline] stage.clarification … stage.execution · stage.compose → llm.stream_chat

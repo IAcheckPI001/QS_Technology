@@ -52,7 +52,8 @@ class Settings(BaseSettings):
     agent_parallel_tools: int = Field(default=3, alias="AGENT_PARALLEL_TOOLS")
     agent_max_concurrent_runs: int = Field(default=8, alias="AGENT_MAX_CONCURRENT_RUNS")
     agent_history_messages: int = Field(default=6, alias="AGENT_HISTORY_MESSAGES")
-    # Tool báo cáo CRM (crm_report, thử nghiệm): gọi API CRM bằng Bearer <acting_user_id>.
+    # Tool CRM (crm_report, crm_records; thử nghiệm): gọi API danh sách và Reporting Query API
+    # của CRM bằng Bearer <crm_access_token | acting_user_id>, cùng CRM_API_BASE_URL.
     crm_report_enabled: bool = Field(default=False, alias="CRM_REPORT_ENABLED")
     crm_api_base_url: str = Field(default="", alias="CRM_API_BASE_URL")
     crm_api_timeout_s: float = Field(default=10.0, alias="CRM_API_TIMEOUT_S")
