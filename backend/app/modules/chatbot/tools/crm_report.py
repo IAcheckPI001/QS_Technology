@@ -1,23 +1,29 @@
 """Tool `crm_report`: số liệu tổng hợp từ CRM theo ReportQuery.
 
-LLM chỉ điền ReportQuery (tên logic trong catalog). Tool kiểm tra query, gọi API
-CRM bằng token của nhân viên (CRM phân quyền theo token), rồi engine lọc, nhóm,
-tính metric và delta. LLM nhận kết quả đã tổng hợp, không nhận bản ghi thô;
-`subject`/`description` bị bỏ ngay khi parse.
+LLM chỉ điền ReportQuery (tên logic trong catalog). Tool kiểm tra query rồi lấy dữ liệu
+bằng token của nhân viên (CRM phân quyền theo token) theo nguồn của dataset:
+- list_api (tickets): tải bản ghi, engine trong tiến trình lọc, nhóm, tính metric và delta;
+  `subject`/`description` bị bỏ ngay khi parse.
+- report_api: `reporting/report_api.py` dịch query sang JSON của CRM Reporting Query API
+  (đường dẫn cột lấy từ catalog), CRM chạy SQL, tool ghép kết quả và tính delta.
+LLM nhận kết quả đã tổng hợp kèm `definitions` (cách hiểu cố định của dataset), không
+nhận bản ghi thô, token hay tên bảng/cột.
 """
 
+import asyncio
 import json
 import logging
 from collections.abc import Callable, Mapping
 from datetime import tzinfo
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field
 
 from app.core.tracing import current_span, span
-from app.modules.chatbot.providers.crm_api import CrmApiError, CrmListClient
+from app.modules.chatbot.providers.crm_api import CrmApiError, CrmListClient, CrmReportClient, ReportPage
 from app.modules.chatbot.reporting.catalog import DatasetSpec
-from app.modules.chatbot.reporting.engine import run_report
+from app.modules.chatbot.reporting.engine import ReportResult, run_report
+from app.modules.chatbot.reporting.report_api import ApiResult, compile_report, merge_report
 from app.modules.chatbot.reporting.validate import NormalizedQuery, ReportQueryError, validate_query
 from app.modules.chatbot.schemas.default import SystemModel
 from app.modules.chatbot.schemas.security.principal import PrincipalContext
@@ -34,9 +40,10 @@ _TRUNCATION_MARGIN_TOKENS = 32
 CRM_REPORT_DESCRIPTION = (
     "Số liệu tổng hợp từ CRM (đếm, thống kê, xu hướng, tồn đọng) trong phạm vi dữ liệu tài khoản "
     "nhân viên được phép xem. Dùng cho câu hỏi bao nhiêu/nhiều nhất/trung bình/so sánh theo kỳ về "
-    "phiếu hỗ trợ (ticket) theo trạng thái, model, loại yêu cầu, nhân viên xử lý, khách hàng. "
-    "Không dùng cho thông tin kỹ thuật sản phẩm (dùng product_docs_ask). Backend tự lọc, nhóm và "
-    "tính: chỉ chọn metrics, dimensions, filters (AND), date_range, time_grain, sort, limit."
+    "phiếu hỗ trợ (ticket), khách hàng, lần giao phiếu cho người xử lý, thiết bị giao cho khách. "
+    "Không dùng để liệt kê từng bản ghi (dùng crm_records) hay thông tin kỹ thuật sản phẩm "
+    "(dùng product_docs_ask). Backend tự lọc, nhóm và tính: chỉ chọn dataset, metrics, dimensions, "
+    "filters (AND), date_range, time_grain, sort, limit."
 )
 
 CRM_REPORT_GUIDE = """Gọi tool:
@@ -44,6 +51,8 @@ CRM_REPORT_GUIDE = """Gọi tool:
 - So sánh các kỳ (tháng 9 với tháng 10): một call, date_range bao cả các kỳ + time_grain; backend trả change.delta/delta_pct so với kỳ liền trước.
 - "Đang mở/tồn đọng": status_group = active hoặc metric active_ticket_count. "Mở quá N ngày": thêm filter age_hours gt N*24.
 - Không có date_range: tính trên toàn bộ dữ liệu.
+- Chọn dataset theo nghĩa: phiếu hỗ trợ → tickets; khách hàng/khách mới/sale phụ trách → customers; ai được giao/hỗ trợ bao nhiêu phiếu hoặc khách → support_assignments; "bán được", thiết bị giao cho khách → device_deliveries.
+- Câu cần dữ liệu ở hai dataset: gọi từng dataset; không tự cộng/trừ giữa hai kết quả.
 
 Đọc output:
 - Giữ nguyên số liệu; không tự cộng/trừ/chia hay tự tính tỉ lệ. Dùng change cho chênh lệch giữa các kỳ.
@@ -52,7 +61,9 @@ CRM_REPORT_GUIDE = """Gọi tool:
 - source_truncated: true: dữ liệu lấy về chưa đủ, nói rõ số liệu có thể thiếu.
 - Trạng thái in_progress chỉ cập nhật khi có người mở chi tiết phiếu nên pending/in_progress có thể lệch thực tế; thời gian tạo→đóng của phiếu mở lại tính từ lúc tạo ban đầu.
 - Chưa hỗ trợ: danh sách/chi tiết từng phiếu, nội dung phiếu, quá hạn/SLA. Nói rõ là chưa có dữ liệu cho yêu cầu đó.
-- Lỗi crm_auth_failed: không truy cập được dữ liệu CRM bằng tài khoản này. crm_unavailable: CRM tạm thời không phản hồi."""
+- definitions: cách hiểu cố định của dataset (vd "bán được" là gì, khách của phiếu suy ra thế nào). Nêu ngắn các định nghĩa liên quan ở cuối câu trả lời.
+- rows rỗng hoặc số 0 không phải lỗi: không có dữ liệu thỏa điều kiện hoặc nằm ngoài phạm vi tài khoản được xem.
+- Lỗi crm_auth_failed: phiên CRM không hợp lệ, nhân viên cần đăng nhập lại. crm_forbidden: tài khoản không có quyền xem dữ liệu này; nói thẳng, không thử lại. crm_report_contract_error: báo cáo tạm thời lỗi cấu hình; không thử lại. crm_unavailable: CRM tạm thời không phản hồi; có thể thu hẹp date_range và thử lại một lần."""
 
 
 class AppliedDateRange(SystemModel):
@@ -82,9 +93,11 @@ class ReportOutput(ToolOutput):
     row_count: int
     total_groups: int
     matched_count: int          # bản ghi thỏa mọi filter
-    fetched_count: int          # bản ghi lấy từ CRM
-    skipped_count: int          # bản ghi sai định dạng bị bỏ
+    fetched_count: int | None   # list_api: bản ghi lấy từ CRM; report_api: None (CRM tự tính)
+    skipped_count: int | None   # list_api: bản ghi sai định dạng bị bỏ; report_api: None
     source_truncated: bool
+    source: Literal["list_api", "report_api"] = "list_api"
+    definitions: list[str] = Field(default_factory=list)
 
     def to_llm(self, budget_tokens: int, count: Callable[[str], int]) -> dict[str, Any]:
         """Giữ phần mô tả; bỏ dòng cuối tới khi vừa budget."""
@@ -117,11 +130,25 @@ def catalog_text(datasets: Mapping[str, DatasetSpec]) -> str:
             values = f" [{', '.join(field.values)}]" if field.values else ""
             fields.append(f"{name} ({field.type}, {use}){values}: {field.description.rstrip('.')}")
         lines.append("Fields: " + "; ".join(fields))
+        grains = _grains(spec)
         lines.append(
-            f"Date fields: {', '.join(spec.date_fields)} (mặc định {spec.default_date_field})."
+            f"Date fields: {', '.join(spec.date_fields)} (mặc định {spec.default_date_field})"
+            + (f"; time_grain: {grains}." if grains else ".")
         )
-    print(f"Date fields:\n" + "\n".join(lines))
     return "\n".join(lines)
+
+
+def _grains(spec: DatasetSpec) -> str:
+    """Kỳ chia được của dataset report_api (list_api: mọi trường ngày, day/week/month)."""
+    if spec.report is None:
+        return ""
+    options = [
+        f"{field} {grain}"
+        for field in spec.date_fields
+        for grain in ("day", "week", "month")
+        if spec.report.period_dimension(field, grain) is not None
+    ]
+    return ", ".join(options) or "không hỗ trợ"
 
 
 def build_crm_report_tool(
@@ -129,9 +156,11 @@ def build_crm_report_tool(
     datasets: Mapping[str, DatasetSpec],
     *,
     tz: tzinfo,
+    report_client: CrmReportClient | None = None,
     timeout_s: float = 20.0,
 ) -> ToolSpec:
-    datasets = dict(datasets)
+    # Dataset report_api chỉ được dùng khi có client Reporting API.
+    datasets = available_datasets(datasets, report_client)
 
     async def run(arguments: ReportQuery, context: ToolContext) -> ReportOutput:
         state = context.parent_state
@@ -154,6 +183,9 @@ def build_crm_report_tool(
             query.start.isoformat() if query.start else "-",
             query.end.isoformat() if query.end else "-", query.time_grain or "-",
         )
+        if query.dataset.report is not None:
+            assert report_client is not None
+            return await _run_report_api(report_client, query, token, tz)
         try:
             with span("report.fetch", "internal", dataset=query.dataset.name) as fetch_span:
                 page = await client.fetch_all(query.dataset.source_path, token)
@@ -175,16 +207,8 @@ def build_crm_report_tool(
             len(page.items), len(records), skipped, result.matched_count, len(result.rows),
             result.total_groups, page.truncated,
         )
-        return ReportOutput(
-            applied=applied(query, tz),
-            rows=result.rows,
-            row_count=len(result.rows),
-            total_groups=result.total_groups,
-            matched_count=result.matched_count,
-            fetched_count=len(page.items),
-            skipped_count=skipped,
-            source_truncated=page.truncated,
-        )
+        return _output(query, tz, result, fetched=len(page.items), skipped=skipped,
+                       truncated=page.truncated)
 
     return ToolSpec(
         name=CRM_REPORT_TOOL_NAME,
@@ -197,6 +221,78 @@ def build_crm_report_tool(
         concurrency_safe=True,
         max_calls_per_turn=4,
         timeout_s=timeout_s,
+    )
+
+
+async def _run_report_api(
+    client: CrmReportClient,
+    query: NormalizedQuery,
+    token: str,
+    tz: tzinfo,
+) -> ReportOutput:
+    compiled = compile_report(query)
+    with span("report.fetch", "internal", dataset=query.dataset.name, queries=len(compiled.queries)):
+        pages = await query_all(client, [item.body for item in compiled.queries], token)
+    with span("report.merge", "internal") as merge_span:
+        result = merge_report(query, compiled, [ApiResult(page.rows, page.totals) for page in pages])
+        merge_span.set(matched=result.matched_count, rows=len(result.rows), groups=result.total_groups)
+    truncated = any(page.truncated for page in pages)
+    current_span().set(result_rows=len(result.rows), source_truncated=truncated)
+    logger.info(
+        "crm_report done source=report_api queries=%d matched=%d rows=%d groups=%d truncated=%s",
+        len(compiled.queries), result.matched_count, len(result.rows), result.total_groups, truncated,
+    )
+    return _output(query, tz, result, fetched=None, skipped=None, truncated=truncated,
+                   system_filters=list(compiled.applied_filters))
+
+
+async def query_all(client: CrmReportClient, bodies: list[dict[str, Any]], token: str) -> list[ReportPage]:
+    """Chạy các query song song; lỗi CRM đầu tiên thành ToolRejected (query còn lại bị huỷ)."""
+    try:
+        async with asyncio.TaskGroup() as group:
+            tasks = [group.create_task(client.query(body, token)) for body in bodies]
+    except* CrmApiError as errors:
+        error = errors.exceptions[0]
+        assert isinstance(error, CrmApiError)
+        logger.warning("crm report fetch failed code=%s detail=%s", error.code, error.detail)
+        raise ToolRejected(error.code, error.detail) from None
+    return [task.result() for task in tasks]
+
+
+def available_datasets(
+    datasets: Mapping[str, DatasetSpec],
+    report_client: CrmReportClient | None,
+) -> dict[str, DatasetSpec]:
+    return {
+        name: spec for name, spec in datasets.items()
+        if spec.report is None or report_client is not None
+    }
+
+
+def _output(
+    query: NormalizedQuery,
+    tz: tzinfo,
+    result: ReportResult,
+    *,
+    fetched: int | None,
+    skipped: int | None,
+    truncated: bool,
+    system_filters: list[str] | None = None,
+) -> ReportOutput:
+    applied_query = applied(query, tz)
+    if system_filters is not None:
+        applied_query = applied_query.model_copy(update={"system_filters": system_filters})
+    return ReportOutput(
+        applied=applied_query,
+        rows=result.rows,
+        row_count=len(result.rows),
+        total_groups=result.total_groups,
+        matched_count=result.matched_count,
+        fetched_count=fetched,
+        skipped_count=skipped,
+        source_truncated=truncated,
+        source=query.dataset.source,
+        definitions=list(query.dataset.definitions),
     )
 
 
@@ -253,7 +349,7 @@ def applied(query: NormalizedQuery, tz: tzinfo) -> AppliedQuery:
         metrics=list(query.metrics),
         dimensions=list(query.dimensions),
         filters=[condition.describe() for condition in query.filters],
-        system_filters=[label for label, _ in query.dataset.system_filters],
+        system_filters=query.dataset.system_filter_labels(),
         date_range=date_range,
         time_grain=query.time_grain,
         sort=[f"{field} {direction}" for field, direction in query.sort],

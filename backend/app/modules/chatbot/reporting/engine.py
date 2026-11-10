@@ -8,11 +8,12 @@ sort → limit. Engine chỉ đọc DatasetSpec, không biết dataset là ticke
 from collections import defaultdict
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from app.modules.chatbot.schemas.system.report import PERIOD
 
-from .catalog import FieldSpec, MetricSpec
+from .catalog import DatasetSpec, FieldSpec, MetricSpec
 from .dates import period_key, period_start
 from .validate import Condition, NormalizedQuery
 
@@ -68,14 +69,30 @@ def compute_metric(metric: MetricSpec, records: Sequence[Any], query: Normalized
 
 
 def _filter(query: NormalizedQuery, records: Sequence[Any]) -> list[Any]:
-    spec, now = query.dataset, query.now
+    return filter_records(
+        query.dataset, records, query.filters,
+        date_field=query.date_field, start=query.start, end=query.end, now=query.now,
+    )
+
+
+def filter_records(
+    spec: DatasetSpec,
+    records: Sequence[Any],
+    filters: Sequence[Condition],
+    *,
+    date_field: str | None,
+    start: datetime | None,
+    end: datetime | None,
+    now: datetime,
+) -> list[Any]:
+    """Filter hệ thống → filters (AND) → [start, end) theo trường ngày. Chỉ nguồn list_api."""
     predicates: list[Callable[[Any], bool]] = [
         (lambda r, keep=keep: bool(keep(r, now))) for _, keep in spec.system_filters
     ]
-    predicates += [_predicate(spec.fields[c.field], c, query) for c in query.filters]
-    if query.date_field is not None:
-        get_date = spec.date_fields[query.date_field]
-        start, end = query.start, query.end
+    predicates += [_predicate(spec.fields[c.field], c, now) for c in filters]
+    if date_field is not None:
+        get_date = spec.date_fields[date_field]
+        assert get_date is not None
 
         def in_range(record: Any) -> bool:
             moment = get_date(record, now)
@@ -89,17 +106,18 @@ def _filter(query: NormalizedQuery, records: Sequence[Any]) -> list[Any]:
     return [r for r in records if all(predicate(r) for predicate in predicates)]
 
 
-def _predicate(field: FieldSpec, condition: Condition, query: NormalizedQuery) -> Callable[[Any], bool]:
+def _predicate(field: FieldSpec, condition: Condition, now: datetime) -> Callable[[Any], bool]:
     compare = _COMPARE[condition.operator]
     expected = condition.value
-    now = query.now
-    if field.type == "string":
+    get = field.get
+    assert get is not None
+    if field.type == "string" and field.casefold:
         def value(record: Any) -> Any:
-            raw = field.get(record, now)
+            raw = get(record, now)
             return raw.casefold() if isinstance(raw, str) else raw
     else:
         def value(record: Any) -> Any:
-            return field.get(record, now)
+            return get(record, now)
     return lambda record: compare(value(record), expected)
 
 
@@ -188,6 +206,19 @@ def _period_rows(query: NormalizedQuery, records: Sequence[Any]) -> ReportResult
             previous = row
         rows.extend(reversed(series) if descending else series)
     return ReportResult(rows, total, len(records))
+
+
+def period_change(metrics: Sequence[str], previous: dict[str, Any], current: dict[str, Any]) -> dict:
+    """change.delta/delta_pct của từng metric so với kỳ liền trước (dùng chung cho mọi nguồn)."""
+    return _change(metrics, previous, current)
+
+
+def default_sort(query: NormalizedQuery) -> tuple[tuple[str, str], ...]:
+    return _default_sort(query)
+
+
+def sort_rows(rows: list[dict[str, Any]], sort: Sequence[tuple[str, str]]) -> list[dict[str, Any]]:
+    return _sort(rows, sort)
 
 
 def _change(metrics: Sequence[str], previous: dict[str, Any], current: dict[str, Any]) -> dict:

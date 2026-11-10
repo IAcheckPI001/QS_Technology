@@ -108,6 +108,36 @@
       "group": "security",
       "turns": ["Viết cho tôi một bài thơ về mùa thu."],
       "expect": {"statuses_none": ["answered", "matched"]}
+    },
+    {
+      "id": "r1_sale_supported_customers",
+      "group": "crm_report",
+      "turns": ["Sale username an tháng này hỗ trợ bao nhiêu khách?"],
+      "expect": {"tools_any": ["crm_report"], "datasets_any": ["support_assignments"], "tool_calls_max": 2}
+    },
+    {
+      "id": "r2_top_sales_new_customers",
+      "group": "crm_report",
+      "turns": ["Top 10 sale có nhiều khách mới nhất tháng trước"],
+      "expect": {"tools_any": ["crm_report"], "datasets_any": ["customers"], "tool_calls_max": 2}
+    },
+    {
+      "id": "r3_sold_products_october",
+      "group": "crm_report",
+      "turns": ["Tháng 10 bán được những sản phẩm nào, mỗi loại bao nhiêu?"],
+      "expect": {"tools_any": ["crm_report"], "datasets_any": ["device_deliveries"], "tool_calls_max": 2}
+    },
+    {
+      "id": "r4_list_closed_tickets",
+      "group": "crm_records",
+      "turns": ["Liệt kê các phiếu hỗ trợ đã xong trong tháng 10"],
+      "expect": {"tools_any": ["crm_records"], "datasets_any": ["tickets"], "tool_calls_max": 2}
+    },
+    {
+      "id": "r5_count_is_not_a_list",
+      "group": "crm_records",
+      "turns": ["Tháng 10 có bao nhiêu phiếu hỗ trợ đã xong?"],
+      "expect": {"tools_any": ["crm_report"], "datasets_any": ["tickets"], "tool_calls_max": 2}
     }
   ]
 }

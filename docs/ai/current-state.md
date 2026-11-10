@@ -55,7 +55,7 @@ provider layer, and database access remains in the repository layer.
 | P3 history reads and ownership | Partially implemented | Support-chat session/message reads and session creation are available behind `LEARNING_API_ENABLED`; authentication and ownership are still deferred. |
 | P4 health/readiness semantics | Open | Connectivity check exists, but readiness status/error semantics and schema checks are incomplete. |
 | P5 active chatbot pipeline | Partially implemented | Security, context loading (with persisted `ConversationState`), pruning, the clarification loop (deterministic resume, `pending_answer`, held sub-queries, 2-attempt limit), analysis, execution-plan execution, fixed replies for chitchat/out_of_scope/handoff-only turns and provider final-answer streaming run. Retrieval is wired at test level: one retrieve task per sub-query, filtered hybrid search (vector + FTS, RRF, parent expansion) over `doc_chunks` via `match_doc_chunks` (`backend/sql/doc_chunks.sql`, applied manually), sources rendered into the answer prompt. Not verified against live Supabase; retrieval parameters are untuned starting values. Handoff is a scaffold: `DisabledHandoffProvider` creates no ticket, so `mode` stays `bot`. Requires the `conversation_state` column migration (not verified live). |
-| P5b CRM agent flow | Experimental, unit-tested only | `/chat/crm` runs a bounded tool-calling loop (`AgentRunner`) when `CRM_CHAT_FLOW=agent` (default). Tools: `product_docs_ask` (reruns clarification → analysis → retrieval on a child state, no compose) and, behind `CRM_REPORT_ENABLED`, `crm_report` (aggregate ticket reports from the CRM API, see 12d). Provider capabilities and tool schemas are checked at startup. Shared turn deadline, cancellation propagation, three-level concurrency limits and a per-session turn lease (409 `session_busy`) are implemented and tested with fakes only. Hybrid model selection: questions like "which models support EtherCAT? how do I install it?" filter models in code from `REGISTRY["capabilities"]` (`catalog_match` with `next_action` report_no_match / lookup_each / ask_selection / verify_with_sources), and follow-up lookups only accept models backed by evidence (employee message/history, session model context, discovered models, or cited sources via `based_on_sources`). The orchestrator is tool-neutral: shared rules in the system prompt, per-tool rules in `ToolSpec.guide`, per-tool turn state, `deduplicate` and `max_calls_per_turn` per tool. No per-role tool permissions (every CRM employee can use every tool), no SSE progress events, the final answer is one `delta` (no token streaming), no web tools. Not verified against live OpenAI tool calling or Supabase; `chat_sessions.turn_lease_until` must be applied manually. |
+| P5b CRM agent flow | Experimental, unit-tested only | `/chat/crm` runs a bounded tool-calling loop (`AgentRunner`) when `CRM_CHAT_FLOW=agent` (default). Tools: `product_docs_ask` (reruns clarification → analysis → retrieval on a child state, no compose) and, behind `CRM_REPORT_ENABLED`, `crm_report` (aggregate reports: tickets from the CRM list API, customers / support assignments / device deliveries from the CRM Reporting Query API) and `crm_records` (whitelisted record lists), see 12d. Provider capabilities and tool schemas are checked at startup. Shared turn deadline, cancellation propagation, three-level concurrency limits and a per-session turn lease (409 `session_busy`) are implemented and tested with fakes only. Hybrid model selection: questions like "which models support EtherCAT? how do I install it?" filter models in code from `REGISTRY["capabilities"]` (`catalog_match` with `next_action` report_no_match / lookup_each / ask_selection / verify_with_sources), and follow-up lookups only accept models backed by evidence (employee message/history, session model context, discovered models, or cited sources via `based_on_sources`). The orchestrator is tool-neutral: shared rules in the system prompt, per-tool rules in `ToolSpec.guide`, per-tool turn state, `deduplicate` and `max_calls_per_turn` per tool. No per-role tool permissions (every CRM employee can use every tool), no SSE progress events, the final answer is one `delta` (no token streaming), no web tools. Not verified against live OpenAI tool calling or Supabase; `chat_sessions.turn_lease_until` must be applied manually. |
 | P5c request tracing (phase 0) | Implemented, unit-tested only | In-process span tree per `/chat/*` request (`app/core/tracing.py`, no new dependency): router, security/context/prune, pipeline stages, agent steps, tool calls, retrieval (embedding, `match_doc_chunks`), CRM API pages, compose, history writes. Real OpenAI usage is recorded on spans (analysis, compose stream, embeddings, agent steps). Every turn logs one `chat_trace` summary line; with `CHAT_TRACE_PERSIST=true` the trace is stored in `public.chat_traces` (`backend/sql/chat_traces.sql`, apply manually) and served by `GET /chatbot/sessions/{id}/trace`. Metadata only. Not verified against live Supabase/OpenAI; no OpenTelemetry export, no context propagation to CRM/OpenAI, no UI, no retention. |
 | P6 knowledge learning pipeline (`learning_ai`) | Ingestion + privacy wired behind a flag | Pure domain logic (record schema, post-LLM validation, rule conflicts, review lifecycle, chunking, indexer sync) plus CRM ingestion, prefilter and the Ollama-backed privacy pipeline exist and are unit-tested with fake providers. `POST /ai/learning` runs ingestion + privacy when `LEARNING_API_ENABLED=true` (no authentication yet). LLM segment/extract calls, job persistence, outbox, embedding and vector index are missing. Not verified against live Supabase/Ollama. |
 | P7 technical document ingest (`doc_ingest`) | Parsing spike done (F54); contract C1 locked (rev 3); table normalization, profile, approval core and CLI `run` with HTML report implemented and tested; pipeline PDF → chunk not complete | Offline CLI tool in a separate `.venv-ingest` (Docling), isolated from the chat service (import boundary tested both ways, excluded from the chat image via `backend/.dockerignore`). C1 locked 2026-11-03 (D-02, D-03, D-04 data model, D-08, D-11); rev 3 changes T-01 to whitespace-gap column boundaries because the rev 2 rule failed on F54 itself. Implemented: `schemas/` (Pydantic, `extra="forbid"`), `profile.py` + `profiles/` (`default`, `qs_controller`, registry vocabulary snapshot), `normalize/` (Docling JSON reader; logical tables T-01…T-05, T-15), `technical_refs/` (ParamRef T-12, applicability T-13 on table cells), review queue, `review/approval.py` (unit states, serve rule, approval gate, carry-over by id then unique hash match, risk-based bulk approval, publish rule), CLI `run` (`cli.py`, `pipeline.py`, `report/html_report.py`, `parse/docling_runner.py`): PDF or saved Docling JSON → run dir `data/ingest_runs/{doc_id}/{run_id}/` + `report/index.html` showing each step. T-13 output is `applicability_candidates` (candidates, not facts). Tests: five C1 groups (LT, HC, AP, HA, PI) on the F54 fixture plus synthetic fixtures, none need Docling. Also implemented: Docling label classification (T-16), V-01 text coverage, S0 with per-page OCR, header/footer check (T-17), printed pages (T-06), section paths (T-07), `NormalizedElement`, figures (T-18 labels next to pictures, T-09 screenshot, T-10 watermark candidate, T-11 caption, T-14 crop + render to `normalized/images/`, T-19 duplicates), list parent/child (T-08 v1), T-12/T-13 on text. Not implemented: V-02…V-04, chunk builder, fact extraction, unit assignment, review CLI, publish, web upload. No DB writes. `doc_chunks` still holds hand-authored F86 chunks loaded by `chunking_loader/load_csv.py`. |
@@ -298,27 +298,53 @@ not currently implemented.
      (run manually; stops if chunks still carry `ASTRO_10S`). Model matching in
      text now requires a code boundary ("6AH" does not match inside "6AHE"), so
      codes glued to Vietnamese words ("F86có") are no longer detected.
-12d. `crm_report` (experimental, `CRM_REPORT_ENABLED=false` by default):
-     aggregate-only reports over dataset `tickets` from CRM
-     `GET /api/v1/support/cases`, computed in-process (see architecture.md).
-     Verified with fakes and once against the CRM test API (22 tickets, client +
-     validate + engine); **not** verified end to end through `/chat/crm` with live
-     OpenAI. The CRM bearer is the optional `crm_access_token` of `/chat/crm`
+12d. `crm_report` + `crm_records` (experimental, `CRM_REPORT_ENABLED=false` by default).
+     Semantic catalog: the LLM picks logical names from enums; join paths, system
+     filters and business definitions live in `DatasetSpec` (decision 2026-11-10 with
+     Toma: option A, no raw `list_datasets`/`get_table`/`run_query` tools for the LLM).
+     Datasets: `tickets` (CRM `GET /api/v1/support/cases`, computed in-process; kept on
+     the list API because the Reporting API cannot compute resolution time, ticket age
+     or `status_group`), `customers` (CRM curated report dataset, needs `customer.read`),
+     `support_assignments` and `device_deliveries` (`product_ownerships`), both raw
+     tables that need `auth.manage_roles` on the CRM side. Report datasets compile to
+     `POST /api/v1/reports/query` (`reporting/report_api.py`), run in parallel and are
+     merged in the AI service (change/delta, empty periods). `crm_records` lists up to
+     20 rows per call from a per-dataset column whitelist (no subject/description/notes,
+     phone/email/address), with `total` and `next_offset`. Errors: 401
+     `crm_auth_failed`, 403 `crm_forbidden` (new; was `crm_auth_failed`), Reporting API
+     400 `crm_report_contract_error`, others `crm_unavailable`. Outputs carry
+     `definitions` (fixed meaning of "khách của phiếu", "bán được", …).
+     Verified with fakes only (`test_report_api.py`, `test_crm_records_tool.py`); the
+     list API path was verified once against the CRM test API (22 tickets). The
+     Reporting API itself is **not** verified over HTTP (its own doc says the same).
+     Assumptions until the CRM team confirms (all written into `definitions` or code
+     comments): DB timestamps are Vietnam local time (the API compares calendar dates);
+     a case's customer is `support_cases.product_item_id → product_items.customer_id`;
+     the curated `customers` dataset names its dimensions `assigned_sales`,
+     `created_day`, `created_month` and accepts `select` on raw column names; product
+     "model" is `products.name`; people are filtered by exact `auth_users.username`
+     (no name → UUID lookup API yet; `assigned_sales` is only a UUID). Check with
+     `backend/evals/check_crm_report_contract.py` (needs `CRM_EVAL_ACCESS_TOKEN`).
+     The CRM bearer is the optional `crm_access_token` of `/chat/crm`
      (kept only in the request principal as `SecretStr`, excluded from dumps,
-     logs, `chat_sessions` and snapshots); without it the tool falls back to
+     logs, `chat_sessions` and snapshots); without it the tools fall back to
      `acting_user_id`, which is logged and stored, so it must not be a secret. The
      widget test route reads the token from `VITE_CRM_TEST_TOKEN`, which is
      bundled into the browser build: test environment only. Ticket status
      `resolved` counts as done (with `closed`). Known limits: tokens are not
-     refreshed (CRM issues non-refreshing tokens); the `/ai/tools` endpoints
-     (need `X-API-Key` + Bearer) are not used yet; every call re-fetches all tickets the token can see (no cache,
-     no filter push-down to the API); `priority`/`category`/`support_mode` are
-     free strings until their enums are confirmed; `in_progress` is only updated
-     by CRM when a case page is opened; no list/detail queries, no SLA/overdue,
-     no `having` or cross-dataset joins.
+     refreshed; `tickets` still re-fetches every ticket the token can see (no cache,
+     no filter push-down); `priority`/`category`/`support_mode` are free strings until
+     their enums are confirmed; `in_progress` is only updated by CRM when a case page is
+     opened; no ticket content/detail, no SLA/overdue, no `having`, OR/NOT or `gt/lt` on
+     report datasets, no `week` grain on report datasets; a sales user without
+     `auth.manage_roles` only gets `customers` and `tickets` (others return
+     `crm_forbidden`). Does the CRM Reporting API block sensitive columns
+     (`auth_users.password_hash`, `sessions`…)? Unknown; the AI service never asks for
+     them because only catalog paths are sent.
 12a. CRM agent flow backlog: per-role tool permissions, SSE progress event,
-     token streaming of the final answer, report list/detail queries and more
-     datasets, write tools with user confirmation, planner step when the tool
+     token streaming of the final answer, record detail (ticket content), raw report tool
+     for admins (option C: whitelisted tables/columns, behind `required_scope`),
+     person name → UUID lookup for report filters, write tools with user confirmation, planner step when the tool
      count grows, MCP adapter, Ollama/Gemini capability declarations, live
      verification of OpenAI tool calling and of cancellation reaching asyncpg
      (`pg_stat_activity`).
@@ -644,6 +670,18 @@ Current step: **Ingestion V1 group A–C in progress** (C1 locked 2026-11-03).
   of applied report filters in `tools/crm_report.py`. Backend pytest **765 passed,
   14 skipped, 1 failed** (same CRLF-only `test_f86_baseline_csv_unchanged`). Live
   re-run of case 1: pending (Toma).
+- CRM Reporting Query API + `crm_records` (2026-11-10, branch `test` from
+  `feature/deploy_ai_service`): `CrmReportClient`, `ReportApiSource`/`ColumnSpec` in the
+  catalog, `reporting/report_api.py` (compile/merge), `reporting/records.py`, datasets
+  `customers`, `support_assignments`, `device_deliveries`, tool `crm_records`, 403 split
+  into `crm_forbidden`, `ReportOutput.source`/`definitions` (`fetched_count`/`skipped_count`
+  nullable), eval cases r1–r5 + `tools_any`/`datasets_any` in `run_crm_agent_eval.py`
+  (`CRM_EVAL_ACCESS_TOKEN`), contract script `evals/check_crm_report_contract.py`.
+  Backend pytest **885 passed, 14 skipped, 1 failed** (same CRLF-only
+  `test_f86_baseline_csv_unchanged`). Two existing assertions changed on purpose: 403 is
+  now `crm_forbidden`, agent setup registers `crm_records`. Frontend untouched;
+  `npm run lint`/`build` not run (no `node_modules` in the worktree). Not verified: the
+  Reporting API over HTTP, the agent eval cases with live OpenAI.
 - Live Supabase connectivity/insert: **not verified**.
 
 ## Architectural impact

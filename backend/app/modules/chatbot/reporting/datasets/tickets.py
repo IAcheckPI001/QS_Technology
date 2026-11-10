@@ -12,7 +12,7 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, field_validator
 from app.modules.chatbot.extraction.registry import REGISTRY
 from app.modules.chatbot.extraction.validate_registry import resolve_models
 
-from ..catalog import DatasetSpec, FieldSpec, MetricSpec, hours_between
+from ..catalog import ColumnSpec, DatasetSpec, FieldSpec, MetricSpec, hours_between
 
 STATUS_LABELS = {
     "new": "mới tạo",
@@ -46,6 +46,7 @@ class TicketRecord(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True, str_strip_whitespace=True)
 
     id: str
+    case_number: str | None = None
     status: str
     priority: str | None = None
     category: str | None = None
@@ -78,7 +79,7 @@ def _status_group(status: str) -> str | None:
     return next((group for group, values in STATUS_GROUPS.items() if status in values), None)
 
 
-def _enum_normalizer(labels: dict[str, str]):
+def enum_normalizer(labels: dict[str, str]):
     """Nhận mã ("in_progress") hoặc nhãn tiếng Việt ("đang hỗ trợ"), không phân biệt hoa/thường."""
     lookup = {code.casefold(): code for code in labels}
     lookup.update({label.casefold(): code for code, label in labels.items()})
@@ -126,12 +127,12 @@ TICKETS = DatasetSpec(
         "status": FieldSpec(
             "enum", lambda r, now: r.status, "Trạng thái phiếu.",
             values=tuple(STATUS_LABELS), labels=STATUS_LABELS,
-            normalize=_enum_normalizer(STATUS_LABELS),
+            normalize=enum_normalizer(STATUS_LABELS),
         ),
         "status_group": FieldSpec(
             "enum", lambda r, now: _status_group(r.status), "Nhóm trạng thái.",
             values=tuple(STATUS_GROUPS), labels=STATUS_GROUP_LABELS,
-            normalize=_enum_normalizer({code: code for code in STATUS_GROUPS}),
+            normalize=enum_normalizer({code: code for code in STATUS_GROUPS}),
         ),
         "product_model": FieldSpec(
             "enum", lambda r, now: _product_model(r),
@@ -197,4 +198,15 @@ TICKETS = DatasetSpec(
     },
     default_date_field="created_at",
     system_filters=(("delete_pending = false", lambda r, now: not r.delete_pending),),
+    list_columns={
+        "case_number": ColumnSpec("Mã phiếu.", get=lambda r, now: r.case_number),
+        "status": ColumnSpec("Trạng thái phiếu.", get=lambda r, now: r.status),
+        "product": ColumnSpec("Sản phẩm (product_name của CRM).", get=lambda r, now: r.product_name),
+        "category": ColumnSpec("Loại yêu cầu.", get=lambda r, now: r.category),
+        "priority": ColumnSpec("Mức ưu tiên.", get=lambda r, now: r.priority),
+        "customer": ColumnSpec("Tên khách hàng.", get=lambda r, now: r.customer_name),
+        "assignee": ColumnSpec("Nhân viên xử lý.", get=lambda r, now: r.assignee_name),
+        "created_at": ColumnSpec("Thời điểm tạo phiếu.", get=lambda r, now: r.created_at),
+        "closed_at": ColumnSpec("Thời điểm đóng phiếu.", get=lambda r, now: r.closed_at),
+    },
 )

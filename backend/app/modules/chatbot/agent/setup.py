@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 
 from app.core.config import Settings
 from app.modules.chatbot.providers.base import ToolCallingProvider
-from app.modules.chatbot.providers.crm_api import CrmListClient
+from app.modules.chatbot.providers.crm_api import CrmListClient, CrmReportClient
 from app.modules.chatbot.reporting.datasets import DATASETS
 from app.modules.chatbot.extraction.product_catalog import RegistryProductCatalog
 from app.modules.chatbot.retrieval import Retriever
@@ -17,6 +17,7 @@ from app.modules.chatbot.tools import (
     ToolConfigurationError,
     ToolRegistry,
     ToolSpec,
+    build_crm_records_tool,
     build_crm_report_tool,
     build_product_docs_tool,
 )
@@ -54,10 +55,16 @@ def build_agent_runner(
             timeout_s=settings.crm_api_timeout_s,
             max_items=settings.crm_report_max_items,
         )
+        # Reporting Query API cùng base URL; dataset report_api (customers, support_assignments,
+        # device_deliveries) dùng client này, tickets vẫn dùng API danh sách.
+        report_client = CrmReportClient(settings.crm_api_base_url, timeout_s=settings.crm_api_timeout_s)
+        tz = ZoneInfo(settings.crm_report_timezone)
         tools.append(build_crm_report_tool(
-            client,
-            DATASETS,
-            tz=ZoneInfo(settings.crm_report_timezone),
+            client, DATASETS, tz=tz, report_client=report_client,
+            timeout_s=settings.agent_tool_timeout_s,
+        ))
+        tools.append(build_crm_records_tool(
+            client, DATASETS, tz=tz, report_client=report_client,
             timeout_s=settings.agent_tool_timeout_s,
         ))
     registry = ToolRegistry(tools)

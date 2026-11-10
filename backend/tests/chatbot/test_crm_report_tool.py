@@ -146,7 +146,7 @@ def test_pages_until_total_and_flags_truncation():
 
 @pytest.mark.parametrize(("crm", "code"), [
     (FakeCrm(status=401), "crm_auth_failed"),
-    (FakeCrm(status=403), "crm_auth_failed"),
+    (FakeCrm(status=403), "crm_forbidden"),
     (FakeCrm(status=502), "crm_unavailable"),
     (FakeCrm(error=httpx.ReadTimeout("slow")), "crm_unavailable"),
     (FakeCrm(error=httpx.ConnectError("down")), "crm_unavailable"),

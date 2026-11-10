@@ -9,18 +9,25 @@ Chạy từ thư mục backend (cần OPENAI_API_KEY và kết nối database tr
 
     .\\venv\\Scripts\\python.exe evals\\run_crm_agent_eval.py [case_id ...]
 
+Case báo cáo CRM (crm_report/crm_records) cần CRM_REPORT_ENABLED=true, CRM_API_BASE_URL và
+token đăng nhập CRM của một nhân viên thật trong biến môi trường CRM_EVAL_ACCESS_TOKEN (không
+lưu vào file). Thiếu token thì Bearer là user id giả và CRM sẽ trả crm_auth_failed.
+
 Exit code 1 nếu có case không đạt. Kết quả LLM không tất định: chạy vài lần
 trước khi kết luận một case luôn đạt hoặc luôn hỏng.
 """
 
 import asyncio
 import json
+import os
 import sys
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
+
+from pydantic import SecretStr
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -84,6 +91,8 @@ class TurnResult:
     next_actions: list[str] = field(default_factory=list)
     catalog_models: list[list[str]] = field(default_factory=list)
     tool_calls: int = 0
+    tools: list[str] = field(default_factory=list)
+    datasets: list[str] = field(default_factory=list)
 
 
 def _principal() -> PrincipalContext:
@@ -93,7 +102,12 @@ def _principal() -> PrincipalContext:
         tenant_id="qs_technology",
         authn_method="service_key",
         credential_id="eval0000eval0000",
-    ).acting_for("eval-user")
+    ).acting_for("eval-user", _crm_token())
+
+
+def _crm_token() -> SecretStr | None:
+    token = os.environ.get("CRM_EVAL_ACCESS_TOKEN", "").strip()
+    return SecretStr(token) if token else None
 
 
 def _state(text: str, history: list[ConversationMessage], conversation: ConversationState) -> RunState:
@@ -128,6 +142,9 @@ def _collect(provider: RecordingProvider, answer: str) -> TurnResult:
             for call in message.get("tool_calls") or []:
                 result.tool_calls += 1
                 arguments = json.loads(call["function"]["arguments"] or "{}")
+                result.tools.append(call["function"]["name"])
+                if "dataset" in arguments:
+                    result.datasets.append(arguments["dataset"])
                 result.questions.append(arguments.get("question", ""))
         elif message["role"] == "tool":
             payload = json.loads(message["content"])
@@ -169,6 +186,10 @@ def _check(result: TurnResult, expect: dict[str, Any]) -> list[str]:
             need(value in result.catalog_models, f"catalog models khác {value}")
         elif key == "errors_none":
             need(not set(value) & set(result.errors), f"lỗi tool {value}")
+        elif key == "tools_any":
+            need(bool(set(value) & set(result.tools)), f"tool không có {value} (đã gọi {result.tools})")
+        elif key == "datasets_any":
+            need(bool(set(value) & set(result.datasets)), f"dataset không có {value} ({result.datasets})")
         elif key == "tool_calls_min":
             need(result.tool_calls >= value, f"tool calls {result.tool_calls} < {value}")
         elif key == "tool_calls_max":
@@ -197,6 +218,7 @@ async def run_case(runner, provider: RecordingProvider, case: dict[str, Any]) ->
     print(f"  questions : {result.questions}")
     print(f"  statuses  : {result.statuses}  errors: {result.errors}")
     print(f"  catalog   : {list(zip(result.next_actions, result.catalog_models))}")
+    print(f"  tools     : {list(zip(result.tools, result.datasets))}")
     print(f"  answer    : {result.answer[:300]}")
     return _check(result, case["expect"])
 

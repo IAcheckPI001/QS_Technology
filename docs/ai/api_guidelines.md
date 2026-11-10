@@ -218,6 +218,10 @@ trace mới nhất của phiên. Đọc `public.chat_traces`; chỉ có dữ li�
   `dataset`, `metrics`, `dimensions`, `filter_fields` (tên trường, không giá trị),
   `date_field`, `date_preset` (`custom` khi dùng start/end; không ghi ngày), `time_grain`,
   `sort_fields`, `limit`, và `credential_source` (`token` | `user_id`, không giá trị).
+  Dataset report_api có thêm span `report.fetch` (`queries`) → `http.crm_report`×N
+  (`dataset`, `status_code`) → `report.merge`. `tool.crm_records` ghi `dataset`, `fields`
+  (tên cột), `filter_fields`, `limit`, `offset`, `credential_source`, rồi `returned`,
+  `total`; span `records.fetch`.
 - Token trong `summary` là usage **thật** do OpenAI trả về (agent, analysis, compose,
   embedding), khác ước tính trong `chat_history`.
 - Trace chỉ chứa metadata: không có nội dung tin nhắn, câu hỏi agent gửi tool,
@@ -375,7 +379,8 @@ Body của `/chat/crm` khác website (field lạ, kể cả `client_context` và
 
 - `user_id`: bắt buộc, 1–128 ký tự sau khi strip.
 - `crm_access_token`: tùy chọn, 1–4096 ký tự. Token CRM của chính nhân viên đó;
-  tool báo cáo (`crm_report`) dùng làm `Authorization: Bearer` khi gọi API CRM, nên
+  tool báo cáo (`crm_report`, `crm_records`) dùng làm `Authorization: Bearer` khi gọi
+  API CRM (API danh sách và Reporting Query API `POST /api/v1/reports/query`), nên
   CRM phân quyền/phạm vi dữ liệu theo token. **Không** log, không lưu
   (`chat_sessions`, history, snapshot), không dùng để khớp session. Bỏ trống thì
   tool dùng `user_id` làm Bearer (hành vi cũ).
@@ -463,6 +468,13 @@ công khi nhận `done`, và xử lý `error` theo `code`. Các mã lỗi chính
   (`agent_timeout` hết thời gian của lượt, `agent_empty_answer`,
   `agent_context_missing`; mã chi tiết chỉ ghi log). Lỗi của từng tool không làm
   hỏng lượt: agent nhận mã lỗi tool và vẫn trả lời.
+  Mã lỗi của `crm_report`/`crm_records` gửi cho agent (và ghi trong
+  `tool_errors`): `crm_user_missing` (không có nhân viên gắn với lượt),
+  `crm_auth_failed` (CRM trả 401), `crm_forbidden` (CRM trả 403: tài khoản không có
+  quyền với dataset, vd thiếu `auth.manage_roles`), `crm_report_contract_error`
+  (Reporting API trả 400: catalog lệch schema CRM, chi tiết chỉ ghi log ERROR),
+  `crm_unavailable` (timeout, 5xx, body lạ), `tool_invalid_args` (query sai catalog,
+  kèm giá trị hợp lệ).
 - SSE `provider_error`: lỗi trong phần xử lý provider/stream câu trả lời, hoặc
   lỗi không phân loại.
 
