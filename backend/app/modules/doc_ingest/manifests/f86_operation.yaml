@@ -1,0 +1,14 @@
+# F86 Operation Manual (English Version). Run hiện có chỉ gồm trang 5-17, toàn bộ OCR (ocr_required chặn chunk):
+# chỉ dùng làm bản nháp so sánh.
+doc_id: f86_user_guide_2024-09-14
+run_doc_ids: [f86]
+doc_type: user_guide
+doc_title: Operation Manual (English Version)
+doc_version: '2024-09-14'
+product_models: [F86]
+lang: en
+default_scopes: [operation]
+scope_rules:
+  - {match: '(?i)wiring|connection|install', scopes: [installation]}
+storage_bucket: f86-docs
+note: run hiện có chưa đủ trang (BL-13); toàn bộ OCR

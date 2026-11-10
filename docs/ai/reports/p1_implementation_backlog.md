@@ -69,9 +69,9 @@ Trạng thái 2026-11-03 (sau khi khóa C1), chi tiết test ở
 - **BL-26 xong**: `profile.py`, `profiles/default.yaml`, `profiles/qs_controller.yaml`.
 - **BL-05, BL-06, BL-27 xong** cho bảng: `normalize/docling_reader.py`,
   `normalize/tables.py`, `normalize/recorder.py`.
-- **BL-11 xong phần bảng**: T-12/T-13 chạy trên cell của bảng logic
-  (`technical_refs/params.py`, `technical_refs/applicability.py`); chạy trên text
-  chờ cùng BL-08/BL-09.
+- **BL-11 xong**: T-12/T-13 chạy trên cell của bảng logic
+  (`technical_refs/params.py`, `technical_refs/applicability.py`) và trên text
+  (`normalize/text_refs.py`, 2026-11-09).
 - **BL-18, BL-20 xong phần lõi**: `review/approval.py` (máy trạng thái, luật phục
   vụ, approval gate, giữ approval theo hash, duyệt hàng loạt theo rủi ro, luật
   xuất bản theo phụ thuộc/conflict). Chưa có `review_events` lưu trữ và CLI (BL-21).
@@ -100,8 +100,9 @@ Trạng thái 2026-11-03 (sau khi khóa C1), chi tiết test ở
 | BL-29 | Snapshot từ vựng registry (`product_models`, `aliases`, `control_interface`) cho profile + test đồng bộ (D-11, 11c) | `doc_ingest/profiles/registry_snapshot.json`, `tests/chatbot/test_registry_snapshot.py` | D-11 | snapshot | PI-07 fail khi registry đổi mà snapshot chưa sinh lại | P1 |
 | BL-31 | Fixture tổng hợp (SYN) cho ca F54 không có: dòng xuống dòng, header nhiều tầng, bảng không header, nối trang lệch, cell lạc | `backend/tests/doc_ingest/synthetic.py` | BL-04 | builder `SynPage` | Các nhóm LT/HC/AP dùng được, không cần PDF | Sinh chunk |
 | BL-33 | Phân loại nhãn Docling (T-16): mục lục `document_index` giữ nguyên, nhãn chưa hỗ trợ → `unsupported_element`; reader đọc con của mọi phần tử (caption) | `normalize/coverage.py`, `normalize/docling_reader.py` | BL-05 | `ElementCoverage` | Không phần tử body nào bị bỏ im lặng (`test_coverage.py`) | Sinh chunk |
+| BL-34 | Đánh giá đa tài liệu — **có code 2026-11-09, nhãn chưa xác nhận**: báo cáo độ khớp profile (B1, tín hiệu cảnh báo), bộ nhãn tay mẫu (B2), lệnh `eval` chấm precision/recall tách trang text layer / OCR (B3), cổng đạt (B4) | `eval/profile_fit.py`, `eval/labels.py`, `eval/score.py`, `eval/render.py`, `tests/doc_ingest/fixtures/eval/*.labels.json` | BL-09, BL-11 | `RunReport.profile_fit`, `report/eval.json`, `report/eval.html` | F54 đạt (tạm); F86 Installation đạt (tạm); F10T, F86 Operation không đạt (OCR) | Dùng tài liệu mới cho BL-16 |
 | BL-32 | CLI `run` (PDF hoặc Docling JSON đã lưu → chuẩn hóa → thư mục chạy contract §1) + báo cáo HTML từng bước | `doc_ingest/cli.py`, `pipeline.py`, `report/html_report.py`, `parse/docling_runner.py`, `schemas/run.py` | BL-05, BL-06 | `data/ingest_runs/{doc_id}/{run_id}/`, `report/index.html` | `test_run_report.py`; chạy Docling thật trùng kết quả fixture | — |
-| BL-15 | Thư viện chunk assertion CQ-01…CQ-08 | `backend/app/modules/doc_ingest/build/assertions.py` | BL-04 | Hàm kiểm + báo cáo | Chạy được ở chế độ báo cáo trên CSV F86 (RB-02) | Sinh chunk |
+| BL-15 | Thư viện chunk assertion CQ-01…CQ-08 — **có code 2026-11-09**: CQ-01…CQ-10 + CQ-RB (contract C2 §10), chạy trong bước `build` | `backend/app/modules/doc_ingest/build/assertions.py` | BL-04 | `build/chunk_quality.json` | Đạt trên F54 (323 chunk) và F86 Installation (26 chunk); chưa chạy trên CSV F86 (RB-02: CSV không có `element_ids`, `row_ids`) | Sinh chunk |
 
 ### Nhóm B — Contract (C1 đã khóa 2026-11-03)
 
@@ -121,9 +122,9 @@ Trạng thái 2026-11-03 (sau khi khóa C1), chi tiết test ở
 | BL-05 | T-01, T-02: TableGrid theo bbox, lấp ô trống | `normalize/tables.py` | BL-04, BL-02 | `LogicalTable` (1 segment) | GT-01, GT-18 | Sinh chunk |
 | BL-06 | T-03, T-04, T-05: nối trang (sai số tương đối), kế thừa header, nhận header theo tín hiệu (trùng header / hình dạng token / mẫu profile) | `normalize/tables.py` | BL-05, BL-08, BL-26 | `LogicalTable` nhiều segment | GT-02, GT-03, GT-19 | Sinh chunk |
 | BL-27 | T-15 gộp dòng tiếp nối + `orphan_row` | `normalize/tables.py` | BL-05 | dòng logic đã gộp | GT-22 (fixture tổng hợp) | Sinh chunk |
-| BL-09 | T-08 list cha–con | `normalize/lists.py` | BL-04 | `list.parent_element_id` | GT-07 | Trích fact |
+| BL-09 | T-08 list cha–con — **xong v1 2026-11-09** (kiểm trên F54; xem lại khi thêm tài liệu) | `normalize/lists.py` | BL-04 | `list_info` (`ListInfo`), review `list_orphan`, `list_level_ambiguous`, cờ `list_cross_page`, `list_marker_mixed`, `RunReport.lists`, mục List trong báo cáo HTML | GT-07 đạt; F54: 103 con, 0 mồ côi, 3 mơ hồ (trang 71) | Trích fact |
 | BL-10 | T-09, T-10, T-11, T-14: screenshot, watermark candidate, caption, crop (+ T-18 nhãn sát hình) — **xong 2026-11-03** | `normalize/figures.py`, `parse/pdf_probe.py::page_objects` | BL-04 | `image`, `caption_link`, `raw/p{n}.objects.json`, `normalized/images/` | GT-05 (watermark), GT-06, GT-10 đạt. Chưa làm: render trang xoay. Liên quan, không thuộc BL-10: chép kích thước từ bản vẽ khi duyệt = fact `spec` `human_verified_figure` (V1.1); trả ảnh cùng câu trả lời = BL-92 (SSE `assets`) | Sinh chunk (hình) |
-| BL-11 | T-12, T-13: `parse_param_ref` + kiểm giao mã + applicability | `technical_refs/params.py` | BL-04 | `ParamRef`, `applicability` | GT-04, GT-05 | Trích fact |
+| BL-11 | T-12, T-13: `parse_param_ref` + kiểm giao mã + applicability — **xong** (ô bảng 2026-11-03; text 2026-11-09) | `technical_refs/params.py` (`find_param_refs`), `normalize/text_refs.py` | BL-04 | `ParamRef`, `TextParamRef` (vị trí + vai trò), `applicability`, `list_param_mismatch` (T-08 v1.1), `RunReport.refs` | GT-04, GT-05; F54 text phủ 302/302 token | Trích fact |
 | BL-23 | Quyết định deterministic toàn pipeline | `normalize/__init__.py` | BL-05…BL-11 | — | GT-17 | Sinh chunk |
 | BL-25 | Kiểm bất biến V-01…V-04 + `confidence` | `doc_ingest/validate/` | BL-02b, BL-05…BL-11, D-12 | `validation.jsonl`, mục review_queue | GT-20, GT-21, GT-22 | Sinh chunk |
 | BL-13 | Spike F86 (PDF đã có trong `docs/ai/doc_ingest_spike/source/`) — ca kiểm tính chung đầu tiên: khi S1 có, chạy luật rút từ F54 lên F86 **không sửa luật**, ghi các ca không đạt | tool spike | PDF F86 | Báo cáo F86, checklist như F54, danh sách ca luật F54 không xử lý được | Người duyệt ký | S1 phần hình (D-07); D-12 |
@@ -132,7 +133,7 @@ Trạng thái 2026-11-03 (sau khi khóa C1), chi tiết test ở
 
 | ID | Việc | File/module | Phụ thuộc | Đầu ra | Nghiệm thu | Chặn |
 |---|---|---|---|---|---|---|
-| BL-16 | Chunk builder baseline (deterministic, không LLM): section, procedure, warning riêng + quan hệ, bảng logic chia theo dòng có lặp header, visual chunk = caption/title nguyên văn | `doc_ingest/build/` | BL-05…BL-11, BL-15, BL-23, BL-25, BL-27 | `chunks` nháp | CQ-01…CQ-08 đạt trên F54 | — |
+| BL-16 | Chunk builder baseline (deterministic, không LLM) — **có code 2026-11-09, chờ duyệt cổng 2b**: khối label heading, thủ tục nguyên khối (gộp chuỗi "Stage n:"), nhóm parameter kèm giá trị, bảng theo nhóm dòng lặp header, chunk hình = caption/tiêu đề + ảnh, cửa sổ cha ≤ 2.500 ký tự, manifest tài liệu, adapter `doc_chunks_v1`, kiểm 2b (độ phủ, ranh giới theo nhãn, so với CSV tay, duyệt tay), lệnh `build`, `figure-ocr` | `doc_ingest/build/`, `doc_ingest/export/`, `doc_ingest/manifest.py`, `manifests/*.yaml`, `report/chunks_report.py`, `parse/figure_ocr.py` | BL-05…BL-11, BL-15, BL-23, BL-25, BL-27 | `build/chunks.jsonl`, `doc_chunks_v1.jsonl`, `chunk_quality.json`, `chunk_review.json`, `report/chunks.html` | F54: CQ đạt, độ phủ 1,0, ranh giới P/R 1,0 (nhãn nháp); F86 Installation: CQ đạt, độ phủ 1,0, P/R 1,0, đúng loại 0,71; cổng 2b chờ team duyệt | Bước 3 (làm giàu tiếng Việt) |
 | BL-17 | Trích fact nháp: `parameter` (bảng + text), `io_address`, connector→chức năng | `doc_ingest/enrich/` | BL-09, BL-11, D-04, D-10 | `facts` nháp + evidence verbatim | Evidence `table_cell`/`text_span` khớp nguyên văn; I-19 có cờ | — |
 | BL-12 | Quality gate (document: nguồn + version; unit: cờ blocking) | `doc_ingest/review/gate.py` | BL-04 | `gate_report` | Trên F54: document `blocked` vì D-05 chưa xác nhận; unit có cờ thì `pending_review` | Xuất bản |
 

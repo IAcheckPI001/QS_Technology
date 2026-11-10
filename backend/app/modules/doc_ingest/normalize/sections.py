@@ -36,7 +36,10 @@ def parse_heading(text: str, profile: Profile) -> HeadingNumber | None:
     text = " ".join(text.split())
     if profile.section_keywords:
         words = "|".join(re.escape(k) for k in profile.section_keywords)
-        match = re.match(rf"^(?:{words})\s+(?P<num>\d+)\s*[.:]?(?:\s+\S.*)?$", text, re.IGNORECASE)
+        # Tiêu đề có thể dính ngay sau `:`/`.` nếu bắt đầu bằng chữ cái (F54 `PART 1:CONTROLLER
+        # OVERVIEW`, I-26); `PART 1.2 X` vẫn không khớp.
+        match = re.match(rf"^(?:{words})\s+(?P<num>\d+)(?:\s*[.:]?(?:\s+\S.*)?|\s*[.:][^\W\d_].*)$",
+                         text, re.IGNORECASE)
         if match:
             return HeadingNumber((int(match["num"]),), "keyword")
     for pattern, source in ((_NUMBERED, "numbered"), (_GLUED, "glued")):

@@ -14,5 +14,5 @@ SNAPSHOT = (Path(__file__).resolve().parents[2] / "app" / "modules" / "doc_inges
 
 def test_doc_ingest_registry_snapshot_matches_registry() -> None:
     snapshot = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
-    for key in ("product_models", "aliases", "control_interface"):
+    for key in ("product_models", "aliases", "control_interface", "spec_attributes"):
         assert snapshot[key] == REGISTRY[key], key

@@ -1,0 +1,29 @@
+{
+ "schema_version": 1,
+ "doc_id": "f54",
+ "verified": false,
+ "labeled_by": "Claude (nháp 2026-11-09)",
+ "method": "Soạn từ nội dung trang (text đã trích, đối chiếu ảnh trang) theo quy tắc đơn vị của contract C2 §6: thủ tục nguyên khối, nhóm parameter kèm giá trị, hình kèm caption, ghi chú xử lý lỗi là alarm. Loại chunk ghi theo đánh giá nội dung, không theo luật của builder (vd. 2.3.3 là ảnh thiết bị, không phải sơ đồ đấu dây). Nhóm dòng bảng không gán nhãn (CQ-01/CQ-02 kiểm). Cần team xác nhận.",
+ "pages": [
+  {"page": 18, "expected_chunks": [
+   {"chunk_type": "wiring", "start": "Homing switch wiring diagram for NPN, PNP signal", "end": "Figure 14. Homing switch wiring diagram for (NPN,PNP signal)"},
+   {"chunk_type": "procedure", "start": "After connecting the homing sensor for the axes (X,Y,Z,A)", "end": "Figure 15. Homing sensor status configuration parameters for axes (X,Y,Z,A)", "note": "Step 1-3 + screenshot"}
+  ]},
+  {"page": 19, "expected_chunks": [
+   {"chunk_type": "procedure", "start": "How to configure the parameter from 0 to 1:", "end": "Press RESET button to save the configured parameters."},
+   {"chunk_type": "parameter", "start": "Parameter stauts description:", "end": "M1923 = 1 : Normally open sensor (NO)", "note": "M1920-M1923 kèm giá trị 0/1"},
+   {"chunk_type": "figure", "start": "2.3.3 Automatic tool setter connection", "end": "Figure 16. Automatic tool setter deivce", "note": "câu dẫn + ảnh thiết bị"}
+  ]},
+  {"page": 87, "expected_chunks": [
+   {"chunk_type": "figure", "start": "2.6.5 Automatic tool setter", "end": "Figure 99. Automatic tool setter setting parameters", "note": "ghi chú + 2 ảnh màn hình tham số"},
+   {"chunk_type": "parameter", "start": "Parameter status description:", "end": "#14012: Allowable deviation after each contact with the automatic tool setter device"}
+  ]},
+  {"page": 88, "expected_chunks": [
+   {"chunk_type": "procedure", "start": "Parameter setting:", "end": "Press RESET button to save the configrured parameter."},
+   {"chunk_type": "procedure", "start": "Automatic tool setting process (M100)", "end": "record the result in the corresponding (Offset H).", "note": "Stage 1-10 nguyên khối"}
+  ]},
+  {"page": 90, "expected_chunks": [
+   {"chunk_type": "alarm", "start": "At Stage (4,5): If the Z axis has moved", "end": "parameter #14011 but has not yet made contact with the sensor", "note": "ghi chú xử lý lỗi, sang trang 91"}
+  ]}
+ ]
+}

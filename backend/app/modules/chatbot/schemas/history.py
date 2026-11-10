@@ -84,3 +84,48 @@ class RetrievalSnapshotResponse(BaseModel):
 class ChatHistoryResponse(BaseModel):
     session_id: UUID
     messages: list[ChatHistoryItem]
+
+
+class TraceSpan(BaseModel):
+    """Một span của trace: chỉ metadata, không chứa nội dung tin nhắn hay output tool."""
+
+    span_id: str
+    parent_id: str | None = None
+    name: str
+    kind: str
+    # Mốc tính từ lúc dịch vụ nhận request (ms).
+    start_ms: float
+    duration_ms: float | None = None
+    # ok · error · cancelled · unfinished hoặc mã nghiệp vụ (tool_timeout, http_503, ...).
+    status: str
+    attributes: dict[str, str | int | float | bool | list[str] | None] = Field(default_factory=dict)
+
+
+class TraceSummary(BaseModel):
+    span_count: int
+    dropped_spans: int
+    llm_calls: int
+    tool_calls: int
+    # Mọi span lỗi, kể cả span cha nhận lỗi lan lên (đếm lặp một lỗi).
+    error_spans: int
+    # Nơi lỗi phát sinh: span lỗi không có span con nào lỗi.
+    root_error_spans: int
+    failed_tool_calls: int
+    # Token thật do OpenAI trả về, khác ước tính trong chat_history.
+    input_tokens: int
+    output_tokens: int
+    embedding_tokens: int
+
+
+class ChatTraceResponse(BaseModel):
+    session_id: UUID
+    history_id: UUID | None = None
+    trace_id: str
+    request_id: str
+    channel: str
+    # ok hoặc mã lỗi SSE (analysis_error, agent_error, ...), client_disconnected.
+    outcome: str
+    duration_ms: int
+    created_at: datetime
+    summary: TraceSummary
+    spans: list[TraceSpan]

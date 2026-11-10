@@ -262,16 +262,77 @@ có `param_ref`.
 | Kiểm | Điều kiện đạt | Trạng thái |
 |---|---|---|
 | T-18: `page_header` `320 mm` cách hình 3 pt ở dải trên → `figure_text` của hình, không `furniture_unconfirmed`; `text` đè mép hình → `figure_text`; nhãn giữa hai hình → hình gần hơn | Đúng | đạt |
-| T-18 không gắn: câu văn, heading đánh số, `Notes:`, caption, chữ cách hình 40 pt; chuỗi lặp 3 trang sát hình vẫn là furniture | Đúng | đạt |
+| T-18 không gắn: câu văn, heading đánh số, `Notes:`, caption, chữ cách hình 40 pt, dòng bắt đầu ở lề trái văn bản (I-25, F54 `INDEX homing type`); chuỗi lặp 3 trang sát hình vẫn là furniture | Đúng | đạt |
 | T-14: crop mở rộng theo bitmap ≥ 50%, nét vector kéo ra ≤ 36 pt, nhãn của hình; khung trang không mở rộng; không có `objects.json` → bbox + padding, log `no_object_info` | Đúng | đạt |
 | T-09: bảng 0 cell phủ bitmap → `screenshot` có caption, không `empty_table`, không vào bảng logic; không có bitmap → `empty_table` | Đúng | đạt |
-| T-10: picture nằm trong bitmap lặp 3 trang (IoU 0,53, phủ 100%) → `watermark_candidate`; có caption → `watermark_conflict`; hình thật lớn hơn watermark → giữ; bitmap 2 trang → không; logo đổi vị trí và xoay 90° qua các trang → vẫn lặp; ảnh cùng px nhưng mỗi lần một cỡ (dùng lại trong hình thật) → không | Đúng | đạt |
-| T-11: `Figure 5` gắn bảng → chuyển sang hình phía trên (`caption_relinked`, `source = rule`); dải hình lề phải cùng hàng caption không phải đích; caption không có parent được gắn; không ứng viên → `caption_ambiguous`; `Table 3` → bảng gần nhất | Đúng | đạt |
+| T-10: picture nằm trong bitmap lặp 3 trang (IoU 0,53, phủ 100%) → `watermark_candidate`; có caption → `watermark_conflict`; hình thật lớn hơn watermark → giữ; bitmap 2 trang → không; watermark xác định bằng cùng `hash` + cùng vị trí (I-24): ảnh cùng nội dung ở vị trí khác → picture + cờ `repeated_image`; screenshot cùng khung px/cỡ/vị trí nhưng khác nội dung → không cờ; `objects.json` thiếu `hash` → T-10 không chạy | Đúng | đạt |
+| T-11: `Figure 5` gắn bảng → chuyển sang hình phía trên (`caption_relinked`, `source = rule`); dải hình lề phải cùng hàng caption không phải đích; caption không có parent được gắn; không ứng viên → `caption_ambiguous`; hòa giữa picture và screenshot trùng vùng → giữ liên kết Docling; `Table 3` → bảng gần nhất | Đúng | đạt |
 | F54 (có `objects.json`): GT-10 crop trang 9 phủ bitmap 54,8–561,7; GT-01/I-10 Figure 5 trang 11; GT-06 Figure 15 trang 18 → screenshot; GT-05 trang 171 → watermark; V-01 11/11; hash bảng không đổi khi có/không có `objects.json` | Đúng | đạt |
 | F86 OCR: `320 mm` trang 8, 9 → `figure_text` đúng hình; chỉ 2 caption gắn lại (trang 17, Docling không gắn) | Đúng | đạt |
-| F86 trang 1–17 qua CLI (PDF + raw đã OCR): logo lề phải/giữa trang 9, 10, 13, 14, 15 → `watermark_candidate`; 22 picture, 0 `watermark_conflict`, 0 `caption_ambiguous`; crop trang 8, 9 chứa `320 mm` và đường kích thước | Đúng | đạt (kiểm tay, `data/ingest_runs/f86/bl10-figures`) |
+| F86 trang 5–17 qua CLI (PDF + fixture `f86_ocr`): logo trang 9, 10, 13, 14, 15 → picture + `repeated_image` (không phải watermark); 7 nhãn T-18; 0 `watermark_conflict`, 0 `caption_ambiguous`; crop trang 8, 9 chứa `320 mm` | Đúng | đạt (kiểm tay, `data/ingest_runs/f86/fix-i24-26`) |
+| F54 171 trang qua CLI (PDF + raw run `20261103-144432`): 8 `watermark_candidate` đều là watermark thật; 7 screenshot trở lại picture; `watermark_conflict` 1; `caption_ambiguous` 1 (trang 38, Docling gộp hai hình); `PART 1:CONTROLLER OVERVIEW` là heading; hash 11 bảng và trang in không đổi; V-01 168/0/3 | Đúng | đạt (kiểm tay, `data/ingest_runs/f54/fix-i24-26`) |
 | Render (venv ingest + PDF F54): `normalized/images/f54_p009_e003/original.png`, `preview.png`, scale 3–4 | Đúng | đạt (tự skip khi thiếu PDF) |
+| T-19: picture + bảng 0 cell cùng bbox, caption Docling ở bảng → giữ screenshot, picture `duplicate_image` + `duplicate_of`, không crop; không caption → giữ screenshot; chồng một phần (IoU ≈ 0,33) → hai hình | Đúng | đạt |
+| F54 171 trang (run `fix-i27`): 5 cặp trùng trang 64, 81, 85, 96, 98 → mỗi trang một ảnh; ảnh render 247 → 242; caption, review, hash bảng, trang in, V-01 không đổi; F86 trang 5–17 không có cặp trùng | Đúng | đạt (kiểm tay) |
 | Ảnh ở Form XObject (F54 trang 18) lấy bounds form (141,492–500,695), không phải góc 0,720 | Đúng | đạt (`test_f54_fixture.py`) |
+
+### 6.12 List cha–con: T-08 v1 (BL-09) — `test_lists.py`
+
+| Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|
+| GT-07 (fixture F54 trang 19): 4 cha `M1920:`…`M1923:` × 2 con `o … = 0/1`, `depth` 1, `marker` `o`; text con M1921 giữ `(NC` thiếu `)`; không review | Đúng | đạt |
+| Thụt ≥ 18 pt không glyph → con; thụt 10 pt có glyph → con; anh em cùng lề không glyph (`a)`, `b)`) cùng cha; ba cấp (`depth` 2); list cấp 1 thụt khác (x 121) sau label heading không có cha | Đúng | đạt |
+| `operation` (không có khoảng trắng sau `o`) không phải glyph → `list_level_ambiguous` khi thụt 10 pt | Đúng | đạt |
+| `text` hoặc label heading chen giữa ngắt khối: mục thụt sâu không glyph → cấp 1, không review; mục có glyph → `list_orphan`, anh em của nó `list_level_ambiguous`, lùi về lề cấp 1 không review | Đúng | đạt |
+| Qua trang (có/không furniture đầu trang) → cha ở trang trước, cờ `list_cross_page`; trang trước kết thúc bằng text → không nối, `list_orphan`; hai trang không liền nhau → không nối | Đúng | đạt |
+| Tài liệu lộn xộn: `- ` dùng cho cấp 1 → không thành con, không review; lùi lề về x không khớp cấp nào → `list_level_ambiguous`; anh em khác marker → `list_marker_mixed`; marker Docling dùng khi text không có glyph | Đúng | đạt |
+| F54 171 trang (run `bl09-t08`: raw run `20261109-063902` + PDF): 482 list_item, 103 con, 0 mồ côi, 2 `list_cross_page` (trang 67), 3 `list_level_ambiguous` (trang 71); review 21 → 24; hash 11 bảng, trang in, V-01, hình, 242 ảnh crop không đổi | Đúng | đạt (kiểm tay) |
+| F86 trang 5–17 (run `bl09-t08`): 7 list_item, 0 con, review không đổi | Đúng | đạt (kiểm tay) |
+
+### 6.13 Mã parameter, ghi chú áp dụng trong text: T-12/T-13 + T-08 v1.1 (BL-11 phần text) — `test_text_refs.py`
+
+| Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|
+| Đơn, danh sách `(#12010, #12011, …)`, dải `#4140 - #4147`, dải xuống dòng `#8090\n- #8097`; `text[start:end] == label` | Đúng | đạt |
+| Vai trò: `M1920: …` định nghĩa; `o M1920 = 0`, `o #4141= 0` giá trị; trong câu → nhắc tới | Đúng | đạt |
+| `and` tách danh sách; khác prefix → ref riêng | Đúng | đạt |
+| Không phải parameter (near-miss): `M100`, `M8`, `M100H3`, `M195..` (lỗi đánh máy F54 trang 94), `M4` | Đúng | đạt |
+| Dải ngược, trộn dải với danh sách → `param_unparseable`; dải > 64 → `range_too_long` | Đúng | đạt |
+| Profile `default` không quét; chữ trong hình không quét; heading, text, list có ref | Đúng | đạt |
+| T-13 trên text: `not available on F54 controller` → ứng viên `not_available` + `applicability_note` | Đúng | đạt |
+| T-08 v1.1: cha `M1951:`, con `o M1950 = 0/1` → 2 `list_param_mismatch`; cùng mã → không review | Đúng | đạt |
+| Fixture F54 trang 19: 4 định nghĩa, 8 giá trị, không mismatch | Đúng | đạt |
+| F54 171 trang (run `bl11-text`): 227 ref ở 220 phần tử (98/75/54), phủ 302/302 token `#` 4–5 và `M` 4 chữ số; 0 unparseable; near-miss 9; `list_param_mismatch` 2 (trang 96, lỗi soạn thảo của tài liệu); review 24 → 26; hash bảng, trang in, V-01, hình, list không đổi | Đúng | đạt (kiểm tay) |
+| F86 trang 5–17 (run `bl11-text`): 0 ref, review không đổi | Đúng | đạt (kiểm tay) |
+
+### 6.14 Đánh giá đa tài liệu (BL-34) — `test_eval.py`
+
+| Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|
+| B1: `code_shape` (`#4140` → `#9`, `P01-02` → `P9-9`); profile `default` + 25 mã → `default_profile_with_codes`, `unknown_code_shapes`; `qs_controller` nhận `#`, `P01-01` vẫn là dạng lạ; 6 near-miss → `near_miss_high` | Đúng | đạt |
+| B1: picture ≥ 50% trang chứa ≥ 2 câu văn → `picture_swallows_text`; nhãn sơ đồ ngắn không cảnh báo; fixture F54 không có tín hiệu OCR | Đúng | đạt |
+| B3: chấm TP/FP/FN (M0100 là FP), vai trò, cha list, cụm áp dụng, nội dung thân; vai trò sai và cha sai có trong chi tiết; nhãn chưa xác nhận → `provisional` | Đúng | đạt |
+| B4: cổng = tỷ lệ trang OCR ≤ 0,5 + trên trang text layer: T-12 precision ≥ 0,99, recall ≥ 0,95, vai trò ≥ 0,95, T-08 cha sai = 0, T-13 recall = 1, nội dung thân ≥ 0,95 | Đúng | đạt |
+| 4 file nhãn hợp lệ, `verified: false` | Đúng | đạt |
+| Chạy thật (run `eval-b`, nhãn **tạm**): F54 13 trang: T-12 67/0/0, vai trò 1,0, list 26/0/0, T-13 4/4, nội dung 3/3 → **đạt**. F86 Installation 4 trang: 0 mã bịa, nội dung 4/4 → **đạt**. F86 Operation (13/13 trang OCR) → **không đạt** (OCR). F10T (101/105 trang OCR): trang OCR T-12 precision 0,5 (M0100 ×3, I-30), nội dung thân 0/4 (I-28, I-29) → **không đạt** | Đúng như mong đợi | đạt (kiểm tay) |
+
+### 6.15 Chunk builder (BL-16) + kiểm 2b (BL-15) — `test_chunker.py`, `test_chunk_quality.py`
+
+| Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|
+| Manifest: 3 file nạp được, `doc_version` là chuỗi, tìm theo `run_doc_ids` | Đúng | đạt |
+| Parameter: định nghĩa + giá trị con cùng chunk, list lồng, scope thêm `configuration`, mã vào `keywords`; nhóm tách theo ranh giới định nghĩa ≤ 1.200 ký tự (CQ-10 đạt) | Đúng | đạt |
+| Chuỗi "Stage n:" + khối dẫn → 1 `procedure` (kèm ảnh); ghi chú "The cause is…" → `alarm` liên kết hai chiều, scope thêm `maintenance` | Đúng | đạt |
+| Thủ tục > 2.500 ký tự tách ở ranh giới bước, phần 2…n có tiêu đề `(phần i/n, bước a–b)`, không mất/lặp bước | Đúng | đạt |
+| Chunk hình: caption + tiêu đề, ảnh, nhãn hình lọc vào `keywords`; furniture, `figure_text`, ảnh trùng không vào chunk; mục chỉ có heading không sinh chunk | Đúng | đạt |
+| Cửa sổ cha: `content` = nối nguyên văn các con, assets = hợp ảnh con | Đúng | đạt |
+| Review cấp trang (`ocr_required`) chặn chunk trên trang đó; `extraction = ocr` | Đúng | đạt |
+| `control_interface`/`spec_attributes` từ từ vựng registry + profile | Đúng | đạt |
+| Nhãn OCR ảnh crop → `figure_labels` (`crop_ocr`) + `keywords`, không vào `content`; trang OCR toàn trang không OCR lại | Đúng | đạt |
+| Fixture F54 qua `cli run`: CQ đạt, độ phủ 1,0, adapter không lỗi ràng buộc, `run_report.chunks`, `chunks.html`; trang 19 parameter M1920–M1923; bảng parameter chia phần lặp header, mỗi dòng đúng 1 lần | Đúng | đạt |
+| CQ-01/02/03/06/08/09/10 bắt được vi phạm cố ý | Đúng | đạt |
+| Ranh giới theo nhãn (precision/recall/loại), so với CSV tay, tổng hợp duyệt (ok/fix/cũ), cổng 2b, adapter `doc_chunks_v1` đúng cột + ràng buộc | Đúng | đạt |
+| Chạy thật (nhãn **tạm**): F54 323 chunk (62 cha), CQ đạt, độ phủ 1,0, ranh giới P 1,0 / R 1,0 / đúng loại 0,9 (10 đơn vị, 5 trang); F86 Installation 26 chunk, CQ đạt, độ phủ 1,0, P/R 1,0, đúng loại 0,71; so với 27 chunk tay: 7/27 có ≥ 60% token trong một chunk builder | Báo cáo | đạt (kiểm tay), cổng 2b chờ team duyệt |
 
 ### 6.11 Trạng thái GT/CQ hiện có
 
@@ -282,7 +343,7 @@ có `param_ref`.
 | GT-04 | Đạt (profile `qs_controller`) |
 | GT-05 | Đạt (applicability; `watermark_candidate` trang 171, T-10 đã sửa điều kiện) |
 | GT-06, GT-10 | Đạt khi có `objects.json` (fixture F54 có); crop render khi có PDF |
-| GT-07 | Chờ BL-09 |
+| GT-07 | Đạt (T-08 v1, `test_lists.py`) |
 | GT-08, GT-09, GT-12 | Phần section path đạt (BL-08); `lang` theo element chờ I-16 |
 | GT-11 | Phần trang in (T-06) đạt; manifest ghi đè, `doc_version_mismatch` chưa có |
 | GT-13, GT-15 | Đạt ở mức lõi approval (HA-03, HA-05); gán unit từ builder chờ BL-19 |
@@ -293,5 +354,5 @@ có `param_ref`.
 | GT-21 | Chờ BL-25 (V-02) |
 | GT-22 | Phần T-15 đạt (LT-02, LT-04); V-03 chờ BL-25 |
 | GT-23 | Đạt (PI-04) |
-| CQ-01…CQ-08 | Chờ BL-15, BL-16 |
+| CQ-01…CQ-08 (+ CQ-09, CQ-10, CQ-RB) | Có code (BL-15, 2026-11-09); đạt trên F54 và F86 Installation (§6.15); RB-02 trên CSV F86 chưa chạy |
 | RB-01 | Đạt (`test_f86_baseline.py`) |

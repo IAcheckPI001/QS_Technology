@@ -34,10 +34,11 @@ def _codes(result: RunResult) -> list[str]:
     return [r.code for r in result.tables.review]
 
 
-def _box(x0: float, y0: float, x1: float, y1: float, px: tuple[int, int] | None = None) -> dict[str, Any]:
+def _box(x0: float, y0: float, x1: float, y1: float, px: tuple[int, int] | None = None,
+         digest: str | None = None) -> dict[str, Any]:
     box: dict[str, Any] = {"x0": x0, "y0": y0, "x1": x1, "y1": y1}
     if px:
-        box.update(px_w=px[0], px_h=px[1])
+        box.update(px_w=px[0], px_h=px[1], hash=digest or f"img{px[0]}x{px[1]}")
     return box
 
 
@@ -86,6 +87,20 @@ def test_repeated_footer_next_to_picture_stays_furniture() -> None:
         pages.append(page.text("page_footer", "ACME CO.,LTD", 758, 770, x=(200, 300)))
     footers = [e for e in _run(pages).normalized or [] if e.text == "ACME CO.,LTD"]
     assert {(e.normalized_type, e.flags[0]) for e in footers} == {("furniture", "furniture_repeated")}
+
+
+def test_line_at_text_left_margin_is_not_a_picture_label() -> None:
+    """F54 trang 80 (I-25): `INDEX homing type` bắt đầu đúng lề trái văn bản (x 85), ngay trên hình
+    → nhãn mục, không phải nhãn hình. Nhãn giữa vùng hình vẫn được gắn."""
+    page = SynPage(80)
+    for top in (60, 80, 100):
+        page.text("text", f"Body line {top}", top, x=(85, 500))
+    page.text("section_header", "INDEX homing type", 324, 339, x=(85, 189))
+    page.picture(336, 563, x=(84, 556))
+    page.text("text", "24V", 565, 572, x=(300, 320))
+    result = _run([page])
+    assert _by_text(result, "INDEX homing type").normalized_type == "label_heading"
+    assert _by_text(result, "24V").flags == ["figure_text_attached"]
 
 
 def test_label_goes_to_the_nearer_picture() -> None:
@@ -166,7 +181,7 @@ def test_picture_inside_repeated_bitmap_is_watermark_candidate() -> None:
     result = _watermark_pages((216, 364, 425, 458))
     [mark] = _by_type(result, "watermark_candidate")
     assert mark.flags == ["watermark_candidate"] and mark.source_element_type == "picture"
-    assert any(e.rule_id == "T-10" and e.element_id == "bitmap:671x427" for e in result.tables.log)
+    assert any(e.rule_id == "T-10" and e.element_id == "bitmap:img671x427" for e in result.tables.log)
 
 
 def test_watermark_with_caption_is_conflict_not_candidate() -> None:
@@ -179,24 +194,38 @@ def test_real_picture_larger_than_watermark_is_kept() -> None:
     assert len(_by_type(result, "picture")) == 1 and "watermark_conflict" not in _codes(result)
 
 
-def test_logo_moving_and_rotating_across_pages_is_repeated() -> None:
-    """F86: logo 412×262 px ở vị trí khác nhau mỗi trang, cỡ 94×148 pt (trang 13–14 xoay 148×94)."""
+def test_same_image_at_different_positions_is_repeated_image_not_watermark() -> None:
+    """F86: logo 412×262 px cùng nội dung ở vị trí khác nhau mỗi trang (I-24): vẫn là picture,
+    chỉ có cờ `repeated_image` để người duyệt quyết định."""
     boxes = {9: _box(507, 580, 601, 728, (412, 262)), 13: _box(232, 572, 380, 666, (412, 262)),
              15: _box(502, 286, 596, 434, (412, 262))}
     pages = [SynPage(n) for n in boxes]
     pages[1].picture(574, 664, x=(234, 378))
     result = _run(pages, {n: {"bitmaps": [box], "paths": []} for n, box in boxes.items()})
-    assert len(_by_type(result, "watermark_candidate")) == 1
+    [picture] = _by_type(result, "picture")
+    assert picture.flags == ["repeated_image"] and not _by_type(result, "watermark_candidate")
 
 
-def test_image_reused_at_different_sizes_is_not_repeated() -> None:
-    """F86: ảnh 275×275 px dùng lại trong các hình thật, mỗi lần một cỡ."""
-    boxes = {15: _box(128, 373, 482, 517, (275, 275)), 16: _box(113, 59, 499, 221, (275, 275)),
-             17: _box(105, 64, 506, 291, (275, 275))}
-    pages = [SynPage(n) for n in boxes]
-    pages[2].picture(66, 289, x=(107, 504))
-    result = _run(pages, {n: {"bitmaps": [box], "paths": []} for n, box in boxes.items()})
-    assert not _by_type(result, "watermark_candidate") and "watermark_conflict" not in _codes(result)
+def test_screenshots_with_same_size_but_different_content_are_not_repeated() -> None:
+    """F54 (I-24): mọi ảnh giao diện cùng khung 480×272 px, cùng cỡ 360×204 pt, cùng vị trí trên
+    nhiều trang nhưng khác nội dung → không phải watermark, không có cờ."""
+    pages = [SynPage(n) for n in (61, 62, 63)]
+    pages[2].picture(350, 550, x=(142, 498))
+    objects = {n: {"bitmaps": [_box(140, 348, 500, 552, (480, 272), f"screen{n}")], "paths": []}
+               for n in (61, 62, 63)}
+    result = _run(pages, objects)
+    [picture] = _by_type(result, "picture")
+    assert picture.flags == [] and "watermark_conflict" not in _codes(result)
+
+
+def test_objects_without_hash_skip_t10() -> None:
+    """`objects.json` đo trước khi có hash: không đoán watermark theo kích thước."""
+    pages = [SynPage(n) for n in (1, 2, 3)]
+    pages[2].picture(364, 458, x=(216, 425))
+    plain = {k: v for k, v in _WATERMARK.items() if k != "hash"}
+    result = _run(pages, {n: {"bitmaps": [dict(plain)], "paths": []} for n in (1, 2, 3)})
+    assert not _by_type(result, "watermark_candidate")
+    assert any(e.rule_id == "T-10" and "no_bitmap_hash" in e.reason for e in result.tables.log)
 
 
 def test_bitmap_on_fewer_pages_is_not_repeated() -> None:
@@ -275,6 +304,7 @@ def test_f54_figures() -> None:
     assert by_id["f54:p011:e006"].parent_element_id == "f54:p011:e004"                 # Figure 5
     assert by_id["f54:p018:e010"].normalized_type == "screenshot"                      # Figure 15
     assert by_id["f54:p171:e003"].normalized_type == "watermark_candidate"
+    assert [e.pdf_page_index for e in _by_type(result, "watermark_candidate")] == [171]
     assert {"empty_table", "caption_ambiguous", "watermark_conflict"}.isdisjoint(_codes(result))
     assert all(v.passed for v in result.validation)
     assert [table_hash(t) for t in result.tables.tables] == [table_hash(t) for t in without.tables.tables]
@@ -310,3 +340,51 @@ def test_render_crops_writes_original_and_preview(tmp_path: Path) -> None:
     assert (tmp_path / image.original_path).is_file() and (tmp_path / (image.preview_path or "")).is_file()
     assert image.scale is not None and 3.0 <= image.scale <= 4.0
     assert image.px_w is not None and abs(image.px_w - (image.crop_bbox.x1 - image.crop_bbox.x0) * image.scale) <= 2
+
+
+def test_tie_between_duplicate_picture_and_screenshot_keeps_docling_link() -> None:
+    """F54 trang 64: Docling sinh cả picture lẫn bảng 0 cell cho cùng một ảnh chụp màn hình và gắn
+    caption vào bảng; hai ứng viên hòa → giữ liên kết Docling, không `caption_ambiguous`."""
+    page = SynPage(64)
+    page.picture(456, 661, x=(139, 501))
+    table = page.empty_table(456, 661, x=(139, 501))
+    page.text("caption", "Figure 81. Axes direction", 672, 684, x=(176, 465), parent=table)
+    result = _run([page], {64: {"bitmaps": [_box(140, 457, 500, 660, (480, 272))], "paths": []}})
+    [shot] = _by_type(result, "screenshot")
+    assert shot.caption_element_id == _by_text(result, "Figure 81. Axes direction").element_id
+    assert "caption_ambiguous" not in _codes(result)
+
+
+# ------------------------------------------------------------------ T-19 hình trùng
+
+def _twin_page(caption_on_table: bool, table_box: tuple[float, float, float, float] = (139, 456, 501, 661)) -> RunResult:
+    page = SynPage(64)
+    page.picture(456, 661, x=(139, 501))
+    x0, top, x1, bottom = table_box
+    table = page.empty_table(top, bottom, x=(x0, x1))
+    if caption_on_table:
+        page.text("caption", "Figure 81. Axes direction", 672, 684, x=(176, 465), parent=table)
+    bitmaps = [_box(139, 456, 501, 661, (480, 272)), _box(x0, top, x1, bottom, (480, 272), "table")]
+    return _run([page], {64: {"bitmaps": bitmaps, "paths": []}})
+
+
+def test_picture_and_screenshot_of_the_same_image_keep_the_captioned_one() -> None:
+    """F54 trang 64 (I-27): picture + bảng 0 cell cùng bbox, caption Docling gắn vào bảng."""
+    result = _twin_page(caption_on_table=True)
+    [picture], [shot] = _by_type(result, "picture"), _by_type(result, "screenshot")
+    assert (picture.flags, picture.duplicate_of, picture.image) == (["duplicate_image"], shot.element_id, None)
+    assert shot.image is not None and shot.caption_element_id is not None and shot.duplicate_of is None
+    assert any(e.rule_id == "T-19" and "Docling caption" in e.reason for e in result.tables.log)
+
+
+def test_duplicate_without_caption_keeps_the_screenshot() -> None:
+    """F54 trang 98: không bên nào có caption → giữ screenshot (T-09 đã thấy bitmap)."""
+    result = _twin_page(caption_on_table=False)
+    assert _by_type(result, "picture")[0].duplicate_of == _by_type(result, "screenshot")[0].element_id
+
+
+def test_partial_overlap_is_not_a_duplicate() -> None:
+    """F54 trang 148: hai hình chồng một phần (IoU ≈ 0,47) → vẫn là hai hình."""
+    result = _twin_page(caption_on_table=False, table_box=(139, 560, 501, 760))
+    images = _by_type(result, "picture") + _by_type(result, "screenshot")
+    assert len(images) == 2 and all(e.duplicate_of is None and e.image is not None for e in images)

@@ -8,6 +8,7 @@ from uuid import UUID
 import anyio
 
 from app.core.config import settings
+from app.core.tracing import set_root, span
 from app.util.token_counter import count_tokens
 from app.modules.chatbot.schemas.security.principal import PrincipalContext, RequestContext
 from app.modules.chatbot.providers.openai import OpenAIProvider
@@ -36,7 +37,7 @@ from app.modules.chatbot.stages.context_loader import ContextLoader
 from app.modules.chatbot.stages.security import SecurityBlockedError, SecurityStage
 from app.modules.chatbot.stages.security import get_response_message, normalize_locale
 from app.modules.chatbot.stages.analysis_stage import AnalysisStage
-from app.modules.chatbot.schemas.system.security import SecurityAction
+from app.modules.chatbot.schemas.system.security import SecurityAction, SecurityDecision
 from app.modules.chatbot.stages.execution_stage import ExecutionStage
 from app.modules.chatbot.stages.answer_composer import AnswerComposer
 from app.modules.chatbot.stages.clarification_resume_stage import ClarificationResumeStage
@@ -98,19 +99,23 @@ class ChatbotService:
             "history_id": UUID(inbound.message.message_id),
             "idempotency_key": inbound.message.idempotency_key,
         }
-        security_decision = self._security_stage.inspect(message)
+        with span("stage.security", "stage") as security_span:
+            security_decision = self._security_stage.inspect(message)
+            security_span.set(**security_attributes(security_decision))
         if security_decision.action is SecurityAction.BLOCK:
             # Chặn trước khi nạp context: chỉ có locale của client hoặc heuristic,
             # không gửi nội dung bị chặn tới LLM chỉ để biết ngôn ngữ.
             reply_language = normalize_locale(locale) if locale else guess_reply_language(message)
-            await self._history_repository.create_blocked(
-                session_id=session_id,
-                query_origin=message,
-                answer=get_response_message("request_blocked", reply_language),
-                latency_ms=round((perf_counter() - started_at) * 1000),
-                channel=channel,
-                **turn_ids,
-            )
+            set_root(flow="blocked", history_status="blocked")
+            with span("history.write", "db", history_status="blocked"):
+                await self._history_repository.create_blocked(
+                    session_id=session_id,
+                    query_origin=message,
+                    answer=get_response_message("request_blocked", reply_language),
+                    latency_ms=round((perf_counter() - started_at) * 1000),
+                    channel=channel,
+                    **turn_ids,
+                )
             raise SecurityBlockedError(security_decision, reply_language)
 
         # Theo dõi lượt để ghi status='cancelled' khi client ngắt giữa chừng.
@@ -125,8 +130,12 @@ class ChatbotService:
                 security=security_decision,
             )
             load_context_time = perf_counter()
-            context = await self._context_loader.execute(state)
-            context = self._prune.execute(context, self._provider.model)
+            with span("stage.context_load", "stage") as load_span:
+                context = await self._context_loader.execute(state)
+                load_span.set(history_messages=len(context.conversation.history))
+            with span("stage.prune", "stage") as prune_span:
+                context = self._prune.execute(context, self._provider.model)
+                prune_span.set(history_messages=len(context.conversation.history))
             logger.debug("context loaded in %.2fs", perf_counter() - load_context_time)
             state.context = context
             state.context_status = "pruned"
@@ -141,18 +150,20 @@ class ChatbotService:
                     or guess_reply_language(message),
                 )
                 answer_parts.append(answer)
+                set_root(flow="human_agent_mode", history_status="completed")
                 yield answer
-                await self._history_repository.create(
-                    session_id=session_id,
-                    query_origin=message,
-                    answer=answer,
-                    status="completed",
-                    model=None,
-                    latency_ms=round((perf_counter() - started_at) * 1000),
-                    conversation_state=conversation_state.model_dump(mode="json"),
-                    channel=channel,
-                    **turn_ids,
-                )
+                with span("history.write", "db", history_status="completed"):
+                    await self._history_repository.create(
+                        session_id=session_id,
+                        query_origin=message,
+                        answer=answer,
+                        status="completed",
+                        model=None,
+                        latency_ms=round((perf_counter() - started_at) * 1000),
+                        conversation_state=conversation_state.model_dump(mode="json"),
+                        channel=channel,
+                        **turn_ids,
+                    )
                 finalized = True
                 return
 
@@ -160,6 +171,7 @@ class ChatbotService:
             # đều để lại một bản ghi status='error' rồi mới ném tiếp cho router.
             try:
                 if self._agent_runner is not None and request_context.channel is ChannelType.CRM:
+                    set_root(flow="agent")
                     # Kênh CRM: agent tự gọi tool tra cứu. Conversation state chỉ cập nhật
                     # ngữ cảnh model (không pending, không handoff sang người thật).
                     async for chunk in self._agent_runner.run(state):
@@ -171,6 +183,7 @@ class ChatbotService:
                         for model in tool_plan.product_models
                     ])
                 else:
+                    set_root(flow="pipeline")
                     analysis_time = perf_counter()
                     await self._retrieval_pipeline.run(state)
                     # Chỉ log số liệu định tuyến, không log câu hỏi/analysis đầy đủ.
@@ -193,12 +206,14 @@ class ChatbotService:
                     context.query.language = language
                     direct_code = select_direct_response_code(state.plan, language)
                     if direct_code is not None:
+                        set_root(direct_response=direct_code)
                         answer_parts.append(get_direct_response(direct_code, language))
                         yield answer_parts[0]
                     else:
-                        async for chunk in self._answer_composer.stream(state):
-                            answer_parts.append(chunk)
-                            yield chunk
+                        with span("stage.compose", "stage"):
+                            async for chunk in self._answer_composer.stream(state):
+                                answer_parts.append(chunk)
+                                yield chunk
 
                     next_state = await self._transfer_handoff(
                         state,
@@ -207,37 +222,41 @@ class ChatbotService:
                     )
             except Exception:
                 answer = "".join(answer_parts)
+                set_root(history_status="error")
+                with span("history.write", "db", history_status="error"):
+                    await self._history_repository.create(
+                        session_id=session_id,
+                        query_origin=message,
+                        answer=answer or None,
+                        status="error",
+                        model=self._provider.model,
+                        latency_ms=round((perf_counter() - started_at) * 1000),
+                        channel=channel,
+                        **turn_ids,
+                        normalized_query=_normalized_query(state),
+                        retrieval_snapshot=self._retrieval_snapshot(state),
+                        **self._usage(message, answer),
+                    )
+                finalized = True
+                raise
+
+            answer = "".join(answer_parts)
+            set_root(history_status="completed")
+            with span("history.write", "db", history_status="completed"):
                 await self._history_repository.create(
                     session_id=session_id,
                     query_origin=message,
-                    answer=answer or None,
-                    status="error",
+                    answer=answer,
+                    status="completed",
                     model=self._provider.model,
                     latency_ms=round((perf_counter() - started_at) * 1000),
+                    conversation_state=next_state.model_dump(mode="json"),
                     channel=channel,
                     **turn_ids,
                     normalized_query=_normalized_query(state),
                     retrieval_snapshot=self._retrieval_snapshot(state),
                     **self._usage(message, answer),
                 )
-                finalized = True
-                raise
-
-            answer = "".join(answer_parts)
-            await self._history_repository.create(
-                session_id=session_id,
-                query_origin=message,
-                answer=answer,
-                status="completed",
-                model=self._provider.model,
-                latency_ms=round((perf_counter() - started_at) * 1000),
-                conversation_state=next_state.model_dump(mode="json"),
-                channel=channel,
-                **turn_ids,
-                normalized_query=_normalized_query(state),
-                retrieval_snapshot=self._retrieval_snapshot(state),
-                **self._usage(message, answer),
-            )
             finalized = True
         except (asyncio.CancelledError, GeneratorExit):
             # Client ngắt kết nối: Starlette huỷ task (CancelledError) hoặc đóng
@@ -267,6 +286,8 @@ class ChatbotService:
         ]
         hits.sort(key=lambda hit: hit.score, reverse=True)
         status, retrieval_tasks = retrieval_status(tasks)
+        # Root trace: lọc được lượt trả lời không có tài liệu (no_hits) hay tra cứu lỗi.
+        set_root(retrieval_status=status)
         # Luồng agent: nhiều lần tra cứu có cùng task_id, gắn tool_call_id để phân biệt.
         prefixes = [
             prefix
@@ -341,8 +362,9 @@ class ChatbotService:
             session_id,
             len(answer),
         )
+        set_root(history_status="cancelled")
         try:
-            with anyio.CancelScope(shield=True):
+            with anyio.CancelScope(shield=True), span("history.write", "db", history_status="cancelled"):
                 await self._history_repository.create_audit(
                     status="cancelled",
                     session_id=session_id,
@@ -391,11 +413,18 @@ class ChatbotService:
         if task is None:
             return conversation_state
         reason = (task.result.metadata.get("handoff_reason") if task.result else None)
-        ticket = await self._handoff_provider.transfer(
-            session_id,
-            state.context.conversation.history,
-            reason or "human_request",
-        )
+        with span("handoff.transfer", "internal", reason=reason or "human_request") as handoff_span:
+            ticket = await self._handoff_provider.transfer(
+                session_id,
+                state.context.conversation.history,
+                reason or "human_request",
+            )
+            # no_provider: chưa nối nền tảng nhân viên, phiên giữ chế độ bot.
+            handoff_span.set(
+                result="transferred" if ticket is not None else "no_provider",
+                mode=ticket.mode.value if ticket is not None else None,
+            )
+        set_root(handoff="transferred" if ticket is not None else "no_provider")
         if ticket is None:
             # No agent platform connected: stay in bot mode.
             return conversation_state
@@ -403,6 +432,23 @@ class ChatbotService:
             "mode": ticket.mode,
             "ticket_id": ticket.ticket_id,
         })
+
+
+def security_attributes(decision: SecurityDecision) -> dict[str, object]:
+    """Thuộc tính trace của quyết định security: mã luật/nhóm, không có nội dung tin nhắn."""
+    attributes: dict[str, object] = {
+        "action": decision.action.value,
+        "policy_version": decision.policy_version,
+    }
+    if decision.findings:
+        attributes.update(
+            rule_ids=list(dict.fromkeys(finding.rule_id for finding in decision.findings)),
+            categories=list(dict.fromkeys(finding.category for finding in decision.findings)),
+            highest_severity=(
+                decision.highest_severity.value if decision.highest_severity else None
+            ),
+        )
+    return attributes
 
 
 def retrieval_status(tasks) -> tuple[str, list[dict]]:

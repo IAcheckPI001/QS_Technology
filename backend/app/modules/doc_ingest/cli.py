@@ -10,6 +10,15 @@ Chạy (từ thư mục backend):
     .\\venv\\Scripts\\python.exe -m app.modules.doc_ingest.cli run \\
         --raw-dir tests\\doc_ingest\\fixtures\\docling\\f54 --doc-id f54
 
+`eval`: chấm một thư mục chạy theo bộ nhãn tay mẫu → `report/eval.json`, `report/eval.html`:
+    .\\venv\\Scripts\\python.exe -m app.modules.doc_ingest.cli eval \\
+        --run-dir ..\\data\\ingest_runs\\f54\\<run_id> --labels tests\\doc_ingest\\fixtures\\eval\\f54.labels.json
+
+`build`: chunk builder + kiểm chất lượng (BL-16, Bước 2b) trên thư mục chạy có sẵn → `build/*.jsonl`,
+`build/chunk_quality.json`, `report/chunks.html` (không ghi DB). `run` gọi `build` ở cuối khi có manifest:
+    .\\venv\\Scripts\\python.exe -m app.modules.doc_ingest.cli build --run-dir ..\\data\\ingest_runs\\f54\\<run_id> \\
+        --labels tests\\doc_ingest\\fixtures\\eval\\f54.chunks.json
+
 Docling chỉ được import (qua `parse/docling_runner`) khi cần parse hoặc render PDF.
 """
 
@@ -29,7 +38,7 @@ from app.modules.doc_ingest.pipeline import (
 from app.modules.doc_ingest.profile import load_profile
 from app.modules.doc_ingest.report.html_report import render_report
 from app.modules.doc_ingest.s0 import build_profile, ocr_pages
-from app.modules.doc_ingest.schemas.run import DocumentProfile, RunSource
+from app.modules.doc_ingest.schemas.run import DocumentProfile, RunReport, RunSource
 
 DEFAULT_OUT = Path(__file__).resolve().parents[4] / "data" / "ingest_runs"
 
@@ -48,7 +57,61 @@ def _parser() -> argparse.ArgumentParser:
                      help="auto: OCR trang S0 báo không có/hỏng text layer; off: không OCR; force: OCR mọi trang")
     run.add_argument("--out", type=Path, default=DEFAULT_OUT)
     run.add_argument("--run-id", help="mặc định: thời điểm chạy YYYYmmdd-HHMMSS")
+    run.add_argument("--no-build", action="store_true", help="không chạy bước build chunk ở cuối")
+    ev = sub.add_parser("eval", help="chấm điểm thư mục chạy theo nhãn mẫu")
+    ev.add_argument("--run-dir", type=Path, required=True)
+    ev.add_argument("--labels", type=Path, required=True, help="file {doc_id}.labels.json")
+    bd = sub.add_parser("build", help="chunk builder + kiểm chất lượng trên thư mục chạy có sẵn (không ghi DB)")
+    bd.add_argument("--run-dir", type=Path, required=True)
+    bd.add_argument("--manifest", type=Path, help="manifests/*.yaml; mặc định: tìm theo doc_id của lần chạy")
+    bd.add_argument("--labels", type=Path, help="file {doc_id}.chunks.json: nhãn ranh giới chunk")
+    bd.add_argument("--compare-csv", type=Path, help="CSV chunk viết tay để so sánh (vd. doc_chunks_f86.csv)")
+    fo = sub.add_parser("figure-ocr", help="OCR nhãn trong hình trên trang có text layer → build/figure_ocr.jsonl "
+                                           "(.venv-ingest; chạy tiếp được; chạy lại build để dùng)")
+    fo.add_argument("--run-dir", type=Path, required=True)
+    fo.add_argument("--limit", type=int, help="chỉ OCR tối đa N hình trong lần chạy này")
     return parser
+
+
+def cmd_figure_ocr(args: argparse.Namespace) -> None:
+    from app.modules.doc_ingest.build.loader import load_run
+    from app.modules.doc_ingest.parse.figure_ocr import run_figure_ocr
+
+    run = load_run(args.run_dir)
+    count = 0
+    for element_id, labels, seconds in run_figure_ocr(args.run_dir, run.elements, run.ocr_pages, args.limit):
+        count += 1
+        print(f"  {element_id}: {labels} nhãn, {seconds:.1f}s", flush=True)
+    print(f"OCR hình: {count} hình mới → {args.run_dir / 'build' / 'figure_ocr.jsonl'}")
+
+
+def cmd_build(args: argparse.Namespace) -> Path:
+    from app.modules.doc_ingest.build.builder import build_run_dir, write_build
+    from app.modules.doc_ingest.manifest import load_manifest
+
+    manifest = load_manifest(args.manifest) if args.manifest else None
+    result = build_run_dir(args.run_dir, manifest, args.labels, args.compare_csv)
+    path = write_build(result)
+    q = result.quality
+    failed = [c.check_id for c in q.checks if c.passed is False]
+    verdict = {True: "ĐẠT", False: "KHÔNG ĐẠT", None: "chưa đủ dữ liệu"}[q.gate_passed]
+    print(f"Chunk: {q.chunks} ({', '.join(f'{k} {v}' for k, v in q.by_role.items())}); "
+          f"CQ không đạt: {', '.join(failed) or 'không'}; cổng 2b: {verdict}{' (tạm)' if q.provisional else ''}")
+    return path
+
+
+def cmd_eval(args: argparse.Namespace) -> Path:
+    from app.modules.doc_ingest.eval.render import render_eval
+    from app.modules.doc_ingest.eval.score import load_labels, score_run
+
+    report = score_run(args.run_dir, load_labels(args.labels))
+    out = args.run_dir / "report"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "eval.json").write_text(report.model_dump_json(indent=1) + "\n", encoding="utf-8")
+    (out / "eval.html").write_text(render_eval(report), encoding="utf-8")
+    verdict = {True: "ĐẠT", False: "KHÔNG ĐẠT", None: "không đủ dữ liệu"}[report.gate_passed]
+    print(f"Cổng đánh giá: {verdict}{' (tạm: nhãn chưa xác nhận)' if report.provisional else ''}")
+    return out / "eval.html"
 
 
 def cmd_run(args: argparse.Namespace) -> Path:
@@ -132,10 +195,26 @@ def cmd_run(args: argparse.Namespace) -> Path:
 
     report = write_run(run_dir, result, doc_id=args.doc_id, run_id=run_id, created_at=created_at,
                        source=source, timings=timings, versions=versions)
+    if not args.no_build:
+        report = _build_after_run(run_dir, report)
     report_path = run_dir / "report" / "index.html"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(render_report(result, report, images), encoding="utf-8")
     return report_path
+
+
+def _build_after_run(run_dir: Path, report: RunReport) -> RunReport:
+    """`run` gọi bước build ở cuối khi tìm được manifest; không có manifest thì bỏ qua và báo."""
+    from app.modules.doc_ingest.build.builder import build_run_dir, chunk_summary, write_build
+    from app.modules.doc_ingest.manifest import find_manifest
+
+    if find_manifest(report.doc_id) is None:
+        print(f"  build bỏ qua: không có manifest cho doc_id '{report.doc_id}'", flush=True)
+        return report
+    result = build_run_dir(run_dir)
+    write_build(result)
+    print(f"  build: {result.quality.chunks} chunk → report/chunks.html", flush=True)
+    return report.model_copy(update={"chunks": chunk_summary(result.quality)})
 
 
 def _utf8_console() -> None:
@@ -153,6 +232,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "run":
         path = cmd_run(args)
         print(f"Báo cáo: {path}")
+    elif args.command == "eval":
+        print(f"Báo cáo: {cmd_eval(args)}")
+    elif args.command == "build":
+        print(f"Báo cáo: {cmd_build(args)}")
+    elif args.command == "figure-ocr":
+        cmd_figure_ocr(args)
     return 0
 
 

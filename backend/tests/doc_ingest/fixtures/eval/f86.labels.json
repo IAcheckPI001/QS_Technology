@@ -1,0 +1,23 @@
+{
+ "schema_version": 1,
+ "doc_id": "f86",
+ "source_pdf": "F86_Operation Manual (English Version).pdf",
+ "verified": false,
+ "labeled_by": "claude-draft",
+ "method": "Claude soạn nháp 2026-11-09 từ text layer PDF gốc (pypdfium2) và ảnh trang render, không lấy từ output pipeline. Ngữ pháp mã theo contract §4: 'and' không nối danh sách; M-code (M100, M0100.txt), chân (M8), lỗi đánh máy (M195) không phải parameter. Cần team xác nhận.",
+ "pages": [
+  {
+   "page": 12,
+   "body_snippets": [
+    "2.1 POWER SUPPLY",
+    "Using switching power supply is better than voltage transformer"
+   ]
+  },
+  {
+   "page": 17,
+   "body_snippets": [
+    "2.3.3 6-WIRE-NPN TYPE"
+   ]
+  }
+ ]
+}

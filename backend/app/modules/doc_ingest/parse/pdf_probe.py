@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
+from typing import Any
+
 import pypdfium2 as pdfium
 import pypdfium2.raw as pdfium_c
 
@@ -55,21 +58,30 @@ def _topleft(obj: pdfium.PdfObject, height: float) -> BBox:
     return BBox(left, height - top, right, height - bottom)
 
 
-def page_objects(page: pdfium.PdfPage, height: float) -> dict[str, list[dict[str, float]]]:
-    """Ảnh bitmap (kèm kích thước px) và nét vector trên trang (top-left origin), cho T-09,
-    T-10, T-14. Đối tượng lồng trong Form XObject được pdfium trả bounds theo hệ tọa độ của
-    form, không phải của trang (F54 trang 18: ảnh chụp màn hình bị báo ở góc 0,720) → dùng
-    bounds của form cấp trang chứa nó."""
-    bitmaps: list[dict[str, float]] = []
-    paths: list[dict[str, float]] = []
-    form: tuple[BBox, list[tuple[int, int]], list[bool]] | None = None
+def _image_info(obj: pdfium.PdfImage) -> dict[str, Any]:
+    """Kích thước px và hash nội dung (sha256 của dữ liệu ảnh gốc trong PDF, 16 ký tự hex):
+    T-10 nhận "cùng một ảnh" theo nội dung, không theo kích thước (I-24: F54 dùng một khung
+    chụp màn hình 480×272 px cho mọi ảnh giao diện khác nhau)."""
+    px_w, px_h = obj.get_px_size()
+    digest = hashlib.sha256(obj.get_data(decode_simple=False)).hexdigest()[:16]
+    return {"px_w": px_w, "px_h": px_h, "hash": digest}
+
+
+def page_objects(page: pdfium.PdfPage, height: float) -> dict[str, list[dict[str, Any]]]:
+    """Ảnh bitmap (kèm kích thước px, hash nội dung) và nét vector trên trang (top-left
+    origin), cho T-09, T-10, T-14. Đối tượng lồng trong Form XObject được pdfium trả bounds
+    theo hệ tọa độ của form, không phải của trang (F54 trang 18: ảnh chụp màn hình bị báo ở
+    góc 0,720) → dùng bounds của form cấp trang chứa nó."""
+    bitmaps: list[dict[str, Any]] = []
+    paths: list[dict[str, Any]] = []
+    form: tuple[BBox, list[dict[str, Any]], list[bool]] | None = None
 
     def flush() -> None:
         if form is None:
             return
-        box, px, has_path = form
-        if px:
-            bitmaps.append({**box.as_dict(), "px_w": px[0][0], "px_h": px[0][1]})
+        box, images, has_path = form
+        if images:
+            bitmaps.append({**box.as_dict(), **images[0]})
         elif has_path[0]:
             paths.append(box.as_dict())
 
@@ -78,15 +90,14 @@ def page_objects(page: pdfium.PdfPage, height: float) -> dict[str, list[dict[str
             flush()
             form = None
             if obj.type == pdfium_c.FPDF_PAGEOBJ_IMAGE:
-                px_w, px_h = obj.get_px_size()
-                bitmaps.append({**_topleft(obj, height).as_dict(), "px_w": px_w, "px_h": px_h})
+                bitmaps.append({**_topleft(obj, height).as_dict(), **_image_info(obj)})
             elif obj.type == pdfium_c.FPDF_PAGEOBJ_PATH:
                 paths.append(_topleft(obj, height).as_dict())
             elif obj.type == pdfium_c.FPDF_PAGEOBJ_FORM:
                 form = (_topleft(obj, height), [], [False])
         elif form is not None:
             if obj.type == pdfium_c.FPDF_PAGEOBJ_IMAGE and not form[1]:
-                form[1].append(obj.get_px_size())
+                form[1].append(_image_info(obj))
             elif obj.type == pdfium_c.FPDF_PAGEOBJ_PATH:
                 form[2][0] = True
     flush()

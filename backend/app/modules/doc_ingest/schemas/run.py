@@ -65,6 +65,33 @@ class RunStats(StrictModel):
     blocking_by_step: dict[str, int]
 
 
+class TokenCount(StrictModel):
+    token: str
+    count: int
+
+
+class ShapeCount(StrictModel):
+    shape: str                       # chữ số → 9, giữ chữ cái và ký hiệu (vd. `P9-9`, `CN9`)
+    count: int
+    examples: list[str] = Field(default_factory=list)
+
+
+class ProfileFit(StrictModel):
+    """Độ khớp profile với tài liệu (Bước B1, 2026-11-09): chỉ cảnh báo, không tự đổi profile."""
+
+    pages_total: int
+    pages_ocr: int
+    ocr_langs: list[str] = Field(default_factory=list)
+    param_tokens: dict[str, int] = Field(default_factory=dict)       # prefix -> token đã nhận (text)
+    near_miss: list[TokenCount] = Field(default_factory=list)
+    unknown_shapes: list[ShapeCount] = Field(default_factory=list)   # dạng mã không profile nào khai báo
+    body_chars: int = 0
+    figure_text_chars: int = 0
+    page_pictures_with_text: list[int] = Field(default_factory=list)  # trang có picture ≥ 50% trang chứa câu văn
+    vietnamese_chars: int = 0        # ký tự riêng tiếng Việt trên trang OCR (ă â đ ê ô ơ ư + dấu thanh)
+    signals: list[str] = Field(default_factory=list)
+
+
 class RunReport(StrictModel):
     schema_version: Literal[1] = 1
     doc_id: str
@@ -86,3 +113,7 @@ class RunReport(StrictModel):
     printed_pages: dict[int, str | None] = Field(default_factory=dict)   # T-06; None = không có nguồn
     element_types: dict[str, int] = Field(default_factory=dict)          # normalized_type -> số phần tử
     figures: dict[str, int] = Field(default_factory=dict)   # hình theo loại, caption gắn lại, nhãn T-18, ảnh đã render
+    lists: dict[str, int] = Field(default_factory=dict)     # T-08: list_item, con, độ sâu, mồ côi, mơ hồ
+    refs: dict[str, int] = Field(default_factory=dict)      # T-12/T-13 trên text: ref theo vai trò/kiểu/prefix
+    profile_fit: ProfileFit | None = None
+    chunks: dict[str, int] = Field(default_factory=dict)    # bước build (BL-16): số chunk theo vai trò/loại, kiểm lỗi

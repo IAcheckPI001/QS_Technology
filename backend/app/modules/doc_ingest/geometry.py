@@ -43,6 +43,17 @@ def parse_pages(spec: str) -> list[int]:
     return sorted(set(pages))
 
 
+def iou(a: BBox, b: BBox) -> float:
+    """Giao trên hợp của hai bbox (0 khi không chồng nhau)."""
+    w = min(a.x1, b.x1) - max(a.x0, b.x0)
+    h = min(a.y1, b.y1) - max(a.y0, b.y0)
+    if w <= 0 or h <= 0:
+        return 0.0
+    inter = w * h
+    union = (a.x1 - a.x0) * (a.y1 - a.y0) + (b.x1 - b.x0) * (b.y1 - b.y0) - inter
+    return round(inter / union, 3) if union > 0 else 0.0
+
+
 def overlap_ratio(target: BBox, others: list[BBox]) -> float:
     """Tỷ lệ diện tích `target` bị phủ bởi ảnh bitmap (xấp xỉ, cộng dồn)."""
     area = max(1e-6, (target.x1 - target.x0) * (target.y1 - target.y0))

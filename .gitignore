@@ -54,6 +54,8 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+# package mã nguồn chunk builder (BL-16), không phải output build
+!backend/app/modules/doc_ingest/build/
 .eggs/
 
 # =========================

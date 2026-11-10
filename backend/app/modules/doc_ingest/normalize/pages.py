@@ -16,7 +16,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 from app.modules.doc_ingest.normalize.docling_reader import RawItem
-from app.modules.doc_ingest.normalize.figures import label_target
+from app.modules.doc_ingest.normalize.figures import label_target, text_margin
 from app.modules.doc_ingest.normalize.recorder import Recorder
 from app.modules.doc_ingest.normalize.sections import parse_heading
 from app.modules.doc_ingest.schemas.normalized import PrintedPage
@@ -80,6 +80,7 @@ def decide_furniture(items: Sequence[RawItem], profile: Profile, rec: Recorder) 
             examples.setdefault(slot, " ".join(item.text.split()))
     repeated = {slot for slot, seen in pages.items() if len(seen) >= min_pages}
     pictures = [i for i in items if i.label == "picture" and i.parent_id is None]
+    margin = text_margin(items)
     run = FurnitureRun(items=[])
     run.keys = [FurnitureKey(band=b, key=k, pages=sorted(pages[(b, k)]), example=examples[(b, k)])
                 for b, k in sorted(repeated)]
@@ -100,7 +101,7 @@ def decide_furniture(items: Sequence[RawItem], profile: Profile, rec: Recorder) 
                 layer, flag = "furniture", "furniture_composed"
             elif any(p.fullmatch(text) for p in patterns):
                 layer, flag = "furniture", "furniture_pattern"
-        if flag is None and (target := label_target(item, pictures, profile)) is not None:
+        if flag is None and (target := label_target(item, pictures, profile, margin)) is not None:
             # T-18: furniture thật (lặp/pattern) đã thắng ở trên; còn lại nhãn sát hình → chữ của hình.
             layer, flag = "body", "figure_text_attached"
             rec.add_log("T-18", item.element_id, f"short label next to {target.element_id}; figure text",

@@ -1,0 +1,36 @@
+{
+ "schema_version": 1,
+ "doc_id": "f86_italliation",
+ "source_pdf": "F86_Intalliation Manual (English Version).pdf",
+ "verified": false,
+ "labeled_by": "claude-draft",
+ "method": "Claude soạn nháp 2026-11-09 từ text layer PDF gốc (pypdfium2) và ảnh trang render, không lấy từ output pipeline. Ngữ pháp mã theo contract §4: 'and' không nối danh sách; M-code (M100, M0100.txt), chân (M8), lỗi đánh máy (M195) không phải parameter. Cần team xác nhận.",
+ "pages": [
+  {
+   "page": 4,
+   "body_snippets": [
+    "1.1 INSTALLATION DIAGRAM"
+   ]
+  },
+  {
+   "page": 9,
+   "note": "chân Z3-/D3+/P3- và CN11 không phải parameter",
+   "body_snippets": [
+    "Input pins of reverse differential signal from Z phase encoder"
+   ]
+  },
+  {
+   "page": 12,
+   "note": "CN16, CN17, CN18 là connector",
+   "body_snippets": [
+    "2.2 INPUT LOW DIAGRAM"
+   ]
+  },
+  {
+   "page": 20,
+   "body_snippets": [
+    "2.6 HANDWHEEL WIRING DIAGRAM"
+   ]
+  }
+ ]
+}

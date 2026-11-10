@@ -4,6 +4,8 @@ name: default
 vocabulary_file: registry_snapshot.json
 code_patterns: []
 param_prefixes: []
+# T-12 trên text: prefix -> regex số chữ số; rỗng = không quét mã trong text.
+param_text_patterns: {}
 applicability_lexicon:
   - {phrase: "not available on", status: not_available}
   - {phrase: "not available for", status: not_available}
@@ -42,3 +44,43 @@ thresholds:
   crop_padding: 12.0
   screenshot_bitmap_min: 0.8
   watermark_cover_min: 0.9
+  duplicate_iou_min: 0.9
+  list_indent_min: 18.0
+# Chunk builder (BL-16, contract C2 §5, §6, §8). Regex khớp không phân biệt hoa thường qua (?i).
+chunking:
+  child_soft_max: 1200
+  parent_max: 2500
+  figure_text_max: 600
+  embed_max_tokens: 800
+  max_keywords: 40
+  step_patterns: ['(?i)^\s*(step|stage|bước)\s*\(?\d+']
+  procedure_title_patterns:
+    - '(?i)^\s*(how to|steps?\b|procedure|instructions?)'
+    - '(?i)\b(setting|settings)\s*:?\s*$'
+    - '(?i)^\s*(cách|các bước|quy trình|hướng dẫn)'
+  chunk_type_rules:
+    - {chunk_type: pinout, applies_to: [figure, overview, table], title: '(?i)\bpin\s*(out|assignment|definition)|\bport table\b|sơ đồ chân'}
+    - {chunk_type: wiring, applies_to: [figure, overview], title: '(?i)wiring|connection diagram|\b(input|output)\b.*\bdiagram\b|\bdiagram\b.*\b(input|output)\b|đấu dây|sơ đồ (nối|kết nối)', content: '(?i)\b(connection|wiring) diagram\b|sơ đồ đấu dây'}
+    - {chunk_type: dimension, applies_to: [figure, overview], title: '(?i)dimension|kích thước'}
+    - {chunk_type: alarm, applies_to: [overview, table], title: '(?i)\balarm|troubleshoot|\berror\b|báo lỗi|báo động|xử lý lỗi', content: '(?i)\bthe cause is\b|\bnguyên nhân\b'}
+    - {chunk_type: spec, applies_to: [overview, table], title: '(?i)specification|thông số kỹ thuật|hardware summary'}
+  control_interface_terms:
+    pulse_train: ['Pulse Train']
+    ethercat: ['EtherCAT']
+    mechatrolink: ['Mechatrolink']
+  spec_attribute_terms:
+    dimension: ['dimension', 'dimensions', 'kích thước']
+    monitor_size: ['monitor', 'screen size', 'màn hình']
+    max_axis: ['number of axes', 'axis count', 'số trục']
+    io: ['I/O', 'input', 'output', 'ngõ vào', 'ngõ ra']
+    loop_type: ['open loop', 'closed loop']
+    look_ahead: ['look-ahead', 'look ahead']
+    spindle: ['spindle', 'trục chính']
+    rtcp: ['RTCP']
+    ports: ['USB', 'RS485', 'RS232', 'MPG', 'port', 'cổng']
+  # Nhãn trong hình giữ làm từ khóa (ngoài code_patterns): giá trị có đơn vị, mã chữ in hoa + số, ký hiệu chân.
+  figure_label_patterns:
+    - '^\d+(\.\d+)?\s?(mm|cm|m|V|VAC|VDC|A|mA|W|kW|Hz|kHz|ms|s|°C)$'
+    - '^(AC|DC)[-\s]?\d+(\.\d+)?\s?V$'
+    - '^[A-Z]{1,6}[-_]?\d{1,3}[+-]?$'
+    - '^(FG|GND|COM|PE|NC|NO|NPN|PNP|\+?24V|0V|[ABZ][+-])$'

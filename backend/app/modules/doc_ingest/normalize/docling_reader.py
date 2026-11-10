@@ -48,6 +48,7 @@ class RawItem:
     page_width: float = 0.0
     parent_id: str | None = None      # element_id của picture/table chứa phần tử này
     parent_label: str | None = None
+    marker: str = ""                  # list_item: marker Docling (không đáng tin, T-08 ưu tiên glyph)
 
     @property
     def is_furniture(self) -> bool:
@@ -126,5 +127,6 @@ def read_items(docs: Iterable[Mapping[str, Any]], doc_id: str) -> list[RawItem]:
                 page_width=widths[page],
                 parent_id=parent_id,
                 parent_label=parent_label,
+                marker=item.get("marker") or "",
             ))
     return items

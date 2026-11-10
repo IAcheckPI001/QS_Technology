@@ -14,6 +14,7 @@ from typing import Any
 
 from pydantic import Field
 
+from app.core.tracing import current_span, span
 from app.modules.chatbot.providers.crm_api import CrmApiError, CrmListClient
 from app.modules.chatbot.reporting.catalog import DatasetSpec
 from app.modules.chatbot.reporting.engine import run_report
@@ -135,11 +136,14 @@ def build_crm_report_tool(
     async def run(arguments: ReportQuery, context: ToolContext) -> ReportOutput:
         state = context.parent_state
         token, credential = crm_credential(state.principal)
+        # Cấu trúc truy vấn LLM yêu cầu, ghi trước khi validate để lần gọi sai vẫn thấy được.
+        current_span().set(credential_source=credential, **query_shape(arguments))
         if not token:
             logger.warning("crm_report rejected: no acting user")
             raise ToolRejected("crm_user_missing", "no CRM user is attached to this conversation")
         try:
-            query = validate_query(arguments, datasets, now=state.request_context.received_at, tz=tz)
+            with span("report.validate", "internal", dataset=arguments.dataset):
+                query = validate_query(arguments, datasets, now=state.request_context.received_at, tz=tz)
         except ReportQueryError as error:
             logger.info("crm_report invalid query dataset=%s detail=%s", arguments.dataset, error)
             raise ToolArgumentError(str(error)) from None
@@ -151,12 +155,21 @@ def build_crm_report_tool(
             query.end.isoformat() if query.end else "-", query.time_grain or "-",
         )
         try:
-            page = await client.fetch_all(query.dataset.source_path, token)
+            with span("report.fetch", "internal", dataset=query.dataset.name) as fetch_span:
+                page = await client.fetch_all(query.dataset.source_path, token)
+                fetch_span.set(items=len(page.items), total=page.total, truncated=page.truncated)
         except CrmApiError as error:
             logger.warning("crm_report fetch failed code=%s detail=%s", error.code, error.detail)
             raise ToolRejected(error.code, error.detail) from None
-        records, skipped = query.dataset.parse(page.items)
-        result = run_report(query, records)
+        # Cấu trúc truy vấn đã nằm trên span tool (query_shape); ở đây chỉ số đếm.
+        with span("report.engine", "internal", filters=len(query.filters)) as engine_span:
+            records, skipped = query.dataset.parse(page.items)
+            result = run_report(query, records)
+            engine_span.set(
+                parsed=len(records), skipped=skipped, matched=result.matched_count,
+                rows=len(result.rows), groups=result.total_groups,
+            )
+        current_span().set(result_rows=len(result.rows), source_truncated=page.truncated)
         logger.info(
             "crm_report done fetched=%d parsed=%d skipped=%d matched=%d rows=%d groups=%d truncated=%s",
             len(page.items), len(records), skipped, result.matched_count, len(result.rows),
@@ -198,6 +211,34 @@ def crm_credential(principal: PrincipalContext) -> tuple[str | None, str]:
     return principal.acting_user_id, "user_id"
 
 
+def query_shape(query: ReportQuery) -> dict[str, object]:
+    """Thuộc tính trace của ReportQuery: tên trường/enum của catalog, không có giá trị filter
+    hay ngày cụ thể."""
+    date_range = query.date_range
+    return {
+        "dataset": query.dataset,
+        "metrics": list(query.metrics),
+        "dimensions": list(query.dimensions),
+        "filter_fields": [item.field for item in query.filters],
+        "date_field": date_range.field if date_range else None,
+        "date_mode": _date_mode(date_range),
+        "date_preset": date_range.preset if date_range else None,
+        "time_grain": query.time_grain,
+        "sort_fields": [item.field for item in query.sort],
+        "limit": query.limit,
+    }
+
+
+def _date_mode(date_range) -> str | None:
+    """`preset` | `custom` (start/end) | `preset+custom` (cả hai, validate sẽ từ chối)."""
+    if date_range is None:
+        return None
+    has_dates = date_range.start is not None or date_range.end is not None
+    if date_range.preset is not None:
+        return "preset+custom" if has_dates else "preset"
+    return "custom" if has_dates else None
+
+
 def applied(query: NormalizedQuery, tz: tzinfo) -> AppliedQuery:
     date_range = None
     if query.date_field is not None:
@@ -207,7 +248,6 @@ def applied(query: NormalizedQuery, tz: tzinfo) -> AppliedQuery:
             end=query.end.isoformat() if query.end else None,
             timezone=str(tz),
         )
-    print(f"Applied query: dataset={query.dataset.name}, metrics={query.metrics}, dimensions={query.dimensions}, filters={[c.describe() for c in query.filters]}, date_range={date_range}, time_grain={query.time_grain}, sort={query.sort}, limit={query.limit}")
     return AppliedQuery(
         dataset=query.dataset.name,
         metrics=list(query.metrics),

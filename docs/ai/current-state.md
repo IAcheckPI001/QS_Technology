@@ -2,9 +2,12 @@
 
 ## Scope
 
-This document is the current status of the database, configuration, and chat
-history work. It supersedes the original findings-only review and distinguishes
-completed work from remaining validation, deferred scope, and open risks.
+This document is the current status of the AI service: database,
+configuration and chat history, the chatbot pipeline and CRM agent flow,
+service-key auth, the knowledge learning pipeline (`learning_ai`) and the
+technical document ingest tool (`doc_ingest`). It supersedes the original
+findings-only review and distinguishes completed work from remaining
+validation, deferred scope, and open risks.
 
 The current request architecture is:
 
@@ -47,14 +50,15 @@ provider layer, and database access remains in the repository layer.
 | Area | Status | Summary |
 |---|---|---|
 | P0 importability and deployment configuration | Resolved in code/config | `Depends` is imported, `DATABASE_URL` is documented and passed through Compose. Clean-runtime and live-Supabase validation remain outstanding. |
-| P1 ChatHistory persistence | Implemented, not production-verified | `ChatHistory`, repository, session UUID propagation, and completed/error persistence are wired. Error-transaction behavior and live insert validation remain open. |
+| P1 ChatHistory persistence | Implemented, not production-verified | `ChatHistory`, repository, session ownership (`chat_sessions`), and completed/error/blocked/cancelled persistence are wired. The `error` row commit after streaming is verified by test on FastAPI 0.143 (see open risk 1); live insert validation remains open. |
 | P2 configuration normalization | Resolved in implementation | One cached `pydantic-settings` model is used and model defaults are aligned. Pytest validation remains outstanding. |
 | P3 history reads and ownership | Partially implemented | Support-chat session/message reads and session creation are available behind `LEARNING_API_ENABLED`; authentication and ownership are still deferred. |
 | P4 health/readiness semantics | Open | Connectivity check exists, but readiness status/error semantics and schema checks are incomplete. |
 | P5 active chatbot pipeline | Partially implemented | Security, context loading (with persisted `ConversationState`), pruning, the clarification loop (deterministic resume, `pending_answer`, held sub-queries, 2-attempt limit), analysis, execution-plan execution, fixed replies for chitchat/out_of_scope/handoff-only turns and provider final-answer streaming run. Retrieval is wired at test level: one retrieve task per sub-query, filtered hybrid search (vector + FTS, RRF, parent expansion) over `doc_chunks` via `match_doc_chunks` (`backend/sql/doc_chunks.sql`, applied manually), sources rendered into the answer prompt. Not verified against live Supabase; retrieval parameters are untuned starting values. Handoff is a scaffold: `DisabledHandoffProvider` creates no ticket, so `mode` stays `bot`. Requires the `conversation_state` column migration (not verified live). |
 | P5b CRM agent flow | Experimental, unit-tested only | `/chat/crm` runs a bounded tool-calling loop (`AgentRunner`) when `CRM_CHAT_FLOW=agent` (default). Tools: `product_docs_ask` (reruns clarification → analysis → retrieval on a child state, no compose) and, behind `CRM_REPORT_ENABLED`, `crm_report` (aggregate ticket reports from the CRM API, see 12d). Provider capabilities and tool schemas are checked at startup. Shared turn deadline, cancellation propagation, three-level concurrency limits and a per-session turn lease (409 `session_busy`) are implemented and tested with fakes only. Hybrid model selection: questions like "which models support EtherCAT? how do I install it?" filter models in code from `REGISTRY["capabilities"]` (`catalog_match` with `next_action` report_no_match / lookup_each / ask_selection / verify_with_sources), and follow-up lookups only accept models backed by evidence (employee message/history, session model context, discovered models, or cited sources via `based_on_sources`). The orchestrator is tool-neutral: shared rules in the system prompt, per-tool rules in `ToolSpec.guide`, per-tool turn state, `deduplicate` and `max_calls_per_turn` per tool. No per-role tool permissions (every CRM employee can use every tool), no SSE progress events, the final answer is one `delta` (no token streaming), no web tools. Not verified against live OpenAI tool calling or Supabase; `chat_sessions.turn_lease_until` must be applied manually. |
+| P5c request tracing (phase 0) | Implemented, unit-tested only | In-process span tree per `/chat/*` request (`app/core/tracing.py`, no new dependency): router, security/context/prune, pipeline stages, agent steps, tool calls, retrieval (embedding, `match_doc_chunks`), CRM API pages, compose, history writes. Real OpenAI usage is recorded on spans (analysis, compose stream, embeddings, agent steps). Every turn logs one `chat_trace` summary line; with `CHAT_TRACE_PERSIST=true` the trace is stored in `public.chat_traces` (`backend/sql/chat_traces.sql`, apply manually) and served by `GET /chatbot/sessions/{id}/trace`. Metadata only. Not verified against live Supabase/OpenAI; no OpenTelemetry export, no context propagation to CRM/OpenAI, no UI, no retention. |
 | P6 knowledge learning pipeline (`learning_ai`) | Ingestion + privacy wired behind a flag | Pure domain logic (record schema, post-LLM validation, rule conflicts, review lifecycle, chunking, indexer sync) plus CRM ingestion, prefilter and the Ollama-backed privacy pipeline exist and are unit-tested with fake providers. `POST /ai/learning` runs ingestion + privacy when `LEARNING_API_ENABLED=true` (no authentication yet). LLM segment/extract calls, job persistence, outbox, embedding and vector index are missing. Not verified against live Supabase/Ollama. |
-| P7 technical document ingest (`doc_ingest`) | Parsing spike done (F54); contract C1 locked (rev 3); table normalization, profile, approval core and CLI `run` with HTML report implemented and tested; pipeline PDF → chunk not complete | Offline CLI tool in a separate `.venv-ingest` (Docling), isolated from the chat service (import boundary tested both ways, excluded from the chat image via `backend/.dockerignore`). C1 locked 2026-11-03 (D-02, D-03, D-04 data model, D-08, D-11); rev 3 changes T-01 to whitespace-gap column boundaries because the rev 2 rule failed on F54 itself. Implemented: `schemas/` (Pydantic, `extra="forbid"`), `profile.py` + `profiles/` (`default`, `qs_controller`, registry vocabulary snapshot), `normalize/` (Docling JSON reader; logical tables T-01…T-05, T-15), `technical_refs/` (ParamRef T-12, applicability T-13 on table cells), review queue, `review/approval.py` (unit states, serve rule, approval gate, carry-over by id then unique hash match, risk-based bulk approval, publish rule), CLI `run` (`cli.py`, `pipeline.py`, `report/html_report.py`, `parse/docling_runner.py`): PDF or saved Docling JSON → run dir `data/ingest_runs/{doc_id}/{run_id}/` + `report/index.html` showing each step. T-13 output is `applicability_candidates` (candidates, not facts). Tests: five C1 groups (LT, HC, AP, HA, PI) on the F54 fixture plus synthetic fixtures, none need Docling. Also implemented: Docling label classification (T-16), V-01 text coverage, S0 with per-page OCR, header/footer check (T-17), printed pages (T-06), section paths (T-07), `NormalizedElement`, figures (T-18 labels next to pictures, T-09 screenshot, T-10 watermark candidate, T-11 caption, T-14 crop + render to `normalized/images/`). Not implemented: T-08, V-02…V-04, chunk builder, fact extraction, unit assignment, review CLI, publish, web upload. No DB writes. `doc_chunks` still holds hand-authored F86 chunks loaded by `chunking_loader/load_csv.py`. |
+| P7 technical document ingest (`doc_ingest`) | Parsing spike done (F54); contract C1 locked (rev 3); table normalization, profile, approval core and CLI `run` with HTML report implemented and tested; pipeline PDF → chunk not complete | Offline CLI tool in a separate `.venv-ingest` (Docling), isolated from the chat service (import boundary tested both ways, excluded from the chat image via `backend/.dockerignore`). C1 locked 2026-11-03 (D-02, D-03, D-04 data model, D-08, D-11); rev 3 changes T-01 to whitespace-gap column boundaries because the rev 2 rule failed on F54 itself. Implemented: `schemas/` (Pydantic, `extra="forbid"`), `profile.py` + `profiles/` (`default`, `qs_controller`, registry vocabulary snapshot), `normalize/` (Docling JSON reader; logical tables T-01…T-05, T-15), `technical_refs/` (ParamRef T-12, applicability T-13 on table cells), review queue, `review/approval.py` (unit states, serve rule, approval gate, carry-over by id then unique hash match, risk-based bulk approval, publish rule), CLI `run` (`cli.py`, `pipeline.py`, `report/html_report.py`, `parse/docling_runner.py`): PDF or saved Docling JSON → run dir `data/ingest_runs/{doc_id}/{run_id}/` + `report/index.html` showing each step. T-13 output is `applicability_candidates` (candidates, not facts). Tests: five C1 groups (LT, HC, AP, HA, PI) on the F54 fixture plus synthetic fixtures, none need Docling. Also implemented: Docling label classification (T-16), V-01 text coverage, S0 with per-page OCR, header/footer check (T-17), printed pages (T-06), section paths (T-07), `NormalizedElement`, figures (T-18 labels next to pictures, T-09 screenshot, T-10 watermark candidate, T-11 caption, T-14 crop + render to `normalized/images/`, T-19 duplicates), list parent/child (T-08 v1), T-12/T-13 on text. Not implemented: V-02…V-04, chunk builder, fact extraction, unit assignment, review CLI, publish, web upload. No DB writes. `doc_chunks` still holds hand-authored F86 chunks loaded by `chunking_loader/load_csv.py`. |
 
 ## Finding status
 
@@ -65,9 +69,9 @@ provider layer, and database access remains in the repository layer.
 | 3 | Missing `Depends` import | **Resolved** | `backend/app/api/v1/health.py` imports `Depends`; Python syntax validation passed. |
 | 4 | `ChatSession`/repository `organization_id` mismatch | **Resolved by replacement** | The old session scaffold was removed. `backend/app/db/models/history.py` and `backend/app/modules/chatbot/repositories/history_repository.py` now represent `public.chat_history`. |
 | 5 | No application migration/schema creation | **Partially resolved / externally managed** | The ORM mapping exists and Supabase owns the table. The application does not create or migrate the table, and `/health/db` only runs `SELECT 1`; schema compatibility is not checked automatically. |
-| 6 | Successful writes were not committed | **Resolved for normal successful requests; error path open** | `backend/app/db/session.py` commits after a normal request. However, the service creates an `error` history row and re-raises the provider exception; the dependency then rolls back the transaction, so the error row may be lost. |
-| 7 | Chat route bypassed persistence | **Resolved for write path** | The route injects `ChatbotService`; the service resolves UUIDs and writes completed/error history through `HistoryRepository`. History reads remain out of scope. |
-| 8 | Website string UUID and database UUID mismatch | **Resolved at persistence boundary** | The service validates/parses the incoming string and converts it to `UUID`; invalid or unknown values receive a new UUID. The replacement ID is returned in SSE `done`. |
+| 6 | Successful writes were not committed | **Resolved; verified by test, depends on FastAPI version** | `backend/app/db/session.py` commits after the request. The router catches pipeline exceptions inside the SSE generator, so the `error` row is committed, not rolled back (`test_error_history_from_failed_stream_is_committed_not_rolled_back`, FastAPI 0.143). See open risk 1 for the minimum-version concern. |
+| 7 | Chat route bypassed persistence | **Resolved** | The route injects `ChatbotService`, which writes history through `HistoryRepository`. Reads exist for the Support Workspace (`GET /chatbot/...`) without an ownership check (see medium-priority item 4). |
+| 8 | Website string UUID and database UUID mismatch | **Resolved by replacement** | `session_id` is validated as a UUID by the request schema (422 otherwise) and resolved by `SessionAccessService` against `chat_sessions`; unknown or foreign IDs get `404 session_not_found` (see Session ID lifecycle). |
 | 9 | Duplicated settings sources | **Resolved** | `backend/app/core/config.py` has one cached `Settings` model consumed by application and database code. |
 | 10 | Health endpoint semantics were ambiguous | **Open** | `/health/db` exists, but unavailable-database status codes, structured error responses, readiness semantics, and schema-level checks are not finalized. |
 
@@ -96,8 +100,9 @@ provider layer, and database access remains in the repository layer.
    state and sends `null` for a new conversation.
 8. `backend/sql/chat_sessions.sql` must be applied on Supabase first.
 
-Clearing that local key starts a new active conversation but does not delete
-historical database records. Deletion is not currently implemented.
+Starting a new conversation (cookie cleared by widget-backend, or `null`
+`session_id` from CRM) does not delete historical database records. Deletion is
+not currently implemented.
 
 ### Chat history writes
 
@@ -135,7 +140,9 @@ historical database records. Deletion is not currently implemented.
 
 3. **Backend test suite**
    - Tests run with `backend\venv\Scripts\python.exe -m pytest` from `backend/`.
-   - All tests pass as of 2026-10-28. See the validation record.
+   - Last recorded full run: 679 passed, 12 skipped (2026-11-03); later
+     entries in the validation record do not carry full-suite counts. See the
+     validation record.
 
 4a. **Handoff is a stub (H1) and source numbers restart each turn (H6)**
    - `DisabledHandoffProvider` returns `None` while the reply promises a human
@@ -205,7 +212,12 @@ historical database records. Deletion is not currently implemented.
 ### Lower priority
 
 8. **Provider usage metadata is incomplete**
-   - Token counts and cost are not collected.
+   - `chat_history.input_tokens`, `output_tokens` and `cost_usd` are estimates
+     from the question and answer text (`count_tokens`); prompt context, analysis
+     calls, agent steps and embeddings are not counted there.
+   - Provider-reported usage is now collected per LLM/embedding call in the trace
+     (`chat_trace` log line, `chat_traces.trace.summary`), but is not yet written
+     back to `chat_history` or converted to cost.
    - `retrieved_chunk_ids` remains empty/null: the column is `UUID[]` while
      `doc_chunks.id` is `bigint`, so it needs a schema decision.
 
@@ -243,8 +255,9 @@ historical database records. Deletion is not currently implemented.
 
 ### P2 — Required before enabling history reads
 
-6. Add a `chat_history` read endpoint and repository query with explicit
-   session ordering.
+6. ~~Add a `chat_history` read endpoint and repository query with explicit
+   session ordering.~~ Done: `GET /chatbot/sessions/{session_id}/history`,
+   `/retrieval` and `GET /chatbot/conversations` (no ownership check yet).
 7. Decide whether reads support authenticated users, anonymous visitors, or
    both.
 8. Anonymous website visitors are bound to sessions by widget-backend
@@ -353,8 +366,10 @@ Design and per-step status are in `docs/ai/architecture.md`; the task list is
 Done: P-1 Parsing Spike on F54 (pdf pages 9, 11, 14, 18, 19, 40, 167–171;
 Docling 2.145.0, `do_ocr=False`, TableFormer accurate, ~96 s), spike tool
 `doc_ingest/spike/` (`run_spike.py`, `render_review.py`), `requirements-ingest.txt`,
-`.gitignore` entries, and the P-1 documents (BL-00, BL-01). These documents and
-the module are still untracked in git.
+`.gitignore` entries, and the P-1 documents (BL-00, BL-01). The module and the
+P-1 documents are committed. Note: `docs/ai/doc_ingest_spike/source/F54_Operation
+Manual (English Version)_V.02.pdf` is tracked in git although `source/` is meant
+to be gitignored; whether to keep it is not decided.
 
 Current step: **Ingestion V1 group A–C in progress** (C1 locked 2026-11-03).
 
@@ -374,8 +389,7 @@ Current step: **Ingestion V1 group A–C in progress** (C1 locked 2026-11-03).
     configuration profile (BL-26), registry vocabulary snapshot (BL-29), table
     normalizers T-01…T-05 and T-15 (BL-05, BL-06, BL-27), T-12/T-13 on table cells
     (BL-11 partial), approval core (BL-18, BL-20 partial), synthetic fixtures
-    (BL-31). Remaining: T-08 (BL-09), T-12/T-13
-    on text, fixture text-layer words (BL-02b), V-01…V-04 (BL-25), chunk assertion
+    (BL-31). Remaining: fixture text-layer words (BL-02b), V-01…V-04 (BL-25), chunk assertion
     library (BL-15), whole-pipeline determinism (BL-23), F86 spike (BL-13).
     Done earlier (2026-11-02): isolated module skeleton, golden F54 fixture
     (BL-02), F86 baseline lock (BL-03).
@@ -525,6 +539,111 @@ Current step: **Ingestion V1 group A–C in progress** (C1 locked 2026-11-03).
   the nearest target. Text inside or next to pictures is only a keyword for the picture,
   never chunk body or a fact. HTML report has a Figures section. Picture units, review and
   serving images with answers are still not built (BL-19, BL-21, BL-92).
+- `doc_ingest` full F54 run (171 pages, run `20261103-144432`, re-checked 2026-11-08 with
+  the current code: same output). All output files pass their schemas; V-01 168 passed,
+  0 failed, 3 not run (cover page OCR, two picture-only pages); 11 logical tables, 128
+  headings, 33 screenshots, 247 rendered crops. Defects found then: T-10 treated UI
+  screenshots of the same pixel and display size as a repeated bitmap (7 of 15 watermark
+  candidates and 7 of 8 conflicts were real screenshots, I-24); T-18 took short section
+  labels at the text left margin (I-25); `PART 1:CONTROLLER OVERVIEW` was not a heading
+  (I-26). Normalized output is the chunk builder's input; no chunks are produced yet (BL-16).
+- `doc_ingest` fixes I-24…I-26 (2026-11-08): `objects.json` bitmaps carry a content `hash`;
+  T-10 watermark = same content at the same position on ≥ 3 pages, while the same content
+  at other positions only gets the info flag `repeated_image`; T-18 skips lines starting at
+  the document's text left margin; the keyword heading pattern accepts a title glued after
+  `:`; T-11 keeps the Docling link when two candidates tie. Full F54 re-run (PDF objects on
+  the saved raw): 8 watermark candidates, all real; 1 watermark conflict; 1 caption
+  ambiguity (page 38, real); table hashes and printed pages unchanged.
+- `doc_ingest` I-27 (2026-11-08): Docling sometimes emits both a picture and a 0-cell table
+  for one screenshot. New rule T-19: two figure elements on a page with IoU ≥ 0.9 are one
+  image; the captioned one (else the screenshot, else the first) is kept, the other gets
+  `duplicate_image` and `duplicate_of`, no crop and no caption; nothing is deleted. Full
+  F54: 5 duplicates (pages 64, 81, 85, 96, 98), rendered crops 247 → 242, everything else
+  unchanged; F86 pages 5–17 unaffected.
+- `doc_ingest` summary log: [chunking_builder/chunking_flow_log.md](chunking_builder/chunking_flow_log.md)
+  collects the flow, step status, change history and fixed issues in one place (2026-11-08).
+- `doc_ingest` reference run (2026-11-09): F54 171 pages re-parsed from the PDF
+  (`data/ingest_runs/f54/20261109-063902`) reproduces the `fix-i27` figures exactly; its table
+  hashes are now the baseline (listed in the summary log). No code change.
+- `doc_ingest` BL-09 / T-08 v1 (2026-11-09): new `normalize/lists.py`. Docling returns lists
+  flat, so the level comes from the left margin (main signal); a bullet glyph followed by a
+  space only counts for a 3–18 pt indent. Any non-list body element ends a list block; a list
+  at the top of a page continues the list ending the previous page (`list_cross_page`).
+  Unclear cases get a review item instead of a guessed parent: `list_orphan` and the new
+  `list_level_ambiguous` (both block facts, not chunks); siblings with different markers get
+  `list_marker_mixed`. `list_info` is now the typed `ListInfo`; `RunReport.lists`; HTML report
+  section "List". Full F54: 482 list items, 103 children, 0 orphans, 3 ambiguous (page 71),
+  review 21 → 24, everything else unchanged; F86 pages 5–17 unchanged. Rule is v1, checked on
+  F54 only.
+- `doc_ingest` BL-11 text part (2026-11-09): `technical_refs/params.py::find_param_refs` and
+  `normalize/text_refs.py`. Parameter codes in body text become `TextParamRef` (ParamRef +
+  `start`/`end` + `role` definition/value_option/mention). Only prefixes listed in the new
+  profile field `param_text_patterns` are scanned (`qs_controller`: `#` 4–5 digits, `M` exactly
+  4, so M-code `M100` and pin `M8` are not parameters; they are counted as near-misses).
+  T-13 also runs on text. T-08 v1.1: new review `list_param_mismatch` when a list child talks
+  about a different code than its parent defines. Step `s1_refs` is now implemented;
+  `RunReport.refs`; HTML section. Full F54: 227 refs (98/75/54), 302/302 code tokens covered,
+  2 mismatches on page 96 (an editing error in the manual itself), review 24 → 26, everything
+  else unchanged; F86 unchanged. Next: evaluation on other documents (profile fit report,
+  labelled samples, F86 Installation and F10T).
+- `doc_ingest` BL-34 multi-document evaluation (2026-11-09): `eval/profile_fit.py` adds
+  `RunReport.profile_fit` (code tokens matched, near-misses, unknown code shapes, OCR share,
+  big pictures holding sentences, Vietnamese text on OCR pages) and warning signals shown in
+  the HTML report; nothing is changed automatically. New CLI `eval --run-dir --labels` scores
+  a run against hand-labelled sample pages (`tests/doc_ingest/fixtures/eval/*.labels.json`,
+  drafted by Claude from the PDF text layer and page images, `verified: false` until the team
+  confirms) and writes `report/eval.json`/`eval.html`; the gate needs ≤ 50% OCR pages plus
+  T-12 precision ≥ 0.99, recall ≥ 0.95, roles ≥ 0.95, no wrong list parent, all lexicon notes,
+  ≥ 95% body sentences kept. Provisional results: F54 and F86 Installation pass; F86 Operation
+  and F10T fail on OCR. New issues: I-28 (F10T: Docling takes a whole two-column page frame as
+  one picture, so instructions become figure text), I-29 (OCR runs in English on a Vietnamese
+  scan: diacritics lost), I-30 (`M0100.txt` macro name read as parameter). Not fixed yet.
+- `doc_ingest` BL-16 chunk builder + BL-15 chunk checks (2026-11-09, **draft, awaiting team review of
+  the 2b gate**): stage 2 `build` reads an existing normalized run + a document manifest
+  (`manifests/*.yaml`) and writes `build/chunks.jsonl` (`DraftChunk`, independent of the table),
+  `build/doc_chunks_v1.jsonl` (adapter to the current `doc_chunks` columns, candidate fields in
+  `metadata`), `build/chunk_quality.json` (CQ-01…CQ-10, coverage, boundaries vs draft labels
+  `fixtures/eval/{doc}.chunks.json`, comparison with the hand-written F86 CSV, review summary, gate),
+  `build/chunk_review.json` (team verdicts) and `report/chunks.html`. CLI: `build`, `figure-ocr`
+  (RapidOCR torch on figure crops of text-layer pages → keywords only); `run` calls `build` when a
+  manifest exists. No DB writes; the chatbot retrieval flow is unchanged; no Vietnamese text yet (step 3).
+  Results: F54 323 chunks, F86 Installation 26; CQ pass, coverage 1.0, boundaries P/R 1.0 on draft
+  labels (type accuracy 0.9 / 0.71). New issues I-31 (F86 TOC page not detected), I-32 (F86 port table
+  description cells shifted between rows), I-33 (figure chunks without caption carry only the heading),
+  I-34 (port table granularity vs per-connector hand chunks), I-35 (coarse chunk-type rules).
+  The FTS-branch bug was renumbered E-05 (E-02 already existed).
+- `doc_ingest` C2 chunk contract (2026-11-09, approved with changes to §1, §2 and a new §13):
+  [reports/p2_chunk_contract.md](reports/p2_chunk_contract.md) maps every `doc_chunks` column to its
+  source, based on a read of the current retrieval flow (`Retriever`, `match_doc_chunks`,
+  `product_docs_ask`). Key points: a matched child returns its **parent's** content and assets, so a
+  parent is a context window holding its children verbatim (≤ 2,500 chars, one level); content stays in
+  the source language while `embed_text` always carries a Vietnamese summary/FAQ/keywords (queries are
+  rewritten in Vietnamese); procedures are never split per step; figure labels go to keywords only.
+  The retrieval flow itself is not changed. New issue E-05: the FTS branch of `match_doc_chunks` drops
+  all rows when the model filter is an empty array (vector branch treats it as no filter); to be fixed
+  separately in the chatbot module.
+- Request tracing phase 0 (2026-11-07): `app/core/tracing.py`, spans across router,
+  service, `RetrievalPipeline`, `AgentRunner`, tools, `Retriever`, `CrmListClient` and
+  `OpenAIProvider` (real usage), `TraceRepository` + `backend/sql/chat_traces.sql`,
+  `GET /chatbot/sessions/{id}/trace`, settings `CHAT_TRACE_PERSIST` /
+  `CHAT_TRACE_MAX_SPANS`. Run in the worktree with the main checkout's
+  `backend\venv` and a placeholder `DATABASE_URL` (tests use fakes): backend pytest
+  **762 passed, 14 skipped, 1 failed**. The failure is
+  `test_f86_baseline_csv_unchanged`: the worktree checkout converts
+  `doc_chunks_f86.csv` to CRLF, so its hash differs; unrelated to this change.
+  New `tests/chatbot/test_tracing.py` (13 tests). Existing assertions unchanged.
+  Frontend untouched; `npm run lint`/`build` not run (no `node_modules` in the
+  worktree). `chat_traces` table and live persistence: **not verified**.
+- Trace diagnostics after Toma's case 1 (2026-11-07; `crm_report` with an expired CRM
+  token: first call rejected by catalog validation, second call 401). The trace showed
+  the flow but not why validation failed, what the LLM asked for, which credential was
+  rejected, and `error_spans=5` counted one failure several times. Added: tool span
+  `error_detail` (quoted values redacted), `crm_report` query shape +
+  `credential_source`, summary `root_error_spans` / `failed_tool_calls`, root
+  `tool_errors`, same fields in the `chat_trace` log line. Removed the debug `print`
+  of applied report filters in `tools/crm_report.py`. Backend pytest **765 passed,
+  14 skipped, 1 failed** (same CRLF-only `test_f86_baseline_csv_unchanged`). Live
+  re-run of case 1: pending (Toma).
 - Live Supabase connectivity/insert: **not verified**.
 
 ## Architectural impact

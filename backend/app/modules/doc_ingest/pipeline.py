@@ -15,10 +15,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from app.modules.doc_ingest.eval.profile_fit import profile_fit
 from app.modules.doc_ingest.normalize.coverage import ElementCoverage, classify_items
 from app.modules.doc_ingest.normalize.docling_reader import RawItem, read_items
 from app.modules.doc_ingest.normalize.elements import build_elements
 from app.modules.doc_ingest.normalize.figures import FigureRun, PageObjects, decide_figures
+from app.modules.doc_ingest.normalize.lists import ListRun, decide_lists
+from app.modules.doc_ingest.normalize.text_refs import TextRefRun, annotate_text
 from app.modules.doc_ingest.normalize.pages import decide_furniture, printed_pages
 from app.modules.doc_ingest.normalize.recorder import Recorder
 from app.modules.doc_ingest.normalize.sections import assign_sections
@@ -44,12 +47,11 @@ _STEPS: tuple[tuple[str, str, str, str, str], ...] = (
     ("s1_furniture", "T-17 xác nhận header/footer, chữ trong hình", "normalize.pages", "BL-07", ""),
     ("s1_labels", "Phân loại nhãn Docling, T-16 mục lục", "normalize.coverage", "BL-33", ""),
     ("s1_tables", "S1 bảng logic T-01…T-05, T-15", "normalize.tables", "BL-05, BL-06, BL-27", ""),
-    ("s1_refs", "T-12 mã parameter, T-13 ứng viên applicability", "technical_refs.applicability", "BL-11",
-     "chỉ trên cell của bảng; trên text chờ BL-08/BL-09"),
+    ("s1_refs", "T-12 mã parameter, T-13 ứng viên applicability (ô bảng + text)", "normalize.text_refs", "BL-11", ""),
     ("s1_pages", "T-06 trang in", "normalize.pages", "BL-07", ""),
     ("s1_sections", "T-07 section path", "normalize.sections", "BL-08", ""),
     ("s1_lists", "T-08 list cha–con", "normalize.lists", "BL-09", ""),
-    ("s1_figures", "T-18 nhãn sát hình, T-09…T-11, T-14 screenshot, watermark, caption, crop",
+    ("s1_figures", "T-18 nhãn sát hình, T-09…T-11, T-14, T-19 screenshot, watermark, caption, crop, hình trùng",
      "normalize.figures", "BL-10", ""),
     ("validate", "V-01…V-04 kiểm bất biến", "validate", "BL-25", "chỉ V-01 độ phủ text; V-02…V-04 chưa có"),
     ("build", "Chunk builder", "build", "BL-16", ""),
@@ -134,13 +136,15 @@ class RunResult:
     printed: dict[int, PrintedPage] | None = None
     objects: PageObjects | None = None
     figures: FigureRun | None = None
+    lists: ListRun | None = None
+    refs: TextRefRun | None = None
 
 
 def run_normalization(docs: list[dict[str, Any]], doc_id: str, profile: Profile,
                       words: Words | None = None, s0: DocumentProfile | None = None,
                       objects: PageObjects | None = None) -> RunResult:
     """S0 → T-17/T-18 furniture, nhãn sát hình → T-16 phân loại nhãn → T-06 → T-07 → hình
-    (T-09, T-10, T-11, T-14) → bảng logic → V-01 (khi có words) → NormalizedElement, chung một
+    (T-09, T-10, T-19, T-11, T-14) → bảng logic → T-08 list → T-12/T-13 trên text → V-01 (khi có words) → NormalizedElement, chung một
     recorder. Hình chạy trước bảng: screenshot (T-09) không thành bảng rỗng, caption gắn lại
     (T-11) đổi điều kiện đóng bảng của T-03."""
     rec = Recorder()
@@ -155,13 +159,17 @@ def run_normalization(docs: list[dict[str, Any]], doc_id: str, profile: Profile,
     figures = decide_figures(items, objects, profile, rec)
     items = figures.items
     tables = build_logical_tables(items, doc_id, profile, rec, figures.screenshots)
+    not_flow = frozenset(k for k, v in figures.kinds.items() if v == "watermark_candidate") | frozenset(figures.duplicates)
+    lists = decide_lists(items, profile, rec, not_flow)
+    refs = annotate_text(items, lists, profile, rec, not_flow)
     words = words or {}
     ocr = ocr_pages(s0) if s0 is not None else set()
     validation = text_coverage(doc_id, words, items, elements.kept, profile, rec, ocr) if words else []
-    normalized = build_elements(items, elements, furniture.flags, sections, printed, tables, figures)
+    normalized = build_elements(items, elements, furniture.flags, sections, printed, tables, figures, lists, refs)
     return RunResult(docs=docs, items=items, tables=tables, profile=profile, pages=pages, elements=elements,
                      words=words, validation=validation, s0=s0, normalized=normalized,
-                     furniture_keys=furniture.keys, printed=printed, objects=objects, figures=figures)
+                     furniture_keys=furniture.keys, printed=printed, objects=objects, figures=figures,
+                     lists=lists, refs=refs)
 
 
 def image_dir(element_id: str) -> str:
@@ -248,9 +256,36 @@ def figure_summary(result: RunResult) -> dict[str, int]:
     elements = result.normalized or []
     counts = Counter(e.normalized_type for e in elements
                      if e.normalized_type in ("picture", "screenshot", "watermark_candidate"))
-    flags = Counter(f for e in elements for f in e.flags if f in ("caption_relinked", "figure_text_attached"))
+    flags = Counter(f for e in elements for f in e.flags
+                    if f in ("caption_relinked", "figure_text_attached", "repeated_image", "duplicate_image"))
     return {**dict(sorted(counts.items())), **dict(sorted(flags.items())),
             "rendered": sum(1 for e in elements if e.image is not None and e.image.original_path)}
+
+
+def list_summary(result: RunResult) -> dict[str, int]:
+    """T-08: số list_item, con, độ sâu lớn nhất, mồ côi, mơ hồ, nối qua trang, marker trộn."""
+    infos = [e.list_info for e in result.normalized or [] if e.list_info is not None]
+    flags = Counter(f for e in result.normalized or [] for f in e.flags
+                    if f in ("list_cross_page", "list_marker_mixed"))
+    run = result.lists or ListRun()
+    return {"list_items": len(infos), "children": sum(1 for i in infos if i.parent_element_id),
+            "max_depth": max((i.depth for i in infos), default=0),
+            "orphans": len(run.orphans), "ambiguous": len(run.ambiguous), **dict(sorted(flags.items()))}
+
+
+def ref_summary(result: RunResult) -> dict[str, int]:
+    """T-12/T-13 trên text: số ref theo vai trò, kiểu, prefix; cụm áp dụng; lỗi; near-miss."""
+    refs = [r for e in result.normalized or [] for r in e.param_refs]
+    run = result.refs or TextRefRun()
+    out: dict[str, int] = {"elements_with_refs": sum(1 for e in result.normalized or [] if e.param_refs),
+                           "text_param_refs": len(refs)}
+    out.update({f"role_{k}": v for k, v in sorted(Counter(r.role for r in refs).items())})
+    out.update({f"kind_{k}": v for k, v in sorted(Counter(r.kind for r in refs).items())})
+    out.update({f"prefix_{k}": v for k, v in sorted(Counter(r.prefix for r in refs).items())})
+    out.update({"applicability_text": sum(len(v) for v in run.applicability.values()),
+                "unparseable": run.unparseable, "near_miss": sum(run.near_miss.values()),
+                "list_param_mismatch": run.list_mismatch})
+    return out
 
 
 def table_hash(table: LogicalTable) -> str:
@@ -302,6 +337,9 @@ def write_run(run_dir: Path, result: RunResult, *, doc_id: str, run_id: str, cre
         printed_pages={p: pp.value for p, pp in sorted((result.printed or {}).items())},
         element_types=dict(sorted(Counter(e.normalized_type for e in result.normalized or []).items())),
         figures=figure_summary(result),
+        lists=list_summary(result),
+        refs=ref_summary(result),
+        profile_fit=profile_fit(result),
     )
     (run_dir / "run_report.json").write_text(report.model_dump_json(indent=1) + "\n", encoding="utf-8")
     return report

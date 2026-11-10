@@ -8,7 +8,7 @@ from typing import Literal
 from pydantic import Field
 
 from app.modules.doc_ingest.schemas.base import StrictModel
-from app.modules.doc_ingest.technical_refs.params import ParamRef
+from app.modules.doc_ingest.technical_refs.params import ParamRef, TextParamRef
 
 ApplicabilityStatus = Literal["not_available", "available_only", "conditional"]
 ReviewCode = Literal[
@@ -36,6 +36,8 @@ ReviewCode = Literal[
     "range_too_long",
     "param_code_overlap",
     "list_orphan",
+    "list_level_ambiguous",
+    "list_param_mismatch",
     "per_code_values",
     "doc_version_mismatch",
     "source_conflict",
@@ -168,14 +170,23 @@ class ImageInfo(StrictModel):
     extraction: Literal["page_render_crop", "manual_region"] = "page_render_crop"
 
 
+class ListInfo(StrictModel):
+    """Contract §2 `list` (T-08 v1). `depth` 0 = cấp 1; `marker` = glyph đầu text nếu có, ngược
+    lại marker Docling (rỗng → null)."""
+
+    indent_x: float
+    depth: int
+    parent_element_id: str | None = None
+    marker: str | None = None
+
+
 class CaptionLink(StrictModel):
     source: Literal["docling", "rule"]
     rule_id: Literal["T-11"] | None = None
 
 
 class NormalizedElement(StrictModel):
-    """Một phần tử sau S1 (contract §2). Trường của bước chưa có code (T-08 list, T-12/T-13
-    trên text) để rỗng cho tới khi bước đó có."""
+    """Một phần tử sau S1 (contract §2)."""
 
     schema_version: Literal[1] = 1
     element_id: str
@@ -193,12 +204,13 @@ class NormalizedElement(StrictModel):
     section_path_source: Literal["numbering", "inherited", "none"] = "none"
     label_heading: str | None = None
     parent_element_id: str | None = None       # picture/table chứa phần tử (figure_text, caption)
-    list_info: dict[str, object] | None = None  # contract §2 `list` (T-08); đổi tên vì trùng builtin
+    list_info: ListInfo | None = None          # contract §2 `list` (T-08); đổi tên vì trùng builtin
     table_ref: TableRef | None = None
     image: ImageInfo | None = None
     caption_element_id: str | None = None      # với picture/screenshot/bảng: caption của nó
     caption_link: CaptionLink | None = None
-    param_refs: list[ParamRef] = Field(default_factory=list)
+    duplicate_of: str | None = None            # T-19: cùng một ảnh với phần tử này (không crop, không chunk)
+    param_refs: list[TextParamRef] = Field(default_factory=list)   # T-12 trên text
     applicability_candidates: list[ApplicabilityCandidate] = Field(default_factory=list)
     flags: list[str] = Field(default_factory=list)
     review_required: bool = False

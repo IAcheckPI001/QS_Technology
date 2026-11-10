@@ -12,7 +12,7 @@ DEFAULT = load_profile("default")
 
 @pytest.mark.parametrize(("text", "numbers", "strong"), [
     ("1.2 Dimension", (1, 2), True), ("CHAPTER 2.", (2,), True), ("PART 2: WIRING - CONNECTION", (2,), True),
-    ("chương 3 Lắp đặt", (3,), True), ("2.9.1AXIS", (2, 9, 1), True), ("3 Installation", (3,), False),
+    ("chương 3 Lắp đặt", (3,), True), ("PART 1:CONTROLLER OVERVIEW", (1,), True), ("2.9.1AXIS", (2, 9, 1), True), ("3 Installation", (3,), False),
     ("320 mm", (320,), False),
 ])
 def test_parse_heading(text: str, numbers: tuple[int, ...], strong: bool) -> None:
@@ -20,7 +20,7 @@ def test_parse_heading(text: str, numbers: tuple[int, ...], strong: bool) -> Non
     assert heading is not None and (heading.numbers, heading.strong) == (numbers, strong)
 
 
-@pytest.mark.parametrize("text", ["Notes:", "1.2 3", "Figure 1-1. Front view", "320"])
+@pytest.mark.parametrize("text", ["Notes:", "1.2 3", "Figure 1-1. Front view", "320", "PART 1.2 X"])
 def test_not_a_numbered_heading(text: str) -> None:
     assert parse_heading(text, DEFAULT) is None
 

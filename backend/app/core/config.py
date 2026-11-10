@@ -60,6 +60,10 @@ class Settings(BaseSettings):
     crm_report_timezone: str = Field(default="Asia/Ho_Chi_Minh", alias="CRM_REPORT_TIMEZONE")
     # Lease chống hai lượt chạy song song trên cùng phiên; hết hạn tự giải phóng nếu tiến trình chết.
     chat_turn_lease_s: int = Field(default=120, alias="CHAT_TURN_LEASE_S")
+    # Trace từng lượt chat (app/core/tracing.py). Luôn thu thập và log tóm tắt; chỉ ghi
+    # vào public.chat_traces khi bật (cần áp backend/sql/chat_traces.sql trước).
+    chat_trace_persist: bool = Field(default=False, alias="CHAT_TRACE_PERSIST")
+    chat_trace_max_spans: int = Field(default=500, ge=10, alias="CHAT_TRACE_MAX_SPANS")
     ollama_base_url: str = Field(default="", alias="OLLAMA_BASE_URL")
     ollama_model: str = Field(default="", alias="OLLAMA_MODEL")
     ollama_timeout_seconds: float = Field(default=180.0, alias="OLLAMA_TIMEOUT_SECONDS")

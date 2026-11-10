@@ -77,8 +77,8 @@ def test_watermark_bitmap_repeats_on_pages() -> None:
     for page in SPIKE_PAGES:
         objects = _load(F54 / f"p{page:03d}.objects.json")
         assert objects["pdf_page_index"] == page
-        sizes.update({(b["px_w"], b["px_h"]) for b in objects["bitmaps"]})
-    assert sizes[(671, 427)] == len(SPIKE_PAGES)
+        sizes.update({(b["px_w"], b["px_h"], b["hash"]) for b in objects["bitmaps"]})
+    assert sizes[(671, 427, "20953f60866f6155")] == len(SPIKE_PAGES)    # cùng nội dung mọi trang (T-10)
 
 
 def test_bitmap_inside_form_xobject_uses_form_bounds() -> None:

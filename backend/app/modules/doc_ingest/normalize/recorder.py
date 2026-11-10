@@ -35,6 +35,8 @@ REVIEW_POLICY: dict[ReviewCode, tuple[bool, Blocks]] = {
     "range_too_long": (True, "fact"),
     "param_code_overlap": (True, "fact"),
     "list_orphan": (True, "fact"),
+    "list_level_ambiguous": (True, "fact"),
+    "list_param_mismatch": (True, "fact"),
     "per_code_values": (True, "fact"),
     "doc_version_mismatch": (True, "publish"),
     "source_conflict": (True, "fact"),

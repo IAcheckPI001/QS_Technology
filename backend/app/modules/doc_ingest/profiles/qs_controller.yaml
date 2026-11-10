@@ -4,3 +4,5 @@ name: qs_controller
 extends: default
 code_patterns: ['^#\d', '^M\d{4}', '^[XY]\d{2,3}$', '^CN\d+$']
 param_prefixes: ["#", "M"]
+# T-12 trên text: `M` phải đủ 4 chữ số (F54: M100 là M-code, M8 là chân output, không phải parameter).
+param_text_patterns: {'#': '\d{4,5}', 'M': '\d{4}'}

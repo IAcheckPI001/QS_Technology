@@ -1,5 +1,5 @@
-"""Hình (contract §5): T-18 nhãn sát hình, T-09 screenshot, T-10 ứng viên watermark, T-11 gắn
-caption, T-14 vùng crop. Luật hình học chung, không theo tài liệu.
+"""Hình (contract §5): T-18 nhãn sát hình, T-09 screenshot, T-10 ứng viên watermark, T-19 gộp
+phần tử hình trùng, T-11 gắn caption, T-14 vùng crop. Luật hình học chung, không theo tài liệu.
 
 Đối tượng trang (`raw/p{n}.objects.json`: bitmap kèm kích thước px, nét vector) đo từ PDF bằng
 pypdfium2. Trang không có file này (run cũ, fixture chỉ có Docling JSON): T-09/T-10 không chạy,
@@ -12,12 +12,12 @@ không thành fact. Nội dung có thẩm quyền là ảnh crop.
 from __future__ import annotations
 
 import dataclasses
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.modules.doc_ingest.geometry import BBox, overlap_ratio
+from app.modules.doc_ingest.geometry import BBox, iou, overlap_ratio
 from app.modules.doc_ingest.normalize.docling_reader import RawItem
 from app.modules.doc_ingest.normalize.recorder import Recorder
 from app.modules.doc_ingest.normalize.sections import parse_heading
@@ -29,7 +29,9 @@ PageObjects = dict[int, dict[str, list[dict[str, Any]]]]
 # Nhãn Docling có thể là nhãn hình bị để ngoài picture (F86: `320 mm` gắn page_header / text).
 _LABEL_SOURCES = frozenset({"text", "page_header", "page_footer", "section_header"})
 _SENTENCE_END = (".", ":", ";", "?", "!")
-_SAME_SIZE = 1.0       # T-10: sai số cỡ hiển thị (pt) để coi hai bitmap là cùng một ảnh lặp
+_SAME_POSITION = 1.0   # T-10: sai số vị trí (pt) của cùng một ảnh trên hai trang
+_MARGIN_TOL = 3.0      # T-18: dòng bắt đầu cách lề trái văn bản ≤ (pt) là dòng văn bản
+_MARGIN_MIN_LINES = 3  # T-18: số dòng tối thiểu để coi một x0 là lề trái văn bản
 _TIE = 1.0             # T-11: hai ứng viên chênh khoảng cách ≤ (pt) → caption_ambiguous
 
 
@@ -45,13 +47,8 @@ def _union(a: BBox, b: BBox) -> BBox:
     return BBox(min(a.x0, b.x0), min(a.y0, b.y0), max(a.x1, b.x1), max(a.y1, b.y1))
 
 
-def _size(raw: Mapping[str, Any]) -> tuple[float, float]:
-    return raw["x1"] - raw["x0"], raw["y1"] - raw["y0"]
-
-
-def _same_size(a: tuple[float, float], b: tuple[float, float]) -> bool:
-    """Cùng cỡ hiển thị, cho phép xoay 90° (F86: logo 94×148 pt, trang 13–14 là 148×94)."""
-    return any(abs(a[0] - w) <= _SAME_SIZE and abs(a[1] - h) <= _SAME_SIZE for w, h in (b, b[::-1]))
+def _same_place(a: BBox, b: BBox) -> bool:
+    return all(abs(getattr(a, k) - getattr(b, k)) <= _SAME_POSITION for k in ("x0", "y0", "x1", "y1"))
 
 
 def _gap(a: BBox, b: BBox) -> float:
@@ -64,15 +61,31 @@ def _starts_with(text: str, keywords: Sequence[str]) -> bool:
     return any(folded.startswith(k.casefold()) for k in keywords)
 
 
-def label_target(item: RawItem, pictures: Sequence[RawItem], profile: Profile) -> RawItem | None:
+def text_margin(items: Sequence[RawItem]) -> float | None:
+    """Lề trái văn bản của tài liệu: x0 (làm tròn) gặp nhiều nhất ở dòng text/heading/list trong
+    body; None khi chưa đủ `_MARGIN_MIN_LINES` dòng (F54: 85 pt, 399 dòng; F86 OCR: 35 pt)."""
+    counts = Counter(round(i.bbox.x0) for i in items
+                     if i.bbox is not None and i.parent_id is None and not i.is_furniture
+                     and i.label in ("text", "section_header", "list_item"))
+    if not counts:
+        return None
+    x0, count = counts.most_common(1)[0]
+    return float(x0) if count >= _MARGIN_MIN_LINES else None
+
+
+def label_target(item: RawItem, pictures: Sequence[RawItem], profile: Profile,
+                 margin: float | None = None) -> RawItem | None:
     """T-18: nhãn ngắn (kích thước, tên chân) Docling để ngoài picture nhưng nằm sát hoặc đè mép
     hình → picture gần nhất; None nếu không phải nhãn hình. Câu văn, heading đánh số, caption
-    không bao giờ bị gắn."""
+    và dòng bắt đầu ở lề trái văn bản (nhãn mục như F54 `INDEX homing type`, I-25) không bao
+    giờ bị gắn."""
     text = " ".join(item.text.split())
     t = profile.thresholds
     if (item.bbox is None or item.parent_id is not None or item.label not in _LABEL_SOURCES or not text
             or len(text.split()) > t.figure_label_max_tokens or text.endswith(_SENTENCE_END)
             or _starts_with(text, profile.caption_keywords)):
+        return None
+    if margin is not None and abs(item.bbox.x0 - margin) <= _MARGIN_TOL:
         return None
     heading = parse_heading(text, profile)
     # `320 mm` khớp mẫu số một đoạn (heading yếu); chỉ heading mạnh hoặc section_header có số
@@ -94,6 +107,7 @@ class FigureRun:
     images: dict[str, ImageInfo] = field(default_factory=dict)
     captions: dict[str, tuple[str, CaptionLink]] = field(default_factory=dict)  # đích -> (caption, link)
     flags: dict[str, list[str]] = field(default_factory=dict)
+    duplicates: dict[str, str] = field(default_factory=dict)     # T-19: phần tử trùng -> phần tử giữ lại
 
     @property
     def screenshots(self) -> frozenset[str]:
@@ -102,24 +116,31 @@ class FigureRun:
 
 @dataclass
 class _Repeated:
+    hash: str
     px: tuple[int, int]
-    size: tuple[float, float]
+    anchor: BBox
     boxes: dict[int, list[BBox]] = field(default_factory=dict)   # trang -> vị trí trên trang đó
 
 
+def _has_hash(objects: PageObjects) -> bool:
+    return any(raw.get("hash") for page in objects.values() for raw in page.get("bitmaps", []))
+
+
 def _repeated_bitmaps(objects: PageObjects, min_pages: int) -> list[_Repeated]:
-    """Bitmap cùng kích thước px và cùng cỡ hiển thị (± `_SAME_SIZE`, cho phép xoay 90°) trên
-    ≥ `min_pages` trang; vị trí tùy ý (logo F86 đổi chỗ theo trang). Ảnh dùng lại trong hình thật
-    thường đổi cỡ (F86 275×275 px ở 354×144, 386×162 pt…) nên không thành nhóm lặp."""
+    """Watermark: cùng nội dung (`hash`) **và** cùng vị trí (± `_SAME_POSITION`) trên ≥ `min_pages`
+    trang (I-24). Cùng kích thước không đủ: F54 dùng một khung 480×272 px cho mọi ảnh giao diện.
+    Cùng nội dung không đủ: tài liệu dùng lại nguyên một ảnh giao diện ở nhiều trang."""
     groups: list[_Repeated] = []
     for page in sorted(objects):
         for raw in objects[page].get("bitmaps", []):
-            px = (raw.get("px_w", 0), raw.get("px_h", 0))
-            group = next((g for g in groups if g.px == px and _same_size(g.size, _size(raw))), None)
+            if not raw.get("hash"):
+                continue
+            box = _bbox(raw)
+            group = next((g for g in groups if g.hash == raw["hash"] and _same_place(g.anchor, box)), None)
             if group is None:
-                group = _Repeated(px=px, size=_size(raw))
+                group = _Repeated(hash=raw["hash"], px=(raw.get("px_w", 0), raw.get("px_h", 0)), anchor=box)
                 groups.append(group)
-            group.boxes.setdefault(page, []).append(_bbox(raw))
+            group.boxes.setdefault(page, []).append(box)
     return [g for g in groups if len(g.boxes) >= min_pages]
 
 
@@ -141,11 +162,14 @@ def _screenshots(items: Sequence[RawItem], objects: PageObjects, profile: Profil
 def _watermarks(items: Sequence[RawItem], objects: PageObjects, profile: Profile, run: FigureRun,
                 rec: Recorder) -> None:
     t = profile.thresholds
+    if objects and not _has_hash(objects):
+        rec.add_log("T-10", "objects", "no_bitmap_hash: objects.json without content hash; T-10 not run")
+        return
     repeated = _repeated_bitmaps(objects, t.furniture_min_pages)
     for group in repeated:
-        rec.add_log("T-10", f"bitmap:{group.px[0]}x{group.px[1]}",
-                    f"bitmap {group.size[0]:.0f}x{group.size[1]:.0f} pt repeated on {len(group.boxes)} pages",
-                    after={"pages": sorted(group.boxes)})
+        rec.add_log("T-10", f"bitmap:{group.hash}", f"bitmap {group.px[0]}x{group.px[1]} px at the same "
+                    f"position on {len(group.boxes)} pages",
+                    after={"pages": sorted(group.boxes), "bbox": group.anchor.as_dict()})
     for item in items:
         if item.label != "picture" or item.parent_id is not None or item.bbox is None:
             continue
@@ -169,9 +193,65 @@ def _watermarks(items: Sequence[RawItem], objects: PageObjects, profile: Profile
                     after={"normalized_type": "watermark_candidate", "cover": cover})
 
 
+def _duplicates(items: Sequence[RawItem], profile: Profile, run: FigureRun, rec: Recorder) -> None:
+    """T-19 (I-27): Docling có khi sinh cả `picture` lẫn `table` 0 cell cho cùng một ảnh (F54 trang
+    64, 81, 85, 96, 98: IoU 1,0, cùng một bitmap). Hai phần tử hình cùng trang, IoU ≥
+    `duplicate_iou_min` → một ảnh. Giữ phần tử Docling gắn caption; không thì screenshot (T-09
+    đã thấy bitmap); còn hòa thì phần tử đọc trước. Phần tử còn lại không xóa: cờ
+    `duplicate_image` + `duplicate_of`, không crop, không nhận caption. Chồng một phần → hai hình."""
+    images = [(order, i) for order, i in enumerate(items)
+              if i.parent_id is None and i.bbox is not None
+              and ((i.label == "picture" and i.element_id not in run.kinds) or i.element_id in run.screenshots)]
+    for n, (order_a, a) in enumerate(images):
+        if a.element_id in run.duplicates:
+            continue
+        for order_b, b in images[n + 1:]:
+            if b.page != a.page or b.element_id in run.duplicates:
+                continue
+            overlap = iou(a.bbox, b.bbox)   # type: ignore[arg-type]
+            if overlap < profile.thresholds.duplicate_iou_min:
+                continue
+            rank = {x.element_id: (not x.has_caption, x.element_id not in run.screenshots, order)
+                    for order, x in ((order_a, a), (order_b, b))}
+            keep, drop = sorted((a, b), key=lambda x: rank[x.element_id])
+            reason = ("has the Docling caption" if keep.has_caption and not drop.has_caption
+                      else "screenshot (T-09)" if keep.element_id in run.screenshots
+                      and drop.element_id not in run.screenshots else "first in reading order")
+            run.duplicates[drop.element_id] = keep.element_id
+            run.flags.setdefault(drop.element_id, []).append("duplicate_image")
+            rec.add_log("T-19", drop.element_id, f"same image as {keep.element_id} (IoU {overlap}); kept: {reason}",
+                        target=keep.element_id, after={"duplicate_of": keep.element_id, "iou": overlap})
+            if drop.element_id == a.element_id:
+                break
+
+
+def _repeated_images(items: Sequence[RawItem], objects: PageObjects, profile: Profile, run: FigureRun,
+                     rec: Recorder) -> None:
+    """Cờ thông tin `repeated_image`: picture không caption nằm trong một ảnh có cùng nội dung
+    xuất hiện trên ≥ `furniture_min_pages` trang ở vị trí khác nhau (logo F86 cạnh hình, ảnh
+    giao diện dùng lại). Không đổi loại, không loại khỏi nội dung; người duyệt quyết định."""
+    t = profile.thresholds
+    pages_of: dict[str, set[int]] = defaultdict(set)
+    for page, data in objects.items():
+        for raw in data.get("bitmaps", []):
+            if raw.get("hash"):
+                pages_of[raw["hash"]].add(page)
+    for item in items:
+        if (item.label != "picture" or item.parent_id is not None or item.bbox is None or item.has_caption
+                or item.element_id in run.kinds or item.element_id in run.duplicates):
+            continue
+        for raw in objects.get(item.page, {}).get("bitmaps", []):
+            seen = pages_of.get(raw.get("hash") or "", set())
+            if len(seen) >= t.furniture_min_pages and overlap_ratio(item.bbox, [_bbox(raw)]) >= t.watermark_cover_min:
+                run.flags.setdefault(item.element_id, []).append("repeated_image")
+                rec.add_log("T-10", item.element_id, f"image content repeated on {len(seen)} pages; kept as picture",
+                            after={"pages": sorted(seen)})
+                break
+
+
 def _link_captions(items: list[RawItem], profile: Profile, run: FigureRun, rec: Recorder) -> None:
     figure_kw = [k for k in profile.caption_keywords if k not in profile.table_caption_keywords]
-    figures = [i for i in items if i.parent_id is None and i.bbox is not None
+    figures = [i for i in items if i.parent_id is None and i.bbox is not None and i.element_id not in run.duplicates
                and ((i.label == "picture" and run.kinds.get(i.element_id) != "watermark_candidate")
                     or run.kinds.get(i.element_id) == "screenshot")]
     tables = [i for i in items if i.parent_id is None and i.bbox is not None and i.label == "table"
@@ -193,6 +273,11 @@ def _link_captions(items: list[RawItem], profile: Profile, run: FigureRun, rec: 
                 run.captions.setdefault(item.parent_id, (item.element_id, CaptionLink(source="docling")))
             continue
         pool.sort(key=lambda pair: pair[0])
+        tied = [f for gap, f in pool if gap - pool[0][0] <= _TIE] if pool else []
+        if len(tied) > 1 and item.parent_id in {f.element_id for f in tied}:
+            # Hòa nhưng Docling đã gắn vào một trong các ứng viên (F54: Docling sinh cả picture lẫn
+            # bảng 0 cell cho cùng một ảnh chụp màn hình) → giữ liên kết Docling, không mơ hồ.
+            pool = [(gap, f) for gap, f in pool if f.element_id == item.parent_id]
         if not pool or (len(pool) > 1 and pool[1][0] - pool[0][0] <= _TIE):
             count = "no" if not pool else "two"
             rec.add_review(item.element_id, "caption_ambiguous",
@@ -226,7 +311,7 @@ def _crops(items: Sequence[RawItem], objects: PageObjects, profile: Profile, run
     missing: set[int] = set()
     for item in items:
         is_image = (item.label == "picture" and item.parent_id is None) or item.element_id in run.screenshots
-        if not is_image or item.bbox is None:
+        if not is_image or item.bbox is None or item.element_id in run.duplicates:
             continue
         bbox, region, sources = item.bbox, item.bbox, ["docling"]
         page = objects.get(item.page)
@@ -262,11 +347,13 @@ def _crops(items: Sequence[RawItem], objects: PageObjects, profile: Profile, run
 
 def decide_figures(items: Sequence[RawItem], objects: PageObjects | None, profile: Profile,
                    rec: Recorder) -> FigureRun:
-    """T-09 → T-10 → T-11 → T-14 (T-18 chạy trong `decide_furniture`, trước luật furniture)."""
+    """T-09 → T-10 → T-19 → T-11 → T-14 (T-18 chạy trong `decide_furniture`, trước luật furniture)."""
     objects = objects or {}
     run = FigureRun(items=list(items))
     _screenshots(run.items, objects, profile, run, rec)
     _watermarks(run.items, objects, profile, run, rec)
+    _duplicates(run.items, profile, run, rec)
     _link_captions(run.items, profile, run, rec)
+    _repeated_images(run.items, objects, profile, run, rec)
     _crops(run.items, objects, profile, run, rec)
     return run

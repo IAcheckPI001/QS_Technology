@@ -48,7 +48,8 @@ routers/      chat.py (POST /chat/*), workspace.py (GET /chatbot/*), sse.py (SSE
 dependencies.py  service/repository, RequestContext, auth theo kênh, Idempotency-Key
 services/     chat_service.py (ChatbotService), session_access.py (+ SessionTurnLease), service_auth.py
 adapters/     website.py, crm.py: schema kênh -> InboundRequest
-repositories/ history_repository.py, chat_session_repository.py (+ ChatTurnLeaseRepository), doc_chunk_repository.py
+repositories/ history_repository.py, chat_session_repository.py (+ ChatTurnLeaseRepository), doc_chunk_repository.py,
+              trace_repository.py (public.chat_traces)
 stages/       ... + retrieval_pipeline.py (clarification -> analysis -> [catalog] -> execution, dùng chung)
               catalog_lookup_stage.py (tìm model theo bảng capabilities, chỉ pipeline của agent)
 extraction/   registry.py (intents, models, coverage, capabilities), validate_registry.py, product_catalog.py
@@ -211,10 +212,16 @@ CRM backend ─ Bearer qsk_… (key kênh crm) + {user_id, session_id, message} 
    bên ngoài, chưa chuyển tiếp tin nhắn cho nhân viên và chưa có cơ chế trả về
    `mode=bot`. `update_conversation_state` tính state mới và lưu vào cột
    `conversation_state` của row `completed`.
-10. Router phát event `done` với `request_id` và authoritative `session_id`.
-    Frontend lưu session ID trong localStorage cho request sau.
-11. Context/domain/provider exception được log server-side và ánh xạ thành SSE
-    `context_error` hoặc `provider_error`.
+10. Router phát event `done` với `request_id` và authoritative `session_id`
+    (cùng giá trị header `X-Session-ID`). Bên tích hợp giữ session cho lượt sau:
+    widget-backend lưu trong cookie HttpOnly `qs_chat_session` và gỡ
+    `session_id` khỏi `done`; CRM giữ trong UI state và gửi `null` khi bắt đầu
+    hội thoại mới. Support Workspace chỉ còn đọc khóa cũ `chatbot_session_id`
+    trong localStorage làm session mặc định để xem.
+11. Exception được log server-side và ánh xạ thành SSE `error` trong
+    `routers/sse.py`: `request_blocked` (SecurityStage), `context_error`
+    (context/pruning), `analysis_error` (analysis/execution/compose),
+    `agent_error` (luồng agent CRM), còn lại `provider_error`.
 
 ## Luồng agent (kênh CRM)
 
@@ -463,6 +470,52 @@ thêm adapter MCP sau), provider Ollama/Gemini cho agent.
   cùng session không chạy song song: request thứ hai nhận 409 `session_busy`
   (lease theo phiên).
 
+## Tracing (giai đoạn 0: trong tiến trình, không thư viện ngoài)
+
+Mỗi request `POST /chat/*` có một `Trace` (`app/core/tracing.py`): cây span với
+`start_ms` tính từ lúc middleware nhận request, `duration_ms`, `status` và thuộc
+tính metadata. Span cha nằm trong contextvars; `TaskGroup` sao chép context nên tool
+chạy song song và task retrieve vẫn nằm đúng dưới span cha.
+
+```text
+chat.request (root: channel, flow, history_status, first_delta_ms, deltas)
+├ session.resolve · session.lease_acquire
+├ stage.security · stage.context_load · stage.prune
+├ [agent] agent.run (steps, tool_calls, answered_without_tools)
+│  ├ agent.wait_slot
+│  ├ llm.chat_tools (step, tool_choice, finish_reason, tool_calls, input/output_tokens)
+│  ├ tool.product_docs_ask (tool_call_id, result_status, sources)
+│  │  ├ stage.clarification · stage.analysis (intents, routes) → llm.chat_json
+│  │  ├ stage.catalog_lookup (next_action) · stage.execution (tasks)
+│  │  └ retrieval.search (hits, top_score, fallback)
+│  │     ├ embedding (input_tokens) · db.match_doc_chunks (rows) · db.fetch_chunks
+│  ├ tool.crm_report (query_shape, credential_source) → report.validate · report.fetch
+│  │    → http.crm_list×N (status_code) · report.engine
+│  └ tool.<name> tức thời khi call bị gộp trùng / vượt trần / hết lượt (status = mã)
+│     (span tool lỗi có error_detail đã che giá trị trong nháy; root có tool_errors)
+├ [pipeline] stage.clarification … stage.execution · stage.compose → llm.stream_chat
+├ history.write (history_status)
+└ session.lease_release
+```
+
+- Router (`routers/chat.py`) tạo trace; `routers/sse.py` kích hoạt trace suốt stream,
+  đóng khi stream kết thúc (xong, lỗi, client ngắt), log một dòng `chat_trace`
+  (outcome, duration, first_delta_ms, số span/LLM/tool, token thật, lỗi gốc,
+  `tool_errors`) và lưu vào
+  `public.chat_traces` qua `TraceRepository` (session DB riêng, shield khi bị huỷ,
+  lỗi chỉ log) khi `CHAT_TRACE_PERSIST=true`. Lỗi trước khi stream (401/404/409/422)
+  không lưu trace.
+- Token thật: `OpenAIProvider` ghi usage của `chat_complete_json`, `chat_complete_text`,
+  `stream_chat` (`stream_options.include_usage`) và `embed` vào span; runner ghi usage
+  của `chat_complete_tools`. `chat_history.input_tokens/output_tokens/cost_usd` vẫn là
+  ước tính, chưa đổi sang usage thật.
+- Chỉ metadata: không ghi nội dung tin nhắn, câu hỏi agent viết, argument/output tool,
+  prompt, câu trả lời hay `crm_access_token`. `Span.set` cắt chuỗi 120 ký tự, list 20
+  phần tử; tối đa `CHAT_TRACE_MAX_SPANS` span/trace (vượt thì đếm `dropped_spans`).
+- Không có trace đang chạy (test, learning_ai) thì `span()` là no-op.
+- Chưa có: OpenTelemetry/OTLP, truyền `traceparent`/`X-Request-ID` sang CRM API và
+  OpenAI, lấy mẫu, retention, giao diện waterfall, tracing cho `/ai/learning`.
+
 ## Các lớp và trách nhiệm
 
 | Lớp | Trách nhiệm | Không nên làm |
@@ -481,7 +534,7 @@ thêm adapter MCP sau), provider Ollama/Gemini cho agent.
 
 Đang public: `GET /health`, `GET /health/db`, `POST /chat/website` và
 `POST /chat/crm` (service key server-to-server, đúng kênh)
-và các GET `/chatbot/...` của Support Workspace. Module `learning_ai` cung cấp
+và các GET `/chatbot/...` của Support Workspace (kể cả `/trace`). Module `learning_ai` cung cấp
 `POST /ai/learning` và các endpoint support-chat khi `LEARNING_API_ENABLED=true`
 (xem mục dưới). Quyền nhân viên CRM theo `user_id`, ownership cho các GET history, chống xử lý trùng
 theo `Idempotency-Key` và production readiness/schema checks là phạm vi chưa
@@ -502,10 +555,16 @@ C1 đã khóa** (D-02, D-03, D-04 mô hình dữ liệu, D-08, D-11; rev 3 đổ
 biên cột theo khe trắng). Đã có code và test cho: schema, profile cấu hình, chuẩn
 hóa **bảng** (T-01…T-05, T-15), parse mã parameter và ghi chú áp dụng trên cell
 (T-12, T-13), review queue, lõi approval theo unit. **Chưa có pipeline PDF →
-chunk đầy đủ**: chưa có T-08, V-02…V-04, builder, trích fact, CLI review,
+chunk đầy đủ**: chưa có V-02…V-04, builder, trích fact, CLI review,
 publish. Đã có CLI `run` (PDF → Docling → chuẩn hóa bảng → thư mục chạy + báo cáo
 HTML từng bước) để kiểm thử bằng file thật. Dữ liệu `doc_chunks` vẫn là chunk F86
 biên soạn tay, nạp bằng `chunking_loader/load_csv.py`.
+
+**Cập nhật 2026-11-09 — chunk builder (BL-16, contract C2):** giai đoạn 2 `build` đọc thư mục
+chạy đã chuẩn hóa + manifest, sinh chunk nháp (`build/chunks.jsonl`, `DraftChunk` độc lập với
+bảng) + adapter ra dòng `doc_chunks` hiện tại (`build/doc_chunks_v1.jsonl`) + kiểm chất lượng
+(`build/chunk_quality.json`, `report/chunks.html`). **Không ghi DB; luồng tra cứu chatbot không
+đổi.** Chưa có: phần tiếng Việt (Bước 3), đánh giá tra cứu offline (Bước 4), loader/xuất bản.
 
 **Cấu trúc và ranh giới module:**
 
@@ -523,15 +582,30 @@ backend/app/modules/doc_ingest/
                        tables.py (T-01..T-05, T-15 + gọi T-12/T-13), recorder.py (review/log),
                        pages.py (T-17 xác nhận header/footer theo lặp nhiều trang, chữ trong hình
                        -> figure_text; T-06 trang in), sections.py (T-07 section path theo số),
-                       figures.py (T-18 nhãn sát hình, T-09 screenshot, T-10 watermark, T-11
-                       caption, T-14 vùng crop), elements.py (ghép NormalizedElement ->
+                       figures.py (T-18 nhãn sát hình, T-09 screenshot, T-10 watermark, T-19
+                       hình trùng, T-11 caption, T-14 vùng crop), lists.py (T-08 v1 list
+                       cha–con theo lề trái), text_refs.py (T-12/T-13 trên text, T-08 v1.1),
+                       elements.py (ghép NormalizedElement ->
                        normalized/elements.jsonl)
   validate/coverage.py V-01 độ phủ text: từ text layer (words.json) so với nội dung giữ lại
   s0.py                S0: quyết định OCR theo trang (text layer missing/poor), ocr_required
   parse/profile_probe.py  S0 đo trang bằng pypdfium2 (ký tự, ký tự lỗi, bitmap, path, xoay, page label)
-  parse/pdf_probe.py   page_objects: bitmap (+ px) và nét vector từng trang -> raw/p{n}.objects.json;
+  parse/pdf_probe.py   page_objects: bitmap (+ px, hash nội dung) và nét vector từng trang -> raw/p{n}.objects.json;
                        đối tượng trong Form XObject lấy bounds của form
-  technical_refs/      params.py (ParamRef, T-12), applicability.py (T-13)
+  technical_refs/      params.py (ParamRef, T-12; find_param_refs quét text), applicability.py (T-13)
+  eval/                profile_fit.py (độ khớp profile, tín hiệu cảnh báo), labels.py + score.py + render.py
+                       (lệnh `eval`: chấm theo nhãn mẫu tests/doc_ingest/fixtures/eval → report/eval.*)
+  manifest.py, manifests/  DocManifest (doc_id theo quy ước CSV, doc_type, model, scope + luật scope, bucket)
+                       cho chunk builder; f54.yaml, f86_installation.yaml, f86_operation.yaml (contract C2 §3)
+  build/               chunk builder BL-16 (giai đoạn 2, đọc thư mục chạy có sẵn, không parse lại PDF):
+                       loader.py, chunker.py (khối label heading → đơn vị → cửa sổ cha ≤ 2.500), render.py,
+                       fields.py (scope, interface, từ khóa, embed_text, assets, review), assertions.py
+                       (CQ-01…CQ-10, BL-15), quality.py (độ phủ, ranh giới theo nhãn, so CSV tay, cổng 2b),
+                       builder.py (ghi build/*.jsonl, chunk_quality.json, chunk_review.json)
+  export/doc_chunks_v1.py  DraftChunk → dòng bảng doc_chunks hiện tại (trường ứng viên C2 §13 vào metadata)
+  report/chunks_report.py  report/chunks.html: trang duyệt chunk (cổng, CQ, độ phủ, ranh giới, so CSV, thẻ chunk)
+  parse/figure_ocr.py  lệnh `figure-ocr`: RapidOCR (torch, có sẵn) trên ảnh crop hình ở trang có text layer
+                       → build/figure_ocr.jsonl (chỉ làm từ khóa)
   review/approval.py   trạng thái unit, luật phục vụ, approval gate, giữ approval (theo id,
                        id đổi thì khớp duy nhất theo hash), duyệt hàng loạt theo rủi ro,
                        luật xuất bản (phụ thuộc, conflict)
@@ -540,7 +614,8 @@ backend/app/modules/doc_ingest/
   report/html_report.py  report/index.html tự chứa: tổng quan + trạng thái bước, theo trang
                        (ảnh + khung element + biên cột), theo bảng (lưới Docling thô cạnh bảng logic,
                        tô màu T-01/T-02/T-05/T-15, ứng viên T-13), review queue, log
-  cli.py               `run --pdf ... | --raw-dir ...` (Docling chỉ import khi cần parse/render PDF)
+  cli.py               `run --pdf ... | --raw-dir ...` (gọi `build` ở cuối khi có manifest), `eval`, `build`,
+                       `figure-ocr` (Docling chỉ import khi cần parse/render PDF)
   parse/               nơi duy nhất (cùng spike/) được import docling, pypdfium2, PIL
     docling_runner.py  build_converter (spike dùng chung), convert_pages, render_pages
     pdf_probe.py       page_label (/PageLabels), image_objects (bitmap nhúng), count_path_objects
@@ -583,7 +658,8 @@ backend/tests/chatbot/test_registry_snapshot.py   snapshot từ vựng khớp RE
       T-17 header/footer, T-06 trang in, T-07 section path   CÓ CODE + TEST (BL-07, BL-08)
       hình: T-18, T-09 screenshot, T-10 watermark, T-11 caption, T-14 crop + render
                                       CÓ CODE + TEST (BL-10)
-      list (T-08), T-12/T-13 trên text   chưa có code (BL-09, BL-11 phần text)
+      list cha–con T-08 v1 (lề trái + glyph phụ, nối qua trang)   CÓ CODE + TEST (BL-09)
+      T-12/T-13 trên text (mã + vị trí + vai trò), T-08 v1.1   CÓ CODE + TEST (BL-11)
 [Profile] Profile cấu hình (default, qs_controller)  CÓ CODE + TEST (BL-26, BL-29)
 [T-16] Phân loại nhãn Docling        CÓ CODE + TEST (BL-33): mục lục giữ, nhãn lạ -> review
 [V]   Kiểm bất biến V-01..V-04        V-01 CÓ CODE + TEST (ngưỡng tạm, D-12 mở); V-02..V-04 chưa có
@@ -672,13 +748,14 @@ Mục tiêu: biến hội thoại hỗ trợ / tài liệu thành `KnowledgeReco
 
 **Trạng thái tổng quát:** phần lõi domain thuần (schema, validate, conflict rule,
 lifecycle, chunking, indexer logic) đã có và có unit test tại
-`backend/tests/learning_ai/`. **Chưa có entrypoint nào chạy luồng end-to-end.**
-Chưa có API thật, ingestion, lời gọi LLM, persistence Supabase, outbox, embedding
-hay vector index.
+`backend/tests/learning_ai/`. `POST /ai/learning` (sau cờ `LEARNING_API_ENABLED`,
+chưa có auth) chạy được bước [1]: ingestion → prefilter → privacy.
+**Chưa có luồng end-to-end tới tri thức**: chưa có lời gọi LLM segment/extract,
+persistence Supabase (job, record), outbox, embedding hay vector index.
 
 ```text
 [0] POST /ai/learning                 chạy [1]; chỉ include khi LEARNING_API_ENABLED=true, chưa có auth
-[1] Ingestion -> SourceDocument       có logic + service (chưa có bảng job, chưa nối route)
+[1] Ingestion -> SourceDocument       có logic + service, đã nối route [0] (chưa có bảng job)
       prefilter -> privacy A..D       Ollama bắt buộc, fail-closed (xem mục Privacy bên dưới)
 [2] Pass 1 Segmenter (LLM)            chỉ có schema Segment/SegmentationOutput
 [3] Pass 2 Extractor (LLM, strict)    có schema + to_strict_schema (inject enum registry);

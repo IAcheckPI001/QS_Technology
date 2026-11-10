@@ -11,6 +11,7 @@ from time import perf_counter
 from typing import TYPE_CHECKING, Protocol, Sequence
 from uuid import uuid4
 
+from app.core.tracing import span
 from app.modules.chatbot.schemas.default import SourceMetadata
 from app.modules.chatbot.schemas.system import (
     Candidate,
@@ -109,19 +110,30 @@ class Retriever:
         if not targets:
             raise ValueError("retrieval requires at least one target")
         query = targets[0].queries[0]
-        embedding = (await self._embedder.embed([query.query]))[0]
+        with span(
+            "retrieval.search", "internal",
+            sub_query_id=query.sub_query_id, targets=len(targets),
+        ) as search_span:
+            embedding = (await self._embedder.embed([query.query]))[0]
 
-        runs = await self._search_targets(targets, embedding)
-        ranked = self._merge(runs)
-        used_fallback = False
-        if not ranked and fallback_targets:
-            fallback_runs = await self._search_targets(fallback_targets, embedding)
-            runs.extend(fallback_runs)
-            ranked = self._merge(fallback_runs)
-            used_fallback = True
+            runs = await self._search_targets(targets, embedding)
+            ranked = self._merge(runs)
+            used_fallback = False
+            if not ranked and fallback_targets:
+                fallback_runs = await self._search_targets(fallback_targets, embedding)
+                runs.extend(fallback_runs)
+                ranked = self._merge(fallback_runs)
+                used_fallback = True
 
-        kept = ranked[: self._config.final_chunk_top_k]
-        hits = await self._expand_parents(kept)
+            kept = ranked[: self._config.final_chunk_top_k]
+            hits = await self._expand_parents(kept)
+            search_span.set(
+                searches=len(runs),
+                relevant=len(ranked),
+                hits=len(hits),
+                fallback=used_fallback,
+                top_score=round(max((match.vector_score for match in kept), default=0.0), 4),
+            )
         context_child_ids = {chunk_id for hit in hits for chunk_id in hit.matched_chunk_ids}
         kept_ids = {str(match.id) for match in kept}
 
@@ -163,19 +175,24 @@ class Retriever:
         models: list[str] | None,
     ) -> _SearchRun:
         started = perf_counter()
-        matches = await self._repository.match(
-            embedding=embedding,
-            query_text=request.queries[0].query,
-            domain=request.domain,
-            scopes=request.scopes,
-            models=models,
-            control_interface=request.control_interface,
-            spec_attributes=request.spec_attributes,
-            vector_k=self._config.vector_candidate_k,
-            fts_k=self._config.fts_candidate_k,
-            rrf_k=self._config.rrf_k,
-            spec_boost=self._config.spec_boost,
-        )
+        with span(
+            "db.match_doc_chunks", "db",
+            domain=request.domain, models=models or [], scopes=request.scopes,
+        ) as match_span:
+            matches = await self._repository.match(
+                embedding=embedding,
+                query_text=request.queries[0].query,
+                domain=request.domain,
+                scopes=request.scopes,
+                models=models,
+                control_interface=request.control_interface,
+                spec_attributes=request.spec_attributes,
+                vector_k=self._config.vector_candidate_k,
+                fts_k=self._config.fts_candidate_k,
+                rrf_k=self._config.rrf_k,
+                spec_boost=self._config.spec_boost,
+            )
+            match_span.set(rows=len(matches))
         return _SearchRun(
             request=request,
             models=models,
@@ -236,10 +253,11 @@ class Retriever:
         fetch_ids = list(dict.fromkeys(
             [*groups.keys(), *(matches[0].id for matches in groups.values())]
         ))
-        records = {
-            record.id: record
-            for record in await self._repository.fetch_by_ids(fetch_ids)
-        }
+        with span("db.fetch_chunks", "db", ids=len(fetch_ids)):
+            records = {
+                record.id: record
+                for record in await self._repository.fetch_by_ids(fetch_ids)
+            }
 
         hits: list[ChunkHit] = []
         for context_id, matches in groups.items():

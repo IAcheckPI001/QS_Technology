@@ -22,6 +22,7 @@ Các route hiện được include từ `backend/app/api/v1/router.py`:
   cho màn Lịch sử hội thoại của Support Workspace.
 - `GET /chatbot/sessions/{session_id}/retrieval`: snapshot chunk truy xuất của
   lượt gần nhất có chunk, cho màn Kết quả chunk.
+- `GET /chatbot/sessions/{session_id}/trace`: trace (cây span) của một lượt chat.
 - `POST /ai/learning`: chỉ khi `LEARNING_API_ENABLED=true` (xem bên dưới).
 - `GET/POST /support-chat/sessions` và
   `GET /support-chat/sessions/{session_id}/messages`: đọc/tạo hội thoại CRM
@@ -168,6 +169,62 @@ endpoint này chưa trả các khóa đó).
 Không có snapshot trả `404 retrieval_not_found`; database lỗi trả
 `503 database_unavailable`.
 
+### `GET /chatbot/sessions/{session_id}/trace`
+
+Query tùy chọn `history_id` (UUID, = `chat_history.id` của lượt). Không có thì trả
+trace mới nhất của phiên. Đọc `public.chat_traces`; chỉ có dữ liệu khi server đặt
+`CHAT_TRACE_PERSIST=true` (xem architecture.md "Tracing").
+
+```json
+{
+  "session_id": "…",
+  "history_id": "…",
+  "trace_id": "9f2c…",
+  "request_id": "…",
+  "channel": "crm",
+  "outcome": "ok",
+  "duration_ms": 5321,
+  "created_at": "…",
+  "summary": {
+    "span_count": 18, "dropped_spans": 0, "llm_calls": 3, "tool_calls": 1,
+    "error_spans": 0, "root_error_spans": 0, "failed_tool_calls": 0,
+    "input_tokens": 4210, "output_tokens": 380, "embedding_tokens": 14
+  },
+  "spans": [
+    {
+      "span_id": "0005", "parent_id": "0004", "name": "llm.chat_tools", "kind": "llm",
+      "start_ms": 412.3, "duration_ms": 1830.5, "status": "ok",
+      "attributes": {"step": 1, "tool_choice": "auto", "input_tokens": 1350,
+                     "output_tokens": 42, "tool_calls": ["product_docs_ask"]}
+    }
+  ]
+}
+```
+
+- `start_ms` tính từ lúc dịch vụ nhận request; `parent_id` dựng lại cây span.
+- `outcome`: `ok`, mã lỗi SSE (`analysis_error`, `agent_error`, …) hoặc
+  `client_disconnected`. `status` của span: `ok`, `error`, `cancelled`,
+  `unfinished` hoặc mã nghiệp vụ (`tool_timeout`, `http_503`, `deduplicated`, …).
+- `summary.error_spans` đếm mọi span lỗi, kể cả span cha nhận lỗi lan lên (một lỗi
+  401 làm `http.crm_list`, `report.fetch`, `tool.crm_report` cùng lỗi);
+  `root_error_spans` chỉ đếm nơi lỗi phát sinh (span lỗi không có span con lỗi);
+  `failed_tool_calls` đếm tool call lỗi.
+- Lượt agent trả lời được nhưng có tool lỗi vẫn `outcome="ok"`; root span có thêm
+  `tool_errors: ["crm_report:crm_auth_failed", …]` (`{tool}:{mã}`).
+- Span tool lỗi có `error_detail`: lý do tool trả cho LLM, tách theo `; `, tối đa 5
+  mục × 120 ký tự, **giá trị trong nháy bị thay bằng `'…'`** (thông báo validate có thể
+  lặp lại giá trị LLM điền, vd. tên người).
+- `tool.crm_report` có cấu trúc truy vấn LLM yêu cầu (ghi trước khi validate):
+  `dataset`, `metrics`, `dimensions`, `filter_fields` (tên trường, không giá trị),
+  `date_field`, `date_preset` (`custom` khi dùng start/end; không ghi ngày), `time_grain`,
+  `sort_fields`, `limit`, và `credential_source` (`token` | `user_id`, không giá trị).
+- Token trong `summary` là usage **thật** do OpenAI trả về (agent, analysis, compose,
+  embedding), khác ước tính trong `chat_history`.
+- Trace chỉ chứa metadata: không có nội dung tin nhắn, câu hỏi agent gửi tool,
+  output tool, prompt hay token CRM.
+- Không có trace trả `404 trace_not_found`; database lỗi (kể cả bảng chưa tạo) trả
+  `503 database_unavailable`. Endpoint chưa xác thực, như các GET Support Workspace khác.
+
 Khi chạy local, đặt `LEARNING_API_ENABLED=true` trong `backend/.env` rồi khởi
 động lại backend. Khi chạy Docker Compose, đặt biến này trong file `.env` ở
 repository root; Compose sẽ truyền biến vào container backend. Nếu không bật
@@ -218,7 +275,6 @@ Lỗi trả `{"detail": {"code", "message", "request_id"}}` với message tổng
 
 | HTTP | `code` | Khi nào |
 |---|---|---|
-| 403 | `service_key_channel_mismatch` | Key hợp lệ nhưng cấp cho kênh khác endpoint (ví dụ key website gọi `/chat/crm`) |
 | 404 | `session_not_found` | Session không có row nào |
 | 422 | (FastAPI) | `session_id` không phải UUID, sai `schema_version`, field lạ |
 | 503 | `privacy_provider_not_configured` | Bật route nhưng thiếu `OLLAMA_BASE_URL`/`OLLAMA_MODEL` |
@@ -357,7 +413,8 @@ Lỗi trước khi mở stream trả JSON `{"detail": {"code", "message", "reque
 
 | HTTP | `code` | Khi nào |
 |---|---|---|
-| 401 | `invalid_service_key` | `/chat/crm`: thiếu, sai định dạng, không tồn tại, sai secret, bị thu hồi, hết hạn key, hoặc integration bị disable. Cùng một body cho mọi lý do; lý do chỉ ghi log `Service key rejected reason=... key_id=...` (kèm `WWW-Authenticate: Bearer`) |
+| 401 | `invalid_service_key` | Cả hai endpoint: key thiếu, sai định dạng, không tồn tại, sai secret, bị thu hồi, hết hạn, hoặc integration bị disable. Cùng một body cho mọi lý do (kèm `WWW-Authenticate: Bearer`); lý do chỉ ghi log `Service key rejected reason=... key_id=...` |
+| 403 | `service_key_channel_mismatch` | Key hợp lệ nhưng cấp cho kênh khác endpoint (ví dụ key website gọi `/chat/crm`) |
 | 404 | `session_not_found` | `session_id` không thuộc principal/kênh, bị thu hồi hoặc hết hạn |
 | 409 | `session_busy` | Phiên đang có một lượt khác chưa trả lời xong (gửi đúp, hai tab). Client chờ lượt trước kết thúc rồi gửi lại; lease tự hết hạn sau `CHAT_TURN_LEASE_S` nếu tiến trình chết |
 | 422 | `invalid_idempotency_key` | `Idempotency-Key` không phải UUID |
@@ -408,6 +465,8 @@ công khi nhận `done`, và xử lý `error` theo `code`. Các mã lỗi chính
   hỏng lượt: agent nhận mã lỗi tool và vẫn trả lời.
 - SSE `provider_error`: lỗi trong phần xử lý provider/stream câu trả lời, hoặc
   lỗi không phân loại.
+
+Ánh xạ exception → SSE `code` nằm ở `backend/app/modules/chatbot/routers/sse.py`.
 
 Mọi lỗi sau khi context đã nạp (analysis, execution, compose, stream) đều được
 ghi `chat_history` với `status='error'`, kèm phần câu trả lời đã stream (nếu có).

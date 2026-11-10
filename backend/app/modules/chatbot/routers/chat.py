@@ -14,6 +14,9 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
+from app.core.config import settings
+from app.core.tracing import Trace, activate, span
+
 from app.modules.chatbot.adapters.crm import crm_to_inbound
 from app.modules.chatbot.adapters.website import website_to_inbound
 from app.modules.chatbot.dependencies import (
@@ -22,9 +25,11 @@ from app.modules.chatbot.dependencies import (
     get_idempotency_key,
     get_request_context,
     get_session_access_service,
+    get_trace_repository,
     get_turn_lease,
     get_website_principal,
 )
+from app.modules.chatbot.repositories.trace_repository import TraceRepository
 from app.modules.chatbot.routers.sse import error_response, stream_chat
 from app.modules.chatbot.schemas.channels import CRMChatIn, WebsiteChatIn
 from app.modules.chatbot.schemas.default import ChannelType
@@ -52,12 +57,14 @@ async def chat_website(
     sessions: SessionAccessService = Depends(get_session_access_service),
     turn_lease: SessionTurnLease = Depends(get_turn_lease),
     service: ChatbotService | None = Depends(get_chatbot_service),
+    trace_store: TraceRepository | None = Depends(get_trace_repository),
 ) -> StreamingResponse | JSONResponse:
     return await _chat(
         request,
         service,
         sessions,
         turn_lease,
+        trace_store,
         principal,
         request_context,
         payload.session_id,
@@ -81,12 +88,14 @@ async def chat_crm(
     sessions: SessionAccessService = Depends(get_session_access_service),
     turn_lease: SessionTurnLease = Depends(get_turn_lease),
     service: ChatbotService | None = Depends(get_chatbot_service),
+    trace_store: TraceRepository | None = Depends(get_trace_repository),
 ) -> StreamingResponse | JSONResponse:
     return await _chat(
         request,
         service,
         sessions,
         turn_lease,
+        trace_store,
         principal.acting_for(payload.user_id, payload.crm_access_token),
         request_context,
         payload.session_id,
@@ -105,6 +114,48 @@ async def _chat(
     service: ChatbotService | None,
     sessions: SessionAccessService,
     turn_lease: SessionTurnLease,
+    trace_store: TraceRepository | None,
+    principal: PrincipalContext,
+    request_context: RequestContext,
+    requested_session_id: UUID | None,
+    to_inbound: Callable[[UUID, str], InboundRequest],
+) -> StreamingResponse | JSONResponse:
+    request_id = request_context.request_id
+    # Trace tính từ lúc middleware nhận request: khoảng trống trước span đầu tiên là
+    # thời gian xác thực service key và parse body. Lỗi trước khi stream không lưu trace.
+    trace = Trace(
+        request_id,
+        root_name="chat.request",
+        started_at=getattr(request.state, "request_started_at", None),
+        max_spans=settings.chat_trace_max_spans,
+    )
+    trace.root.set(
+        channel=request_context.channel.value,
+        new_session=requested_session_id is None,
+        handler_start_ms=round(trace.duration_ms),
+    )
+    with activate(trace):
+        return await _chat_traced(
+            request,
+            service,
+            sessions,
+            turn_lease,
+            trace,
+            trace_store,
+            principal,
+            request_context,
+            requested_session_id,
+            to_inbound,
+        )
+
+
+async def _chat_traced(
+    request: Request,
+    service: ChatbotService | None,
+    sessions: SessionAccessService,
+    turn_lease: SessionTurnLease,
+    trace: Trace,
+    trace_store: TraceRepository | None,
     principal: PrincipalContext,
     request_context: RequestContext,
     requested_session_id: UUID | None,
@@ -121,11 +172,12 @@ async def _chat(
         )
 
     try:
-        session_id = await sessions.resolve_or_create(
-            requested_session_id,
-            principal,
-            request_context.channel,
-        )
+        with span("session.resolve", "db"):
+            session_id = await sessions.resolve_or_create(
+                requested_session_id,
+                principal,
+                request_context.channel,
+            )
     except SessionNotFound:
         return error_response(
             request,
@@ -148,7 +200,8 @@ async def _chat(
     leased = requested_session_id is not None
     if leased:
         try:
-            await turn_lease.acquire(session_id)
+            with span("session.lease_acquire", "db"):
+                await turn_lease.acquire(session_id)
         except SessionBusy:
             return error_response(
                 request,
@@ -199,4 +252,6 @@ async def _chat(
         principal,
         request_context,
         on_finish=release_lease if leased else None,
+        trace=trace,
+        trace_store=trace_store,
     )

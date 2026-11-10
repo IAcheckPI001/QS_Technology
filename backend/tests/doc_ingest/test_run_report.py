@@ -47,6 +47,11 @@ def test_run_dir_follows_contract_layout(f54_run: Path) -> None:
     assert report.printed_pages[167] == "160" and len(report.furniture_keys) == 4
     assert report.figures == {"picture": 5, "screenshot": 1, "watermark_candidate": 1, "caption_relinked": 1,
                               "rendered": 0}       # không có PDF: chỉ vùng crop, không render
+    # T-08: fixture có trang 19 (4 cha × 2 con, GT-07)
+    assert report.lists["children"] >= 8 and report.lists["orphans"] == 0 and report.lists["max_depth"] == 1
+    # T-12 trên text (fixture trang 19: 4 định nghĩa M1920…M1923, 8 giá trị)
+    assert report.refs["role_definition"] >= 4 and report.refs["role_value_option"] >= 8
+    assert report.refs["list_param_mismatch"] == 0
 
 
 def test_raw_dir_without_words_reports_v01_not_run(tmp_path: Path) -> None:
@@ -66,11 +71,11 @@ def test_step_status_comes_from_existing_modules() -> None:
     status = {s.key: s.status for s in step_states()}
     assert status["s1_tables"] == "implemented" and status["parse"] == "implemented"
     assert status["s1_labels"] == "implemented"
-    assert status["s1_refs"] == "partial" and status["review"] == "partial" and status["validate"] == "partial"
+    assert status["review"] == "partial" and status["validate"] == "partial"
     assert status["s0"] == "implemented"
-    for key in ("s1_furniture", "s1_pages", "s1_sections", "s1_figures"):
+    for key in ("s1_furniture", "s1_pages", "s1_sections", "s1_figures", "s1_lists", "s1_refs", "build"):
         assert status[key] == "implemented", key
-    for key in ("s1_lists", "build", "facts", "publish"):
+    for key in ("facts", "publish"):
         assert status[key] == "not_implemented", key
 
 
@@ -163,3 +168,19 @@ def test_report_shows_figures_without_claiming_rendered_images(f54_run: Path) ->
     assert "Không có ảnh crop (chạy không kèm PDF)" in page and "<img src=" not in page
     assert "Figure 5. F54 controller I/O ports<span class='muted'> (T-11 gắn lại)" in page
     assert "watermark_candidate ← picture" in page
+
+
+def test_report_shows_list_tree(f54_run: Path) -> None:
+    page = (f54_run / "report/index.html").read_text(encoding="utf-8")
+    assert "<h2 id='lists'>List cha–con (T-08 v1)" in page and "<a href='#lists'>List</a>" in page
+    assert "Lề x × marker của tài liệu" in page
+    assert "o M1921 = 0 : Normally closed sensor (NC" in page
+    assert "<h2 id='refs'>Mã parameter, ghi chú áp dụng trong text (T-12/T-13)</h2>" in page
+
+
+def test_report_has_profile_fit(f54_run: Path) -> None:
+    report = RunReport.model_validate_json((f54_run / "run_report.json").read_text(encoding="utf-8"))
+    assert report.profile_fit is not None and report.profile_fit.param_tokens.get("M", 0) >= 12
+    assert "ocr_majority" not in report.profile_fit.signals
+    page = (f54_run / "report/index.html").read_text(encoding="utf-8")
+    assert "<h2 id='fit'>Độ khớp profile với tài liệu</h2>" in page

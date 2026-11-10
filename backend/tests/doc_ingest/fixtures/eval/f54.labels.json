@@ -1,0 +1,836 @@
+{
+ "schema_version": 1,
+ "doc_id": "f54",
+ "source_pdf": "F54_Operation Manual (English Version)_V.02.pdf",
+ "verified": false,
+ "labeled_by": "claude-draft",
+ "method": "Claude soạn nháp 2026-11-09 từ text layer PDF gốc (pypdfium2) và ảnh trang render, không lấy từ output pipeline. Ngữ pháp mã theo contract §4: 'and' không nối danh sách; M-code (M100, M0100.txt), chân (M8), lỗi đánh máy (M195) không phải parameter. Cần team xác nhận.",
+ "pages": [
+  {
+   "page": 18,
+   "param_refs": [
+    {
+     "label": "M1920, M1921, M1922, M1923",
+     "prefix": "M",
+     "kind": "list",
+     "codes": [
+      1920,
+      1921,
+      1922,
+      1923
+     ],
+     "role": "mention"
+    }
+   ]
+  },
+  {
+   "page": 19,
+   "param_refs": [
+    {
+     "label": "M1920",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1920
+     ],
+     "role": "definition"
+    },
+    {
+     "label": "M1920",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1920
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "M1920",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1920
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "M1921",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1921
+     ],
+     "role": "definition"
+    },
+    {
+     "label": "M1921",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1921
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "M1921",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1921
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "M1922",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1922
+     ],
+     "role": "definition"
+    },
+    {
+     "label": "M1922",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1922
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "M1922",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1922
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "M1923",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1923
+     ],
+     "role": "definition"
+    },
+    {
+     "label": "M1923",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1923
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "M1923",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1923
+     ],
+     "role": "value_option"
+    }
+   ],
+   "list_children": [
+    {
+     "child": "o M1920 = 0",
+     "parent": "M1920:"
+    },
+    {
+     "child": "o M1920 = 1",
+     "parent": "M1920:"
+    },
+    {
+     "child": "o M1921 = 0",
+     "parent": "M1921:"
+    },
+    {
+     "child": "o M1921 = 1",
+     "parent": "M1921:"
+    },
+    {
+     "child": "o M1922 = 0",
+     "parent": "M1922:"
+    },
+    {
+     "child": "o M1922 = 1",
+     "parent": "M1922:"
+    },
+    {
+     "child": "o M1923 = 0",
+     "parent": "M1923:"
+    },
+    {
+     "child": "o M1923 = 1",
+     "parent": "M1923:"
+    }
+   ],
+   "body_snippets": [
+    "Homing sensor status configuration parameter for X axis"
+   ]
+  },
+  {
+   "page": 22,
+   "param_refs": [
+    {
+     "label": "M1925, M1926, M1958",
+     "prefix": "M",
+     "kind": "list",
+     "codes": [
+      1925,
+      1926,
+      1958
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "M1925,\nM1926, M1958",
+     "prefix": "M",
+     "kind": "list",
+     "codes": [
+      1925,
+      1926,
+      1958
+     ],
+     "role": "mention"
+    }
+   ]
+  },
+  {
+   "page": 24,
+   "param_refs": [
+    {
+     "label": "M1937,\nM1938, M1939, M1940, M1941",
+     "prefix": "M",
+     "kind": "list",
+     "codes": [
+      1937,
+      1938,
+      1939,
+      1940,
+      1941
+     ],
+     "role": "mention"
+    }
+   ]
+  },
+  {
+   "page": 66,
+   "param_refs": [
+    {
+     "label": "#4140, #4141, #4142, #4143",
+     "prefix": "#",
+     "kind": "list",
+     "codes": [
+      4140,
+      4141,
+      4142,
+      4143
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#4140",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4140
+     ],
+     "role": "definition"
+    },
+    {
+     "label": "#4140",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4140
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#4140",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4140
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#4140",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4140
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#4141",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4141
+     ],
+     "role": "definition"
+    },
+    {
+     "label": "#4141",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4141
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#4141",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4141
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#4141",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4141
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#4142",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4142
+     ],
+     "role": "definition"
+    },
+    {
+     "label": "#4142",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4142
+     ],
+     "role": "value_option"
+    }
+   ],
+   "list_children": [
+    {
+     "child": "o #4140 = 0",
+     "parent": "#4140:"
+    },
+    {
+     "child": "o #4140 = 1",
+     "parent": "#4140:"
+    },
+    {
+     "child": "o #4140 = 2",
+     "parent": "#4140:"
+    },
+    {
+     "child": "o #4142 = 0",
+     "parent": "#4142:"
+    },
+    {
+     "child": "o #4141= 0",
+     "parent": "#4141:"
+    },
+    {
+     "child": "o #4141 = 1",
+     "parent": "#4141:"
+    },
+    {
+     "child": "o #4141 = 2",
+     "parent": "#4141:"
+    }
+   ],
+   "body_snippets": [
+    "X axis moves in linear direction"
+   ]
+  },
+  {
+   "page": 67,
+   "note": "o #4142 = 1/2 nối cha #4142 ở cuối trang 66",
+   "param_refs": [
+    {
+     "label": "#4142",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4142
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#4142",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4142
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#4143",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4143
+     ],
+     "role": "definition"
+    },
+    {
+     "label": "#4143",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4143
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#4143",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4143
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#4143",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4143
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#4060, #4061, #4062, #4063",
+     "prefix": "#",
+     "kind": "list",
+     "codes": [
+      4060,
+      4061,
+      4062,
+      4063
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#4060",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4060
+     ],
+     "role": "definition"
+    },
+    {
+     "label": "#4060",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4060
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#4060",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4060
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#4060",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      4060
+     ],
+     "role": "value_option"
+    }
+   ],
+   "list_children": [
+    {
+     "child": "o #4142 = 1",
+     "parent": "#4142:"
+    },
+    {
+     "child": "o #4142 = 2",
+     "parent": "#4142:"
+    },
+    {
+     "child": "o #4143 = 0",
+     "parent": "#4143:"
+    },
+    {
+     "child": "o #4143 = 1",
+     "parent": "#4143:"
+    },
+    {
+     "child": "o #4143 = 2",
+     "parent": "#4143:"
+    },
+    {
+     "child": "o #4060 = 0",
+     "parent": "#4060:"
+    },
+    {
+     "child": "o #4060 = 1",
+     "parent": "#4060:"
+    },
+    {
+     "child": "o #4060 = 2",
+     "parent": "#4060:"
+    }
+   ]
+  },
+  {
+   "page": 69,
+   "param_refs": [
+    {
+     "label": "#12010, #12011, #12012, #12013",
+     "prefix": "#",
+     "kind": "list",
+     "codes": [
+      12010,
+      12011,
+      12012,
+      12013
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#12340, #12341, #12342, #12343",
+     "prefix": "#",
+     "kind": "list",
+     "codes": [
+      12340,
+      12341,
+      12342,
+      12343
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#12350, #12351, #12352, #12353",
+     "prefix": "#",
+     "kind": "list",
+     "codes": [
+      12350,
+      12351,
+      12352,
+      12353
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#12010",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      12010
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#12340",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      12340
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#12350",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      12350
+     ],
+     "role": "value_option"
+    }
+   ]
+  },
+  {
+   "page": 70,
+   "param_refs": [
+    {
+     "label": "#12010",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      12010
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#12340",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      12340
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#12350",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      12350
+     ],
+     "role": "value_option"
+    }
+   ]
+  },
+  {
+   "page": 71,
+   "param_refs": [
+    {
+     "label": "#12010",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      12010
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#12340",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      12340
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "#12350",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      12350
+     ],
+     "role": "value_option"
+    }
+   ]
+  },
+  {
+   "page": 88,
+   "note": "M100 là M-code, không phải parameter; '#14003 and #14004' là hai mã đơn",
+   "param_refs": [
+    {
+     "label": "#14010",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14010
+     ],
+     "role": "definition"
+    },
+    {
+     "label": "#14011",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14011
+     ],
+     "role": "definition"
+    },
+    {
+     "label": "#14012",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14012
+     ],
+     "role": "definition"
+    },
+    {
+     "label": "#14003",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14003
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#14004",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14004
+     ],
+     "role": "mention"
+    }
+   ],
+   "body_snippets": [
+    "When command M100 is called, the coolant system will be turned off"
+   ]
+  },
+  {
+   "page": 91,
+   "note": "M100, M100H3 không phải parameter",
+   "param_refs": [
+    {
+     "label": "#14006",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14006
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#14006",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14006
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#14010",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14010
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#14008",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14008
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#14008",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14008
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#14011",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14011
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#14006",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14006
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#14006",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14006
+     ],
+     "role": "mention"
+    }
+   ],
+   "list_children": [
+    {
+     "child": "o Ex: If M100H3 is called",
+     "parent": "Situation 2:"
+    }
+   ]
+  },
+  {
+   "page": 96,
+   "note": "Lỗi soạn thảo của tài liệu: cha ghi M1951 (câu Note và con đều là M1950)",
+   "param_refs": [
+    {
+     "label": "M1950",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1950
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "M1951",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1951
+     ],
+     "role": "definition"
+    },
+    {
+     "label": "M1950",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1950
+     ],
+     "role": "value_option"
+    },
+    {
+     "label": "M1950",
+     "prefix": "M",
+     "kind": "single",
+     "codes": [
+      1950
+     ],
+     "role": "value_option"
+    }
+   ],
+   "list_children": [
+    {
+     "child": "o M1950 = 0",
+     "parent": "M1951:"
+    },
+    {
+     "child": "o M1950 = 1",
+     "parent": "M1951:"
+    }
+   ]
+  },
+  {
+   "page": 171,
+   "note": "mã nằm trong bảng (T-12 bảng), không tính ở text",
+   "applicability": [
+    "Not available on F54 controller",
+    "Available on touch controller",
+    "Available on touch controller",
+    "Available on touch controller"
+   ]
+  }
+ ]
+}

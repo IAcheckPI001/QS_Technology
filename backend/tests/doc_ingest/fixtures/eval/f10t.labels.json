@@ -1,0 +1,74 @@
+{
+ "schema_version": 1,
+ "doc_id": "f10t",
+ "source_pdf": "F10T_Operation Manual (English Version).pdf",
+ "verified": false,
+ "labeled_by": "claude-draft",
+ "method": "Claude soạn nháp 2026-11-09 từ text layer PDF gốc (pypdfium2) và ảnh trang render, không lấy từ output pipeline. Ngữ pháp mã theo contract §4: 'and' không nối danh sách; M-code (M100, M0100.txt), chân (M8), lỗi đánh máy (M195) không phải parameter. Cần team xác nhận.",
+ "pages": [
+  {
+   "page": 64,
+   "note": "OCR; bố cục hai cột trong khung; hướng dẫn bên phải là nội dung thân (I-28)",
+   "body_snippets": [
+    "Đầu tiên nhấn vào nút AUTO trên bảng điều khiển của thiết bị",
+    "Nhập một lệnh bất kỳ cho bộ điều khiển và nhấn OK để xác nhận"
+   ]
+  },
+  {
+   "page": 90,
+   "note": "OCR; M0100 là tên chương trình macro (M0100.txt), không phải parameter",
+   "body_snippets": [
+    "Chương trình macro được tạo bằng việc sử dụng Notepad"
+   ]
+  },
+  {
+   "page": 97,
+   "note": "OCR; M100 là M-code",
+   "param_refs": [
+    {
+     "label": "#14003",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14003
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#14004",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14004
+     ],
+     "role": "mention"
+    },
+    {
+     "label": "#14005",
+     "prefix": "#",
+     "kind": "single",
+     "codes": [
+      14005
+     ],
+     "role": "mention"
+    }
+   ],
+   "body_snippets": [
+    "Khi lệnh M100 được gọi thì hệ thống tưới nguội sẽ tắt"
+   ]
+  },
+  {
+   "page": 105,
+   "note": "text layer; mã nằm trong bảng",
+   "applicability": [
+    "Available on touch controller",
+    "Available on touch controller",
+    "Available on touch controller",
+    "Not available on F10T controller",
+    "Available on touch controller",
+    "Available on touch controller",
+    "Available on touch controller"
+   ]
+  }
+ ]
+}

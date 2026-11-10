@@ -1,4 +1,4 @@
-"""Ghép kết quả T-16, T-17/T-18, T-06, T-07, hình (T-09…T-11, T-14) và bảng logic thành
+"""Ghép kết quả T-16, T-17/T-18, T-06, T-07, hình (T-09…T-11, T-14, T-19), bảng logic, T-08 và T-12/T-13 trên text thành
 `NormalizedElement` (contract §2).
 
 Chỉ gắn nhãn và tham chiếu, không sửa `text` (nguyên văn Docling/OCR).
@@ -11,6 +11,8 @@ from collections.abc import Mapping, Sequence
 from app.modules.doc_ingest.normalize.coverage import ElementCoverage
 from app.modules.doc_ingest.normalize.docling_reader import RawItem
 from app.modules.doc_ingest.normalize.figures import FigureRun
+from app.modules.doc_ingest.normalize.lists import ListRun
+from app.modules.doc_ingest.normalize.text_refs import TextRefRun
 from app.modules.doc_ingest.normalize.sections import SectionInfo
 from app.modules.doc_ingest.normalize.tables import TableRun
 from app.modules.doc_ingest.schemas.normalized import (
@@ -42,14 +44,18 @@ def _normalized_type(item: RawItem, section: SectionInfo | None, unsupported: se
 
 def build_elements(items: Sequence[RawItem], coverage: ElementCoverage, flags: Mapping[str, list[str]],
                    sections: Mapping[str, SectionInfo], printed: Mapping[int, PrintedPage],
-                   tables: TableRun, figures: FigureRun) -> list[NormalizedElement]:
+                   tables: TableRun, figures: FigureRun, lists: ListRun | None = None,
+                   refs: TextRefRun | None = None) -> list[NormalizedElement]:
     table_refs = {seg.element_id: TableRef(logical_table_id=t.logical_table_id, segment_index=i)
                   for t in tables.tables for i, seg in enumerate(t.segments)}
     reviewed = {r.element_id for r in tables.review} | {r.target for r in tables.review if r.target}
+    lists = lists or ListRun()
+    refs = refs or TextRefRun()
     unsupported = {i.element_id for i in coverage.unsupported}
     out = []
     for order, item in enumerate(items):
-        item_flags = list(flags.get(item.element_id, [])) + figures.flags.get(item.element_id, [])
+        item_flags = (list(flags.get(item.element_id, [])) + figures.flags.get(item.element_id, [])
+                      + lists.flags.get(item.element_id, []))
         section = sections.get(item.element_id)
         caption = figures.captions.get(item.element_id)
         if section is not None:
@@ -70,10 +76,14 @@ def build_elements(items: Sequence[RawItem], coverage: ElementCoverage, flags: M
             section_path_source=section.section_path_source if section else "none",  # type: ignore[arg-type]
             label_heading=section.label_heading if section else None,
             parent_element_id=item.parent_id,
+            list_info=lists.info.get(item.element_id),
             table_ref=table_refs.get(item.element_id),
             image=figures.images.get(item.element_id),
             caption_element_id=caption[0] if caption else None,
             caption_link=caption[1] if caption else None,
+            duplicate_of=figures.duplicates.get(item.element_id),
+            param_refs=refs.param_refs.get(item.element_id, []),
+            applicability_candidates=refs.applicability.get(item.element_id, []),
             flags=item_flags,
             review_required=item.element_id in reviewed,
         ))

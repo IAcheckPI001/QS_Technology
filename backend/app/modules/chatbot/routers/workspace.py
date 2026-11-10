@@ -8,17 +8,25 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.config import settings
-from app.modules.chatbot.dependencies import get_history_repository, request_id_of
+from app.modules.chatbot.dependencies import (
+    get_history_repository,
+    get_trace_reader,
+    request_id_of,
+)
 from app.modules.chatbot.repositories.history_repository import HistoryRepository
+from app.modules.chatbot.repositories.trace_repository import TraceRepository
 from app.modules.chatbot.routers.sse import error_response
 from app.modules.chatbot.schemas.history import (
     ChatHistoryItem,
     ChatHistoryResponse,
     ChatStatus,
+    ChatTraceResponse,
     ChunkResult,
     ConversationListResponse,
     ConversationSummary,
     RetrievalSnapshotResponse,
+    TraceSpan,
+    TraceSummary,
 )
 
 logger = logging.getLogger(__name__)
@@ -156,4 +164,46 @@ async def get_retrieval_snapshot(
         total_tokens=row.total_tokens or 0,
         retrieval_status=snapshot.get("retrieval_status"),
         chunks=chunks,
+    )
+
+
+@router.get("/chatbot/sessions/{session_id}/trace", response_model=ChatTraceResponse)
+async def get_chat_trace(
+    request: Request,
+    session_id: UUID,
+    history_id: UUID | None = Query(default=None),
+    repository: TraceRepository = Depends(get_trace_reader),
+) -> ChatTraceResponse | JSONResponse:
+    """Trace của lượt mới nhất trong phiên, hoặc của lượt `history_id`."""
+    try:
+        row = await repository.latest_for_session(session_id, history_id)
+    except SQLAlchemyError:
+        return _database_unavailable(
+            request,
+            "Chat trace could not be loaded. Please try again.",
+            "Chat trace load failed (session_id=%s)",
+            session_id,
+        )
+    if row is None:
+        return JSONResponse(
+            status_code=404,
+            content={
+                "detail": {
+                    "code": "trace_not_found",
+                    "message": "No trace found for this conversation turn.",
+                }
+            },
+        )
+    payload = row.trace
+    return ChatTraceResponse(
+        session_id=session_id,
+        history_id=row.history_id,
+        trace_id=row.trace_id,
+        request_id=row.request_id,
+        channel=row.channel,
+        outcome=row.outcome,
+        duration_ms=row.duration_ms,
+        created_at=row.created_at,
+        summary=TraceSummary.model_validate(payload["summary"]),
+        spans=[TraceSpan.model_validate(item) for item in payload["spans"]],
     )

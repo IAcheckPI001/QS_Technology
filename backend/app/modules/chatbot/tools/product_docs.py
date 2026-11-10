@@ -17,6 +17,7 @@ from typing import Any, Literal
 
 from pydantic import Field
 
+from app.core.tracing import current_span
 from app.modules.chatbot.extraction.registry import REGISTRY
 from app.modules.chatbot.extraction.validate_registry import display_name, models_in_text
 from app.modules.chatbot.schemas.default import SystemModel
@@ -215,6 +216,12 @@ def build_product_docs_tool(pipeline: RetrievalPipeline, timeout_s: float = 20.0
         for trace in child.retrieval_traces:
             parent.add_trace(trace)
         output = build_output(child)
+        # Span của tool call (runner mở): chỉ mã trạng thái và số đếm.
+        current_span().set(
+            result_status=output.status,
+            source_groups=len(output.sources),
+            sources=sum(len(group.sources) for group in output.sources),
+        )
         assert parent.agent is not None     # turn_state đã tạo
         parent.agent.add_source_texts({
             source.source_id: source.content

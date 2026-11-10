@@ -11,6 +11,7 @@ Nguyên tắc hiển thị:
 from __future__ import annotations
 
 import html
+from collections import Counter
 from collections.abc import Sequence
 
 from app.modules.doc_ingest.normalize.docling_reader import RawItem
@@ -118,7 +119,18 @@ def _overview(report: RunReport, result: RunResult) -> str:
         "so sánh giữa các lần chạy dùng content hash.</p>"
         "<table class='t'><tr><th>ID</th><th>Trang</th><th>Cột</th><th>Dòng</th><th>content hash</th>"
         f"<th>Review</th><th>Phạm vi trang</th></tr>{index}</table>"
+        f"{_chunks(report)}"
     )
+
+
+def _chunks(report: RunReport) -> str:
+    """Bước build (BL-16): tóm tắt + liên kết trang duyệt chunk; chưa build → ghi rõ."""
+    if not report.chunks:
+        return ("<h3 id='chunks'>Chunk</h3><p class='muted'>Chưa build chunk cho lần chạy này (không có manifest "
+                "hoặc chưa chạy lệnh <code>build</code>).</p>")
+    parts = ", ".join(f"{k} {v}" for k, v in report.chunks.items())
+    return (f"<h3 id='chunks'>Chunk</h3><p>{_e(parts)}. <a href='chunks.html'>Trang duyệt chunk</a> "
+            "(nháp, chưa ghi DB).</p>")
 
 
 # ---------------------------------------------------------------------- theo trang
@@ -288,6 +300,10 @@ _FLAG_TEXT = {
     "section_parent_missing": "thiếu section cha", "heading_spacing": "số dính chữ (OCR)",
     "figure_text_attached": "nhãn sát hình, gắn vào hình (T-18)", "caption_relinked": "caption gắn lại (T-11)",
     "watermark_candidate": "ứng viên watermark (T-10), không xóa",
+    "repeated_image": "ảnh cùng nội dung lặp ở vị trí khác (T-10), vẫn là hình — chờ duyệt",
+    "duplicate_image": "trùng với hình khác (T-19), không crop, không chunk",
+    "list_cross_page": "list con nối từ trang trước (T-08)",
+    "list_marker_mixed": "anh em cùng cha dùng marker khác nhau (T-08)",
 }
 _SOURCE_TEXT = {"docling": "bbox Docling", "bitmap": "bitmap nhúng", "vector": "nét vector", "label": "nhãn của hình"}
 
@@ -318,6 +334,7 @@ def _figures(result: RunResult) -> str:
             link = " (T-11 gắn lại)" if e.caption_link.source == "rule" else " (Docling)"
         inner = children.get(e.element_id, [])
         attached = [c for c in inner if "figure_text_attached" in c.flags]
+        twins = [d.element_id for d in elements if d.duplicate_of == e.element_id]
         img = (f"<img src='../{_e(e.image.preview_path)}' alt='{_e(e.element_id)}' loading='lazy'>"
                if e.image.preview_path else "")
         sources = ", ".join(_SOURCE_TEXT.get(s, s) for s in e.image.crop_sources)
@@ -330,11 +347,144 @@ def _figures(result: RunResult) -> str:
             f"<div class='muted'>crop ({c.x0:.0f},{c.y0:.0f})–({c.x1:.0f},{c.y1:.0f}): {_e(sources)}</div>"
             f"<div class='muted'>{len(inner)} chữ OCR trong hình"
             + (f"; nhãn sát hình (T-18): {_e(', '.join(a.text or '' for a in attached))}" if attached else "")
-            + "</div></div>")
+            + "</div>"
+            + (f"<div class='muted'>Docling sinh thêm phần tử trùng (T-19): {_e(', '.join(twins))}</div>" if twins else "")
+            + (f"<div class='muted'>{_e(_FLAG_TEXT['repeated_image'])}</div>" if "repeated_image" in e.flags else "")
+            + "</div>")
     out.append(f"<div class='figs'>{''.join(cards)}</div>")
     issues = [r for r in result.tables.review if r.code in ("caption_ambiguous", "watermark_conflict", "empty_table")]
     if issues:
         out.append(f"<h3>Cần xem</h3><table class='t'>{_REVIEW_HEAD}{_review_rows(issues)}</table>")
+    return "".join(out)
+
+
+def _lists(result: RunResult) -> str:
+    elements = result.normalized or []
+    items = [e for e in elements if e.list_info is not None]
+    th = result.profile.thresholds
+    out = [f"<h2 id='lists'>List cha–con (T-08 v1) · {len(items)}</h2>",
+           "<p class='muted'>Docling trả list phẳng; cấp suy từ lề trái. Thụt sâu hơn mục trước ≥ "
+           f"{th.list_indent_min:.0f} pt → con; thụt 3–{th.list_indent_min:.0f} pt chỉ là con khi có glyph đầu dòng "
+           f"({_e(' '.join(result.profile.list_glyphs))}); cùng lề → anh em. Mọi phần tử không phải list ngắt khối; "
+           "list đầu trang nối khối cuối trang trước. Không chắc → review, không gán cha. Luật v1 mới kiểm trên F54.</p>"]
+    if not items:
+        out.append("<p class='muted'>Không có list_item.</p>")
+        return "".join(out)
+    by_id = {e.element_id: e for e in elements}
+    levels = Counter((round(e.list_info.indent_x), e.list_info.marker or "—", e.list_info.depth)
+                     for e in items if e.list_info)
+    rows = "".join(f"<tr><td>{x}</td><td><code>{_e(repr(m)[1:-1])}</code></td><td>{d}</td><td>{n}</td></tr>"
+                   for (x, m, d), n in sorted(levels.items()))
+    out.append("<h3>Lề x × marker của tài liệu</h3><p class='muted'>Kiểu đầu dòng lộn xộn hiện ra ở đây: cùng "
+               "một marker ở nhiều lề, hoặc nhiều marker ở cùng một cấp.</p><table class='t'><tr><th>lề x (pt)</th>"
+               f"<th>marker</th><th>cấp (0 = cấp 1)</th><th>số mục</th></tr>{rows}</table>")
+    children: dict[str, list[NormalizedElement]] = {}
+    for e in items:
+        if e.list_info and e.list_info.parent_element_id:
+            children.setdefault(e.list_info.parent_element_id, []).append(e)
+    if children:
+        groups = []
+        for parent_id, kids in children.items():
+            parent = by_id.get(parent_id)
+            page = parent.pdf_page_index if parent else kids[0].pdf_page_index
+            kid_rows = "".join(
+                f"<li>{_e(k.text or '')}<span class='muted'> · {_e(k.element_id)}"
+                + (" · " + _e(', '.join(_FLAG_TEXT.get(f, f) for f in k.flags if f.startswith('list_')))
+                   if any(f.startswith('list_') for f in k.flags) else "") + "</span></li>" for k in kids)
+            groups.append(f"<li><a href='#p{page}'>trang {page}</a> · {_e(parent.text if parent else parent_id)}"
+                          f"<ul>{kid_rows}</ul></li>")
+        out.append(f"<details><summary>Cây cha–con ({len(children)} cha, "
+                   f"{sum(len(k) for k in children.values())} con)</summary><ul>{''.join(groups)}</ul></details>")
+    issues = [r for r in result.tables.review if r.code in ("list_orphan", "list_level_ambiguous")]
+    if issues:
+        out.append("<h3>Cần xem</h3><p class='muted'><code>list_orphan</code>: có glyph, thụt sâu hơn list khác "
+                   "cùng trang nhưng không có cha phía trên. <code>list_level_ambiguous</code>: lề không khớp cấp "
+                   "nào đang mở. Cả hai chặn trích fact, không chặn chunk.</p>"
+                   f"<table class='t'>{_REVIEW_HEAD}{_review_rows(issues)}</table>")
+    return "".join(out)
+
+
+_SIGNAL_TEXT = {
+    "default_profile_with_codes": "Profile không quét mã trong text nhưng tài liệu có nhiều token dạng mã: chọn hoặc "
+                                  "tạo profile có <code>param_text_patterns</code>.",
+    "unknown_code_shapes": "Có dạng mã lặp nhiều mà profile chưa khai báo (xem bảng dạng mã lạ).",
+    "near_miss_high": "Nhiều token đúng prefix nhưng sai số chữ số: mẫu mã của profile có thể sai, hoặc OCR đọc nhầm "
+                      "(vd. <code>0</code> → <code>o</code>).",
+    "ocr_majority": "Hơn nửa số trang phải OCR: V-01 không đo được trên trang OCR, nội dung cần duyệt kỹ.",
+    "picture_swallows_text": "Picture chiếm ≥ 50% trang chứa câu văn: nội dung thân có thể bị xếp thành chữ trong hình "
+                             "và mất khỏi chunk (I-28).",
+    "ocr_lang_mismatch": "Trang OCR có chữ tiếng Việt nhưng OCR không chạy tiếng Việt: dấu bị mất (I-29).",
+}
+
+
+def _profile_fit(report: RunReport) -> str:
+    fit = report.profile_fit
+    if fit is None:
+        return ""
+    out = ["<h2 id='fit'>Độ khớp profile với tài liệu</h2>",
+           "<p class='muted'>Chỉ cảnh báo cho người nạp tài liệu, không tự đổi profile, không sinh review. Quy trình: "
+           "chạy với <code>default</code> → đọc mục này → chọn/tạo profile → chạy lại → duyệt → gán nhãn mẫu và chấm "
+           "điểm nếu là loại tài liệu mới.</p>"]
+    if fit.signals:
+        out.append("<ul>" + "".join(f"<li class='warn'><code>{_e(sig)}</code>: {_SIGNAL_TEXT.get(sig, '')}</li>"
+                                    for sig in fit.signals) + "</ul>")
+    else:
+        out.append("<p>Không có tín hiệu cảnh báo.</p>")
+    rows = [("Trang / trang OCR", f"{fit.pages_total} / {fit.pages_ocr}" + (f" (OCR: {', '.join(fit.ocr_langs)})"
+                                                                         if fit.ocr_langs else "")),
+            ("Mã đã nhận trong text", ", ".join(f"{k}: {v}" for k, v in fit.param_tokens.items()) or "—"),
+            ("Ký tự chữ thân / chữ trong hình", f"{fit.body_chars} / {fit.figure_text_chars}"),
+            ("Trang có picture lớn chứa câu văn", ", ".join(map(str, fit.page_pictures_with_text)) or "—"),
+            ("Ký tự tiếng Việt trên trang OCR", str(fit.vietnamese_chars))]
+    out.append("<table class='t'>" + "".join(f"<tr><th>{_e(k)}</th><td>{_e(v)}</td></tr>" for k, v in rows) + "</table>")
+    if fit.unknown_shapes:
+        out.append("<h3>Dạng mã lạ (profile chưa khai báo)</h3><table class='t'><tr><th>dạng</th><th>số lần</th>"
+                   "<th>ví dụ</th></tr>" + "".join(
+                       f"<tr><td><code>{_e(x.shape)}</code></td><td>{x.count}</td><td>{_e(', '.join(x.examples))}</td></tr>"
+                       for x in fit.unknown_shapes) + "</table>")
+    if fit.near_miss:
+        out.append("<p class='muted'>Near-miss: " + _e(", ".join(f"{t.token} ×{t.count}" for t in fit.near_miss)) + "</p>")
+    return "".join(out)
+
+
+_ROLE_TEXT = {"definition": "định nghĩa", "value_option": "giá trị", "mention": "nhắc tới"}
+
+
+def _text_refs(result: RunResult) -> str:
+    elements = result.normalized or []
+    patterns = result.profile.param_text_patterns
+    out = ["<h2 id='refs'>Mã parameter, ghi chú áp dụng trong text (T-12/T-13)</h2>",
+           "<p class='muted'>Chỉ là <b>ứng viên</b> cho bước trích fact (BL-17), chưa duyệt. Quét đoạn, list, heading, "
+           "caption; không quét chữ trong hình, mục lục, bảng (bảng có luật riêng). Mẫu mã theo profile "
+           f"<code>{_e(result.profile.name)}</code>: "
+           + (_e(", ".join(f"{k} + {v}" for k, v in patterns.items())) if patterns else "không khai báo → không quét text")
+           + ". Vai trò: định nghĩa (<code>M1920: …</code>), giá trị (<code>M1920 = 0</code>), nhắc tới trong câu.</p>"]
+    refs = [(e, r) for e in elements for r in e.param_refs]
+    if refs:
+        roles = Counter(r.role for _, r in refs)
+        codes = Counter(r.label for _, r in refs)
+        out.append("<table class='t'><tr><th>vai trò</th><th>số mã</th></tr>"
+                   + "".join(f"<tr><td>{_e(_ROLE_TEXT.get(k, k))}</td><td>{n}</td></tr>" for k, n in roles.most_common())
+                   + f"</table><p class='muted'>{len(refs)} mã ở {len({e.element_id for e, _ in refs})} phần tử. Hay gặp: "
+                   + _e(", ".join(f"{c} ×{n}" for c, n in codes.most_common(12))) + "</p>")
+    else:
+        out.append("<p class='muted'>Không có mã parameter trong text.</p>")
+    near = result.refs.near_miss if result.refs else Counter()
+    if near:
+        out.append("<h3>Gần giống mã nhưng bị loại (near-miss)</h3><p class='muted'>Đúng prefix nhưng số chữ số không "
+                   "khớp mẫu, hoặc dính chữ phía sau (vd. M-code <code>M100</code>, chân <code>M8</code>, lỗi đánh máy "
+                   "<code>M195</code>). Nhiều near-miss là dấu hiệu profile chưa khớp tài liệu.</p><table class='t'>"
+                   "<tr><th>token</th><th>số lần</th></tr>"
+                   + "".join(f"<tr><td><code>{_e(t)}</code></td><td>{n}</td></tr>" for t, n in near.most_common(20))
+                   + "</table>")
+    text_ids = {e.element_id for e in elements if e.param_refs or e.applicability_candidates}
+    issues = [r for r in result.tables.review
+              if r.code in ("param_unparseable", "range_too_long", "list_param_mismatch")
+              or (r.code.startswith("applicability") and r.element_id in text_ids and r.target is None)]
+    if issues:
+        out.append("<h3>Cần xem</h3><p class='muted'><code>list_param_mismatch</code>: list con nói về mã khác mã "
+                   "cha định nghĩa (thường là lỗi soạn thảo của tài liệu). Tất cả chặn trích fact, không chặn chunk.</p>"
+                   f"<table class='t'>{_REVIEW_HEAD}{_review_rows(issues)}</table>")
     return "".join(out)
 
 
@@ -382,11 +532,14 @@ def _page_elements(result: RunResult, page: int) -> str:
         if e.normalized_type == "figure_text":
             continue
         text = _e((e.text or "")[:140])
+        if e.list_info is not None and e.list_info.depth:
+            text = "&nbsp;&nbsp;&nbsp;&nbsp;" * e.list_info.depth + "↳ " + text
         inner = children.get(e.element_id, [])
         if inner:
             text += (f"<details><summary>{len(inner)} chữ OCR trong hình · chưa duyệt · không vào nội dung chunk"
                      "</summary>" + "<br>".join(_e(c.text or "") for c in inner) + "</details>")
-        note = ", ".join(_FLAG_TEXT.get(f, f) for f in e.flags)
+        note = ", ".join([_FLAG_TEXT.get(f, f) for f in e.flags]
+                         + [f"mã {r.label} ({_ROLE_TEXT.get(r.role, r.role)})" for r in e.param_refs])
         rows.append(f"<tr class='{'muted' if e.content_layer == 'furniture' else ''}'><td>{e.reading_order}</td>"
                     f"<td>{_e(e.normalized_type)}</td><td>{text}</td><td class='path'>{_e(' › '.join(e.section_path))}"
                     f"</td><td>{_e(note)}</td></tr>")
@@ -548,12 +701,12 @@ def render_report(result: RunResult, report: RunReport, page_images: dict[int, s
     run = result.tables
     body = (
         f"<main><h1>Báo cáo chạy doc_ingest · {_e(report.doc_id)}</h1>"
-        "<nav><a href='#overview'>Tổng quan</a><a href='#s0'>S0</a><a href='#validation'>V-01</a><a href='#elements'>Mục lục, nhãn lạ</a>"
-        "<a href='#furniture'>Header/footer, trang in</a><a href='#figures'>Hình</a>"
+        "<nav><a href='#overview'>Tổng quan</a><a href='#fit'>Độ khớp profile</a><a href='#s0'>S0</a><a href='#validation'>V-01</a><a href='#elements'>Mục lục, nhãn lạ</a>"
+        "<a href='#furniture'>Header/footer, trang in</a><a href='#figures'>Hình</a><a href='#lists'>List</a><a href='#refs'>Mã parameter</a>"
         "<a href='#pages'>Theo trang</a><a href='#tables'>Theo bảng</a>"
-        "<a href='#review'>Review queue</a><a href='#log'>Log</a></nav>"
-        f"{_overview(report, result)}{_s0(result)}{_validation(result)}{_elements(result)}{_furniture(result)}"
-        f"{_figures(result)}"
+        "<a href='#review'>Review queue</a><a href='#log'>Log</a><a href='#chunks'>Chunk</a></nav>"
+        f"{_overview(report, result)}{_profile_fit(report)}{_s0(result)}{_validation(result)}{_elements(result)}{_furniture(result)}"
+        f"{_figures(result)}{_lists(result)}{_text_refs(result)}"
         f"{_pages(result, page_images)}"
         f"{_tables(result, report)}"
         f"<h2 id='review'>Review queue ({len(run.review)})</h2>"

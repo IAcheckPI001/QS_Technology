@@ -4,12 +4,16 @@ import json
 import logging
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import aclosing
+from uuid import UUID
 
+import anyio
 from fastapi import Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
+from app.core.tracing import STATUS_OK, Trace, activate, span
 from app.modules.chatbot.agent import AgentError
 from app.modules.chatbot.analysis.analyzer import AnalysisError
+from app.modules.chatbot.repositories.trace_repository import TraceRepository
 from app.modules.chatbot.schemas.inbound import InboundRequest
 from app.modules.chatbot.schemas.security.principal import PrincipalContext, RequestContext
 from app.modules.chatbot.services import ChatbotService
@@ -45,6 +49,31 @@ def error_response(
     )
 
 
+def log_trace_summary(trace: Trace, outcome: str) -> None:
+    """Một dòng tóm tắt mỗi lượt (luôn có, kể cả khi không lưu trace vào DB)."""
+    summary = trace.summary()
+    logger.info(
+        "chat_trace trace_id=%s outcome=%s duration_ms=%d first_delta_ms=%s spans=%d "
+        "llm_calls=%d tool_calls=%d input_tokens=%d output_tokens=%d embedding_tokens=%d "
+        "error_spans=%d root_error_spans=%d failed_tool_calls=%d tool_errors=%s dropped_spans=%d",
+        trace.trace_id,
+        outcome,
+        round(trace.duration_ms),
+        trace.root.attributes.get("first_delta_ms", "-"),
+        summary["span_count"],
+        summary["llm_calls"],
+        summary["tool_calls"],
+        summary["input_tokens"],
+        summary["output_tokens"],
+        summary["embedding_tokens"],
+        summary["error_spans"],
+        summary["root_error_spans"],
+        summary["failed_tool_calls"],
+        ",".join(trace.root.attributes.get("tool_errors") or []) or "-",  # type: ignore[arg-type]
+        summary["dropped_spans"],
+    )
+
+
 def sse_event(name: str, payload: dict[str, object]) -> str:
     return f"event: {name}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
@@ -56,8 +85,14 @@ def stream_chat(
     principal: PrincipalContext,
     request_context: RequestContext,
     on_finish: Callable[[], Awaitable[None]] | None = None,
+    trace: Trace | None = None,
+    trace_store: TraceRepository | None = None,
 ) -> StreamingResponse:
-    """on_finish chạy khi stream kết thúc vì bất kỳ lý do gì (xong, lỗi, client ngắt)."""
+    """on_finish chạy khi stream kết thúc vì bất kỳ lý do gì (xong, lỗi, client ngắt).
+
+    trace (nếu có) được kích hoạt trong suốt stream, đóng khi stream kết thúc, log
+    một dòng tóm tắt và lưu qua trace_store (nếu có).
+    """
     request_id = request_context.request_id
     session_id = inbound.session.session_id
 
@@ -66,20 +101,50 @@ def stream_chat(
         return sse_event("error", {"code": code, "message": message, "request_id": request_id})
 
     async def event_stream() -> AsyncIterator[str]:
+        with activate(trace):
+            try:
+                async with aclosing(_events()) as events:
+                    async for event in events:
+                        yield event
+            finally:
+                if on_finish is not None:
+                    with span("session.lease_release", "db"):
+                        await on_finish()
+                if trace is not None:
+                    await _finish_trace(trace)
+
+    async def _finish_trace(finished: Trace) -> None:
+        # Không có outcome: stream bị đóng trước khi có done/error (client ngắt).
+        outcome = getattr(request.state, "outcome", None) or "client_disconnected"
+        finished.finish(STATUS_OK if outcome == "ok" else outcome)
+        log_trace_summary(finished, outcome)
+        if trace_store is None:
+            return
         try:
-            async with aclosing(_events()) as events:
-                async for event in events:
-                    yield event
-        finally:
-            if on_finish is not None:
-                await on_finish()
+            # Shield: vẫn ghi khi stream kết thúc vì client ngắt (task đang bị huỷ).
+            with anyio.CancelScope(shield=True):
+                await trace_store.save(
+                    finished,
+                    history_id=UUID(inbound.message.message_id),
+                    session_id=UUID(session_id),
+                    channel=request_context.channel.value,
+                    outcome=outcome,
+                )
+        except Exception:
+            logger.exception("failed to save chat trace trace_id=%s", finished.trace_id)
 
     async def _events() -> AsyncIterator[str]:
         try:
             # aclosing: khi client ngắt và generator này bị đóng, stream_reply cũng
             # được đóng ngay (không chờ GC) để kịp ghi lượt status='cancelled'.
+            deltas = 0
             async with aclosing(service.stream_reply(inbound, principal, request_context)) as replies:
                 async for chunk in replies:
+                    deltas += 1
+                    if trace is not None:
+                        if deltas == 1:
+                            trace.root.set(first_delta_ms=round(trace.duration_ms))
+                        trace.root.set(deltas=deltas)
                     yield sse_event("delta", {"text": chunk})
             set_outcome(request, "ok")
             yield sse_event("done", {"request_id": request_id, "session_id": session_id})

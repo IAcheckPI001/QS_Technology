@@ -15,7 +15,7 @@ from app.modules.doc_ingest.schemas.review import KnowledgeUnit, UnitState
 from tests.doc_ingest.f54 import f54_docs, run_docs, run_f54
 
 DOC_INGEST = Path(__file__).resolve().parents[2] / "app" / "modules" / "doc_ingest"
-RULE_PACKAGES = ("normalize", "technical_refs", "review", "schemas", "validate")
+RULE_PACKAGES = ("normalize", "technical_refs", "review", "schemas", "validate", "build", "export")
 SNAPSHOT = PROFILES_DIR / "registry_snapshot.json"
 
 

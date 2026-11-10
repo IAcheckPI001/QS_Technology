@@ -10,6 +10,8 @@ from typing import Any
 
 import httpx
 
+from app.core.tracing import span
+
 logger = logging.getLogger(__name__)
 
 PAGE_SIZE = 100
@@ -85,7 +87,11 @@ class CrmListClient:
         offset: int,
     ) -> tuple[list[dict[str, Any]], int | None]:
         try:
-            response = await client.get(path, params={"limit": limit, "offset": offset})
+            with span("http.crm_list", "http", path=path, limit=limit, offset=offset) as http_span:
+                response = await client.get(path, params={"limit": limit, "offset": offset})
+                http_span.set(status_code=response.status_code)
+                if response.status_code != 200:
+                    http_span.fail(f"http_{response.status_code}")
         except httpx.TimeoutException:
             logger.warning("crm list timed out path=%s offset=%d", path, offset)
             raise CrmApiError("crm_unavailable", "CRM did not respond in time") from None

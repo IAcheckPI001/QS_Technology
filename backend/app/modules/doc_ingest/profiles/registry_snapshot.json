@@ -20,5 +20,16 @@
     "pulse_train": "Pulse Train/xung",
     "ethercat": "EtherCAT",
     "mechatrolink": "Mechatrolink"
+  },
+  "spec_attributes": {
+    "dimension": "kích thước",
+    "monitor_size": "màn hình",
+    "max_axis": "số trục",
+    "io": "ngõ vào/ra I/O",
+    "loop_type": "open/closed loop",
+    "look_ahead": "look-ahead",
+    "spindle": "trục chính",
+    "rtcp": "RTCP",
+    "ports": "cổng USB/RS485/MPG"
   }
 }

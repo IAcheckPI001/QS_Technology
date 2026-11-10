@@ -1,0 +1,13 @@
+# F86 Installation Manual (English Version), ngày phát hành 25-04-2024 (trang bìa).
+# doc_id trùng với 27 chunk viết tay trong doc_chunks_f86.csv: bản build chỉ là nháp, khi xuất bản phải quyết định
+# thay thế hay đặt phiên bản mới (BL-91).
+doc_id: f86_installation_2024-04-25
+run_doc_ids: [f86_italliation, f86_installation]
+doc_type: installation_manual
+doc_title: Installation Manual (English Version)
+doc_version: '2024-04-25'
+product_models: [F86]
+lang: en
+default_scopes: [installation]
+scope_rules: []
+storage_bucket: f86-docs

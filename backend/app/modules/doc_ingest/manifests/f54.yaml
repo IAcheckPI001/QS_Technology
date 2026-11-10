@@ -1,0 +1,13 @@
+# F54 Operation Manual (English Version). Tên file ghi V.02, footer trong tài liệu ghi V.01: cần người xác nhận.
+doc_id: f54_operation_v02
+run_doc_ids: [f54]
+doc_type: user_guide
+doc_title: Operation Manual (English Version)
+doc_version: V.02
+product_models: [F54]
+lang: en
+default_scopes: [operation]
+scope_rules:
+  - {match: '(?i)^PART 2\b|wiring|connection|install', scopes: [installation]}
+storage_bucket: f54-docs
+note: doc_version lấy từ tên file; footer ghi V.01 (chờ xác nhận)

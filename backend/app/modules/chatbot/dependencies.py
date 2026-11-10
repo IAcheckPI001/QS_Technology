@@ -22,6 +22,7 @@ from app.modules.chatbot.repositories.chat_session_repository import (
 )
 from app.modules.chatbot.repositories.history_repository import HistoryRepository
 from app.modules.chatbot.repositories.service_key_repository import ServiceKeyRepository
+from app.modules.chatbot.repositories.trace_repository import TraceRepository
 from app.modules.chatbot.schemas.default import ChannelType
 from app.modules.chatbot.schemas.security.principal import PrincipalContext, RequestContext
 from app.modules.chatbot.services import (
@@ -64,6 +65,16 @@ def get_session_access_service(
     db: AsyncSession = Depends(get_db_session),
 ) -> SessionAccessService:
     return SessionAccessService(ChatSessionRepository(db))
+
+
+def get_trace_repository() -> TraceRepository | None:
+    """Chỉ ghi trace vào DB khi CHAT_TRACE_PERSIST=true (bảng chat_traces đã được tạo)."""
+    return TraceRepository() if settings.chat_trace_persist else None
+
+
+def get_trace_reader() -> TraceRepository:
+    """Đọc trace cho Support Workspace (không phụ thuộc cờ ghi)."""
+    return TraceRepository()
 
 
 def get_turn_lease() -> SessionTurnLease:

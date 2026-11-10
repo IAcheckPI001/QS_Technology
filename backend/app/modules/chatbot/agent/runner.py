@@ -30,6 +30,7 @@ from time import perf_counter
 from typing import Any
 
 from app.core.config import Settings
+from app.core.tracing import NON_ERROR_STATUSES, error_detail_items, set_root, span
 from app.modules.chatbot.providers.base import ToolCallingProvider
 from app.modules.chatbot.schemas.system import (
     AgentRun,
@@ -123,8 +124,30 @@ class AgentRunner:
 
     async def run(self, state: RunState) -> AsyncIterator[str]:
         """Chạy một lượt; câu trả lời cuối được trả thành một chunk."""
-        async with self._run_slots:
-            answer = await self._run(state)
+        with span("agent.run", "internal") as run_span:
+            with span("agent.wait_slot", "internal"):
+                await self._run_slots.acquire()
+            try:
+                answer = await self._run(state)
+            finally:
+                self._run_slots.release()
+                if state.agent is not None:
+                    steps = state.agent.steps
+                    run_span.set(
+                        steps=sum(1 for step in steps if step.kind == "llm"),
+                        tool_calls=sum(1 for step in steps if step.kind == "tool"),
+                        answered_without_tools=state.agent.answered_without_tools,
+                        invalid_citations=len(state.agent.invalid_citations),
+                    )
+                    # Lượt vẫn trả lời được (outcome ok) nhưng tool lỗi: đánh dấu trên root
+                    # để lọc/grep được mà không phải đọc từng span.
+                    tool_errors = [
+                        f"{step.name}:{step.status}"
+                        for step in steps
+                        if step.kind == "tool" and step.status not in NON_ERROR_STATUSES
+                    ]
+                    if tool_errors:
+                        set_root(tool_errors=tool_errors)
         yield answer
 
     def plan(self, state: RunState, specs: Sequence[ToolSpec]) -> None:
@@ -246,13 +269,24 @@ class AgentRunner:
         assert state.agent is not None
         started_at = perf_counter()
         try:
-            async with asyncio.timeout(timeout_s):
-                turn = await self._provider.chat_complete_tools(
-                    messages,
-                    tools,
-                    tool_choice=tool_choice,
-                    parallel_tool_calls=self._provider.capabilities.parallel_tool_calls,
-                    max_tokens=self._limits.max_answer_tokens,
+            with span(
+                "llm.chat_tools", "llm",
+                step=step, tool_choice=tool_choice, model=self._provider.model,
+                messages=len(messages), timeout_s=round(timeout_s, 1),
+            ) as llm_span:
+                async with asyncio.timeout(timeout_s):
+                    turn = await self._provider.chat_complete_tools(
+                        messages,
+                        tools,
+                        tool_choice=tool_choice,
+                        parallel_tool_calls=self._provider.capabilities.parallel_tool_calls,
+                        max_tokens=self._limits.max_answer_tokens,
+                    )
+                llm_span.set(
+                    finish_reason=turn.finish_reason,
+                    tool_calls=[call.name for call in turn.tool_calls],
+                    input_tokens=turn.usage.input_tokens,
+                    output_tokens=turn.usage.output_tokens,
                 )
         except TimeoutError:
             state.agent.add_step(AgentStep(
@@ -399,8 +433,12 @@ class AgentRunner:
         step: int,
     ) -> ToolOutcome:
         context = ToolContext(parent_state=state, sources=sources, tool_call_id=call.id)
-        outcome = await self._registry.invoke(call, context, allowed=allowed, timeout_s=timeout_s)
-        self._record_tool(state, step, outcome)
+        with span(f"tool.{call.name[:64]}", "tool", step=step, tool_call_id=call.id) as tool_span:
+            outcome = await self._registry.invoke(call, context, allowed=allowed, timeout_s=timeout_s)
+            if not outcome.ok:
+                tool_span.fail(outcome.error_code or "tool_failed")
+                _set_error_detail(tool_span, outcome)
+        self._record_tool(state, step, outcome, executed=True)
         return outcome
 
     def _record_tool(
@@ -409,8 +447,16 @@ class AgentRunner:
         step: int,
         outcome: ToolOutcome,
         status: str | None = None,
+        executed: bool = False,
     ) -> None:
         assert state.agent is not None
+        if not executed:
+            # Call không chạy (gộp trùng, vượt trần, hết lượt/giờ): span tức thời để
+            # trace vẫn đủ một mục cho mỗi tool_call_id.
+            with span(f"tool.{outcome.name[:64]}", "tool", step=step, tool_call_id=outcome.tool_call_id) as skipped:
+                skipped.fail(status or outcome.error_code or "tool_failed")
+                if not outcome.ok:
+                    _set_error_detail(skipped, outcome)
         state.agent.add_step(AgentStep(
             step=step,
             kind="tool",
@@ -446,6 +492,13 @@ class AgentRunner:
 
     def _count(self, text: str) -> int:
         return count_tokens(text, self._provider.model)
+
+
+def _set_error_detail(target: Any, outcome: ToolOutcome) -> None:
+    """Lý do lỗi tool (do tool viết, đã gửi cho LLM) vào span; giá trị trong nháy bị che."""
+    items = error_detail_items(outcome.error_detail)
+    if items:
+        target.set(error_detail=items)
 
 
 def _call_key(call: ToolCallRequest) -> str:

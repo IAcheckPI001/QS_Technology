@@ -1,6 +1,7 @@
 from collections.abc import AsyncIterator
 from typing import Any
 
+from app.core.tracing import Span, span
 from app.modules.chatbot.schemas.system import (
     AssistantTurn,
     LLMCapabilities,
@@ -22,6 +23,18 @@ OPENAI_CAPABILITIES = LLMCapabilities(
     tool_choice_required=True,
     schema_dialect="openai_strict",
 )
+
+
+def _record_usage(target: Span, usage: Any) -> None:
+    """Usage thật của OpenAI vào span (không có usage thì bỏ qua)."""
+    if usage is None:
+        return
+    details = getattr(usage, "prompt_tokens_details", None)
+    target.set(
+        input_tokens=getattr(usage, "prompt_tokens", 0) or 0,
+        output_tokens=getattr(usage, "completion_tokens", 0) or 0,
+        cached_input_tokens=getattr(details, "cached_tokens", None) if details else None,
+    )
 
 
 class OpenAIProvider:
@@ -46,29 +59,42 @@ class OpenAIProvider:
         return OPENAI_CAPABILITIES
 
     async def stream_chat(self, messages: list[dict[str, str]]) -> AsyncIterator[str]:
-        stream: Any = await self._client.chat.completions.create(
-            model=self._model,
-            messages=messages,
-            stream=True,
-        )
-        async for part in stream:
-            text = part.choices[0].delta.content if part.choices else None
-            if text:
-                yield text
+        with span("llm.stream_chat", "llm", model=self._model, messages=len(messages)) as llm_span:
+            stream: Any = await self._client.chat.completions.create(
+                model=self._model,
+                messages=messages,
+                stream=True,
+                # Chunk cuối (choices rỗng) mang usage thật của cả lượt stream.
+                stream_options={"include_usage": True},
+            )
+            chunks = 0
+            async for part in stream:
+                _record_usage(llm_span, getattr(part, "usage", None))
+                text = part.choices[0].delta.content if part.choices else None
+                if text:
+                    chunks += 1
+                    if chunks == 1:
+                        llm_span.set(first_token_ms=round(llm_span.elapsed_ms()))
+                    llm_span.set(chunks=chunks)
+                    yield text
     
     async def chat_complete_json(
         self,
         messages: list[dict[str, str]],
         response_format: dict[str, Any] | None = None
     ) -> dict[str, Any]:
-        resp = await self._client.chat.completions.create(
-            model=self._model,
-            messages=messages,
-            temperature=0,
-            max_tokens=600,
-            stream=False,
-            response_format=response_format or {"type": "json_object"},
-        )
+        with span("llm.chat_json", "llm", model=self._model, messages=len(messages)) as llm_span:
+            resp = await self._client.chat.completions.create(
+                model=self._model,
+                messages=messages,
+                temperature=0,
+                max_tokens=600,
+                stream=False,
+                response_format=response_format or {"type": "json_object"},
+            )
+            _record_usage(llm_span, resp.usage)
+            if resp.choices:
+                llm_span.set(finish_reason=resp.choices[0].finish_reason)
 
         if not resp.choices:
             raise RuntimeError("Ollama returned no completion choices.")
@@ -81,11 +107,13 @@ class OpenAIProvider:
         self,
         messages: list[dict[str, str]],
     ) -> str:
-        response = await self._client.chat.completions.create(
-            model=self._model,
-            messages=messages,
-            stream=False,
-        )
+        with span("llm.chat_text", "llm", model=self._model, messages=len(messages)) as llm_span:
+            response = await self._client.chat.completions.create(
+                model=self._model,
+                messages=messages,
+                stream=False,
+            )
+            _record_usage(llm_span, response.usage)
 
         if not response.choices:
             raise RuntimeError("Ollama returned no completion choices.")
@@ -145,10 +173,14 @@ class OpenAIProvider:
         )
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
-        response = await self._client.embeddings.create(
-            model=self._embedding_model,
-            input=texts,
-        )
+        with span("embedding", "embedding", model=self._embedding_model, inputs=len(texts)) as embed_span:
+            response = await self._client.embeddings.create(
+                model=self._embedding_model,
+                input=texts,
+            )
+            usage = getattr(response, "usage", None)
+            if usage is not None:
+                embed_span.set(input_tokens=getattr(usage, "prompt_tokens", 0) or 0)
         ordered = sorted(response.data, key=lambda item: item.index)
         return [list(item.embedding) for item in ordered]
 

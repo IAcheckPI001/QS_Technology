@@ -1,0 +1,28 @@
+{
+ "schema_version": 1,
+ "doc_id": "f86_italliation",
+ "verified": false,
+ "labeled_by": "Claude (nháp 2026-11-09)",
+ "method": "Soạn từ nội dung trang (text đã trích, đối chiếu ảnh trang) theo quy tắc đơn vị của contract C2 §6. Loại chunk theo đánh giá nội dung (vd. ghi chú vị trí cổng CN10-CN15 là overview, sơ đồ nguồn 2.8 là wiring). Nhóm dòng bảng cổng không gán nhãn (CQ-01/CQ-02 kiểm). Cần team xác nhận.",
+ "pages": [
+  {"page": 6, "expected_chunks": [
+   {"chunk_type": "wiring", "start": "2.1 CONNECTION DIAGRAM", "end": "2.1 CONNECTION DIAGRAM", "note": "sơ đồ kết nối, không caption"}
+  ]},
+  {"page": 11, "expected_chunks": [
+   {"chunk_type": "overview", "start": "Port CN10 - CN15 are located", "end": "The operator can customize the axis position settings."}
+  ]},
+  {"page": 12, "expected_chunks": [
+   {"chunk_type": "wiring", "start": "2.2 INPUT LOW DIAGRAM", "end": "2.2 INPUT LOW DIAGRAM"}
+  ]},
+  {"page": 13, "expected_chunks": [
+   {"chunk_type": "wiring", "start": "2.3 HIGH INPUT DIAGRAM", "end": "CN18"}
+  ]},
+  {"page": 18, "expected_chunks": [
+   {"chunk_type": "wiring", "start": "Symbol of differential", "end": "connect the shield wire to FG pin of controller"}
+  ]},
+  {"page": 26, "expected_chunks": [
+   {"chunk_type": "wiring", "start": "2.7 RS485, I/O-LINK", "end": "Serial connection diagram from I/O_LINK_32_V1.1_0722 board to another board."},
+   {"chunk_type": "wiring", "start": "2.8 POWER CONNECTION", "end": "2.8 POWER CONNECTION"}
+  ]}
+ ]
+}
