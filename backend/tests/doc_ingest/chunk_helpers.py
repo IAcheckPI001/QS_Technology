@@ -9,10 +9,11 @@ from app.modules.doc_ingest.build.loader import RunInput
 from app.modules.doc_ingest.profile import load_profile
 from app.modules.doc_ingest.schemas.manifest import DocManifest
 from app.modules.doc_ingest.schemas.normalized import (
-    Box, ImageInfo, ListInfo, NormalizedElement, PrintedPage, RawRef, ReviewItem,
+    Box, Cell, Column, ImageInfo, ListInfo, LogicalTable, NormalizedElement, PrintedPage, RawRef, ReviewItem, Row,
+    Segment, TableRef,
 )
 from app.modules.doc_ingest.schemas.run import DocumentProfile, PageProfile, RunReport, RunSource, RunStats
-from app.modules.doc_ingest.technical_refs.params import TextParamRef
+from app.modules.doc_ingest.technical_refs.params import ParamRef, TextParamRef
 
 MANIFEST = DocManifest(doc_id="syn_manual_v1", run_doc_ids=["syn"], doc_type="user_guide", doc_title="Syn Manual",
                        doc_version="v1", product_models=["F54"], lang="en", default_scopes=["operation"],
@@ -29,7 +30,8 @@ class Doc:
     def add(self, kind: str, text: str | None = None, *, path: tuple[str, ...] = ("1 Intro",), page: int = 1,
             label: str | None = None, depth: int | None = None, parent: str | None = None, marker: str | None = None,
             refs: list[TextParamRef] | None = None, caption: str | None = None, owner: str | None = None,
-            image: bool = False, duplicate_of: str | None = None, layer: str = "body") -> str:
+            image: bool = False, duplicate_of: str | None = None, layer: str = "body",
+            table: str | None = None) -> str:
         self.counter += 1
         eid = f"syn:p{page:03d}:e{self.counter:03d}"
         self.elements.append(NormalizedElement(
@@ -42,7 +44,8 @@ class Doc:
             if depth is not None else None,
             image=ImageInfo(original_path=f"normalized/images/{eid.replace(':', '_')}/original.png",
                             crop_bbox=Box(x0=0, y0=0, x1=10, y1=10), crop_sources=["docling"]) if image else None,
-            caption_element_id=caption, duplicate_of=duplicate_of, param_refs=refs or []))
+            caption_element_id=caption, duplicate_of=duplicate_of, param_refs=refs or [],
+            table_ref=TableRef(logical_table_id=table, segment_index=0) if table else None))
         return eid
 
     def link_caption(self, owner: str, caption: str) -> None:
@@ -66,10 +69,32 @@ def report(pages: list[int], ocr: set[int] = frozenset()) -> RunReport:  # type:
                      table_content_hashes={}, page_range_boundary={}, s0=s0)
 
 
+def logical_table(segment_id: str, rows: list[list[str]], headers: tuple[str, ...] = ("Parameter", "Description"),
+                  table_id: str = "syn:t001") -> LogicalTable:
+    """Bảng logic một segment; `rows[i][j] == ""` là ô trống. Ô cột 0 dạng `#123` thành `param_ref`."""
+    seg = Segment(element_id=segment_id, pdf_page_index=1, bbox=Box(x0=0, y0=0, x1=1, y1=1),
+                  num_cols_docling=len(headers))
+    cols = [Column(index=i, header_text=h, x_min=i, x_max=i + 1, header_source="detected")
+            for i, h in enumerate(headers)]
+
+    def cells(values: list[str]) -> list[Cell]:
+        return [Cell(col=i, text=v, bbox=None, raw_cell_ref=None, docling_col=i, docling_header=False,
+                     assigned_by="bbox") for i, v in enumerate(values)]
+
+    out = [Row(row_id="r0", segment=0, is_header=True, cells=cells(list(headers)))]
+    for i, values in enumerate(rows, start=1):
+        code = values[0]
+        param = (ParamRef(prefix="#", kind="single", codes=[int(code[1:])], label=code)
+                 if code.startswith("#") and code[1:].isdigit() else None)
+        out.append(Row(row_id=f"r{i}", segment=0, is_header=False, cells=cells(values), param_ref=param))
+    return LogicalTable(logical_table_id=table_id, segments=[seg], columns=cols, rows=out)
+
+
 def build(doc: Doc, tmp_path: Path, *, review: list[ReviewItem] | None = None, ocr: set[int] = frozenset(),
-          profile_name: str = "qs_controller", **kwargs) -> BuildResult:  # type: ignore[assignment]
+          profile_name: str = "qs_controller", tables: dict[str, LogicalTable] | None = None,
+          **kwargs) -> BuildResult:  # type: ignore[assignment]
     pages = sorted({e.pdf_page_index for e in doc.elements})
-    run = RunInput(run_dir=tmp_path, report=report(pages, ocr), elements=doc.elements, tables={},
+    run = RunInput(run_dir=tmp_path, report=report(pages, ocr), elements=doc.elements, tables=tables or {},
                    review=review or [], ocr_pages=set(ocr))
     return build_chunks(run, MANIFEST, load_profile(profile_name), **kwargs)
 

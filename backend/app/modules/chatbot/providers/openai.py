@@ -25,6 +25,13 @@ OPENAI_CAPABILITIES = LLMCapabilities(
 )
 
 
+def is_reasoning_model(model: str) -> bool:
+    """Model suy luận (o1/o3/o4…, gpt-5…): không nhận temperature tuỳ ý và max_tokens;
+    giới hạn đầu ra là max_completion_tokens (gồm cả token suy nghĩ)."""
+    name = model.strip().lower()
+    return name.startswith("gpt-5") or (len(name) > 1 and name[0] == "o" and name[1].isdigit())
+
+
 def _record_usage(target: Span, usage: Any) -> None:
     """Usage thật của OpenAI vào span (không có usage thì bỏ qua)."""
     if usage is None:
@@ -45,10 +52,16 @@ class OpenAIProvider:
         api_key: str,
         model: str,
         embedding_model: str = "text-embedding-3-small",
+        *,
+        reasoning_effort: str | None = None,
     ) -> None:
+        """reasoning_effort: chỉ gửi khi model là model suy luận (vd low, medium)."""
         self._client = AsyncOpenAI(api_key=api_key)
         self._model = model
         self._embedding_model = embedding_model
+        self._reasoning = is_reasoning_model(model)
+        self._reasoning_effort = reasoning_effort if self._reasoning else None
+        self._capabilities = OPENAI_CAPABILITIES.model_copy(update={"reasoning": self._reasoning})
 
     @property
     def model(self) -> str:
@@ -56,7 +69,16 @@ class OpenAIProvider:
 
     @property
     def capabilities(self) -> LLMCapabilities:
-        return OPENAI_CAPABILITIES
+        return self._capabilities
+
+    def _generation_options(self, max_tokens: int) -> dict[str, Any]:
+        """Tham số sinh theo loại model: model suy luận không nhận temperature=0 và max_tokens."""
+        if not self._reasoning:
+            return {"temperature": 0, "max_tokens": max_tokens}
+        options: dict[str, Any] = {"max_completion_tokens": max_tokens}
+        if self._reasoning_effort:
+            options["reasoning_effort"] = self._reasoning_effort
+        return options
 
     async def stream_chat(self, messages: list[dict[str, str]]) -> AsyncIterator[str]:
         with span("llm.stream_chat", "llm", model=self._model, messages=len(messages)) as llm_span:
@@ -87,10 +109,10 @@ class OpenAIProvider:
             resp = await self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,
-                temperature=0,
-                max_tokens=600,
                 stream=False,
                 response_format=response_format or {"type": "json_object"},
+                # Model suy luận cần chỗ cho token suy nghĩ.
+                **self._generation_options(2000 if self._reasoning else 600),
             )
             _record_usage(llm_span, resp.usage)
             if resp.choices:
@@ -144,9 +166,8 @@ class OpenAIProvider:
         resp = await self._client.chat.completions.create(
             model=self._model,
             messages=messages,
-            temperature=0,
-            max_tokens=max_tokens,
             stream=False,
+            **self._generation_options(max_tokens),
             **options,
         )
         if not resp.choices:

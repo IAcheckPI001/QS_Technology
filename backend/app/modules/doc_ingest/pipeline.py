@@ -19,12 +19,12 @@ from app.modules.doc_ingest.eval.profile_fit import profile_fit
 from app.modules.doc_ingest.normalize.coverage import ElementCoverage, classify_items
 from app.modules.doc_ingest.normalize.docling_reader import RawItem, read_items
 from app.modules.doc_ingest.normalize.elements import build_elements
-from app.modules.doc_ingest.normalize.figures import FigureRun, PageObjects, decide_figures
+from app.modules.doc_ingest.normalize.figures import FigureRun, PageObjects, decide_figures, release_text_frames
 from app.modules.doc_ingest.normalize.lists import ListRun, decide_lists
 from app.modules.doc_ingest.normalize.text_refs import TextRefRun, annotate_text
 from app.modules.doc_ingest.normalize.pages import decide_furniture, printed_pages
 from app.modules.doc_ingest.normalize.recorder import Recorder
-from app.modules.doc_ingest.normalize.sections import assign_sections
+from app.modules.doc_ingest.normalize.sections import assign_sections, fix_figures_above_heading
 from app.modules.doc_ingest.normalize.tables import TableRun, build_logical_tables
 from app.modules.doc_ingest.profile import profile_hash
 from app.modules.doc_ingest.review.approval import content_hash, table_unit_payload
@@ -44,7 +44,7 @@ PACKAGE = "app.modules.doc_ingest"
 _STEPS: tuple[tuple[str, str, str, str, str], ...] = (
     ("s0", "S0 hồ sơ tài liệu", "parse.profile_probe", "BL-24", ""),
     ("parse", "Parse Docling theo trang (OCR theo trang khi S0 yêu cầu)", "parse.docling_runner", "—", ""),
-    ("s1_furniture", "T-17 xác nhận header/footer, chữ trong hình", "normalize.pages", "BL-07", ""),
+    ("s1_furniture", "T-20 khung chữ, T-17 xác nhận header/footer, chữ trong hình", "normalize.pages", "BL-07", ""),
     ("s1_labels", "Phân loại nhãn Docling, T-16 mục lục", "normalize.coverage", "BL-33", ""),
     ("s1_tables", "S1 bảng logic T-01…T-05, T-15", "normalize.tables", "BL-05, BL-06, BL-27", ""),
     ("s1_refs", "T-12 mã parameter, T-13 ứng viên applicability (ô bảng + text)", "normalize.text_refs", "BL-11", ""),
@@ -55,7 +55,9 @@ _STEPS: tuple[tuple[str, str, str, str, str], ...] = (
      "normalize.figures", "BL-10", ""),
     ("validate", "V-01…V-04 kiểm bất biến", "validate", "BL-25", "chỉ V-01 độ phủ text; V-02…V-04 chưa có"),
     ("build", "Chunk builder", "build", "BL-16", ""),
-    ("facts", "Trích fact (gồm applicability của fact)", "enrich", "BL-17", ""),
+    ("enrich", "Làm giàu tiếng Việt cho chunk lá (Bước 3)", "enrich", "—",
+     "bản nháp; chưa duyệt `approved`, chưa đánh giá tra cứu"),
+    ("facts", "Trích fact (gồm applicability của fact)", "facts", "BL-17", ""),
     ("review", "Review / HITL theo unit", "review.approval", "BL-18…BL-21",
      "lõi trạng thái/approval; gán unit, CLI review chưa có"),
     ("publish", "Gói xuất bản → doc_chunks", "build.package_writer", "BL-22, BL-90…", ""),
@@ -143,7 +145,7 @@ class RunResult:
 def run_normalization(docs: list[dict[str, Any]], doc_id: str, profile: Profile,
                       words: Words | None = None, s0: DocumentProfile | None = None,
                       objects: PageObjects | None = None) -> RunResult:
-    """S0 → T-17/T-18 furniture, nhãn sát hình → T-16 phân loại nhãn → T-06 → T-07 → hình
+    """S0 → T-20 khung chữ → T-17/T-18 furniture, nhãn sát hình → T-16 phân loại nhãn → T-06 → T-07 → hình
     (T-09, T-10, T-19, T-11, T-14) → bảng logic → T-08 list → T-12/T-13 trên text → V-01 (khi có words) → NormalizedElement, chung một
     recorder. Hình chạy trước bảng: screenshot (T-09) không thành bảng rỗng, caption gắn lại
     (T-11) đổi điều kiện đóng bảng của T-03."""
@@ -151,11 +153,19 @@ def run_normalization(docs: list[dict[str, Any]], doc_id: str, profile: Profile,
     if s0 is not None:
         s0_review(s0, doc_id, rec)
     pages = sorted(doc_page(d) for d in docs)
-    furniture = decide_furniture(read_items(docs, doc_id), profile, rec)
-    items = furniture.items
-    elements = classify_items(items, rec)
+    ocr = ocr_pages(s0) if s0 is not None else set()
+    # T-20 cần biết trang nào có text layer; không có S0 thì không chạy.
+    text_pages = {p.page for p in s0.pages if not p.ocr_applied} if s0 is not None else set()
+    frames = release_text_frames(read_items(docs, doc_id), text_pages, profile, rec)
+    furniture = decide_furniture(frames.items, profile, rec, frames.frames)
+    for element_id, frame_flags in frames.flags.items():
+        furniture.flags.setdefault(element_id, []).extend(frame_flags)
+    items, moved = fix_figures_above_heading(furniture.items, text_pages, profile, rec)
+    for element_id, moved_flags in moved.items():
+        furniture.flags.setdefault(element_id, []).extend(moved_flags)
+    elements = classify_items(items, rec, profile)
     printed = printed_pages(items, pages, doc_id, profile, rec, s0)
-    sections = assign_sections(items, furniture.demoted, profile, rec)
+    sections = assign_sections(items, furniture.demoted, profile, rec, elements.toc_lines)
     figures = decide_figures(items, objects, profile, rec)
     items = figures.items
     tables = build_logical_tables(items, doc_id, profile, rec, figures.screenshots)
@@ -163,7 +173,6 @@ def run_normalization(docs: list[dict[str, Any]], doc_id: str, profile: Profile,
     lists = decide_lists(items, profile, rec, not_flow)
     refs = annotate_text(items, lists, profile, rec, not_flow)
     words = words or {}
-    ocr = ocr_pages(s0) if s0 is not None else set()
     validation = text_coverage(doc_id, words, items, elements.kept, profile, rec, ocr) if words else []
     normalized = build_elements(items, elements, furniture.flags, sections, printed, tables, figures, lists, refs)
     return RunResult(docs=docs, items=items, tables=tables, profile=profile, pages=pages, elements=elements,

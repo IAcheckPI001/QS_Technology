@@ -59,6 +59,9 @@ class ToolContext:
 
 
 ToolRun = Callable[[Any, ToolContext], Awaitable[ToolOutput]]
+# (arguments_raw, detail lỗi, context): argument LLM gửi không qua được validate nên không
+# tới `run`; tool muốn giám sát chất lượng argument (vd. audit của crm_query) thì gắn hook.
+InvalidArgsHook = Callable[[str, str, ToolContext], None]
 
 
 @dataclass(frozen=True)
@@ -84,6 +87,7 @@ class ToolSpec:
     max_calls_per_turn: int | None = None   # trần riêng, ngoài giới hạn chung của lượt
     timeout_s: float = 20.0
     required_scope: str | None = None   # chưa dùng: điểm gắn phân quyền theo role/scope
+    on_invalid_args: InvalidArgsHook | None = None   # gọi khi argument không parse/validate được
 
     @property
     def deduplicates(self) -> bool:

@@ -145,6 +145,23 @@ def test_per_tool_call_limit_blocks_only_that_tool():
     assert list(by_id) == ["c1", "c2", "c3"]
 
 
+def test_call_refused_by_per_tool_limit_does_not_use_the_turn_budget():
+    """2026-11-12: call bị tool_call_limit không chạy nên không trừ trần chung; call khác vẫn chạy."""
+    runs = []
+    provider = ScriptedToolProvider([
+        calls(_report("c1", "this_month"), _report("c2", "last_month"), ("c3", "echo", {"text": "a"})),
+        calls(("c4", "echo", {"text": "b"})),
+        answer("Xong"),
+    ])
+    state = crm_state()
+    registry = ToolRegistry([report_tool(max_calls_per_turn=1, runs=runs), echo_tool()])
+
+    _run(agent_runner(provider, registry, max_tool_calls=3), state)
+
+    # c2 bị trần riêng từ chối: chỉ c1, c3 trừ trần chung 3, nên c4 vẫn chạy.
+    assert _tool_statuses(state) == [("c1", "ok"), ("c3", "ok"), ("c2", "tool_call_limit"), ("c4", "ok")]
+
+
 def test_invalid_per_tool_limit_is_rejected_at_registration():
     with pytest.raises(ToolConfigurationError, match="max_calls_per_turn"):
         ToolRegistry([report_tool(max_calls_per_turn=0)])

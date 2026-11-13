@@ -23,9 +23,11 @@ Getter = Callable[[Any, datetime], Any]
 # Đường dẫn cột của Reporting API: `cột` hoặc `fk_col.fk_col.cột` (theo relations của CRM).
 ApiPath = str
 
+# `contains`: chứa chuỗi con, không phân biệt hoa thường (list_api: casefold; report_api: CRM
+# so khớp không phân biệt hoa thường nhưng PHÂN BIỆT dấu tiếng Việt).
 OPERATORS_BY_TYPE: dict[FieldType, tuple[str, ...]] = {
     "enum": ("eq", "ne", "in", "not_in"),
-    "string": ("eq", "ne", "in", "not_in"),
+    "string": ("eq", "ne", "in", "not_in", "contains"),
     "bool": ("eq", "ne"),
     "number": ("eq", "ne", "gt", "gte", "lt", "lte"),
 }
@@ -78,13 +80,15 @@ class MetricSpec:
 class ColumnSpec:
     """Cột được phép liệt kê ở chế độ danh sách (crm_records): whitelist tường minh.
 
-    Không bao giờ khai báo cột nội dung tự do hay liên hệ (subject, description, phone,
-    email, notes, address) hay bí mật. get: nguồn list_api; api_path: nguồn report_api.
+    Không bao giờ khai báo cột bí mật (mật khẩu, token, hash…). Cột liên hệ và ghi chú chỉ
+    khai báo khi đã có quyết định mở cho AI (customers, 2026-11-10). get: nguồn list_api;
+    api_path: nguồn report_api. max_chars: trần độ dài chuỗi hiển thị (None: mặc định).
     """
 
     description: str
     get: Getter | None = None
     api_path: ApiPath | None = None
+    max_chars: int | None = None
 
 
 @dataclass(frozen=True)

@@ -11,7 +11,8 @@ agent không tạo task chạy ngầm tách rời.
 Runner không biết tool làm gì: hành vi riêng do ToolSpec khai báo (guide ghép
 vào prompt, read_only/concurrency_safe cho song song, deduplicate cho call trùng,
 max_calls_per_turn cho trần riêng). State riêng của tool nằm trong
-AgentRun.tool_states, tool tự quản.
+AgentRun.tool_states, tool tự quản. Trần chung (max_tool_calls) chỉ đếm call không bị
+trần riêng từ chối (tool_call_limit).
 
 Kiểm soát bằng code, không dựa vào prompt: call trùng của tool deduplicate dùng
 lại kết quả thành công trước đó; [S#] trong câu trả lời cuối không phải nguồn
@@ -96,6 +97,7 @@ class AgentLimits:
             parallel_tools=settings.agent_parallel_tools,
             max_concurrent_runs=settings.agent_max_concurrent_runs,
             history_messages=settings.agent_history_messages,
+            max_answer_tokens=settings.agent_max_completion_tokens,
         )
 
 
@@ -203,7 +205,9 @@ class AgentRunner:
             outcomes = await self._execute_unique(
                 state, runnable, allowed, tool_timeout, sources, step, completed, calls_per_tool,
             )
-            tool_calls_used += len(runnable)
+            # Call bị trần riêng của tool từ chối (tool_call_limit) không chạy: không trừ trần chung,
+            # để call khác trong cùng bước không nhận nhầm tool_budget_exhausted (2026-11-12).
+            tool_calls_used += sum(outcome.error_code != TOOL_CALL_LIMIT for outcome in outcomes)
             # Bỏ qua vì hết giờ hay vì hết số lượt gọi tool: LLM nhận đúng lý do.
             skipped_code = "tool_budget_exhausted" if tool_timeout >= MIN_CALL_BUDGET_S else "tool_timeout"
             for call in skipped:
@@ -282,6 +286,7 @@ class AgentRunner:
                         parallel_tool_calls=self._provider.capabilities.parallel_tool_calls,
                         max_tokens=self._limits.max_answer_tokens,
                     )
+                    print(f"\n\n--- \nquery llm sinh ra: {turn} \n---\n\n")
                 llm_span.set(
                     finish_reason=turn.finish_reason,
                     tool_calls=[call.name for call in turn.tool_calls],

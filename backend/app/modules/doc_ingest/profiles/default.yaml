@@ -29,6 +29,19 @@ section_keywords: ["PART", "CHAPTER", "Phần", "Chương"]
 # T-17 (d): regex header/footer cho đoạn trang quá ngắn để luật lặp nhận ra; mặc định không có.
 furniture_patterns: []
 list_glyphs: ["o", "-", "•", "▪"]
+# T-20: tiêu đề khung hướng dẫn/ảnh minh họa và dòng model áp dụng (khớp toàn chuỗi): không tính là câu
+# khi quyết định picture có phải khung chữ.
+frame_label_patterns:
+  - '(?i)(description images?|instructions?|hình minh họa|hướng dẫn)\s*:?'
+  - '(?i)models?\s*:.*'
+# T-20: dòng model của khung. Tiêu đề khung + dòng model liền sau, hoặc dòng model ngay trên hình, mà Docling
+# để ngoài picture → chữ của hình (không vào text thân, không cắt chuỗi bước).
+frame_model_patterns:
+  - '(?i)models?\s*:.*'
+# T-16: tiêu đề mục lục đứng ngay trước phần tử mục lục.
+toc_title_patterns:
+  - '(?i)(table of )?contents?\s*:?'
+  - '(?i)mục lục\s*:?'
 thresholds:
   continuation_tol: 0.15
   shape_majority: 0.6
@@ -39,6 +52,8 @@ thresholds:
   furniture_min_pages: 3
   figure_label_gap: 12.0
   figure_label_max_tokens: 4
+  frame_sentence_words: 5
+  frame_text_min_ratio: 0.5
   crop_bitmap_min: 0.5
   crop_vector_margin: 36.0
   crop_padding: 12.0
@@ -52,8 +67,14 @@ chunking:
   parent_max: 2500
   figure_text_max: 600
   embed_max_tokens: 800
+  embed_enrich_reserve: 150
   max_keywords: 40
   step_patterns: ['(?i)^\s*(step|stage|bước)\s*\(?\d+']
+  # I-39: khối dài vượt giới hạn chỉ chia ở đầu các phần này; phần dẫn ≤ block_lead_max lặp ở mọi phần sau.
+  block_part_patterns: ['(?i)^\s*(case|example|ví dụ|trường hợp)\s*\d+\b']
+  block_lead_max: 300
+  # I-42: câu dẫn ngắn ngay trước "Step 1" (≤ ngưỡng) thuộc thủ tục mở bằng bước đó.
+  procedure_lead_max: 160
   procedure_title_patterns:
     - '(?i)^\s*(how to|steps?\b|procedure|instructions?)'
     - '(?i)\b(setting|settings)\s*:?\s*$'
@@ -78,6 +99,20 @@ chunking:
     spindle: ['spindle', 'trục chính']
     rtcp: ['RTCP']
     ports: ['USB', 'RS485', 'RS232', 'MPG', 'port', 'cổng']
+  # I-46 (2026-11-13, thử nghiệm sau CP-I46): THÊM scope theo nội dung, cộng vào scope theo mục của manifest (không
+  # bớt). Tiêu đề xét từ cấp 2 trở xuống (tên phần lớn như "PART 2: WIRING - CONNECTION - SETTING" gộp nhiều việc).
+  # Không dùng "press", "screen", "program" làm dấu hiệu vận hành: thủ tục cài tham số cũng có các từ này.
+  scope_title_min_level: 2
+  scope_content_rules:
+    - scope: configuration
+      title: '(?i)\b(setting|settings|parameters?|configur\w*|set ?up)\b|cài đặt|cấu hình|tham số'
+      content: '(?i)\bPARAMETER screen\b|\buser password\b|\bparameter (status )?description\b|\bconfigure the (following )?parameters?\b|\bset the parameters?\b'
+    - scope: operation
+      content: '(?i)\boperat(ing|ion) instructions?\b|\bMANUAL MODE\b|\bAUTO mode\b|\bCYCLE START\b|\bprocess \(M\d+\)|\bwhen (the )?command M\d+ is (called|executed)\b|hướng dẫn vận hành'
+    - scope: maintenance
+      content: '(?i)\breports? an error\b|\bthe cause (is|of)\b|\btroubleshoot\w*'
+    - scope: installation
+      chunk_types: [wiring, pinout, dimension]
   # Nhãn trong hình giữ làm từ khóa (ngoài code_patterns): giá trị có đơn vị, mã chữ in hoa + số, ký hiệu chân.
   figure_label_patterns:
     - '^\d+(\.\d+)?\s?(mm|cm|m|V|VAC|VDC|A|mA|W|kW|Hz|kHz|ms|s|°C)$'

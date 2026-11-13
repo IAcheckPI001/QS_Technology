@@ -1,0 +1,2474 @@
+{
+  "created_at": "2026-11-11T08:29:54+00:00",
+  "config": {
+    "crm_tools": "query",
+    "openai_model": "gpt-4o-mini",
+    "agent_max_steps": 5,
+    "agent_max_tool_calls": 8,
+    "agent_max_completion_tokens": 1200,
+    "effort": "low",
+    "runs": 3
+  },
+  "models": {
+    "gpt-4o-mini": {
+      "summary": {
+        "passed": 37,
+        "runs": 63,
+        "steps_mean": 3.7142857142857144,
+        "steps_distribution": {
+          "2": 2,
+          "3": 37,
+          "4": 16,
+          "5": 1,
+          "6": 2,
+          "7": 3,
+          "8": 1,
+          "9": 1
+        },
+        "query_outcomes": {
+          "ok": 59,
+          "empty": 26,
+          "invalid_args": 9,
+          "rejected": 3,
+          "crm_invalid": 5
+        },
+        "tool_errors": {
+          "tool_call_limit": 3,
+          "tool_budget_exhausted": 6,
+          "tool_invalid_args": 12,
+          "crm_query_invalid": 5
+        },
+        "run_errors": {},
+        "input_tokens_mean": 23877.825396825396,
+        "output_tokens_mean": 281.55555555555554,
+        "fixed_token_share": 0.9215005221687386,
+        "latency_p50_s": 4.36,
+        "latency_p95_s": 12.92
+      },
+      "runs": [
+        {
+          "model": "gpt-4o-mini",
+          "case": "r1_sale_supported_customers",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "kết quả crm_query cuối empty không thuộc ['ok']"
+          ],
+          "steps": 4,
+          "input_tokens": 30905,
+          "output_tokens": 215,
+          "fixed_tokens": 23696,
+          "latency_s": 8.64,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "r1_sale_supported_customers",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "tool calls 14 > 4",
+            "kết quả crm_query cuối empty không thuộc ['ok']"
+          ],
+          "steps": 6,
+          "input_tokens": 51280,
+          "output_tokens": 1402,
+          "fixed_tokens": 35544,
+          "latency_s": 16.83,
+          "tool_errors": [
+            "tool_call_limit",
+            "tool_call_limit",
+            "tool_call_limit",
+            "tool_budget_exhausted",
+            "tool_budget_exhausted",
+            "tool_budget_exhausted",
+            "tool_budget_exhausted",
+            "tool_budget_exhausted",
+            "tool_budget_exhausted"
+          ],
+          "query_outcomes": [
+            "ok",
+            "empty",
+            "empty",
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "r1_sale_supported_customers",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "kết quả crm_query cuối empty không thuộc ['ok']"
+          ],
+          "steps": 4,
+          "input_tokens": 30905,
+          "output_tokens": 197,
+          "fixed_tokens": 23696,
+          "latency_s": 5.35,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "r2_top_sales_new_customers",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 20176,
+          "output_tokens": 649,
+          "fixed_tokens": 17772,
+          "latency_s": 8.39,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "r2_top_sales_new_customers",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 20052,
+          "output_tokens": 587,
+          "fixed_tokens": 17772,
+          "latency_s": 8.27,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "r2_top_sales_new_customers",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 20052,
+          "output_tokens": 587,
+          "fixed_tokens": 17772,
+          "latency_s": 7.2,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "r3_sold_products_october",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 4,
+          "input_tokens": 24986,
+          "output_tokens": 326,
+          "fixed_tokens": 23696,
+          "latency_s": 6.53,
+          "tool_errors": [
+            "tool_invalid_args"
+          ],
+          "query_outcomes": [
+            "invalid_args",
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "r3_sold_products_october",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 4,
+          "input_tokens": 24986,
+          "output_tokens": 325,
+          "fixed_tokens": 23696,
+          "latency_s": 5.53,
+          "tool_errors": [
+            "tool_invalid_args"
+          ],
+          "query_outcomes": [
+            "invalid_args",
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "r3_sold_products_october",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'product_ownerships', 'mode': 'aggregate', 'dimensions': ['product_item_id.product_id.name'], 'date_field': 'created_at'}]"
+          ],
+          "steps": 4,
+          "input_tokens": 24948,
+          "output_tokens": 328,
+          "fixed_tokens": 23696,
+          "latency_s": 5.95,
+          "tool_errors": [
+            "tool_invalid_args"
+          ],
+          "query_outcomes": [
+            "rejected",
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "r4_list_closed_tickets",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 5,
+          "input_tokens": 32350,
+          "output_tokens": 433,
+          "fixed_tokens": 29620,
+          "latency_s": 7.53,
+          "tool_errors": [
+            "tool_invalid_args",
+            "tool_invalid_args"
+          ],
+          "query_outcomes": [
+            "invalid_args",
+            "invalid_args",
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "r4_list_closed_tickets",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 4,
+          "input_tokens": 25395,
+          "output_tokens": 318,
+          "fixed_tokens": 23696,
+          "latency_s": 5.7,
+          "tool_errors": [
+            "tool_invalid_args"
+          ],
+          "query_outcomes": [
+            "invalid_args",
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "r4_list_closed_tickets",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 4,
+          "input_tokens": 25395,
+          "output_tokens": 318,
+          "fixed_tokens": 23696,
+          "latency_s": 5.44,
+          "tool_errors": [
+            "tool_invalid_args"
+          ],
+          "query_outcomes": [
+            "invalid_args",
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "r5_count_is_not_a_list",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18584,
+          "output_tokens": 164,
+          "fixed_tokens": 17772,
+          "latency_s": 3.53,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "r5_count_is_not_a_list",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18584,
+          "output_tokens": 159,
+          "fixed_tokens": 17772,
+          "latency_s": 3.41,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "r5_count_is_not_a_list",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18584,
+          "output_tokens": 155,
+          "fixed_tokens": 17772,
+          "latency_s": 3.58,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q1_customer_by_name",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18628,
+          "output_tokens": 173,
+          "fixed_tokens": 17772,
+          "latency_s": 4.01,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q1_customer_by_name",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18628,
+          "output_tokens": 170,
+          "fixed_tokens": 17772,
+          "latency_s": 4.64,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q1_customer_by_name",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18628,
+          "output_tokens": 170,
+          "fixed_tokens": 17772,
+          "latency_s": 4.05,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q2_purchase_orders_by_status",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17912,
+          "output_tokens": 97,
+          "fixed_tokens": 17772,
+          "latency_s": 3.45,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q2_purchase_orders_by_status",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17912,
+          "output_tokens": 99,
+          "fixed_tokens": 17772,
+          "latency_s": 2.96,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q2_purchase_orders_by_status",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17912,
+          "output_tokens": 99,
+          "fixed_tokens": 17772,
+          "latency_s": 2.9,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q3_stock_per_material",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 4,
+          "input_tokens": 26068,
+          "output_tokens": 633,
+          "fixed_tokens": 23696,
+          "latency_s": 10.19,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "ok",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q3_stock_per_material",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 4,
+          "input_tokens": 26179,
+          "output_tokens": 636,
+          "fixed_tokens": 23696,
+          "latency_s": 9.16,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q3_stock_per_material",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 4,
+          "input_tokens": 26061,
+          "output_tokens": 587,
+          "fixed_tokens": 23696,
+          "latency_s": 8.46,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q4_active_users",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17944,
+          "output_tokens": 98,
+          "fixed_tokens": 17772,
+          "latency_s": 2.92,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q4_active_users",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18452,
+          "output_tokens": 101,
+          "fixed_tokens": 17772,
+          "latency_s": 3.37,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q4_active_users",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17944,
+          "output_tokens": 98,
+          "fixed_tokens": 17772,
+          "latency_s": 3.05,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q5_staff_names",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 4,
+          "input_tokens": 25732,
+          "output_tokens": 367,
+          "fixed_tokens": 23696,
+          "latency_s": 7.59,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q5_staff_names",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 4,
+          "input_tokens": 25732,
+          "output_tokens": 365,
+          "fixed_tokens": 23696,
+          "latency_s": 10.75,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q5_staff_names",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 4,
+          "input_tokens": 25732,
+          "output_tokens": 365,
+          "fixed_tokens": 23696,
+          "latency_s": 7.34,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q6_new_customers_per_month",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18908,
+          "output_tokens": 241,
+          "fixed_tokens": 17772,
+          "latency_s": 4.12,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q6_new_customers_per_month",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'dimensions': ['created_month']}]"
+          ],
+          "steps": 3,
+          "input_tokens": 18782,
+          "output_tokens": 240,
+          "fixed_tokens": 17772,
+          "latency_s": 4.01,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q6_new_customers_per_month",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18908,
+          "output_tokens": 241,
+          "fixed_tokens": 17772,
+          "latency_s": 4.26,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q7_customers_of_sale",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 19581,
+          "output_tokens": 235,
+          "fixed_tokens": 17772,
+          "latency_s": 4.43,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q7_customers_of_sale",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 19422,
+          "output_tokens": 220,
+          "fixed_tokens": 17772,
+          "latency_s": 4.7,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q7_customers_of_sale",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 19422,
+          "output_tokens": 221,
+          "fixed_tokens": 17772,
+          "latency_s": 4.49,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q9_customers_of_staff_by_name",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "không có query khớp {'dataset': 'user_profiles', 'filters': ['first_name contains']}",
+            "không có query khớp {'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filter_values_uuid': ['assigned_sales_id']}",
+            "answer thiếu ['76']"
+          ],
+          "steps": 3,
+          "input_tokens": 19141,
+          "output_tokens": 101,
+          "fixed_tokens": 17772,
+          "latency_s": 3.5,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q9_customers_of_staff_by_name",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "không có query khớp {'dataset': 'user_profiles', 'filters': ['first_name contains']}",
+            "không có query khớp {'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filter_values_uuid': ['assigned_sales_id']}",
+            "answer thiếu ['76']"
+          ],
+          "steps": 3,
+          "input_tokens": 19141,
+          "output_tokens": 101,
+          "fixed_tokens": 17772,
+          "latency_s": 3.54,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q9_customers_of_staff_by_name",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "không có query khớp {'dataset': 'user_profiles', 'filters': ['first_name contains']}",
+            "không có query khớp {'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filter_values_uuid': ['assigned_sales_id']}",
+            "answer thiếu ['76']"
+          ],
+          "steps": 3,
+          "input_tokens": 19141,
+          "output_tokens": 101,
+          "fixed_tokens": 17772,
+          "latency_s": 3.19,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q10_current_state_has_no_date",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18499,
+          "output_tokens": 102,
+          "fixed_tokens": 17772,
+          "latency_s": 3.36,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q10_current_state_has_no_date",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18499,
+          "output_tokens": 102,
+          "fixed_tokens": 17772,
+          "latency_s": 3.21,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q10_current_state_has_no_date",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18499,
+          "output_tokens": 102,
+          "fixed_tokens": 17772,
+          "latency_s": 3.05,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q11_staff_name_not_found",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'user_profiles'}]",
+            "có query khớp mẫu bị cấm {'dataset': 'customers'}"
+          ],
+          "steps": 3,
+          "input_tokens": 19135,
+          "output_tokens": 98,
+          "fixed_tokens": 17772,
+          "latency_s": 3.15,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q11_staff_name_not_found",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'user_profiles'}]",
+            "có query khớp mẫu bị cấm {'dataset': 'customers'}"
+          ],
+          "steps": 3,
+          "input_tokens": 19135,
+          "output_tokens": 98,
+          "fixed_tokens": 17772,
+          "latency_s": 3.97,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q11_staff_name_not_found",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'user_profiles'}]",
+            "có query khớp mẫu bị cấm {'dataset': 'customers'}"
+          ],
+          "steps": 3,
+          "input_tokens": 19135,
+          "output_tokens": 98,
+          "fixed_tokens": 17772,
+          "latency_s": 2.91,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q12_roles_of_staff_reverse_relation",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'user_roles', 'filters': ['user_id.username']}]"
+          ],
+          "steps": 3,
+          "input_tokens": 18495,
+          "output_tokens": 106,
+          "fixed_tokens": 17772,
+          "latency_s": 4.36,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q12_roles_of_staff_reverse_relation",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'user_roles', 'filters': ['user_id.username']}]"
+          ],
+          "steps": 3,
+          "input_tokens": 18517,
+          "output_tokens": 115,
+          "fixed_tokens": 17772,
+          "latency_s": 3.7,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q12_roles_of_staff_reverse_relation",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'user_roles', 'filters': ['user_id.username']}]"
+          ],
+          "steps": 3,
+          "input_tokens": 18502,
+          "output_tokens": 106,
+          "fixed_tokens": 17772,
+          "latency_s": 3.3,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q13_top_staff_in_october",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]",
+            "có query khớp mẫu bị cấm {'dataset': 'support_assignments', 'filters': ['is_current']}",
+            "kết quả crm_query cuối empty không thuộc ['ok']"
+          ],
+          "steps": 4,
+          "input_tokens": 26279,
+          "output_tokens": 275,
+          "fixed_tokens": 23696,
+          "latency_s": 5.46,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty",
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q13_top_staff_in_october",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]",
+            "có query khớp mẫu bị cấm {'dataset': 'support_assignments', 'filters': ['is_current']}",
+            "kết quả crm_query cuối empty không thuộc ['ok']"
+          ],
+          "steps": 4,
+          "input_tokens": 26279,
+          "output_tokens": 275,
+          "fixed_tokens": 23696,
+          "latency_s": 5.44,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty",
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "q13_top_staff_in_october",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]",
+            "có query khớp mẫu bị cấm {'dataset': 'support_assignments', 'filters': ['is_current']}",
+            "kết quả crm_query cuối empty không thuộc ['ok']"
+          ],
+          "steps": 4,
+          "input_tokens": 26279,
+          "output_tokens": 275,
+          "fixed_tokens": 23696,
+          "latency_s": 5.45,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty",
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "s1_customer_count_excludes_spam",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filters': ['customer_type']}]"
+          ],
+          "steps": 3,
+          "input_tokens": 18507,
+          "output_tokens": 73,
+          "fixed_tokens": 17772,
+          "latency_s": 2.71,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "s1_customer_count_excludes_spam",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filters': ['customer_type']}]"
+          ],
+          "steps": 2,
+          "input_tokens": 11557,
+          "output_tokens": 58,
+          "fixed_tokens": 11848,
+          "latency_s": 2.48,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "s1_customer_count_excludes_spam",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filters': ['customer_type']}]"
+          ],
+          "steps": 2,
+          "input_tokens": 11557,
+          "output_tokens": 58,
+          "fixed_tokens": 11848,
+          "latency_s": 2.13,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "s2_status_values_without_note",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17879,
+          "output_tokens": 94,
+          "fixed_tokens": 17772,
+          "latency_s": 3.85,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "s2_status_values_without_note",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17879,
+          "output_tokens": 94,
+          "fixed_tokens": 17772,
+          "latency_s": 3.54,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "s2_status_values_without_note",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17879,
+          "output_tokens": 94,
+          "fixed_tokens": 17772,
+          "latency_s": 3.13,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "f1_list_next_page_next_turn",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'list', 'date_field': 'created_at', 'offset_min': 1}]"
+          ],
+          "steps": 8,
+          "input_tokens": 49678,
+          "output_tokens": 553,
+          "fixed_tokens": 47392,
+          "latency_s": 12.92,
+          "tool_errors": [
+            "crm_query_invalid",
+            "crm_query_invalid",
+            "crm_query_invalid"
+          ],
+          "query_outcomes": [
+            "empty",
+            "crm_invalid",
+            "crm_invalid",
+            "crm_invalid",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "f1_list_next_page_next_turn",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'list', 'date_field': 'created_at', 'offset_min': 1}]"
+          ],
+          "steps": 7,
+          "input_tokens": 43574,
+          "output_tokens": 447,
+          "fixed_tokens": 41468,
+          "latency_s": 10.25,
+          "tool_errors": [
+            "crm_query_invalid"
+          ],
+          "query_outcomes": [
+            "empty",
+            "crm_invalid",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "f1_list_next_page_next_turn",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'list', 'date_field': 'created_at', 'offset_min': 1}]"
+          ],
+          "steps": 7,
+          "input_tokens": 43574,
+          "output_tokens": 454,
+          "fixed_tokens": 41468,
+          "latency_s": 10.52,
+          "tool_errors": [
+            "crm_query_invalid"
+          ],
+          "query_outcomes": [
+            "empty",
+            "crm_invalid",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "f2_refine_previous_count_next_turn",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'support_cases', 'mode': 'aggregate', 'filters': ['status', 'product_item_id.product_id.name'], 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]"
+          ],
+          "steps": 6,
+          "input_tokens": 38336,
+          "output_tokens": 462,
+          "fixed_tokens": 35544,
+          "latency_s": 10.02,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "ok",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "f2_refine_previous_count_next_turn",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "tool calls 5 > 4",
+            "không có query khớp [{'dataset': 'support_cases', 'mode': 'aggregate', 'filters': ['status', 'product_item_id.product_id.name'], 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]",
+            "kết quả crm_query cuối invalid_args không thuộc ['ok']"
+          ],
+          "steps": 9,
+          "input_tokens": 60319,
+          "output_tokens": 746,
+          "fixed_tokens": 53316,
+          "latency_s": 13.39,
+          "tool_errors": [
+            "tool_invalid_args",
+            "tool_invalid_args",
+            "tool_invalid_args",
+            "tool_invalid_args"
+          ],
+          "query_outcomes": [
+            "ok",
+            "rejected",
+            "invalid_args",
+            "invalid_args",
+            "invalid_args"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4o-mini",
+          "case": "f2_refine_previous_count_next_turn",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'support_cases', 'mode': 'aggregate', 'filters': ['status', 'product_item_id.product_id.name'], 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]"
+          ],
+          "steps": 7,
+          "input_tokens": 47219,
+          "output_tokens": 931,
+          "fixed_tokens": 41468,
+          "latency_s": 17.13,
+          "tool_errors": [
+            "tool_invalid_args"
+          ],
+          "query_outcomes": [
+            "ok",
+            "rejected",
+            "ok",
+            "ok"
+          ],
+          "error": null
+        }
+      ]
+    },
+    "gpt-4.1-mini": {
+      "summary": {
+        "passed": 40,
+        "runs": 63,
+        "steps_mean": 3.5873015873015874,
+        "steps_distribution": {
+          "3": 45,
+          "4": 6,
+          "5": 6,
+          "6": 5,
+          "7": 1
+        },
+        "query_outcomes": {
+          "rejected": 4,
+          "ok": 54,
+          "empty": 20,
+          "crm_invalid": 7,
+          "invalid_args": 1
+        },
+        "tool_errors": {
+          "tool_invalid_args": 5,
+          "crm_query_invalid": 7
+        },
+        "run_errors": {},
+        "input_tokens_mean": 22703.095238095237,
+        "output_tokens_mean": 216.68253968253967,
+        "fixed_token_share": 0.9360474587410289,
+        "latency_p50_s": 4.15,
+        "latency_p95_s": 9.55
+      },
+      "runs": [
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r1_sale_supported_customers",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 4,
+          "input_tokens": 28361,
+          "output_tokens": 302,
+          "fixed_tokens": 23696,
+          "latency_s": 8.0,
+          "tool_errors": [
+            "tool_invalid_args"
+          ],
+          "query_outcomes": [
+            "rejected",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r1_sale_supported_customers",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'filters': ['assigned_to.username'], 'date_field': 'created_at'}]",
+            "kết quả crm_query cuối rejected không thuộc ['ok']"
+          ],
+          "steps": 3,
+          "input_tokens": 19364,
+          "output_tokens": 189,
+          "fixed_tokens": 17772,
+          "latency_s": 3.84,
+          "tool_errors": [
+            "tool_invalid_args"
+          ],
+          "query_outcomes": [
+            "rejected"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r1_sale_supported_customers",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'filters': ['assigned_to.username'], 'date_field': 'created_at'}]",
+            "kết quả crm_query cuối empty không thuộc ['ok']"
+          ],
+          "steps": 5,
+          "input_tokens": 34031,
+          "output_tokens": 528,
+          "fixed_tokens": 29620,
+          "latency_s": 8.98,
+          "tool_errors": [
+            "tool_invalid_args",
+            "tool_invalid_args"
+          ],
+          "query_outcomes": [
+            "rejected",
+            "rejected",
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r2_top_sales_new_customers",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 19716,
+          "output_tokens": 152,
+          "fixed_tokens": 17772,
+          "latency_s": 4.7,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r2_top_sales_new_customers",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 19716,
+          "output_tokens": 164,
+          "fixed_tokens": 17772,
+          "latency_s": 3.96,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r2_top_sales_new_customers",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 19716,
+          "output_tokens": 151,
+          "fixed_tokens": 17772,
+          "latency_s": 4.14,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r3_sold_products_october",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18613,
+          "output_tokens": 260,
+          "fixed_tokens": 17772,
+          "latency_s": 5.4,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r3_sold_products_october",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18593,
+          "output_tokens": 260,
+          "fixed_tokens": 17772,
+          "latency_s": 4.75,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r3_sold_products_october",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18579,
+          "output_tokens": 248,
+          "fixed_tokens": 17772,
+          "latency_s": 4.61,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r4_list_closed_tickets",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 20968,
+          "output_tokens": 339,
+          "fixed_tokens": 17772,
+          "latency_s": 5.03,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r4_list_closed_tickets",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 20764,
+          "output_tokens": 792,
+          "fixed_tokens": 17772,
+          "latency_s": 8.64,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r4_list_closed_tickets",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18651,
+          "output_tokens": 220,
+          "fixed_tokens": 17772,
+          "latency_s": 4.65,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r5_count_is_not_a_list",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18605,
+          "output_tokens": 164,
+          "fixed_tokens": 17772,
+          "latency_s": 4.18,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r5_count_is_not_a_list",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 4,
+          "input_tokens": 25264,
+          "output_tokens": 236,
+          "fixed_tokens": 23696,
+          "latency_s": 5.56,
+          "tool_errors": [
+            "crm_query_invalid"
+          ],
+          "query_outcomes": [
+            "crm_invalid",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "r5_count_is_not_a_list",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18605,
+          "output_tokens": 164,
+          "fixed_tokens": 17772,
+          "latency_s": 4.49,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q1_customer_by_name",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18583,
+          "output_tokens": 97,
+          "fixed_tokens": 17772,
+          "latency_s": 3.63,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q1_customer_by_name",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18583,
+          "output_tokens": 97,
+          "fixed_tokens": 17772,
+          "latency_s": 3.7,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q1_customer_by_name",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18583,
+          "output_tokens": 97,
+          "fixed_tokens": 17772,
+          "latency_s": 3.53,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q2_purchase_orders_by_status",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17924,
+          "output_tokens": 118,
+          "fixed_tokens": 17772,
+          "latency_s": 4.08,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q2_purchase_orders_by_status",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17924,
+          "output_tokens": 107,
+          "fixed_tokens": 17772,
+          "latency_s": 3.61,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q2_purchase_orders_by_status",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17924,
+          "output_tokens": 104,
+          "fixed_tokens": 17772,
+          "latency_s": 3.35,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q3_stock_per_material",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 5,
+          "input_tokens": 31395,
+          "output_tokens": 567,
+          "fixed_tokens": 29620,
+          "latency_s": 11.26,
+          "tool_errors": [
+            "crm_query_invalid"
+          ],
+          "query_outcomes": [
+            "ok",
+            "crm_invalid",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q3_stock_per_material",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 5,
+          "input_tokens": 31395,
+          "output_tokens": 578,
+          "fixed_tokens": 29620,
+          "latency_s": 9.55,
+          "tool_errors": [
+            "crm_query_invalid"
+          ],
+          "query_outcomes": [
+            "ok",
+            "crm_invalid",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q3_stock_per_material",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 5,
+          "input_tokens": 31395,
+          "output_tokens": 574,
+          "fixed_tokens": 29620,
+          "latency_s": 9.78,
+          "tool_errors": [
+            "crm_query_invalid"
+          ],
+          "query_outcomes": [
+            "ok",
+            "crm_invalid",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q4_active_users",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17938,
+          "output_tokens": 96,
+          "fixed_tokens": 17772,
+          "latency_s": 3.24,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q4_active_users",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17938,
+          "output_tokens": 96,
+          "fixed_tokens": 17772,
+          "latency_s": 3.75,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q4_active_users",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17938,
+          "output_tokens": 96,
+          "fixed_tokens": 17772,
+          "latency_s": 3.54,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q5_staff_names",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18597,
+          "output_tokens": 198,
+          "fixed_tokens": 17772,
+          "latency_s": 3.98,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q5_staff_names",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18597,
+          "output_tokens": 173,
+          "fixed_tokens": 17772,
+          "latency_s": 4.21,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q5_staff_names",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18578,
+          "output_tokens": 179,
+          "fixed_tokens": 17772,
+          "latency_s": 4.47,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q6_new_customers_per_month",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'dimensions': ['created_month']}]"
+          ],
+          "steps": 4,
+          "input_tokens": 25343,
+          "output_tokens": 334,
+          "fixed_tokens": 23696,
+          "latency_s": 6.72,
+          "tool_errors": [
+            "crm_query_invalid"
+          ],
+          "query_outcomes": [
+            "crm_invalid",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q6_new_customers_per_month",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'dimensions': ['created_month']}]"
+          ],
+          "steps": 4,
+          "input_tokens": 25343,
+          "output_tokens": 334,
+          "fixed_tokens": 23696,
+          "latency_s": 6.29,
+          "tool_errors": [
+            "crm_query_invalid"
+          ],
+          "query_outcomes": [
+            "crm_invalid",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q6_new_customers_per_month",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'dimensions': ['created_month']}]"
+          ],
+          "steps": 4,
+          "input_tokens": 25343,
+          "output_tokens": 329,
+          "fixed_tokens": 23696,
+          "latency_s": 6.59,
+          "tool_errors": [
+            "crm_query_invalid"
+          ],
+          "query_outcomes": [
+            "crm_invalid",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q7_customers_of_sale",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "dataset không có ['customers'] (['auth_users'])",
+            "không có query khớp [{'dataset': 'customers', 'mode': 'list', 'filters': ['assigned_sales_id.username']}]"
+          ],
+          "steps": 3,
+          "input_tokens": 19143,
+          "output_tokens": 101,
+          "fixed_tokens": 17772,
+          "latency_s": 3.4,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q7_customers_of_sale",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "dataset không có ['customers'] (['auth_users'])",
+            "không có query khớp [{'dataset': 'customers', 'mode': 'list', 'filters': ['assigned_sales_id.username']}]"
+          ],
+          "steps": 3,
+          "input_tokens": 19143,
+          "output_tokens": 101,
+          "fixed_tokens": 17772,
+          "latency_s": 3.55,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q7_customers_of_sale",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "dataset không có ['customers'] (['auth_users'])",
+            "không có query khớp [{'dataset': 'customers', 'mode': 'list', 'filters': ['assigned_sales_id.username']}]"
+          ],
+          "steps": 3,
+          "input_tokens": 19143,
+          "output_tokens": 101,
+          "fixed_tokens": 17772,
+          "latency_s": 3.26,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q9_customers_of_staff_by_name",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 5,
+          "input_tokens": 31722,
+          "output_tokens": 202,
+          "fixed_tokens": 29620,
+          "latency_s": 6.72,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q9_customers_of_staff_by_name",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 4,
+          "input_tokens": 26962,
+          "output_tokens": 188,
+          "fixed_tokens": 23696,
+          "latency_s": 5.43,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q9_customers_of_staff_by_name",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 5,
+          "input_tokens": 31722,
+          "output_tokens": 202,
+          "fixed_tokens": 29620,
+          "latency_s": 6.58,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q10_current_state_has_no_date",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18499,
+          "output_tokens": 102,
+          "fixed_tokens": 17772,
+          "latency_s": 3.54,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q10_current_state_has_no_date",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18499,
+          "output_tokens": 102,
+          "fixed_tokens": 17772,
+          "latency_s": 3.17,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q10_current_state_has_no_date",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 18499,
+          "output_tokens": 116,
+          "fixed_tokens": 17772,
+          "latency_s": 3.44,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q11_staff_name_not_found",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 19053,
+          "output_tokens": 113,
+          "fixed_tokens": 17772,
+          "latency_s": 3.58,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q11_staff_name_not_found",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 19053,
+          "output_tokens": 111,
+          "fixed_tokens": 17772,
+          "latency_s": 3.84,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q11_staff_name_not_found",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 19053,
+          "output_tokens": 111,
+          "fixed_tokens": 17772,
+          "latency_s": 3.52,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q12_roles_of_staff_reverse_relation",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'user_roles', 'filters': ['user_id.username']}]"
+          ],
+          "steps": 3,
+          "input_tokens": 18491,
+          "output_tokens": 108,
+          "fixed_tokens": 17772,
+          "latency_s": 4.27,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q12_roles_of_staff_reverse_relation",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'user_roles', 'filters': ['user_id.username']}]"
+          ],
+          "steps": 3,
+          "input_tokens": 18491,
+          "output_tokens": 108,
+          "fixed_tokens": 17772,
+          "latency_s": 4.42,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q12_roles_of_staff_reverse_relation",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'user_roles', 'filters': ['user_id.username']}]"
+          ],
+          "steps": 3,
+          "input_tokens": 18491,
+          "output_tokens": 108,
+          "fixed_tokens": 17772,
+          "latency_s": 3.56,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q13_top_staff_in_october",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]",
+            "kết quả crm_query cuối empty không thuộc ['ok']"
+          ],
+          "steps": 3,
+          "input_tokens": 20311,
+          "output_tokens": 201,
+          "fixed_tokens": 17772,
+          "latency_s": 4.15,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q13_top_staff_in_october",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]",
+            "kết quả crm_query cuối empty không thuộc ['ok']"
+          ],
+          "steps": 3,
+          "input_tokens": 20311,
+          "output_tokens": 189,
+          "fixed_tokens": 17772,
+          "latency_s": 3.86,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "q13_top_staff_in_october",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]",
+            "kết quả crm_query cuối empty không thuộc ['ok']"
+          ],
+          "steps": 3,
+          "input_tokens": 20300,
+          "output_tokens": 195,
+          "fixed_tokens": 17772,
+          "latency_s": 4.05,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "s1_customer_count_excludes_spam",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filters': ['customer_type']}]"
+          ],
+          "steps": 3,
+          "input_tokens": 18507,
+          "output_tokens": 76,
+          "fixed_tokens": 17772,
+          "latency_s": 3.16,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "s1_customer_count_excludes_spam",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filters': ['customer_type']}]"
+          ],
+          "steps": 3,
+          "input_tokens": 18507,
+          "output_tokens": 76,
+          "fixed_tokens": 17772,
+          "latency_s": 3.17,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "s1_customer_count_excludes_spam",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filters': ['customer_type']}]"
+          ],
+          "steps": 3,
+          "input_tokens": 18507,
+          "output_tokens": 76,
+          "fixed_tokens": 17772,
+          "latency_s": 3.03,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "s2_status_values_without_note",
+          "attempt": 1,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17879,
+          "output_tokens": 97,
+          "fixed_tokens": 17772,
+          "latency_s": 4.1,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "s2_status_values_without_note",
+          "attempt": 2,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17879,
+          "output_tokens": 97,
+          "fixed_tokens": 17772,
+          "latency_s": 3.34,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "s2_status_values_without_note",
+          "attempt": 3,
+          "passed": true,
+          "failures": [],
+          "steps": 3,
+          "input_tokens": 17879,
+          "output_tokens": 97,
+          "fixed_tokens": 17772,
+          "latency_s": 3.39,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "f1_list_next_page_next_turn",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'list', 'date_field': 'created_at', 'offset_min': 1}]"
+          ],
+          "steps": 6,
+          "input_tokens": 37535,
+          "output_tokens": 378,
+          "fixed_tokens": 35544,
+          "latency_s": 8.73,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "f1_list_next_page_next_turn",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'customers', 'mode': 'list', 'date_field': 'created_at', 'offset_min': 1}]"
+          ],
+          "steps": 6,
+          "input_tokens": 37598,
+          "output_tokens": 403,
+          "fixed_tokens": 35544,
+          "latency_s": 9.24,
+          "tool_errors": [],
+          "query_outcomes": [
+            "empty",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "f1_list_next_page_next_turn",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "kết quả crm_query cuối empty không thuộc ['ok']"
+          ],
+          "steps": 6,
+          "input_tokens": 37708,
+          "output_tokens": 336,
+          "fixed_tokens": 35544,
+          "latency_s": 8.51,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "empty"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "f2_refine_previous_count_next_turn",
+          "attempt": 1,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'support_cases', 'mode': 'aggregate', 'filters': ['status', 'product_item_id.product_id.name'], 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]"
+          ],
+          "steps": 7,
+          "input_tokens": 45305,
+          "output_tokens": 509,
+          "fixed_tokens": 41468,
+          "latency_s": 10.99,
+          "tool_errors": [
+            "tool_invalid_args"
+          ],
+          "query_outcomes": [
+            "invalid_args",
+            "ok",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "f2_refine_previous_count_next_turn",
+          "attempt": 2,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'support_cases', 'mode': 'aggregate', 'filters': ['status', 'product_item_id.product_id.name'], 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]"
+          ],
+          "steps": 6,
+          "input_tokens": 38610,
+          "output_tokens": 349,
+          "fixed_tokens": 35544,
+          "latency_s": 8.22,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "ok"
+          ],
+          "error": null
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "case": "f2_refine_previous_count_next_turn",
+          "attempt": 3,
+          "passed": false,
+          "failures": [
+            "không có query khớp [{'dataset': 'support_cases', 'mode': 'aggregate', 'filters': ['status', 'product_item_id.product_id.name'], 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]"
+          ],
+          "steps": 6,
+          "input_tokens": 38628,
+          "output_tokens": 355,
+          "fixed_tokens": 35544,
+          "latency_s": 7.95,
+          "tool_errors": [],
+          "query_outcomes": [
+            "ok",
+            "ok"
+          ],
+          "error": null
+        }
+      ]
+    }
+  }
+}

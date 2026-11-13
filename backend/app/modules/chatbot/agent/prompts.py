@@ -43,7 +43,9 @@ def build_system_prompt(
     language: str | None,
     tools: Sequence[GuidedTool] = (),
 ) -> str:
-    parts = [AGENT_SYSTEM_PROMPT]
+    # <now> đứng trước guide (khoảng 2-3k token): đặt cuối thì model nhỏ hay bỏ qua và tự điền năm
+    # sai (eval crm_query 2026-11-12: "tháng 10" → 2023).
+    parts = [AGENT_SYSTEM_PROMPT, f"<now>{now.isoformat(timespec='minutes')}</now>"]
     guides = [
         f'<tool_guide name="{tool.name}">\n{tool.guide.strip()}\n</tool_guide>'
         for tool in tools
@@ -51,7 +53,6 @@ def build_system_prompt(
     ]
     if guides:
         parts.append("<tool_guides>\n" + "\n".join(guides) + "\n</tool_guides>")
-    parts.append(f"<now>{now.isoformat(timespec='minutes')}</now>")
     if language:
         parts.append(f"<language_hint>{language}</language_hint>")
     return "\n".join(parts)

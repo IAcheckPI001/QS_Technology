@@ -26,11 +26,13 @@ _BY_LABEL: dict[str, NormalizedType] = {
 
 
 def _normalized_type(item: RawItem, section: SectionInfo | None, unsupported: set[str],
-                     figures: FigureRun) -> NormalizedType:
+                     figures: FigureRun, toc_lines: set[str]) -> NormalizedType:
     if item.is_furniture:
         return "furniture"
     if item.parent_label == "picture" and item.label != "caption":
         return "figure_text"
+    if item.element_id in toc_lines:
+        return "toc"
     if item.element_id in figures.kinds:
         return figures.kinds[item.element_id]   # type: ignore[return-value]
     if item.element_id in unsupported:
@@ -69,7 +71,7 @@ def build_elements(items: Sequence[RawItem], coverage: ElementCoverage, flags: M
             content_layer="furniture" if item.is_furniture else "body",
             reading_order=order,
             source_element_type=item.label,
-            normalized_type=_normalized_type(item, section, unsupported, figures),
+            normalized_type=_normalized_type(item, section, unsupported, figures, coverage.toc_lines),
             bbox=Box(x0=b.x0, y0=b.y0, x1=b.x1, y1=b.y1) if b is not None else None,
             text=item.text or None,
             section_path=section.section_path if section else [],

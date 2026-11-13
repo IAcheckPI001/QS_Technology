@@ -1,0 +1,318 @@
+# Bộ câu hỏi mẫu đánh giá tra cứu (luồng web) — 14 câu. Toma duyệt Q1–Q8 (2026-11-13), bổ sung Q9–Q14.
+# Định dạng: docs/ai/reports/p2_doc_chunks_schema_review.md §8; công cụ: evals/run_retrieval_eval.py.
+# expected_intent: intent đúng (một trong danh sách) — Claude đề xuất, Toma duyệt 2026-11-13.
+# expected: chunk phải tìm được (đúng nhất); acceptable: cũng trả lời được câu hỏi (tính là trúng ở recall).
+# Chunk đúng khớp theo (content_hash, section_path); chunk_key chỉ để đọc (đổi giữa các lần build).
+source_runs: [f54/eval-l, f86_italliation/eval-l]
+cases:
+  - id: Q1
+    question: "Đấu dây báo lỗi servo loại PNP như thế nào?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["dau_day"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0040
+        content_hash: c8ed020871f895b4e55a58f0a942dd43d8098fe38ce304eec6ebf8155f7081ec
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle", "2.3.4.2 Servo alarm wiring diagram (PNP type)"]
+        note: "2.3.4.2 Servo alarm wiring diagram (PNP type)"
+    acceptable: []
+  - id: Q2
+    # Toma (2026-11-13): đổi từ câu hỏi theo mã (#12010) sang câu hỏi về bước vít me.
+    question: "Cách tính và cài đặt thông số theo bước vít me của trục như thế nào?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["cong_thuc", "thu_tuc"]
+    expected_intent: ["guide.configuration", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0112
+        content_hash: 52b9fcf2a4b1764e023f359a66d831bca1ce4797bd457d2b256fe9df94e51d64
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.7 Electronic gear box setting"]
+        note: "2.6.4.7 › Formula (phần 1/2): Case 1 vít me bước 10 mm, số xung cho 1 mm, #12010"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0111
+        content_hash: 29c2a73afa9c67037fe60e512155d3e5b0f46a7262a2a10f44f94d3c6cdbc252
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.7 Electronic gear box setting"]
+        note: "2.6.4.7 Electronic gear box setting: danh sách tham số cần cài (#12010…, #12340…, #12350…)"
+      - chunk_key: f54_operation_v02:B0113
+        content_hash: 05f8266acb1bc70b4b974438aa50b5a382e8cc5004fc51300f7436428fab37c2
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.7 Electronic gear box setting"]
+        note: "2.6.4.7 › Formula (phần 2/2): cùng công thức, trường hợp thanh răng"
+  - id: Q3
+    question: "Làm sao cài đặt giới hạn hành trình mềm (soft limit) cho trục X?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["thu_tuc"]
+    expected_intent: ["guide.configuration", "guide.operation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0161
+        content_hash: bbf6e9acae7d78e1432d0f8959cdd52d131be26e02a08a252dd1a7ac2198e48e
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)"]
+        note: "2.6.4.19 Machine travel limit setting (Soft Limit)"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0162
+        content_hash: 761f62bfb4325d5f0b86af76c6d5f157ace8dfd5f7b41daa18c5283771c284c0
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)"]
+        note: "2.6.4.19 Machine travel limit setting (Soft Limit) › Note:"
+      - chunk_key: f54_operation_v02:B0169
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)", "2.6.4.19.2 Travel limit in positive direction"]
+        note: "2.6.4.19.2 Travel limit in positive direction › Parameter setting:"
+      - chunk_key: f54_operation_v02:B0170
+        content_hash: 94433eb2f1eadb6a904829b3e2fa5271d842a554620e2c03b9aefc201125bf5f
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)", "2.6.4.19.2 Travel limit in positive direction"]
+        note: "2.6.4.19.2 Travel limit in positive direction › Parameter status descr"
+  - id: Q4
+    question: "cach dau day tay quay MPG co nut dung khan cap EMG"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["dau_day", "khong_dau"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0050
+        content_hash: c9ba8c26ad7a5e59345e119686ad3135744e9de9f0b7d8446933952e0dd87b99
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.7 MPG pendant with EMG button"]
+        note: "2.3.5.7 MPG pendant with EMG button"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0052
+        content_hash: a7939a0228af849d3fb2ed16d7c9600e00d4179d40a81fe8882f34a07c1cccdf
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.7 MPG pendant with EMG button"]
+        note: "2.3.5.7 MPG pendant with EMG button › Parameter stauts description:"
+  - id: Q5
+    question: "Tốc độ về home lần thứ hai của các trục cài ở tham số nào?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["tham_so"]
+    expected_intent: ["guide.configuration"]
+    expected:
+      - chunk_key: f54_operation_v02:B0155
+        content_hash: 185769f659b096cab9e4684f72c60d4543720046082cdcc1925fb61e702a34d4
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.17 Homing Feedrate 2nd"]
+        note: "2.6.4.17 Homing Feedrate 2nd › Parameter status description:"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0153
+        content_hash: 7b54ff291b4c21dddf23a24d427ba72ddc2232afc5d00aea94918dd7e2948911
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.17 Homing Feedrate 2nd"]
+        note: "2.6.4.17 Homing Feedrate 2nd"
+  - id: Q6
+    question: "Khi so dao tự động mà trục Z không chạm cảm biến thì máy báo lỗi do đâu?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["loi"]
+    expected_intent: ["troubleshoot.error"]
+    expected:
+      - chunk_key: f54_operation_v02:B0177
+        content_hash: af2b928d7d68bfefea2530afa49e2c68b672804cd9244a53757d4b113968dd95
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter › Note:"
+    acceptable: []
+  - id: Q7
+    question: "Làm sao chạy tiếp chương trình từ dòng bị dừng trước đó?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["thao_tac"]
+    expected_intent: ["guide.operation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0203
+        content_hash: c45fe8541bfb1897431aca6a16a1c987f1c3b8082924629a46a2a1158145db1c
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.5 Resume the program from the line where it was previously stopped"]
+        note: "3.5 Resume the program from the line where it was previously stopped ›"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0204
+        content_hash: f11f693be1480019f6b0ebf7bcbe0ebee6da4eca88a00658e71b4d5ba3d9d0a3
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.5 Resume the program from the line where it was previously stopped"]
+        note: "3.5 Resume the program from the line where it was previously stopped ›"
+      - chunk_key: f54_operation_v02:B0205
+        content_hash: 715358595db93655a2d559fb55a70ab8637888e35acb05ab2cee3cee090df569
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.5 Resume the program from the line where it was previously stopped"]
+        note: "3.5 Resume the program from the line where it was previously stopped ›"
+  - id: Q8
+    question: "Cổng CN10 trên bộ điều khiển F86 dùng để làm gì?"
+    domain: technical_docs
+    models: ["F86"]
+    tags: ["cong_ket_noi"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f86_installation_2024-04-25:B0005
+        content_hash: d4003cd1bbd1c50db58f5a3fda4c9076e16e0ee9cda230ecc3b8a7a260130bff
+        section_path: ["PART 2", "2.1 CONNECTION DIAGRAM"]
+        note: "2.1 CONNECTION DIAGRAM › PORT TABLE"
+    acceptable:
+      - chunk_key: f86_installation_2024-04-25:B0009
+        content_hash: 923edbbd2a734ffda60beae50295c34592069334e37dfc68d4fad892a7f89deb
+        section_path: ["PART 2", "2.1 CONNECTION DIAGRAM"]
+        note: "2.1 CONNECTION DIAGRAM › Note:"
+  - id: Q9
+    # Toma bổ sung 2026-11-13. Câu kiểu từ khóa; "tỷ số truyền điện tử" ≠ "tỉ số bánh răng điện tử" trong tóm tắt VI.
+    question: "công thức tính tỷ số truyền điện tử F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["cong_thuc", "tu_khoa"]
+    expected_intent: ["guide.configuration"]
+    expected:
+      - chunk_key: f54_operation_v02:B0112
+        content_hash: 52b9fcf2a4b1764e023f359a66d831bca1ce4797bd457d2b256fe9df94e51d64
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.7 Electronic gear box setting"]
+        note: "2.6.4.7 › Formula (phần 1/2): Electronic gear ratio = Pulse/mm × Gear(Motor)/Gear(Screw); Case 1 vít me"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0113
+        content_hash: 05f8266acb1bc70b4b974438aa50b5a382e8cc5004fc51300f7436428fab37c2
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.7 Electronic gear box setting"]
+        note: "2.6.4.7 › Formula (phần 2/2): cùng công thức, Case 3 thanh răng"
+      - chunk_key: f54_operation_v02:B0111
+        content_hash: 29c2a73afa9c67037fe60e512155d3e5b0f46a7262a2a10f44f94d3c6cdbc252
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.7 Electronic gear box setting"]
+        note: "2.6.4.7: danh sách tham số tỉ số bánh răng điện tử (#12340…, #12350…)"
+  - id: Q10
+    # Toma bổ sung 2026-11-13. Người dùng gọi "đo dao", bảng thuật ngữ gọi tool setter là "bộ so dao".
+    question: "tham số giới hạn hành trình đo dao tự động F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["tham_so", "tu_khoa"]
+    expected_intent: ["guide.configuration", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0032
+        content_hash: bdbf9c59d9aea555bb0468e073378bc7f1394d9071ea42e90660925bfd04a21b
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.5 [6-wire] Automatic tool setter wiring diagram (PNP signal)"]
+        note: "2.3.3.5 bộ so dao 6 dây: M1926 trạng thái công tắc giới hạn hành trình đầu dò, M1958 bật/tắt giới hạn hành trình"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0030
+        content_hash: 1050e468a588eaff50a70f37f6f931a218e8317a33f7e439ac46defe8ef3fbda
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.5 [6-wire] Automatic tool setter wiring diagram (PNP signal)"]
+        note: "2.3.3.5: các bước cài M1925, M1926, M1958"
+      - chunk_key: f54_operation_v02:B0173
+        content_hash: a6d974c8f9e5a065bb9ccd0af6aba27a5629a72126624169109661d88dd36edf
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter: #14006 tọa độ Z khi chạm bộ so dao"
+      - chunk_key: f54_operation_v02:B0177
+        content_hash: af2b928d7d68bfefea2530afa49e2c68b672804cd9244a53757d4b113968dd95
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5: lỗi khi giới hạn hành trình đặt ở #14006 sai"
+  - id: Q11
+    # Toma bổ sung 2026-11-13. Câu tổng quát: mọi sơ đồ đấu servo của mục 2.6 đều là mong đợi.
+    question: "Hướng dẫn đấu nối Servo trong bộ điều khiển F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["dau_day", "tu_khoa"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0080
+        content_hash: 91a4363063f4bc4a7d6f8a5c1a1d592b0169aeb47b2a71bacdf397ee2da457f6
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)"]
+        note: "2.6 Axis connection: lưu ý trước khi đấu servo, cáp chống nhiễu"
+      - chunk_key: f54_operation_v02:B0081
+        content_hash: cd94332afa131db242b498764b397fe4b06e6654cead1f191b285e2c6d4f8264
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)"]
+        note: "2.6: sơ đồ Pul/Dir tham khảo trên driver servo Yaskawa SGDV"
+      - chunk_key: f54_operation_v02:B0082
+        content_hash: 5e565d39faaa9f87fef3da5a68bc899922536d23653210f36ff4be7ac904e0ea
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.1 X-Y axis wiring diagram (Pul/Dir)"]
+        note: "2.6.1 sơ đồ đấu trục X-Y (Pul/Dir)"
+      - chunk_key: f54_operation_v02:B0083
+        content_hash: 095fe9fd6f46d28a0bba8e1db64ce3c488429fd6cfb06b50abcdebe33ec6c966
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.2 Z-A axis wiring diagram (Pul/Dir)"]
+        note: "2.6.2 sơ đồ đấu trục Z-A (Pul/Dir)"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0084
+        content_hash: 000ff7df1fc40e5dc36700cc5e6e9175205b26c2aac63e8beedfc70904b8c009
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.3 Encoder feedback signal for phase Z from the servo drive of axes (X, Y, Z, A)"]
+        note: "2.6.3 tín hiệu encoder pha Z từ driver servo"
+      - chunk_key: f54_operation_v02:B0039
+        content_hash: f0946fa1f3539043e717c792a3596e0d0d312bab1061ac56247a54fa19d6b0a6
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle", "2.3.4.1 Servo alarm wiring diagram (NPN type)"]
+        note: "2.3.4.1 đấu báo lỗi servo (NPN)"
+      - chunk_key: f54_operation_v02:B0040
+        content_hash: c8ed020871f895b4e55a58f0a942dd43d8098fe38ce304eec6ebf8155f7081ec
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle", "2.3.4.2 Servo alarm wiring diagram (PNP type)"]
+        note: "2.3.4.2 đấu báo lỗi servo (PNP)"
+      - chunk_key: f54_operation_v02:B0086
+        content_hash: 5ce432acf5944ab2b0c8fa05cf9c4bc141bd848877b9156cbfdfd4b0e4445e33
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.1 Enable/Disabe axis (X,Y,Z,A)"]
+        note: "2.6.4.1 bật trục sau khi đấu servo (AX1–4.ENA)"
+  - id: Q12
+    # Toma bổ sung 2026-11-13. Chunk 1.2 có scope operation (không phải installation). lookup.product_info sẽ tìm product_catalog (domain sai với tài liệu kỹ thuật) — câu kiểm ranh giới intent.
+    question: "Kích thước bản vẽ lắp của bộ điều khiển F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["kich_thuoc", "tu_khoa"]
+    expected_intent: ["guide.installation", "lookup.product_info"]
+    expected:
+      - chunk_key: f54_operation_v02:B0002
+        content_hash: b0144453db790fbc41813ca29155a5e1680fe92c7b5bcffae24c9e9a19278882
+        section_path: ["PART 1:CONTROLLER OVERVIEW", "1.2 Dimension"]
+        note: "1.2 Dimension: bản vẽ kích thước bộ điều khiển F54 (212, 220, 140, 4-M4)"
+    acceptable: []
+  - id: Q13
+    # Toma bổ sung 2026-11-13. Có lỗi gõ "tính hiệu" (tín hiệu) giữ nguyên như người dùng gõ; mọi sơ đồ bộ so dao đều là mong đợi.
+    question: "Cách đấu tính hiệu so dao trên bộ điều khiển F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["dau_day", "loi_go"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0024
+        content_hash: 8fcadf393d9f0c5b282471db1d04bbac5e22c2c9cc83caee776fa44955a0e8e0
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.1 [3-wire] Automatic tool setter wiring diagram"]
+        note: "2.3.3.1 bộ so dao 3 dây"
+      - chunk_key: f54_operation_v02:B0025
+        content_hash: 65286f2aa56e42a7025eec8b3067d041d24b4a8e8416c7160165eca6e3e396da
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.2 [4-wire] Automatic tool setter wiring diagram (NPN signal)"]
+        note: "2.3.3.2 bộ so dao 4 dây (NPN)"
+      - chunk_key: f54_operation_v02:B0026
+        content_hash: a2ec0babdf752c091d8bbb43014e2d5644b6ddafd701fb05fe52c303a75a092e
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.3 [4-wire] Automatic tool setter wiring diagarm (PNP signal)"]
+        note: "2.3.3.3 bộ so dao 4 dây (PNP)"
+      - chunk_key: f54_operation_v02:B0027
+        content_hash: 9a37bb0e19d9bea33147e1517be9c0a797cbc89589caa6296f5212e3ff7d0d78
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.4 [6-wire] Automatic tool setter wiring diagram (NPN signal)"]
+        note: "2.3.3.4 bộ so dao 6 dây (NPN)"
+      - chunk_key: f54_operation_v02:B0029
+        content_hash: a7ad0c7bf98e781eb8439eda19be3032d2a712de3b664a9d0d7422689b991577
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.5 [6-wire] Automatic tool setter wiring diagram (PNP signal)"]
+        note: "2.3.3.5 bộ so dao 6 dây (PNP)"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0023
+        content_hash: 3262a76ce683fbd785f539232afe85434742085734eecc9c01b508827a89242f
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection"]
+        note: "2.3.3 kết nối bộ so dao: lưu ý chung"
+      - chunk_key: f54_operation_v02:B0030
+        content_hash: 1050e468a588eaff50a70f37f6f931a218e8317a33f7e439ac46defe8ef3fbda
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.5 [6-wire] Automatic tool setter wiring diagram (PNP signal)"]
+        note: "2.3.3.5: cài M1925, M1926, M1958 sau khi đấu"
+  - id: Q14
+    # Toma bổ sung 2026-11-13. Mọi sơ đồ cảm biến/công tắc home đều là mong đợi.
+    question: "Cách đấu cảm biến về home trên bộ điều khiển F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["dau_day"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0014
+        content_hash: a84c575a6f797b0f1e510466c46c608771885bd0711383a3a71a7fda423b6d44
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.1 [3-wire] homing sensor wiring diagram"]
+        note: "2.3.2.1 cảm biến home 3 dây"
+      - chunk_key: f54_operation_v02:B0015
+        content_hash: e51b67ec75885c4deefec7ca361de25814d3457f441a556035f0f3f1301fb82c
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.2 [2-wire] homing sensor wiring diagram (NPN signal)"]
+        note: "2.3.2.2 cảm biến home 2 dây (NPN)"
+      - chunk_key: f54_operation_v02:B0016
+        content_hash: 655f8c9f4606c411d9332034f46626b817287bf5a7a62d688146acb541ff617f
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.3 [2-wire] homing sensor wiring diagram (PNP signal)"]
+        note: "2.3.2.3 cảm biến home 2 dây (PNP)"
+      - chunk_key: f54_operation_v02:B0019
+        content_hash: 597bb5927f770ad324ff9bc4cfd846863a704a912db7dc3db73db44cbb5ec1c0
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.4 Homing switch wiring diagram"]
+        note: "2.3.2.4 đấu công tắc home NPN/PNP"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0013
+        content_hash: 86214e54aa6dffda855a4d0b8b12c3fdeee383cca4e82aaf834b14d0f2d2660e
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor"]
+        note: "2.3.2 kết nối cảm biến home X,Y,Z,A: lưu ý chung"
+      - chunk_key: f54_operation_v02:B0018
+        content_hash: 8cf7e3db7b10ff81db879e9157c81df7da54fd57be14d6dcc5d4c918472ab7e7
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.4 Homing switch wiring diagram"]
+        note: "2.3.2.4 cấu tạo công tắc home"
+      - chunk_key: f54_operation_v02:B0020
+        content_hash: 2654d1bd4c59fed0e3dc2db00387917e496e6093d9a7fb1468ece6d37322e7b7
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.4 Homing switch wiring diagram"]
+        note: "2.3.2.4: cài M1920–M1923 sau khi đấu"

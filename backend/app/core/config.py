@@ -42,7 +42,8 @@ class Settings(BaseSettings):
     crm_chat_flow: Literal["agent", "pipeline"] = Field(default="agent", alias="CRM_CHAT_FLOW")
     # Giới hạn của một lượt agent. Mọi timeout lấy từ deadline chung AGENT_TURN_TIMEOUT_S;
     # AGENT_FINAL_RESERVE_S được giữ lại cho bước trả lời cuối.
-    agent_max_steps: int = Field(default=5, alias="AGENT_MAX_STEPS")
+    # 6: một câu hỏi CRM thường cần crm_schema → crm_query → (sửa query) → trả lời.
+    agent_max_steps: int = Field(default=6, alias="AGENT_MAX_STEPS")
     agent_max_tool_calls: int = Field(default=8, alias="AGENT_MAX_TOOL_CALLS")
     agent_turn_timeout_s: float = Field(default=60.0, alias="AGENT_TURN_TIMEOUT_S")
     agent_llm_timeout_s: float = Field(default=20.0, alias="AGENT_LLM_TIMEOUT_S")
@@ -52,9 +53,24 @@ class Settings(BaseSettings):
     agent_parallel_tools: int = Field(default=3, alias="AGENT_PARALLEL_TOOLS")
     agent_max_concurrent_runs: int = Field(default=8, alias="AGENT_MAX_CONCURRENT_RUNS")
     agent_history_messages: int = Field(default=6, alias="AGENT_HISTORY_MESSAGES")
-    # Tool CRM (crm_report, crm_records; thử nghiệm): gọi API danh sách và Reporting Query API
-    # của CRM bằng Bearer <crm_access_token | acting_user_id>, cùng CRM_API_BASE_URL.
+    # Model riêng cho vòng lặp agent (kênh CRM); rỗng = OPENAI_MODEL. Stage phân tích trong tool
+    # product_docs_ask và luồng website vẫn dùng OPENAI_MODEL.
+    agent_model: str = Field(default="", alias="AGENT_MODEL")
+    # Chỉ áp dụng cho model suy luận (gpt-5…, o3…): none/minimal/low/medium/high (tuỳ model).
+    agent_reasoning_effort: str = Field(default="", alias="AGENT_REASONING_EFFORT")
+    # Giới hạn token đầu ra mỗi bước LLM của agent; model suy luận tính cả token suy nghĩ
+    # nên cần lớn hơn (khoảng 4000).
+    agent_max_completion_tokens: int = Field(default=1200, alias="AGENT_MAX_COMPLETION_TOKENS")
+    # Tool CRM (thử nghiệm): gọi API danh sách và Reporting Query API của CRM bằng
+    # Bearer <crm_access_token | acting_user_id>, cùng CRM_API_BASE_URL.
+    # CRM_TOOLS: query = crm_schema + crm_query (LLM tự dựng query, mọi bảng; mặc định),
+    # catalog = crm_report + crm_records (catalog ngữ nghĩa 4 dataset), both = cả bốn.
     crm_report_enabled: bool = Field(default=False, alias="CRM_REPORT_ENABLED")
+    crm_tools: Literal["query", "catalog", "both"] = Field(default="query", alias="CRM_TOOLS")
+    crm_schema_cache_s: float = Field(default=600.0, alias="CRM_SCHEMA_CACHE_S")
+    # Audit crm_query có cả giá trị filter và body gửi CRM (có thể là PII) vào logger
+    # app.crm_query.audit. Chỉ bật có thời hạn để đánh giá chất lượng query.
+    crm_query_audit_log: bool = Field(default=False, alias="CRM_QUERY_AUDIT_LOG")
     crm_api_base_url: str = Field(default="", alias="CRM_API_BASE_URL")
     crm_api_timeout_s: float = Field(default=10.0, alias="CRM_API_TIMEOUT_S")
     crm_report_max_items: int = Field(default=2000, alias="CRM_REPORT_MAX_ITEMS")
@@ -89,7 +105,10 @@ class Settings(BaseSettings):
     database_pool_recycle: int = Field(default=1800, alias="DATABASE_POOL_RECYCLE")
     database_pool_mode: str = Field(default="session", alias="DATABASE_POOL_MODE")
 
-    @field_validator("openai_api_key", "openai_model", "ollama_base_url", "ollama_model", mode="before")
+    @field_validator(
+        "openai_api_key", "openai_model", "ollama_base_url", "ollama_model", "agent_model",
+        "agent_reasoning_effort", mode="before",
+    )
     @classmethod
     def _strip(cls, value: str) -> str:
         return value.strip()
@@ -145,6 +164,7 @@ class Settings(BaseSettings):
         "agent_tool_output_tokens",
         "agent_parallel_tools",
         "agent_max_concurrent_runs",
+        "agent_max_completion_tokens",
         "chat_turn_lease_s",
     )
     @classmethod
@@ -153,16 +173,27 @@ class Settings(BaseSettings):
             raise ValueError("Agent limits and turn lease must be greater than zero")
         return value
 
+    @field_validator("agent_reasoning_effort")
+    @classmethod
+    def _validate_reasoning_effort(cls, value: str) -> str:
+        if value and value not in {"none", "minimal", "low", "medium", "high"}:
+            raise ValueError("AGENT_REASONING_EFFORT must be one of none, minimal, low, medium, high")
+        return value
+
+    @property
+    def effective_agent_model(self) -> str:
+        return self.agent_model or self.openai_model
+
     @field_validator("crm_api_base_url", "crm_report_timezone", mode="before")
     @classmethod
     def _strip_crm(cls, value: str) -> str:
         return value.strip()
 
-    @field_validator("crm_api_timeout_s", "crm_report_max_items")
+    @field_validator("crm_api_timeout_s", "crm_report_max_items", "crm_schema_cache_s")
     @classmethod
     def _validate_crm_positive(cls, value: float) -> float:
         if value <= 0:
-            raise ValueError("CRM API timeout and max items must be greater than zero")
+            raise ValueError("CRM API timeout, max items and schema cache must be greater than zero")
         return value
 
     @model_validator(mode="after")

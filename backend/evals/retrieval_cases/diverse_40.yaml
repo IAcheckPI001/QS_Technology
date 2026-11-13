@@ -1,0 +1,1436 @@
+# Bộ câu hỏi đa dạng (Toma yêu cầu 2026-11-13): 20 câu khách hàng (D01–D20, web) + 20 câu nhân viên tra
+# tài liệu hỗ trợ khách (D21–D40: hướng dẫn cấu hình, tư vấn sản phẩm, khắc phục lỗi). Claude soạn, chờ Toma
+# duyệt. Chunk đúng xác định theo số mục trên f54/eval-m, f86_italliation/eval-m. Câu không có `expected` chỉ
+# chấm định tuyến (tư vấn sản phẩm → product_catalog; giá/bảo hành → handoff; chào hỏi → chitchat).
+# Câu nhân viên trên thực tế đi qua agent CRM; ở đây chạy qua luồng web để đo phần tra cứu dùng chung.
+source_runs: [f54/eval-m, f86_italliation/eval-m]
+cases:
+  - id: D01
+    question: "Bộ điều khiển F54 cấp nguồn bao nhiêu volt?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "nguon", "thong_so"]
+    expected_intent: ["guide.installation", "lookup.product_info"]
+    expected:
+      - chunk_key: f54_operation_v02:B0006
+        content_hash: 8688c3cfea694690fe8fa93fe1d15aad0c115cc208a5469dc8eb869f927b0ba5
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.2 Controller power supply"]
+        note: "2.2 Controller power supply [figure; scope: installation]"
+      - chunk_key: f54_operation_v02:B0007
+        content_hash: 2629f41e8f652df32f6d108472e1eedb97080ce1682eaf9a3a290b2232384086
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.2 Controller power supply", "2.2.1 Powering instructions"]
+        note: "2.2.1 Powering instructions [figure; scope: installation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0000
+        content_hash: 607713d1ed2766509404b172c2087654d350213308535c2d34ebd9f65c1e00d1
+        section_path: ["PART 1:CONTROLLER OVERVIEW", "1.1 Overview"]
+        note: "1.1 Overview [table; scope: operation]"
+      - chunk_key: f54_operation_v02:B0001
+        content_hash: bb576c3cad733e48e2ff040adb91ad31b484b5af8672c36796ca8e252e363884
+        section_path: ["PART 1:CONTROLLER OVERVIEW", "1.1 Overview"]
+        note: "1.1 Overview [figure; scope: operation]"
+  - id: D02
+    question: "F54 điều khiển được mấy trục, có điều khiển trục chính không?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "tu_van", "thong_so"]
+    expected_intent: ["lookup.product_info"]
+    expected_route: retrieve
+    expected_domain: product_catalog
+    expected: []
+    acceptable: []
+  - id: D03
+    question: "cach dau day nut dung khan cap EMG cho F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "dau_day", "khong_dau"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0055
+        content_hash: a691bc2ca276b54c5edf8626d8d419cab520f411dfd3b633448cb6104a19ead0
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.8 EMG button wiring diagram (NPN - PNP signal) 2.3.8.1 EMG button wiring diagram (NPN type)"]
+        note: "2.3.8 EMG button wiring diagram (NPN - PNP signal) 2.3.8.1 E [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0056
+        content_hash: ccf94e04b9b75e0b68a5b9c534779fb663a2a663fa76463f87df21adf195e8af
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.8 EMG button wiring diagram (NPN - PNP signal) 2.3.8.1 EMG button wiring diagram (NPN type)", "2.3.8.2 EMG button wiring diagram (PNP type)"]
+        note: "2.3.8.2 EMG button wiring diagram (PNP type) [wiring; scope: installation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0050
+        content_hash: c9ba8c26ad7a5e59345e119686ad3135744e9de9f0b7d8446933952e0dd87b99
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.7 MPG pendant with EMG button"]
+        note: "2.3.5.7 MPG pendant with EMG button [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0051
+        content_hash: f713cb70a3c3b55301e3381deae9c9798e9ce0a6423226477aeff254386ee73c
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.7 MPG pendant with EMG button"]
+        note: "2.3.5.7 MPG pendant with EMG button [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0052
+        content_hash: a7939a0228af849d3fb2ed16d7c9600e00d4179d40a81fe8882f34a07c1cccdf
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.7 MPG pendant with EMG button"]
+        note: "2.3.5.7 MPG pendant with EMG button [parameter; scope: installation, configuration]"
+  - id: D04
+    question: "Máy F54 bấm nút START không chạy, nút start đấu thế nào?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "dau_day", "loi"]
+    expected_intent: ["guide.installation", "troubleshoot.error"]
+    expected:
+      - chunk_key: f54_operation_v02:B0053
+        content_hash: 3f5a279aa226e0c56f68d49cbdb343eaa0ab767a2bc2024ac6cc07e54c528210
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.6 STARTbutton wiring diagram with NPN - PNP signal"]
+        note: "2.3.6 STARTbutton wiring diagram with NPN - PNP signal [wiring; scope: installation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0054
+        content_hash: 5e55636c431aa2b339a2d4a6dbfe2878ef708593397cfce39c7b114965f404a4
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.7 STOP button wiring diagram with NPN - NPN signal"]
+        note: "2.3.7 STOP button wiring diagram with NPN - NPN signal [wiring; scope: installation]"
+  - id: D05
+    question: "Làm sao chép file chương trình từ USB vào bộ điều khiển F54?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "van_hanh"]
+    expected_intent: ["guide.operation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0224
+        content_hash: e71606baea9aa8089f45f65ee45791439fa839dd1cf0a5f191099c89fa812b96
+        section_path: ["PART 4 OPERATION INTERFACE", "4.3 Program screen", "4.3.1 Copy data from USB to the controller"]
+        note: "4.3.1 Copy data from USB to the controller [procedure; scope: operation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0221
+        content_hash: cb4bb61a85a545633b4573b911d31a67f7a166bbce7e420502ddb30b682a6fcd
+        section_path: ["PART 4 OPERATION INTERFACE", "4.3 Program screen"]
+        note: "4.3 Program screen [overview; scope: operation]"
+      - chunk_key: f54_operation_v02:B0222
+        content_hash: 258ec68e61a11ed1fa241956beff43c2c4da9656916c6c46265aecaa8ef301a4
+        section_path: ["PART 4 OPERATION INTERFACE", "4.3 Program screen"]
+        note: "4.3 Program screen [figure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0223
+        content_hash: 2652a0e073ada4f67343d56a22e171e380d63ff30799ed868e14fce1aa24e9fd
+        section_path: ["PART 4 OPERATION INTERFACE", "4.3 Program screen"]
+        note: "4.3 Program screen [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0224
+        content_hash: e71606baea9aa8089f45f65ee45791439fa839dd1cf0a5f191099c89fa812b96
+        section_path: ["PART 4 OPERATION INTERFACE", "4.3 Program screen", "4.3.1 Copy data from USB to the controller"]
+        note: "4.3.1 Copy data from USB to the controller [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0225
+        content_hash: 8e74e908e5ff3d651131765dae73097574708397d0e32017a9fdb071dc94faa4
+        section_path: ["PART 4 OPERATION INTERFACE", "4.3 Program screen", "4.3.2 Execute program"]
+        note: "4.3.2 Execute program [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0226
+        content_hash: 122e73912fa1a448e002a540feaac20c8905f3facd6de45a86de99a8bb6016ea
+        section_path: ["PART 4 OPERATION INTERFACE", "4.3 Program screen", "4.3.3 Go to any command line"]
+        note: "4.3.3 Go to any command line [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0231
+        content_hash: 5c6393bf78d3db22e3735a1154ea56ca65500337a2118ff1e579035a637fb6d4
+        section_path: ["4.3.6 Copy and Paste"]
+        note: "4.3.6 Copy and Paste [procedure; scope: operation]"
+  - id: D06
+    question: "Đang chạy thì mất điện đột ngột, làm sao chạy tiếp chương trình?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "van_hanh", "khong_model"]
+    expected_intent: ["guide.operation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0199
+        content_hash: 40ffb46486773bc93fe58693264bbc5f0385b2b0fcb4853ea9ec8690e466b392
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.3 Resume the program when sudden power failure occurs"]
+        note: "3.3 Resume the program when sudden power failure occurs [figure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0200
+        content_hash: 2f36a02c641288e41ed96b66a87443fa5227872cdc263f73688b70e4c61e0612
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.3 Resume the program when sudden power failure occurs"]
+        note: "3.3 Resume the program when sudden power failure occurs [procedure; scope: operation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0201
+        content_hash: 17b483f3cc66c5befcf7c1a95df61999ca7fcdca5fde280e0be0832ef9c8f71f
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.4 Start program from any line"]
+        note: "3.4 Start program from any line [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0203
+        content_hash: c45fe8541bfb1897431aca6a16a1c987f1c3b8082924629a46a2a1158145db1c
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.5 Resume the program from the line where it was previously stopped"]
+        note: "3.5 Resume the program from the line where it was previously [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0204
+        content_hash: f11f693be1480019f6b0ebf7bcbe0ebee6da4eca88a00658e71b4d5ba3d9d0a3
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.5 Resume the program from the line where it was previously stopped"]
+        note: "3.5 Resume the program from the line where it was previously [figure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0205
+        content_hash: 715358595db93655a2d559fb55a70ab8637888e35acb05ab2cee3cee090df569
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.5 Resume the program from the line where it was previously stopped"]
+        note: "3.5 Resume the program from the line where it was previously [procedure; scope: operation]"
+  - id: D07
+    question: "Cách chạy chương trình bắt đầu từ một dòng bất kỳ trên F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "van_hanh"]
+    expected_intent: ["guide.operation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0201
+        content_hash: 17b483f3cc66c5befcf7c1a95df61999ca7fcdca5fde280e0be0832ef9c8f71f
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.4 Start program from any line"]
+        note: "3.4 Start program from any line [procedure; scope: operation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0203
+        content_hash: c45fe8541bfb1897431aca6a16a1c987f1c3b8082924629a46a2a1158145db1c
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.5 Resume the program from the line where it was previously stopped"]
+        note: "3.5 Resume the program from the line where it was previously [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0204
+        content_hash: f11f693be1480019f6b0ebf7bcbe0ebee6da4eca88a00658e71b4d5ba3d9d0a3
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.5 Resume the program from the line where it was previously stopped"]
+        note: "3.5 Resume the program from the line where it was previously [figure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0205
+        content_hash: 715358595db93655a2d559fb55a70ab8637888e35acb05ab2cee3cee090df569
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.5 Resume the program from the line where it was previously stopped"]
+        note: "3.5 Resume the program from the line where it was previously [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0226
+        content_hash: 122e73912fa1a448e002a540feaac20c8905f3facd6de45a86de99a8bb6016ea
+        section_path: ["PART 4 OPERATION INTERFACE", "4.3 Program screen", "4.3.3 Go to any command line"]
+        note: "4.3.3 Go to any command line [procedure; scope: operation]"
+  - id: D08
+    question: "Chỉnh ngày giờ trên bộ điều khiển F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "cau_hinh"]
+    expected_intent: ["guide.configuration", "guide.operation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0273
+        content_hash: 5364d655b6874dd0f59b5eccff2417c086becfe758c9ab0368a764c9c4b0b099
+        section_path: ["4.10 System data", "4.10.2 Date & Time setting"]
+        note: "4.10.2 Date & Time setting [procedure; scope: operation, configuration]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0265
+        content_hash: 9b831128b1407374b4dc75da3622c32a0ff3b2ac8dbc6d8a56d681ef296432ce
+        section_path: ["4.10 System data"]
+        note: "4.10 System data [overview; scope: operation]"
+      - chunk_key: f54_operation_v02:B0266
+        content_hash: cf75e71dfdc5598a878f21510ec21ab86fd80b17e325634fd340bf9016bb5e12
+        section_path: ["4.10 System data"]
+        note: "4.10 System data [table; scope: operation]"
+      - chunk_key: f54_operation_v02:B0268
+        content_hash: e9b11d8daa0fdb23592dce0bd8c8e3ea0218957373b723de3fb2bbd3f54d724f
+        section_path: ["4.10 System data"]
+        note: "4.10 System data [figure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0269
+        content_hash: f47ac0ad2170d77b0a68fddb5296c669aaf76188d0a6db8522a6fb70ee752468
+        section_path: ["4.10 System data"]
+        note: "4.10 System data [procedure; scope: operation]"
+  - id: D09
+    question: "Kết nối wifi cho bộ điều khiển F54 như thế nào?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "cau_hinh"]
+    expected_intent: ["guide.configuration", "guide.operation", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0279
+        content_hash: 685f7e64961d96371b722902507eb14844b8f027e35705bdbb9466764032a08e
+        section_path: ["4.11 Transfer data via Wi-Fi network", "4.11.2 Connect device to wi-fi network"]
+        note: "4.11.2 Connect device to wi-fi network [procedure; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0280
+        content_hash: 1c7e5f946348312331ab416d354dd6233ed3f6b9952d151386b9b1d2774c09a0
+        section_path: ["4.11 Transfer data via Wi-Fi network", "4.11.2 Connect device to wi-fi network"]
+        note: "4.11.2 Connect device to wi-fi network [overview; scope: operation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0275
+        content_hash: 25ef03541ba4b6916c4ec69f114b9f411a86b7cefb341d8f94c1ced2f9ee2c7d
+        section_path: ["4.11 Transfer data via Wi-Fi network"]
+        note: "4.11 Transfer data via Wi-Fi network [figure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0276
+        content_hash: 3947183eb5d6a9df8b2c934613ce48ec0809d30daef5232a39b5780af9f9f53b
+        section_path: ["4.11 Transfer data via Wi-Fi network"]
+        note: "4.11 Transfer data via Wi-Fi network [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0277
+        content_hash: da69ce640a479798876009f8428576319f244cd80b7ec6e54387f8bb0fce8ea1
+        section_path: ["4.11 Transfer data via Wi-Fi network", "4.11.1 Software installation"]
+        note: "4.11.1 Software installation [figure; scope: installation]"
+      - chunk_key: f54_operation_v02:B0279
+        content_hash: 685f7e64961d96371b722902507eb14844b8f027e35705bdbb9466764032a08e
+        section_path: ["4.11 Transfer data via Wi-Fi network", "4.11.2 Connect device to wi-fi network"]
+        note: "4.11.2 Connect device to wi-fi network [procedure; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0280
+        content_hash: 1c7e5f946348312331ab416d354dd6233ed3f6b9952d151386b9b1d2774c09a0
+        section_path: ["4.11 Transfer data via Wi-Fi network", "4.11.2 Connect device to wi-fi network"]
+        note: "4.11.2 Connect device to wi-fi network [overview; scope: operation]"
+      - chunk_key: f54_operation_v02:B0281
+        content_hash: c1fc9f26f9cefad40b7827d21c75fb80795d92c7bd3b9d99185d5a0eb5500414
+        section_path: ["4.11 Transfer data via Wi-Fi network", "4.11.3 Transfer data via wi-fi network"]
+        note: "4.11.3 Transfer data via wi-fi network [figure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0282
+        content_hash: 6794a4ce8c42a61340eb56533cfcf8fb345b2c9786ae8018387e9bdc8d1a47a7
+        section_path: ["4.11 Transfer data via Wi-Fi network", "4.11.3 Transfer data via wi-fi network"]
+        note: "4.11.3 Transfer data via wi-fi network [table; scope: operation]"
+      - chunk_key: f54_operation_v02:B0284
+        content_hash: e50a0cb79118f6286965b614b55b955c8fec90dd6ca148dc09ccc6257c70b3dd
+        section_path: ["4.11 Transfer data via Wi-Fi network", "4.11.3 Transfer data via wi-fi network"]
+        note: "4.11.3 Transfer data via wi-fi network [figure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0285
+        content_hash: 761ea6ebea0a297d30c3da4caad846d34e0919dc6480c4dcf5e001c8d0fe1a7b
+        section_path: ["4.11 Transfer data via Wi-Fi network", "4.11.3 Transfer data via wi-fi network"]
+        note: "4.11.3 Transfer data via wi-fi network [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0286
+        content_hash: 9307e85dc25789ded0af1e1a79b6d4c13972c10f05c4e36ecb9637dc140c4875
+        section_path: ["4.11 Transfer data via Wi-Fi network", "4.11.4 Monitor the operational status of the controller"]
+        note: "4.11.4 Monitor the operational status of the controller [figure; scope: operation]"
+  - id: D10
+    question: "Cập nhật firmware cho F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "cau_hinh"]
+    expected_intent: ["guide.configuration"]
+    expected:
+      - chunk_key: f54_operation_v02:B0271
+        content_hash: 7e99a266224f99032a574ae0a4b3ebfcbdc9a25708feeae2a96ad7022c652aa3
+        section_path: ["4.10 System data", "4.10.1 Firmware update"]
+        note: "4.10.1 Firmware update [procedure; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0272
+        content_hash: 638b7984743a0d60ae9cf784baa3755f7cc53ef3463946681f3a461331dde179
+        section_path: ["4.10 System data", "4.10.1 Firmware update"]
+        note: "4.10.1 Firmware update [overview; scope: operation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0265
+        content_hash: 9b831128b1407374b4dc75da3622c32a0ff3b2ac8dbc6d8a56d681ef296432ce
+        section_path: ["4.10 System data"]
+        note: "4.10 System data [overview; scope: operation]"
+      - chunk_key: f54_operation_v02:B0266
+        content_hash: cf75e71dfdc5598a878f21510ec21ab86fd80b17e325634fd340bf9016bb5e12
+        section_path: ["4.10 System data"]
+        note: "4.10 System data [table; scope: operation]"
+      - chunk_key: f54_operation_v02:B0268
+        content_hash: e9b11d8daa0fdb23592dce0bd8c8e3ea0218957373b723de3fb2bbd3f54d724f
+        section_path: ["4.10 System data"]
+        note: "4.10 System data [figure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0269
+        content_hash: f47ac0ad2170d77b0a68fddb5296c669aaf76188d0a6db8522a6fb70ee752468
+        section_path: ["4.10 System data"]
+        note: "4.10 System data [procedure; scope: operation]"
+  - id: D11
+    question: "Trục X của máy F54 chạy ngược chiều thì chỉnh ở đâu?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "cau_hinh", "loi"]
+    expected_intent: ["guide.configuration", "troubleshoot.error"]
+    expected:
+      - chunk_key: f54_operation_v02:B0090
+        content_hash: 1843092876399745993f7227b28318c7203d24a4b78cecde326a6cc0fe480399
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.2 Motor rotation direction for axes (X,Y,Z,A)"]
+        note: "2.6.4.2 Motor rotation direction for axes (X,Y,Z,A) [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0091
+        content_hash: ccbd9abdfcd5d23cf55fa664a4d2b28bf23504e3edb066ab885a70b01236bd92
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.2 Motor rotation direction for axes (X,Y,Z,A)"]
+        note: "2.6.4.2 Motor rotation direction for axes (X,Y,Z,A) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0092
+        content_hash: b0e5e6960684c4168cb855df0a732166b5167565813914fc4fbcfb5a41600e99
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.2 Motor rotation direction for axes (X,Y,Z,A)"]
+        note: "2.6.4.2 Motor rotation direction for axes (X,Y,Z,A) [overview; scope: installation, configuration]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0098
+        content_hash: 12fc629762248ed37c45a40904cb758554d40852a917cf7d434fcad4b0ff1952
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.4 Axes direction when moving to home position"]
+        note: "2.6.4.4 Axes direction when moving to home position [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0099
+        content_hash: ccbd9abdfcd5d23cf55fa664a4d2b28bf23504e3edb066ab885a70b01236bd92
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.4 Axes direction when moving to home position"]
+        note: "2.6.4.4 Axes direction when moving to home position [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0100
+        content_hash: 2c735c39d57aab734bf3630009f2e8fc59e26686ae13edcc0c125d34a56115b1
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.4 Axes direction when moving to home position"]
+        note: "2.6.4.4 Axes direction when moving to home position [overview; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0287
+        content_hash: 74c7ebdad253a0ca6b94bb41a73c919cd7628d87cf170e3c2dbb3c563ead4517
+        section_path: ["PART 5 PARAMETERS TABLE", "5.1 Axis parameters"]
+        note: "5.1 Axis parameters [parameter; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0288
+        content_hash: e004579e72eef8f8ae7a09f22f478f5b91876350f5f122c88f9bf2efc2197a6b
+        section_path: ["PART 5 PARAMETERS TABLE", "5.1 Axis parameters"]
+        note: "5.1 Axis parameters [parameter; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0289
+        content_hash: e1e7b2e5f520de754194dac18124cf73844f628d88c97bf5acbe5bfdde0a7b62
+        section_path: ["PART 5 PARAMETERS TABLE", "5.1 Axis parameters"]
+        note: "5.1 Axis parameters [parameter; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0290
+        content_hash: c0063369bc354dc7949e4945212c82bdb4edd94baf6dba39861fae3bc920e3df
+        section_path: ["PART 5 PARAMETERS TABLE", "5.1 Axis parameters"]
+        note: "5.1 Axis parameters [parameter; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0291
+        content_hash: 82b78d40b96a02e666f84f40726f359498ecc669d066727dc21e37bb457534c3
+        section_path: ["PART 5 PARAMETERS TABLE", "5.1 Axis parameters"]
+        note: "5.1 Axis parameters [parameter; scope: operation, configuration]"
+  - id: D12
+    question: "Máy F54 báo lỗi servo, đấu tín hiệu báo lỗi servo thế nào?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "loi", "dau_day"]
+    expected_intent: ["troubleshoot.error", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0039
+        content_hash: f0946fa1f3539043e717c792a3596e0d0d312bab1061ac56247a54fa19d6b0a6
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle", "2.3.4.1 Servo alarm wiring diagram (NPN type)"]
+        note: "2.3.4.1 Servo alarm wiring diagram (NPN type) [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0040
+        content_hash: c8ed020871f895b4e55a58f0a942dd43d8098fe38ce304eec6ebf8155f7081ec
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle", "2.3.4.2 Servo alarm wiring diagram (PNP type)"]
+        note: "2.3.4.2 Servo alarm wiring diagram (PNP type) [wiring; scope: installation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0034
+        content_hash: 0598d42c987c8c9dc79e1a1d579103fe2695f104a4b7b0442a669fa0dd856341
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle"]
+        note: "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0035
+        content_hash: f713cb70a3c3b55301e3381deae9c9798e9ce0a6423226477aeff254386ee73c
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle"]
+        note: "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0036
+        content_hash: 329a39d82d36d51963936a9b081944f4e332d5d8cd6b4c505bff6bfecff27663
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle"]
+        note: "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0037
+        content_hash: f713cb70a3c3b55301e3381deae9c9798e9ce0a6423226477aeff254386ee73c
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle"]
+        note: "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0038
+        content_hash: 4128012fee9f1494e6acb06787817a8975b916cf597f988d9301e18e13d5f87e
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle"]
+        note: "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle [parameter; scope: installation, configuration]"
+  - id: D13
+    question: "F54 có hỗ trợ EtherCAT không?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "tu_van"]
+    expected_intent: ["lookup.product_info"]
+    expected_route: retrieve
+    expected_domain: product_catalog
+    expected: []
+    acceptable: []
+  - id: D14
+    question: "Bộ điều khiển F54 giá bao nhiêu?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "handoff"]
+    expected_intent: ["handoff.human"]
+    expected_route: handoff
+    expected: []
+    acceptable: []
+  - id: D15
+    question: "So sánh giúp tôi F54 và F86 khác nhau thế nào"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "tu_van", "so_sanh"]
+    expected_intent: ["compare.product_models"]
+    expected_route: retrieve
+    expected_domain: product_catalog
+    expected: []
+    acceptable: []
+  - id: D16
+    question: "How do I connect the MPG handwheel to the F54 controller?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "dau_day", "tieng_anh"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0042
+        content_hash: 1b079f42ed8d25a9eee75a4797af0d5a4f4213d4a41f578425f6011ad8528580
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle"]
+        note: "2.3.5 MPG Handle [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0043
+        content_hash: c832866681f078a629bdc0ff98fd717e243088980b9f751b06d1cde5dafee737
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.1 MPG wiring diagram (4-wire type - differential output signal)"]
+        note: "2.3.5.1 MPG wiring diagram (4-wire type - differential outpu [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0044
+        content_hash: 017841d7b9ef630e52bcc16b014d6bacdb546eeae2450d383c71bd2b7c6a6ec7
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.2 MPG wiring diagram (6-wire type - differential output signal)"]
+        note: "2.3.5.2 MPG wiring diagram (6-wire type - differential outpu [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0045
+        content_hash: dda03ff7ad9f2425e8d7554efac2390ba596d35f3b82493b079ae3e405abb4be
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.3 MPG wiring diagram(4-wire type - NPN output signal)"]
+        note: "2.3.5.3 MPG wiring diagram(4-wire type - NPN output signal) [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0046
+        content_hash: 857095d01d336003d2b3aca99955f2580eb6b44f66ed8deee8191f49bf186049
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.4 MPG wiring diagram (4-wire type - PNP output signal)"]
+        note: "2.3.5.4 MPG wiring diagram (4-wire type - PNP output signal) [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0047
+        content_hash: 2f78ba374cdbf52968af6b2fe0344ecdc703e8d8245a8a14f6e4c75db7dea093
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.5 MPG wiring diagram (6-wire - NPN output)"]
+        note: "2.3.5.5 MPG wiring diagram (6-wire - NPN output) [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0048
+        content_hash: dda8ccc8d4d8ed8c7754ae2389f95b3abb377acc075d368fad4dade9f11a16bd
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.6 MPG wiring diagram (6-wire - PNP output)"]
+        note: "2.3.5.6 MPG wiring diagram (6-wire - PNP output) [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0050
+        content_hash: c9ba8c26ad7a5e59345e119686ad3135744e9de9f0b7d8446933952e0dd87b99
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.7 MPG pendant with EMG button"]
+        note: "2.3.5.7 MPG pendant with EMG button [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0051
+        content_hash: f713cb70a3c3b55301e3381deae9c9798e9ce0a6423226477aeff254386ee73c
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.7 MPG pendant with EMG button"]
+        note: "2.3.5.7 MPG pendant with EMG button [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0052
+        content_hash: a7939a0228af849d3fb2ed16d7c9600e00d4179d40a81fe8882f34a07c1cccdf
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.7 MPG pendant with EMG button"]
+        note: "2.3.5.7 MPG pendant with EMG button [parameter; scope: installation, configuration]"
+    acceptable: []
+  - id: D17
+    question: "Cách xác định tâm phôi bằng 4 điểm trên F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "van_hanh"]
+    expected_intent: ["guide.operation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0241
+        content_hash: 4963eeaad06db224dda5cd126364c1c398813905e4908ffac256b100ff4e75e8
+        section_path: ["4.4 Offset screen", "4.4.3 Quickly determine the center coordinates for a 3-point or 4-point workpiece"]
+        note: "4.4.3 Quickly determine the center coordinates for a 3-point [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0242
+        content_hash: abf320f14f6db89f779ad2accf022e9599680f72e3c47527bb424113736a3aa6
+        section_path: ["4.4 Offset screen", "4.4.3 Quickly determine the center coordinates for a 3-point or 4-point workpiece"]
+        note: "4.4.3 Quickly determine the center coordinates for a 3-point [procedure; scope: operation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0233
+        content_hash: b0423b62825da533151037c58c117806186a8cd584e97169f650de9d1e626ccb
+        section_path: ["4.4 Offset screen"]
+        note: "4.4 Offset screen [overview; scope: operation]"
+      - chunk_key: f54_operation_v02:B0234
+        content_hash: 7cb98c6e0af29dbd596e9d5a1b1db28abf4e9cbb59e7b24284d6ffc55ec12fcb
+        section_path: ["4.4 Offset screen"]
+        note: "4.4 Offset screen [figure; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0235
+        content_hash: 2fefac2b96ff7581fa390edefc89100495b8362d8c1a426ef9915c02f49e94ad
+        section_path: ["4.4 Offset screen"]
+        note: "4.4 Offset screen [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0236
+        content_hash: ad08c41d065542aa4f33860cedbec3d904712f3264829eec8003f0528e6a6cf4
+        section_path: ["4.4 Offset screen", "4.4.1 Manual data input"]
+        note: "4.4.1 Manual data input [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0238
+        content_hash: bafdd940dd3655712f8af244df7cac4fb06de05463a5599f163cd90943dd8ede
+        section_path: ["4.4 Offset screen", "4.4.2 Assign the coordinates and auxiliary coordinates to the specified coordinate system"]
+        note: "4.4.2 Assign the coordinates and auxiliary coordinates to th [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0239
+        content_hash: 92dc05357f6a143f0a8ff0eee70c654d81b18e0e16911e3fdf9520328771adac
+        section_path: ["4.4 Offset screen", "4.4.2 Assign the coordinates and auxiliary coordinates to the specified coordinate system"]
+        note: "4.4.2 Assign the coordinates and auxiliary coordinates to th [overview; scope: operation]"
+      - chunk_key: f54_operation_v02:B0241
+        content_hash: 4963eeaad06db224dda5cd126364c1c398813905e4908ffac256b100ff4e75e8
+        section_path: ["4.4 Offset screen", "4.4.3 Quickly determine the center coordinates for a 3-point or 4-point workpiece"]
+        note: "4.4.3 Quickly determine the center coordinates for a 3-point [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0242
+        content_hash: abf320f14f6db89f779ad2accf022e9599680f72e3c47527bb424113736a3aa6
+        section_path: ["4.4 Offset screen", "4.4.3 Quickly determine the center coordinates for a 3-point or 4-point workpiece"]
+        note: "4.4.3 Quickly determine the center coordinates for a 3-point [procedure; scope: operation]"
+  - id: D18
+    question: "Làm sao chạy mô phỏng đường chạy dao trước khi gia công?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "van_hanh", "khong_model"]
+    expected_intent: ["guide.operation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0247
+        content_hash: 0c7538e5e8099b773fd7bed93ec62e4c3579b355060a233250dc95eb1bd18c53
+        section_path: ["4.5 Monitor screen", "4.5.1 Toolpath simulation"]
+        note: "4.5.1 Toolpath simulation [procedure; scope: operation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0244
+        content_hash: 2428241e44c67f75ef05f2af64698691e1166646630b925611bd0577d7619b01
+        section_path: ["4.5 Monitor screen"]
+        note: "4.5 Monitor screen [overview; scope: operation]"
+      - chunk_key: f54_operation_v02:B0245
+        content_hash: ed19225b008af745ce70a4eb1d0c52673bde63dd95a494ff3290c9bbed89043f
+        section_path: ["4.5 Monitor screen"]
+        note: "4.5 Monitor screen [figure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0246
+        content_hash: 868de1c1ddd64527bb367dcbc27228a570ab9863940a21e5ebc603aac258280e
+        section_path: ["4.5 Monitor screen"]
+        note: "4.5 Monitor screen [procedure; scope: operation]"
+  - id: D19
+    question: "Chào shop, cảm ơn nhé"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "chao_hoi"]
+    expected_intent: ["other.chitchat"]
+    expected_route: chitchat
+    expected: []
+    acceptable: []
+  - id: D20
+    question: "Bù rơ cơ khí cho trục trên F54 cài thế nào?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "cau_hinh"]
+    expected_intent: ["guide.configuration"]
+    expected:
+      - chunk_key: f54_operation_v02:B0180
+        content_hash: 38fc9e010a2450edf21e2c1023aaa5ce3378f82bf970f8817ca4a62f845e4d5a
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.6 Backlash compensation - Without load (G00)"]
+        note: "2.6.6 Backlash compensation - Without load (G00) [figure; scope: installation]"
+      - chunk_key: f54_operation_v02:B0181
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.6 Backlash compensation - Without load (G00)"]
+        note: "2.6.6 Backlash compensation - Without load (G00) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0182
+        content_hash: e81ca7dc6021f7aa008a2d7cccbc5710a5822792d4a07581d01936e163aa6d28
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.6 Backlash compensation - Without load (G00)"]
+        note: "2.6.6 Backlash compensation - Without load (G00) [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0184
+        content_hash: b5b2a25bf864913ac0b701d1ef5180e6b45f33890535c0acf7f9a33b16cb0217
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.7 Backlash compensation - With load (G01)"]
+        note: "2.6.7 Backlash compensation - With load (G01) [figure; scope: installation]"
+      - chunk_key: f54_operation_v02:B0185
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.7 Backlash compensation - With load (G01)"]
+        note: "2.6.7 Backlash compensation - With load (G01) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0186
+        content_hash: c0fef9278c4c947646e42ea7a8ceac3b47608ef0232316d4705dd75658b3331c
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.7 Backlash compensation - With load (G01)"]
+        note: "2.6.7 Backlash compensation - With load (G01) [parameter; scope: installation, configuration]"
+    acceptable: []
+  - id: D21
+    question: "Khách hỏi tham số #12100 trên F54 là gì"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "cau_hinh", "ma"]
+    expected_intent: ["guide.configuration"]
+    expected:
+      - chunk_key: f54_operation_v02:B0153
+        content_hash: 7b54ff291b4c21dddf23a24d427ba72ddc2232afc5d00aea94918dd7e2948911
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.17 Homing Feedrate 2nd"]
+        note: "2.6.4.17 Homing Feedrate 2nd [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0154
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.17 Homing Feedrate 2nd"]
+        note: "2.6.4.17 Homing Feedrate 2nd [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0155
+        content_hash: 185769f659b096cab9e4684f72c60d4543720046082cdcc1925fb61e702a34d4
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.17 Homing Feedrate 2nd"]
+        note: "2.6.4.17 Homing Feedrate 2nd [parameter; scope: installation, configuration]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0287
+        content_hash: 74c7ebdad253a0ca6b94bb41a73c919cd7628d87cf170e3c2dbb3c563ead4517
+        section_path: ["PART 5 PARAMETERS TABLE", "5.1 Axis parameters"]
+        note: "5.1 Axis parameters [parameter; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0288
+        content_hash: e004579e72eef8f8ae7a09f22f478f5b91876350f5f122c88f9bf2efc2197a6b
+        section_path: ["PART 5 PARAMETERS TABLE", "5.1 Axis parameters"]
+        note: "5.1 Axis parameters [parameter; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0289
+        content_hash: e1e7b2e5f520de754194dac18124cf73844f628d88c97bf5acbe5bfdde0a7b62
+        section_path: ["PART 5 PARAMETERS TABLE", "5.1 Axis parameters"]
+        note: "5.1 Axis parameters [parameter; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0290
+        content_hash: c0063369bc354dc7949e4945212c82bdb4edd94baf6dba39861fae3bc920e3df
+        section_path: ["PART 5 PARAMETERS TABLE", "5.1 Axis parameters"]
+        note: "5.1 Axis parameters [parameter; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0291
+        content_hash: 82b78d40b96a02e666f84f40726f359498ecc669d066727dc21e37bb457534c3
+        section_path: ["PART 5 PARAMETERS TABLE", "5.1 Axis parameters"]
+        note: "5.1 Axis parameters [parameter; scope: operation, configuration]"
+  - id: D22
+    question: "Tham số M1950 trên F54 dùng để làm gì"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "cau_hinh", "ma"]
+    expected_intent: ["guide.configuration", "guide.operation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0193
+        content_hash: c6e6cdafa141190039965408d68a311d97bb1e7129d018a95e1ca08c17b1ddd5
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.2 Workpiece homing"]
+        note: "3.2 Workpiece homing [figure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0194
+        content_hash: 55b7cf7ecdf223ae486735264aebce921949f6306f19759416be4d03239eab1f
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.2 Workpiece homing"]
+        note: "3.2 Workpiece homing [procedure; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0195
+        content_hash: f652085239b33d4582d53ac145311b95c0389a2671cd3ec978f8450bf7207816
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.2 Workpiece homing"]
+        note: "3.2 Workpiece homing [parameter; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0196
+        content_hash: f760e9886d33016bdcfd7b3e8a0e672c928023d110dd0d7828a60f9679991c51
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.2 Workpiece homing"]
+        note: "3.2 Workpiece homing [procedure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0197
+        content_hash: be1c79f8378aa3a8c46715c793ec9d1784110bf006be00b12b9c9e80d621069d
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.2 Workpiece homing"]
+        note: "3.2 Workpiece homing [procedure; scope: operation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0294
+        content_hash: 5aafef23084bd607b206aad400cec55af9e2dd55c78794b01861c0f0e213bef0
+        section_path: ["PART 5 PARAMETERS TABLE", "5.3 General parameters"]
+        note: "5.3 General parameters [parameter; scope: operation, configuration]"
+      - chunk_key: f54_operation_v02:B0295
+        content_hash: c747bc3ca4d5b6de67ac454f9ced768fc3ee872ac8314aad3b2cc78ac716c415
+        section_path: ["PART 5 PARAMETERS TABLE", "5.3 General parameters"]
+        note: "5.3 General parameters [parameter; scope: operation, configuration]"
+  - id: D23
+    question: "Hướng dẫn khách đấu biến tần điều khiển tốc độ spindle bằng analog 0-10V cho F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "dau_day"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0071
+        content_hash: 54b32a49afdbc84010ea0fbfec14200a8fd547124b4cc4b571d1172b5c7e5dbc
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram", "2.4.7 Analog signal wiring diagram for the inverter", "2.4.7.1 Analog signal connection diagram to the inverter using 0-10V voltage"]
+        note: "2.4.7.1 Analog signal connection diagram to the inverter usi [wiring; scope: installation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0070
+        content_hash: acb6f9e4e0c87fa036336fe843fb3e1b0027cbe9993ece573ea4eaa04b3f2b01
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram", "2.4.7 Analog signal wiring diagram for the inverter"]
+        note: "2.4.7 Analog signal wiring diagram for the inverter [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0071
+        content_hash: 54b32a49afdbc84010ea0fbfec14200a8fd547124b4cc4b571d1172b5c7e5dbc
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram", "2.4.7 Analog signal wiring diagram for the inverter", "2.4.7.1 Analog signal connection diagram to the inverter using 0-10V voltage"]
+        note: "2.4.7.1 Analog signal connection diagram to the inverter usi [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0072
+        content_hash: 2278de100f9746bf87d8cff62a6b599d6b195cd67934450c27ede5a4f3583cf9
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram", "2.4.7 Analog signal wiring diagram for the inverter", "2.4.7.2 Analog signal connection diagram to the inverter using 0-20mA current"]
+        note: "2.4.7.2 Analog signal connection diagram to the inverter usi [wiring; scope: installation]"
+  - id: D24
+    question: "Đấu tín hiệu Y41 SP-FW cho spindle chạy thuận trên F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "dau_day", "ma"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0062
+        content_hash: 417ab5c945eb57a5074e3d96e82a312fc2c2248bcc6db1ee466e3f98c67cd47e
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram", "2.4.2 Y41 output signal (SP-FW)"]
+        note: "2.4.2 Y41 output signal (SP-FW) [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0063
+        content_hash: deedd88ea2c82c6223c615566994291ef8670193562b740359012db8594e02dd
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram", "2.4.2 Y41 output signal (SP-FW)"]
+        note: "2.4.2 Y41 output signal (SP-FW) [wiring; scope: installation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0057
+        content_hash: f32fce82c6f19e39080cd98882d989e0e688d9f6ff7b6a64d0bb1ed8e2220caf
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram"]
+        note: "2.4 Output signal wiring diagram [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0058
+        content_hash: ae35e4f187d5a68a7a2470dad32421e80114c006ba669e562a2b5c23f42371fd
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram"]
+        note: "2.4 Output signal wiring diagram [table; scope: installation]"
+      - chunk_key: f54_operation_v02:B0059
+        content_hash: 170ccc5390a1b2941f6e4779b8d78f7bb5f21889325704429cbbf0e35b8f6caa
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram"]
+        note: "2.4 Output signal wiring diagram [wiring; scope: installation]"
+  - id: D25
+    question: "Khách báo spindle F54 không quay, cần kiểm tra đấu dây những gì?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "loi", "dau_day"]
+    expected_intent: ["troubleshoot.error", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0062
+        content_hash: 417ab5c945eb57a5074e3d96e82a312fc2c2248bcc6db1ee466e3f98c67cd47e
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram", "2.4.2 Y41 output signal (SP-FW)"]
+        note: "2.4.2 Y41 output signal (SP-FW) [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0063
+        content_hash: deedd88ea2c82c6223c615566994291ef8670193562b740359012db8594e02dd
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram", "2.4.2 Y41 output signal (SP-FW)"]
+        note: "2.4.2 Y41 output signal (SP-FW) [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0070
+        content_hash: acb6f9e4e0c87fa036336fe843fb3e1b0027cbe9993ece573ea4eaa04b3f2b01
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram", "2.4.7 Analog signal wiring diagram for the inverter"]
+        note: "2.4.7 Analog signal wiring diagram for the inverter [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0071
+        content_hash: 54b32a49afdbc84010ea0fbfec14200a8fd547124b4cc4b571d1172b5c7e5dbc
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram", "2.4.7 Analog signal wiring diagram for the inverter", "2.4.7.1 Analog signal connection diagram to the inverter using 0-10V voltage"]
+        note: "2.4.7.1 Analog signal connection diagram to the inverter usi [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0072
+        content_hash: 2278de100f9746bf87d8cff62a6b599d6b195cd67934450c27ede5a4f3583cf9
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram", "2.4.7 Analog signal wiring diagram for the inverter", "2.4.7.2 Analog signal connection diagram to the inverter using 0-20mA current"]
+        note: "2.4.7.2 Analog signal connection diagram to the inverter usi [wiring; scope: installation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0041
+        content_hash: cf4f399ac25a67af05069acc9a5745b14bb34dd8c3f847c61c937971074bc481
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.4 Alarm signal for axes (X,Y,Z,A), spindle", "2.3.4.3 Spindle alarm wiring diagram (NPN, PNP)"]
+        note: "2.3.4.3 Spindle alarm wiring diagram (NPN, PNP) [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0057
+        content_hash: f32fce82c6f19e39080cd98882d989e0e688d9f6ff7b6a64d0bb1ed8e2220caf
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram"]
+        note: "2.4 Output signal wiring diagram [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0058
+        content_hash: ae35e4f187d5a68a7a2470dad32421e80114c006ba669e562a2b5c23f42371fd
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram"]
+        note: "2.4 Output signal wiring diagram [table; scope: installation]"
+      - chunk_key: f54_operation_v02:B0059
+        content_hash: 170ccc5390a1b2941f6e4779b8d78f7bb5f21889325704429cbbf0e35b8f6caa
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram"]
+        note: "2.4 Output signal wiring diagram [wiring; scope: installation]"
+  - id: D26
+    question: "Cách đấu board I/O link 08_RLTR với bộ điều khiển F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "dau_day"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0075
+        content_hash: c3fd27d027e2216e284359c257c2cf0cfcfd9e6111f317ff9167e048a9c0f80b
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.5 I/O link board connection", "2.5.2 I/O Link 08_RLTR board wiring diagram"]
+        note: "2.5.2 I/O Link 08_RLTR board wiring diagram [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0076
+        content_hash: 3039c9f13ecb9da276710642fb0bfa9cd0c990da43a092d6b560d0b3f9d7dd85
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.5 I/O link board connection", "2.5.2 I/O Link 08_RLTR board wiring diagram", "2.5.2.1 I/O link 08_RLTR board wiring diagram (LOW INPUT)"]
+        note: "2.5.2.1 I/O link 08_RLTR board wiring diagram (LOW INPUT) [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0077
+        content_hash: 748977797626d2961c7f868bb57c653bebf4f0bcb0d1b955240ac6685db96224
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.5 I/O link board connection", "2.5.2 I/O Link 08_RLTR board wiring diagram", "2.5.2.2 I/O link 08_RLTR board wiring diagram (HIGH INPUT)"]
+        note: "2.5.2.2 I/O link 08_RLTR board wiring diagram (HIGH INPUT) [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0078
+        content_hash: b37521cb2e0724a886bd4d888cf98c0ec4b82a38011d39f273a71d645eb98cca
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.5 I/O link board connection", "2.5.2 I/O Link 08_RLTR board wiring diagram", "2.5.2.3 I/O link 08_RLTR board output signal"]
+        note: "2.5.2.3 I/O link 08_RLTR board output signal [figure; scope: installation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0073
+        content_hash: 26ec873043d1a06ae4487c5173a7fbad2ed4cd330a243036075e679d6e4dd52c
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.5 I/O link board connection"]
+        note: "2.5 I/O link board connection [overview; scope: installation]"
+  - id: D27
+    question: "Bật tắt giới hạn mềm từng trục F54 ở tham số nào"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "cau_hinh"]
+    expected_intent: ["guide.configuration"]
+    expected:
+      - chunk_key: f54_operation_v02:B0094
+        content_hash: 4ff949e4987287bae5827302aec0284df0928d22624331ae089d78b32d77fe62
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.3 Software limit for axes (X,Y,Z,A)"]
+        note: "2.6.4.3 Software limit for axes (X,Y,Z,A) [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0095
+        content_hash: ccbd9abdfcd5d23cf55fa664a4d2b28bf23504e3edb066ab885a70b01236bd92
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.3 Software limit for axes (X,Y,Z,A)"]
+        note: "2.6.4.3 Software limit for axes (X,Y,Z,A) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0096
+        content_hash: dde85d8d2cb5817e368de5b3693c206b6dbbe9ae02aeec1a5b28d7cb2a16e526
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.3 Software limit for axes (X,Y,Z,A)"]
+        note: "2.6.4.3 Software limit for axes (X,Y,Z,A) [overview; scope: installation, configuration]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0161
+        content_hash: bbf6e9acae7d78e1432d0f8959cdd52d131be26e02a08a252dd1a7ac2198e48e
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)"]
+        note: "2.6.4.19 Machine travel limit setting (Soft Limit) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0162
+        content_hash: 761f62bfb4325d5f0b86af76c6d5f157ace8dfd5f7b41daa18c5283771c284c0
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)"]
+        note: "2.6.4.19 Machine travel limit setting (Soft Limit) [overview; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0164
+        content_hash: da0600de4fbbc26658561e420768614d791d2b6a3a54de19dd1ee27aa5f2a9af
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)", "2.6.4.19.1 Travel limit in negative direction"]
+        note: "2.6.4.19.1 Travel limit in negative direction [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0165
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)", "2.6.4.19.1 Travel limit in negative direction"]
+        note: "2.6.4.19.1 Travel limit in negative direction [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0166
+        content_hash: c8aeefeb91bb56ad3b15cce02b96af13d1aa935eeabb803e6278000437b56e93
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)", "2.6.4.19.1 Travel limit in negative direction"]
+        note: "2.6.4.19.1 Travel limit in negative direction [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0168
+        content_hash: 694dd67217f95db1c8d22672ba2fec4eb0418380c813d79344aa25b66595399b
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)", "2.6.4.19.2 Travel limit in positive direction"]
+        note: "2.6.4.19.2 Travel limit in positive direction [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0169
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)", "2.6.4.19.2 Travel limit in positive direction"]
+        note: "2.6.4.19.2 Travel limit in positive direction [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0170
+        content_hash: 94433eb2f1eadb6a904829b3e2fa5271d842a554620e2c03b9aefc201125bf5f
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)", "2.6.4.19.2 Travel limit in positive direction"]
+        note: "2.6.4.19.2 Travel limit in positive direction [parameter; scope: installation, configuration]"
+  - id: D28
+    question: "Đổi kiểu phát xung từ Pul/Dir sang CW/CCW trên F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "cau_hinh"]
+    expected_intent: ["guide.configuration"]
+    expected:
+      - chunk_key: f54_operation_v02:B0106
+        content_hash: dfb10b67ff7186b89757d7d2269f002a6aaa7b58ab14a39bde0b87b2fc37c1f4
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.6 Pulse generation type for axes (X,Y,Z,A)"]
+        note: "2.6.4.6 Pulse generation type for axes (X,Y,Z,A) [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0107
+        content_hash: ccbd9abdfcd5d23cf55fa664a4d2b28bf23504e3edb066ab885a70b01236bd92
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.6 Pulse generation type for axes (X,Y,Z,A)"]
+        note: "2.6.4.6 Pulse generation type for axes (X,Y,Z,A) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0108
+        content_hash: 1af9d6e213c62dc605b96d5a7057db65ddf3f65ef247eeb3e5e911ebc70cc29d
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.6 Pulse generation type for axes (X,Y,Z,A)"]
+        note: "2.6.4.6 Pulse generation type for axes (X,Y,Z,A) [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0109
+        content_hash: 753796ddec664ca9e8488ab5d7143e6e68e8dee528e474d3c3232bf6205cb65b
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.6 Pulse generation type for axes (X,Y,Z,A)"]
+        note: "2.6.4.6 Pulse generation type for axes (X,Y,Z,A) [figure; scope: installation, configuration]"
+    acceptable: []
+  - id: D29
+    question: "Cài gia tốc trục khi gia công G01 trên F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "cau_hinh"]
+    expected_intent: ["guide.configuration"]
+    expected:
+      - chunk_key: f54_operation_v02:B0119
+        content_hash: 86bb3b90e9f491d5090b81ca7c5428657d0a14db8d60948cb68d7a7d8e8e6bf0
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.9 Axis acceleraion for machining (G01)"]
+        note: "2.6.4.9 Axis acceleraion for machining (G01) [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0120
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.9 Axis acceleraion for machining (G01)"]
+        note: "2.6.4.9 Axis acceleraion for machining (G01) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0121
+        content_hash: 49239228e170342723635cb998b0b5509b2cd3133ebf029685d7fea7934e97dc
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.9 Axis acceleraion for machining (G01)"]
+        note: "2.6.4.9 Axis acceleraion for machining (G01) [parameter; scope: installation, configuration]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0115
+        content_hash: 643b5e221b0e10c9508238a48fa542d1de0524f2a88c301882ded16a43aa0226
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.8 Axis acceleration in JOG RAPID (G00)"]
+        note: "2.6.4.8 Axis acceleration in JOG RAPID (G00) [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0116
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.8 Axis acceleration in JOG RAPID (G00)"]
+        note: "2.6.4.8 Axis acceleration in JOG RAPID (G00) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0117
+        content_hash: 01755455fecc5a5c738d14c716437c7e5803ebec39d744fc42267e1a2e70a867
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.8 Axis acceleration in JOG RAPID (G00)"]
+        note: "2.6.4.8 Axis acceleration in JOG RAPID (G00) [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0123
+        content_hash: 987050dc352aa9dd8596043ff76ebefb4d0b0ef3f9fa8086c0d0bb6cd6d31cc6
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.10 Axis acceleration in JOG mode"]
+        note: "2.6.4.10 Axis acceleration in JOG mode [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0124
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.10 Axis acceleration in JOG mode"]
+        note: "2.6.4.10 Axis acceleration in JOG mode [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0125
+        content_hash: 2b9d93e88efc20d2cc4c8c673d4bb2845259e4f31c4571863ecccd50ebff27ff
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.10 Axis acceleration in JOG mode"]
+        note: "2.6.4.10 Axis acceleration in JOG mode [parameter; scope: installation, configuration]"
+  - id: D30
+    question: "toc do toi da truc khi chay G00 cai o dau tren F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "cau_hinh", "khong_dau"]
+    expected_intent: ["guide.configuration"]
+    expected:
+      - chunk_key: f54_operation_v02:B0135
+        content_hash: 90ea5690efa7346c730f2df2a0250c4e3d23dece27d4e4f4384348cfad06236a
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.13 Axis max speed in G00 program"]
+        note: "2.6.4.13 Axis max speed in G00 program [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0136
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.13 Axis max speed in G00 program"]
+        note: "2.6.4.13 Axis max speed in G00 program [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0137
+        content_hash: e23bc84199dabfe7408bb7b4d347363359c3650be50c8c9b1186690a3f798a9b
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.13 Axis max speed in G00 program"]
+        note: "2.6.4.13 Axis max speed in G00 program [parameter; scope: installation, configuration]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0127
+        content_hash: 9d01d866173227020d3748ac369c7f42dd01fee1e70b19e78bbdbcb6701d1890
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.11 Machine speed in JOG RAPID mode"]
+        note: "2.6.4.11 Machine speed in JOG RAPID mode [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0128
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.11 Machine speed in JOG RAPID mode"]
+        note: "2.6.4.11 Machine speed in JOG RAPID mode [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0129
+        content_hash: ca6b2557f0e9724683e1c9c990f8d367ad45d9c9d5d57c3eb803a54d5c7f630c
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.11 Machine speed in JOG RAPID mode"]
+        note: "2.6.4.11 Machine speed in JOG RAPID mode [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0131
+        content_hash: 11de1cb3b9d3ee99937542921ba24e2627358fca0ad9dbfd82baba7696546759
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.12 Axis max speed in JOG mode"]
+        note: "2.6.4.12 Axis max speed in JOG mode [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0132
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.12 Axis max speed in JOG mode"]
+        note: "2.6.4.12 Axis max speed in JOG mode [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0133
+        content_hash: 988b8b89ae5ef8ff82c09ae064909da3d733ebf1925db16c6675ee92b587816a
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.12 Axis max speed in JOG mode"]
+        note: "2.6.4.12 Axis max speed in JOG mode [parameter; scope: installation, configuration]"
+  - id: D31
+    question: "Mật khẩu để vào cài tham số trên F54 là gì?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "cau_hinh"]
+    expected_intent: ["guide.configuration"]
+    expected:
+      - chunk_key: f54_operation_v02:B0256
+        content_hash: ea3d0d6d06d5d0c60d29ffe5327c7cd08eb92fd5c5c3bac0b29ceb683b1ea51e
+        section_path: ["4.8 Paramters setting"]
+        note: "4.8 Paramters setting [procedure; scope: operation, configuration]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0086
+        content_hash: 5ce432acf5944ab2b0c8fa05cf9c4bc141bd848877b9156cbfdfd4b0e4445e33
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.1 Enable/Disabe axis (X,Y,Z,A)"]
+        note: "2.6.4.1 Enable/Disabe axis (X,Y,Z,A) [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0087
+        content_hash: ccbd9abdfcd5d23cf55fa664a4d2b28bf23504e3edb066ab885a70b01236bd92
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.1 Enable/Disabe axis (X,Y,Z,A)"]
+        note: "2.6.4.1 Enable/Disabe axis (X,Y,Z,A) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0088
+        content_hash: 92d7079aa5f9c3b9edb431be0fa7eff3a86ea014ebde2ad2c7a0caf14aaf670a
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.1 Enable/Disabe axis (X,Y,Z,A)"]
+        note: "2.6.4.1 Enable/Disabe axis (X,Y,Z,A) [overview; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0090
+        content_hash: 1843092876399745993f7227b28318c7203d24a4b78cecde326a6cc0fe480399
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.2 Motor rotation direction for axes (X,Y,Z,A)"]
+        note: "2.6.4.2 Motor rotation direction for axes (X,Y,Z,A) [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0091
+        content_hash: ccbd9abdfcd5d23cf55fa664a4d2b28bf23504e3edb066ab885a70b01236bd92
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.2 Motor rotation direction for axes (X,Y,Z,A)"]
+        note: "2.6.4.2 Motor rotation direction for axes (X,Y,Z,A) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0092
+        content_hash: b0e5e6960684c4168cb855df0a732166b5167565813914fc4fbcfb5a41600e99
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.2 Motor rotation direction for axes (X,Y,Z,A)"]
+        note: "2.6.4.2 Motor rotation direction for axes (X,Y,Z,A) [overview; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0094
+        content_hash: 4ff949e4987287bae5827302aec0284df0928d22624331ae089d78b32d77fe62
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.3 Software limit for axes (X,Y,Z,A)"]
+        note: "2.6.4.3 Software limit for axes (X,Y,Z,A) [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0095
+        content_hash: ccbd9abdfcd5d23cf55fa664a4d2b28bf23504e3edb066ab885a70b01236bd92
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.3 Software limit for axes (X,Y,Z,A)"]
+        note: "2.6.4.3 Software limit for axes (X,Y,Z,A) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0096
+        content_hash: dde85d8d2cb5817e368de5b3693c206b6dbbe9ae02aeec1a5b28d7cb2a16e526
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.3 Software limit for axes (X,Y,Z,A)"]
+        note: "2.6.4.3 Software limit for axes (X,Y,Z,A) [overview; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0098
+        content_hash: 12fc629762248ed37c45a40904cb758554d40852a917cf7d434fcad4b0ff1952
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.4 Axes direction when moving to home position"]
+        note: "2.6.4.4 Axes direction when moving to home position [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0099
+        content_hash: ccbd9abdfcd5d23cf55fa664a4d2b28bf23504e3edb066ab885a70b01236bd92
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.4 Axes direction when moving to home position"]
+        note: "2.6.4.4 Axes direction when moving to home position [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0100
+        content_hash: 2c735c39d57aab734bf3630009f2e8fc59e26686ae13edcc0c125d34a56115b1
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.4 Axes direction when moving to home position"]
+        note: "2.6.4.4 Axes direction when moving to home position [overview; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0102
+        content_hash: d507aa07dbffe74bfba752c064f144a58e25d9851fc23b7ce47532da7a107d42
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.5 Axis movement type (X,Y,Z,A)"]
+        note: "2.6.4.5 Axis movement type (X,Y,Z,A) [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0103
+        content_hash: ccbd9abdfcd5d23cf55fa664a4d2b28bf23504e3edb066ab885a70b01236bd92
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.5 Axis movement type (X,Y,Z,A)"]
+        note: "2.6.4.5 Axis movement type (X,Y,Z,A) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0104
+        content_hash: 5a87800ce823d9917a4763763f1ac3576f651236055047bcd8ac1bf68b6122cc
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.5 Axis movement type (X,Y,Z,A)"]
+        note: "2.6.4.5 Axis movement type (X,Y,Z,A) [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0106
+        content_hash: dfb10b67ff7186b89757d7d2269f002a6aaa7b58ab14a39bde0b87b2fc37c1f4
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.6 Pulse generation type for axes (X,Y,Z,A)"]
+        note: "2.6.4.6 Pulse generation type for axes (X,Y,Z,A) [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0107
+        content_hash: ccbd9abdfcd5d23cf55fa664a4d2b28bf23504e3edb066ab885a70b01236bd92
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.6 Pulse generation type for axes (X,Y,Z,A)"]
+        note: "2.6.4.6 Pulse generation type for axes (X,Y,Z,A) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0108
+        content_hash: 1af9d6e213c62dc605b96d5a7057db65ddf3f65ef247eeb3e5e911ebc70cc29d
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.6 Pulse generation type for axes (X,Y,Z,A)"]
+        note: "2.6.4.6 Pulse generation type for axes (X,Y,Z,A) [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0109
+        content_hash: 753796ddec664ca9e8488ab5d7143e6e68e8dee528e474d3c3232bf6205cb65b
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.6 Pulse generation type for axes (X,Y,Z,A)"]
+        note: "2.6.4.6 Pulse generation type for axes (X,Y,Z,A) [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0111
+        content_hash: 29c2a73afa9c67037fe60e512155d3e5b0f46a7262a2a10f44f94d3c6cdbc252
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.7 Electronic gear box setting"]
+        note: "2.6.4.7 Electronic gear box setting [overview; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0112
+        content_hash: 52b9fcf2a4b1764e023f359a66d831bca1ce4797bd457d2b256fe9df94e51d64
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.7 Electronic gear box setting"]
+        note: "2.6.4.7 Electronic gear box setting [overview; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0113
+        content_hash: 05f8266acb1bc70b4b974438aa50b5a382e8cc5004fc51300f7436428fab37c2
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.7 Electronic gear box setting"]
+        note: "2.6.4.7 Electronic gear box setting [overview; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0115
+        content_hash: 643b5e221b0e10c9508238a48fa542d1de0524f2a88c301882ded16a43aa0226
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.8 Axis acceleration in JOG RAPID (G00)"]
+        note: "2.6.4.8 Axis acceleration in JOG RAPID (G00) [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0116
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.8 Axis acceleration in JOG RAPID (G00)"]
+        note: "2.6.4.8 Axis acceleration in JOG RAPID (G00) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0117
+        content_hash: 01755455fecc5a5c738d14c716437c7e5803ebec39d744fc42267e1a2e70a867
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.8 Axis acceleration in JOG RAPID (G00)"]
+        note: "2.6.4.8 Axis acceleration in JOG RAPID (G00) [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0119
+        content_hash: 86bb3b90e9f491d5090b81ca7c5428657d0a14db8d60948cb68d7a7d8e8e6bf0
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.9 Axis acceleraion for machining (G01)"]
+        note: "2.6.4.9 Axis acceleraion for machining (G01) [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0120
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.9 Axis acceleraion for machining (G01)"]
+        note: "2.6.4.9 Axis acceleraion for machining (G01) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0121
+        content_hash: 49239228e170342723635cb998b0b5509b2cd3133ebf029685d7fea7934e97dc
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.9 Axis acceleraion for machining (G01)"]
+        note: "2.6.4.9 Axis acceleraion for machining (G01) [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0123
+        content_hash: 987050dc352aa9dd8596043ff76ebefb4d0b0ef3f9fa8086c0d0bb6cd6d31cc6
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.10 Axis acceleration in JOG mode"]
+        note: "2.6.4.10 Axis acceleration in JOG mode [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0124
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.10 Axis acceleration in JOG mode"]
+        note: "2.6.4.10 Axis acceleration in JOG mode [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0125
+        content_hash: 2b9d93e88efc20d2cc4c8c673d4bb2845259e4f31c4571863ecccd50ebff27ff
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.10 Axis acceleration in JOG mode"]
+        note: "2.6.4.10 Axis acceleration in JOG mode [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0127
+        content_hash: 9d01d866173227020d3748ac369c7f42dd01fee1e70b19e78bbdbcb6701d1890
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.11 Machine speed in JOG RAPID mode"]
+        note: "2.6.4.11 Machine speed in JOG RAPID mode [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0128
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.11 Machine speed in JOG RAPID mode"]
+        note: "2.6.4.11 Machine speed in JOG RAPID mode [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0129
+        content_hash: ca6b2557f0e9724683e1c9c990f8d367ad45d9c9d5d57c3eb803a54d5c7f630c
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.11 Machine speed in JOG RAPID mode"]
+        note: "2.6.4.11 Machine speed in JOG RAPID mode [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0131
+        content_hash: 11de1cb3b9d3ee99937542921ba24e2627358fca0ad9dbfd82baba7696546759
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.12 Axis max speed in JOG mode"]
+        note: "2.6.4.12 Axis max speed in JOG mode [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0132
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.12 Axis max speed in JOG mode"]
+        note: "2.6.4.12 Axis max speed in JOG mode [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0133
+        content_hash: 988b8b89ae5ef8ff82c09ae064909da3d733ebf1925db16c6675ee92b587816a
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.12 Axis max speed in JOG mode"]
+        note: "2.6.4.12 Axis max speed in JOG mode [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0135
+        content_hash: 90ea5690efa7346c730f2df2a0250c4e3d23dece27d4e4f4384348cfad06236a
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.13 Axis max speed in G00 program"]
+        note: "2.6.4.13 Axis max speed in G00 program [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0136
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.13 Axis max speed in G00 program"]
+        note: "2.6.4.13 Axis max speed in G00 program [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0137
+        content_hash: e23bc84199dabfe7408bb7b4d347363359c3650be50c8c9b1186690a3f798a9b
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.13 Axis max speed in G00 program"]
+        note: "2.6.4.13 Axis max speed in G00 program [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0139
+        content_hash: a4d1662f2179219abb591609fc84cba04c4d2d18c6899b4b274841b63af2ccb9
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.14 Axis max speed in G01 program"]
+        note: "2.6.4.14 Axis max speed in G01 program [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0140
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.14 Axis max speed in G01 program"]
+        note: "2.6.4.14 Axis max speed in G01 program [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0141
+        content_hash: b8e71b37e0e494ce18a225185b8ca0ad01c411c6cde0e7573baa3c8a94b6eb30
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.14 Axis max speed in G01 program"]
+        note: "2.6.4.14 Axis max speed in G01 program [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0143
+        content_hash: 333cb9133f4b24c6cb638876706052fe7ef4f263c323893fe6b7f58d26b4774a
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.15 Axis homing type"]
+        note: "2.6.4.15 Axis homing type [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0144
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.15 Axis homing type"]
+        note: "2.6.4.15 Axis homing type [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0145
+        content_hash: 30be6e4ce8d5bee1f202f770fc2b9da724395bbbf8c32230149554285b289ca1
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.15 Axis homing type"]
+        note: "2.6.4.15 Axis homing type [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0146
+        content_hash: 25a06757cdaebf8c25d1e00d9b22f68675c335e65dffd4840fa185c44cb21068
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.15 Axis homing type"]
+        note: "2.6.4.15 Axis homing type [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0147
+        content_hash: 8ef7487bb7aa3441298b198bc2438b4c815606ef67c20d11c408992e6a05910d
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.15 Axis homing type"]
+        note: "2.6.4.15 Axis homing type [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0149
+        content_hash: 2a229b77fba310a0370c7bca84c911a3d260870561cbcebad590e4fe5b3537ed
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.16 Homing Feedrate 1st"]
+        note: "2.6.4.16 Homing Feedrate 1st [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0150
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.16 Homing Feedrate 1st"]
+        note: "2.6.4.16 Homing Feedrate 1st [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0151
+        content_hash: 055223fb9dee5e759b43868aea05af1d7ee79a2bd457fb7f8a818ca2a3cb6093
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.16 Homing Feedrate 1st"]
+        note: "2.6.4.16 Homing Feedrate 1st [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0153
+        content_hash: 7b54ff291b4c21dddf23a24d427ba72ddc2232afc5d00aea94918dd7e2948911
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.17 Homing Feedrate 2nd"]
+        note: "2.6.4.17 Homing Feedrate 2nd [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0154
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.17 Homing Feedrate 2nd"]
+        note: "2.6.4.17 Homing Feedrate 2nd [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0155
+        content_hash: 185769f659b096cab9e4684f72c60d4543720046082cdcc1925fb61e702a34d4
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.17 Homing Feedrate 2nd"]
+        note: "2.6.4.17 Homing Feedrate 2nd [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0157
+        content_hash: 8940823554c4e81d39e24068897122242d73a4eb0e63b6ad7bde1fb35b8cefae
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.18 Homing Feedrate 3rd"]
+        note: "2.6.4.18 Homing Feedrate 3rd [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0158
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.18 Homing Feedrate 3rd"]
+        note: "2.6.4.18 Homing Feedrate 3rd [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0159
+        content_hash: 9a14786ebfb4a66a2aac01f5e25bf4c465582585456f6cc292588285ea3f13e8
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.18 Homing Feedrate 3rd"]
+        note: "2.6.4.18 Homing Feedrate 3rd [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0161
+        content_hash: bbf6e9acae7d78e1432d0f8959cdd52d131be26e02a08a252dd1a7ac2198e48e
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)"]
+        note: "2.6.4.19 Machine travel limit setting (Soft Limit) [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0162
+        content_hash: 761f62bfb4325d5f0b86af76c6d5f157ace8dfd5f7b41daa18c5283771c284c0
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)"]
+        note: "2.6.4.19 Machine travel limit setting (Soft Limit) [overview; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0164
+        content_hash: da0600de4fbbc26658561e420768614d791d2b6a3a54de19dd1ee27aa5f2a9af
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)", "2.6.4.19.1 Travel limit in negative direction"]
+        note: "2.6.4.19.1 Travel limit in negative direction [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0165
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)", "2.6.4.19.1 Travel limit in negative direction"]
+        note: "2.6.4.19.1 Travel limit in negative direction [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0166
+        content_hash: c8aeefeb91bb56ad3b15cce02b96af13d1aa935eeabb803e6278000437b56e93
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)", "2.6.4.19.1 Travel limit in negative direction"]
+        note: "2.6.4.19.1 Travel limit in negative direction [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0168
+        content_hash: 694dd67217f95db1c8d22672ba2fec4eb0418380c813d79344aa25b66595399b
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)", "2.6.4.19.2 Travel limit in positive direction"]
+        note: "2.6.4.19.2 Travel limit in positive direction [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0169
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)", "2.6.4.19.2 Travel limit in positive direction"]
+        note: "2.6.4.19.2 Travel limit in positive direction [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0170
+        content_hash: 94433eb2f1eadb6a904829b3e2fa5271d842a554620e2c03b9aefc201125bf5f
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.19 Machine travel limit setting (Soft Limit)", "2.6.4.19.2 Travel limit in positive direction"]
+        note: "2.6.4.19.2 Travel limit in positive direction [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0018
+        content_hash: 8cf7e3db7b10ff81db879e9157c81df7da54fd57be14d6dcc5d4c918472ab7e7
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.4 Homing switch wiring diagram"]
+        note: "2.3.2.4 Homing switch wiring diagram [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0019
+        content_hash: 597bb5927f770ad324ff9bc4cfd846863a704a912db7dc3db73db44cbb5ec1c0
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.4 Homing switch wiring diagram"]
+        note: "2.3.2.4 Homing switch wiring diagram [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0020
+        content_hash: 2654d1bd4c59fed0e3dc2db00387917e496e6093d9a7fb1468ece6d37322e7b7
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.4 Homing switch wiring diagram"]
+        note: "2.3.2.4 Homing switch wiring diagram [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0021
+        content_hash: f713cb70a3c3b55301e3381deae9c9798e9ce0a6423226477aeff254386ee73c
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.4 Homing switch wiring diagram"]
+        note: "2.3.2.4 Homing switch wiring diagram [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0022
+        content_hash: 527f236b2d6b8638284078b6392cf1161f0ec7e21a094e8ea9486b55d81ac466
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.4 Homing switch wiring diagram"]
+        note: "2.3.2.4 Homing switch wiring diagram [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0172
+        content_hash: 9bf79da1a09620c51b3b807c819bca6a212f1eec3f28bfcb6d2c21c20c3a25bc
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter [figure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0173
+        content_hash: a6d974c8f9e5a065bb9ccd0af6aba27a5629a72126624169109661d88dd36edf
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter [parameter; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0174
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter [procedure; scope: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0175
+        content_hash: d2198aafe1963dfed548649aab9b3af56430cea5fee6cbeaeddef78e2fca752f
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter [procedure; scope: installation, operation, maintenance]"
+      - chunk_key: f54_operation_v02:B0177
+        content_hash: af2b928d7d68bfefea2530afa49e2c68b672804cd9244a53757d4b113968dd95
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter [alarm; scope: installation, maintenance]"
+      - chunk_key: f54_operation_v02:B0178
+        content_hash: 992b305e320af091d34a07c6442c0fee9ab6ba86377e29d3c1ebb403ff7371a8
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter [overview; scope: installation]"
+  - id: D32
+    question: "Chế độ MDI dùng thế nào?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "van_hanh", "khong_model"]
+    expected_intent: ["guide.operation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0248
+        content_hash: 285f9d1b479ac303911fb256357eb064953f9cb80c771661e8db6752ee01018b
+        section_path: ["4.5 Monitor screen", "4.5.2 MDI mode"]
+        note: "4.5.2 MDI mode [procedure; scope: operation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0244
+        content_hash: 2428241e44c67f75ef05f2af64698691e1166646630b925611bd0577d7619b01
+        section_path: ["4.5 Monitor screen"]
+        note: "4.5 Monitor screen [overview; scope: operation]"
+      - chunk_key: f54_operation_v02:B0245
+        content_hash: ed19225b008af745ce70a4eb1d0c52673bde63dd95a494ff3290c9bbed89043f
+        section_path: ["4.5 Monitor screen"]
+        note: "4.5 Monitor screen [figure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0246
+        content_hash: 868de1c1ddd64527bb367dcbc27228a570ab9863940a21e5ebc603aac258280e
+        section_path: ["4.5 Monitor screen"]
+        note: "4.5 Monitor screen [procedure; scope: operation]"
+  - id: D33
+    question: "Xem lịch sử báo lỗi trên bộ điều khiển F54 ở đâu"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "loi", "van_hanh"]
+    expected_intent: ["guide.operation", "troubleshoot.error"]
+    expected:
+      - chunk_key: f54_operation_v02:B0251
+        content_hash: da82ce7f0166402b0090dd575838f8d6558ae4598d4aff07dbc2a5f8a0f8fefc
+        section_path: ["4.6 Maintenance screen"]
+        note: "4.6 Maintenance screen [overview; scope: operation]"
+      - chunk_key: f54_operation_v02:B0252
+        content_hash: 06b559fab9915b8013c9d9a36f12cf0953c00756f89d378de5c5aa45fe5dfe7b
+        section_path: ["4.6 Maintenance screen"]
+        note: "4.6 Maintenance screen [figure; scope: operation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0249
+        content_hash: 40a990cba3b300a8a1a5d80278ff63ebfe91b6b819a99973d241ce86d4c38a23
+        section_path: ["4.5 Monitor screen", "4.5.3 Working history"]
+        note: "4.5.3 Working history [procedure; scope: operation]"
+  - id: D34
+    question: "Cách tải dữ liệu PLC vào bộ điều khiển F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "cau_hinh"]
+    expected_intent: ["guide.configuration", "guide.operation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0262
+        content_hash: 5aa447fd134bb4be95f22331555a7537374e5358957709a4995fc13f1f83e80d
+        section_path: ["3.9.2 PLC data loading"]
+        note: "3.9.2 PLC data loading [overview; scope: operation]"
+      - chunk_key: f54_operation_v02:B0263
+        content_hash: f0e1ff1294e26d43eaa6420777b19a496b941d511670cfab55a31ca83c14b4ae
+        section_path: ["3.9.2 PLC data loading"]
+        note: "3.9.2 PLC data loading [table; scope: operation]"
+      - chunk_key: f54_operation_v02:B0264
+        content_hash: 7a9ac66dbb263edd48ff21e8b480c5f8d46bd3a9b84620600772e7ca2a22ce3c
+        section_path: ["3.9.2 PLC data loading"]
+        note: "3.9.2 PLC data loading [procedure; scope: operation, configuration]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0258
+        content_hash: 3f6d43c17c282e19ed6854b814cfcf82cc0f99ab8d929110834772ab41711879
+        section_path: ["4.9 PLC screen"]
+        note: "4.9 PLC screen [overview; scope: operation]"
+      - chunk_key: f54_operation_v02:B0259
+        content_hash: f0dbec2b22101d48da313567834657a19d63f51a46b4452ec8bdd70a6a1b12bf
+        section_path: ["4.9 PLC screen"]
+        note: "4.9 PLC screen [figure; scope: operation]"
+      - chunk_key: f54_operation_v02:B0260
+        content_hash: 0dc30258cc2280eec2a9a2ec1ea66c87b065a52d28ae29e982d27808304472e6
+        section_path: ["4.9 PLC screen"]
+        note: "4.9 PLC screen [procedure; scope: operation]"
+  - id: D35
+    question: "Cổng CN9 trên F54 nối với thiết bị gì"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "dau_day", "ma"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0004
+        content_hash: 12ea88ea1b1f92f82cd0312e8a82de32770a74f630ad618b3a837c94e7754ffe
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.1 Controller I/O ports"]
+        note: "2.1 Controller I/O ports [figure; scope: installation]"
+      - chunk_key: f54_operation_v02:B0005
+        content_hash: f9f6fd384c3f15802bbfa3ffa084c5ffb409771bce99b8a22fdc0da49cd40d44
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.1 Controller I/O ports"]
+        note: "2.1 Controller I/O ports [table; scope: installation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0082
+        content_hash: 5e565d39faaa9f87fef3da5a68bc899922536d23653210f36ff4be7ac904e0ea
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.1 X-Y axis wiring diagram (Pul/Dir)"]
+        note: "2.6.1 X-Y axis wiring diagram (Pul/Dir) [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0083
+        content_hash: 095fe9fd6f46d28a0bba8e1db64ce3c488429fd6cfb06b50abcdebe33ec6c966
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.2 Z-A axis wiring diagram (Pul/Dir)"]
+        note: "2.6.2 Z-A axis wiring diagram (Pul/Dir) [wiring; scope: installation]"
+  - id: D36
+    question: "Đấu nguồn cho bộ điều khiển F86 thế nào"
+    domain: technical_docs
+    models: ["F86"]
+    tags: ["nhan_vien", "dau_day", "f86"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f86_installation_2024-04-25:B0022
+        content_hash: 7f4ee2deddba88b54ddee6dd96047bef9c957092c7f3628da7f3baa37d698c59
+        section_path: ["PART 2", "2.8 POWER CONNECTION"]
+        note: "2.8 POWER CONNECTION [figure; scope: installation]"
+    acceptable: []
+  - id: D37
+    question: "Cổng RS485 I/O link trên F86 đấu thế nào"
+    domain: technical_docs
+    models: ["F86"]
+    tags: ["nhan_vien", "dau_day", "f86"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f86_installation_2024-04-25:B0021
+        content_hash: a6b7ecef8ad457e17eb94898a2bbac12f74ddf6a94ece4388b34ac13439316b7
+        section_path: ["PART 2", "2.7 RS485, I/O-LINK"]
+        note: "2.7 RS485, I/O-LINK [wiring; scope: installation]"
+    acceptable: []
+  - id: D38
+    question: "Tay quay 6 trục ngõ ra NPN đấu vào F86 thế nào"
+    domain: technical_docs
+    models: ["F86"]
+    tags: ["nhan_vien", "dau_day", "f86"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f86_installation_2024-04-25:B0019
+        content_hash: 4e77a69a13560cbd43387f6cc7bbfc8458b2e4803575e16873c4ac23c582a64f
+        section_path: ["PART 2", "2.6 HANDWHEEL WIRING DIAGRAM", "2.6.5 USE FOR NPN OUTPUT SIGNAL OF 6 AXIS HANDWHEEL"]
+        note: "2.6.5 USE FOR NPN OUTPUT SIGNAL OF 6 AXIS HANDWHEEL [figure; scope: installation]"
+    acceptable:
+      - chunk_key: f86_installation_2024-04-25:B0016
+        content_hash: dc8db4894c5d89931fc9119ddce1bf6854e853b832bc353940927347142af762
+        section_path: ["PART 2", "2.6 HANDWHEEL WIRING DIAGRAM", "2.6.2 USE FOR NPN OUTPUT SIGNAL OF 4 AXIS HANDWHEEL"]
+        note: "2.6.2 USE FOR NPN OUTPUT SIGNAL OF 4 AXIS HANDWHEEL [figure; scope: installation]"
+      - chunk_key: f86_installation_2024-04-25:B0018
+        content_hash: 734384f98bad038e27e6fbe9ff0d3558c696f1b1ddb6a0da8dc499bcbc844c8d
+        section_path: ["PART 2", "2.6 HANDWHEEL WIRING DIAGRAM", "2.6.4 USE FOR DIFFERENTIAL OUPUT SIGNAL OF 6 AXIS HANDWHEEL"]
+        note: "2.6.4 USE FOR DIFFERENTIAL OUPUT SIGNAL OF 6 AXIS HANDWHEEL [figure; scope: installation]"
+      - chunk_key: f86_installation_2024-04-25:B0020
+        content_hash: 9af670020d7d550ab787afc1911207e2837bfbefa0184fb84ab069384135bcb1
+        section_path: ["PART 2", "2.6 HANDWHEEL WIRING DIAGRAM", "2.6.6 USE FOR PNP OUTPUT SIGNAL OF 6 AXIS HANDWHEEL"]
+        note: "2.6.6 USE FOR PNP OUTPUT SIGNAL OF 6 AXIS HANDWHEEL [figure; scope: installation]"
+  - id: D39
+    question: "Khách cần mở rộng I/O cho F54, bên mình có những board I/O link nào?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "tu_van"]
+    expected_intent: ["lookup.product_catalog", "lookup.product_info", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0073
+        content_hash: 26ec873043d1a06ae4487c5173a7fbad2ed4cd330a243036075e679d6e4dd52c
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.5 I/O link board connection"]
+        note: "2.5 I/O link board connection [overview; scope: installation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0074
+        content_hash: 535dfd1cad56d43524a0bea35f8fc7aa317d9a0c47381dfe15dab08501595480
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.5 I/O link board connection", "2.5.1 I/O link 32_V1.1_0722 board wiring diagram"]
+        note: "2.5.1 I/O link 32_V1.1_0722 board wiring diagram [wiring; scope: installation]"
+      - chunk_key: f54_operation_v02:B0075
+        content_hash: c3fd27d027e2216e284359c257c2cf0cfcfd9e6111f317ff9167e048a9c0f80b
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.5 I/O link board connection", "2.5.2 I/O Link 08_RLTR board wiring diagram"]
+        note: "2.5.2 I/O Link 08_RLTR board wiring diagram [wiring; scope: installation]"
+  - id: D40
+    question: "Bộ điều khiển F54 được bảo hành bao lâu?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["nhan_vien", "handoff"]
+    expected_intent: ["handoff.human"]
+    expected_route: handoff
+    expected: []
+    acceptable: []

@@ -128,6 +128,14 @@ class ChunkMatch(ChunkRecord):
     vector_score: float
     keyword_score: float | None = None
     fused_score: float
+    # Chỉ match_doc_chunks_v2 trả (D-009): khóa, vai trò, loại chunk và điểm/hạng từng nhánh (trace, đánh giá).
+    chunk_key: str | None = None
+    chunk_role: str | None = None
+    chunk_type: str | None = None
+    code_score: float | None = None
+    vector_rank: int | None = None
+    keyword_rank: int | None = None
+    code_rank: int | None = None
 
 
 class ChunkHit(SystemModel):

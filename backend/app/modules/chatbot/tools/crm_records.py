@@ -1,9 +1,10 @@
 """Tool `crm_records`: liệt kê bản ghi CRM (phiếu, khách, lần giao phiếu, thiết bị giao) theo RecordQuery.
 
 Tách khỏi `crm_report` vì output, rủi ro và luật đọc khác nhau. LLM chỉ chọn cột trong
-whitelist của catalog (`DatasetSpec.list_columns`): cột nội dung tự do (subject,
-description, notes), liên hệ (phone, email, address) hay bí mật không có trong catalog nên
-không bao giờ được đọc hay trả về. Tối đa `MAX_RECORDS` dòng một lần, có tổng và `next_offset`.
+whitelist của catalog (`DatasetSpec.list_columns`): cột không khai báo (nội dung phiếu
+subject/description, cột bí mật) không bao giờ được đọc hay trả về. `customers` mở cả cột
+liên hệ và ghi chú (quyết định 2026-11-10). Tối đa `MAX_RECORDS` dòng một lần, có tổng và
+`next_offset`.
 """
 
 import json
@@ -41,12 +42,14 @@ _TRUNCATION_MARGIN_TOKENS = 32
 CRM_RECORDS_DESCRIPTION = (
     "Liệt kê bản ghi CRM (tối đa 20 dòng mỗi lần) trong phạm vi dữ liệu tài khoản nhân viên được "
     "phép xem: phiếu hỗ trợ, khách hàng, lần giao phiếu, thiết bị giao cho khách. Dùng cho yêu cầu "
-    "danh sách/liệt kê/xem các ... Đếm hay thống kê dùng crm_report. Chỉ chọn cột có trong danh "
-    "sách cột của dataset; không có nội dung phiếu hay thông tin liên hệ."
+    "danh sách/liệt kê/xem/tìm các ... Đếm hay thống kê dùng crm_report. Chỉ chọn cột có trong "
+    "danh sách cột của dataset; không có nội dung phiếu hỗ trợ."
 )
 
 CRM_RECORDS_GUIDE = """Gọi tool:
 - fields: chỉ các cột cần cho câu hỏi. filters/date_range giống crm_report (AND, preset cho ngày tương đối).
+- Tìm khách theo tên/mã/công ty/số điện thoại/email: filter operator contains trên đúng trường (vd {"field": "full_name", "operator": "contains", "value": "Hohmeier"}); không dùng source, status hay trường khác để tìm tên. contains không phân biệt hoa thường nhưng phân biệt dấu: giữ đúng chữ người dùng gõ; nếu 0 kết quả với tên gõ không dấu, nói rõ đã tìm không dấu và gợi ý gõ đúng dấu.
+- Thông tin liên hệ (phone, email, address) và notes chỉ lấy khi câu hỏi cần.
 - "Xem tiếp": gọi lại cùng argument với offset = next_offset.
 
 Đọc output:

@@ -9,7 +9,7 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from app.modules.doc_ingest.schemas.chunk import ChunkQuality, DraftChunk
+from app.modules.doc_ingest.schemas.chunk import ChunkQuality, ChunkReviewFile, DraftChunk
 
 if TYPE_CHECKING:
     from app.modules.doc_ingest.build.builder import BuildResult
@@ -31,6 +31,7 @@ table.t th{background:var(--soft)}
 .card.parent{background:var(--soft)}.card.child{margin-left:28px}
 .card pre{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid var(--line);padding:6px;
   font:12.5px/1.4 ui-monospace,Consolas,monospace;margin:6px 0;max-height:420px;overflow:auto}
+.enrich{border-left:3px solid var(--line);padding:2px 8px;margin:6px 0}.enrich ul{margin:2px 0 0 18px;padding:0}
 .thumbs{display:flex;gap:8px;flex-wrap:wrap}.thumbs img{max-height:160px;max-width:260px;border:1px solid var(--line)}
 .filters select,.filters input{margin-right:8px}
 """
@@ -148,11 +149,27 @@ def _review(q: ChunkQuality) -> str:
             + (f"<div class='warn'>fix còn mở: {_e(', '.join(r.open_fix))}</div>" if r.open_fix else ""))
 
 
-def _card(c: DraftChunk) -> str:
+def _review_2c(q: ChunkQuality) -> str:
+    e = q.enrichment
+    if not e.enriched:
+        return ""
+    state = {True: "ĐẠT", False: "KHÔNG ĐẠT", None: "chưa đủ"}
+    return (f"<h3>Cổng 2c — làm giàu tiếng Việt</h3><p>Tự động (CQ-13): {state[e.auto_passed]} — {e.enriched}/{e.leaves}"
+            f" chunk lá, mã lạ {len(e.code_mismatch)}, content bị cắt {len(e.truncated)}. Mẫu duyệt: {e.sample_ok}/"
+            f"{e.sample} ok, fix {len(e.sample_fix)} ({len(e.severe)} lỗi nặng), chờ {e.sample_pending}. Cổng 2c: "
+            f"{state[e.passed]}{f'; đã duyệt phiên bản {_e(e.approved_version)}' if e.approved_version else ''}.</p>"
+            "<p class='muted'>Lọc cờ <code>mau_2c</code> để xem mẫu. Với mỗi chunk mẫu kiểm 5 điểm: đúng sự thật (không "
+            "thêm số/giá trị/bước/model/mã — sai là lỗi nặng), câu hỏi trả lời được từ content, thuật ngữ đúng cách gọi "
+            "ở QS, từ khóa sát chủ đề, tóm tắt đúng trọng tâm. Ghi vào <code>chunk_review.json</code>: "
+            "<code>enrichment_verdict</code> ok/fix, <code>enrichment_note</code>, <code>enrichment_severe</code>.</p>")
+
+
+def _card(c: DraftChunk, sample: dict[str, str] | None = None) -> str:
     role = c.chunk_role
     badges = "".join(f"<span class='badge'>{_e(x)}</span>" for x in
                      [c.chunk_type, ROLE_TEXT[role], *c.scopes, *c.control_interface, *c.spec_attributes])
-    flags = "".join(f"<span class='badge bad'>{_e(x)}</span>" for x in c.flags + c.review_blockers)
+    marks = [f"mau_2c:{sample[c.chunk_key]}"] if sample and c.chunk_key in sample else []
+    flags = "".join(f"<span class='badge bad'>{_e(x)}</span>" for x in c.flags + c.review_blockers + marks)
     thumbs = "".join(f"<figure><img loading='lazy' src='../{_e(a.local_path)}' alt='{_e(a.element_id)}'>"
                      f"<figcaption class='muted'>{_e(a.element_id)}</figcaption></figure>"
                      for a in c.assets if a.local_path)
@@ -164,33 +181,48 @@ def _card(c: DraftChunk) -> str:
     if c.related_chunk_keys:
         meta.append("liên quan " + ", ".join(k.split(":")[-1] for k in c.related_chunk_keys))
     body = f"<pre>{_e(c.content)}</pre>"
+    if c.summary_vi or c.faq_vi:   # Bước 3: lớp tìm kiếm tiếng Việt (bản nháp, cần duyệt)
+        faq = "".join(f"<li>{_e(q)}</li>" for q in c.faq_vi)
+        body = (f"<div class='enrich'><b>Làm giàu ({_e(c.enrichment_status)}):</b> {_e(c.summary_vi or '—')}"
+                f"<ul>{faq}</ul></div>{body}")
     if role == "parent":
         body = f"<details><summary>Content cha (nối các con)</summary>{body}</details>"
     extra = (f"<details><summary>embed_text, nhãn hình, element</summary><pre>{_e(c.embed_text)}</pre>"
              f"<p class='muted'>Nhãn hình: {_e(', '.join(f'{x.text} ({x.source})' for x in c.figure_labels) or '—')}</p>"
              f"<p class='muted'>element_ids: {_e(', '.join(c.element_ids))}</p></details>")
     return (f"<div class='card {role}' id='{_e(c.chunk_key.split(':')[-1])}' data-type='{_e(c.chunk_type)}' "
-            f"data-role='{role}' data-flags='{_e(' '.join(c.flags + c.review_blockers))}' data-ps='{c.page_start}' "
+            f"data-role='{role}' data-flags='{_e(' '.join(c.flags + c.review_blockers + (['mau_2c'] if marks else [])))}' "
+            f"data-ps='{c.page_start}' "
             f"data-pe='{c.page_end}'><b>{_e(c.chunk_key.split(':')[-1])}</b> {badges}{flags}"
             f"<div>{_e(c.section_title)}</div><div class='muted'>{_e(' · '.join(meta))}</div>"
             f"<div class='muted'>Từ khóa: {_e(', '.join(c.keywords))}</div>{body}"
             f"<div class='thumbs'>{thumbs}</div>{extra}</div>")
 
 
-def _cards(chunks: list[DraftChunk], q: ChunkQuality) -> str:
+def _cards(chunks: list[DraftChunk], q: ChunkQuality, sample: dict[str, str] | None = None) -> str:
     options = lambda values: "".join(f"<option>{_e(v)}</option>" for v in values)  # noqa: E731
-    flags = sorted({f for c in chunks for f in c.flags + c.review_blockers})
+    flags = sorted({f for c in chunks for f in c.flags + c.review_blockers} | ({"mau_2c"} if sample else set()))
     filters = (f"<div class='filters'>Loại <select id='ft' onchange='f()'><option value=''>tất cả</option>"
                f"{options(sorted(q.by_type))}</select>Vai trò <select id='fr' onchange='f()'><option value=''>tất cả"
                f"</option><option value='parent'>cha</option><option value='child'>con</option><option value='standalone'>"
                f"độc lập</option></select>Cờ <select id='fg' onchange='f()'><option value=''>tất cả</option>"
                f"{options(flags)}</select>Trang <input id='fp' type='number' min='0' style='width:70px' oninput='f()'>"
                f"<span id='fn' class='muted'>{len(chunks)} chunk</span></div>")
-    return "<h2 id='cards'>Chunk</h2>" + filters + "".join(_card(c) for c in chunks)
+    return "<h2 id='cards'>Chunk</h2>" + filters + "".join(_card(c, sample) for c in chunks)
+
+
+def _sample_marks(result: BuildResult) -> dict[str, str]:
+    """chunk_key -> enrichment_verdict của mẫu 2c (đọc `build/chunk_review.json`)."""
+    path = result.run.run_dir / "build" / "chunk_review.json"
+    if not path.is_file():
+        return {}
+    review = ChunkReviewFile.model_validate_json(path.read_text(encoding="utf-8"))
+    return {e.chunk_key: e.enrichment_verdict for e in review.reviews if e.enrichment_verdict != "none"}
 
 
 def render_chunks(result: BuildResult) -> str:
     q = result.quality
+    sample = _sample_marks(result)
     texts = {e.element_id: e.text or e.normalized_type for e in result.run.elements}
     nav = ("<nav><a href='index.html'>Báo cáo chuẩn hóa</a><a href='#gate'>Cổng</a><a href='#checks'>CQ</a>"
            "<a href='#coverage'>Độ phủ</a><a href='#bound'>Ranh giới</a><a href='#manual'>So với chunk tay</a>"
@@ -203,4 +235,4 @@ def render_chunks(result: BuildResult) -> str:
             "content='width=device-width,initial-scale=1'><title>Chunk nháp</title>"
             f"<style>{_STYLE}</style><script>{_SCRIPT}</script></head><body><main>{head}{nav}"
             f"{_overview(q)}{_gate(q)}{_checks(q)}{_coverage(q, texts)}{_boundaries(q)}{_manual(q)}{_review(q)}"
-            f"{_cards(result.chunks, q)}</main></body></html>")
+            f"{_review_2c(q)}{_cards(result.chunks, q, sample)}</main></body></html>")

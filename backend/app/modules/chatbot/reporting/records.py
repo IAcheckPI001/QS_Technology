@@ -1,8 +1,8 @@
 """Chế độ danh sách (tool `crm_records`): kiểm tra RecordQuery, lọc/sort/cắt trang, hiển thị an toàn.
 
-Chỉ cột khai báo trong `DatasetSpec.list_columns` được đọc và trả về (whitelist): cột nội
-dung tự do, liên hệ hay bí mật không có trong catalog nên không bao giờ tới LLM. Chuỗi bị
-bỏ ký tự điều khiển và cắt `MAX_TEXT_CHARS`.
+Chỉ cột khai báo trong `DatasetSpec.list_columns` được đọc và trả về (whitelist): cột không
+khai báo (nội dung phiếu, cột bí mật) không bao giờ tới LLM. Chuỗi bị bỏ ký tự điều khiển và
+cắt `ColumnSpec.max_chars` (mặc định `MAX_TEXT_CHARS`).
 
 - list_api (tickets): record từ API danh sách → `filter_records` của engine → sort → trang.
 - report_api: `select` của Reporting API + một query `count` cùng filter để biết tổng
@@ -12,7 +12,7 @@ bỏ ký tự điều khiển và cắt `MAX_TEXT_CHARS`.
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime, tzinfo
+from datetime import UTC, datetime, tzinfo
 from typing import Any
 
 from app.modules.chatbot.schemas.system.records import RecordQuery
@@ -25,6 +25,8 @@ from .validate import Condition, ReportQueryError, condition_of, date_range_of
 DEFAULT_RECORDS = 10
 MAX_TEXT_CHARS = 120
 _CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+# Thời điểm ISO có giờ (dấu cách hoặc T), tuỳ chọn giây, phần lẻ và múi giờ (Z, +00, +07:00).
+_TIMESTAMP = re.compile(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}(:?\d{2})?)?")
 
 
 @dataclass(frozen=True)
@@ -112,7 +114,7 @@ def list_records(query: NormalizedRecords, records: Sequence[Any]) -> RecordPage
         present.sort(key=lambda row: _sort_key(row[field]), reverse=direction == "desc")
         rows = present + missing
     page = rows[query.offset:query.offset + query.limit]
-    return RecordPage([render(row, query.tz) for row in page], len(matched))
+    return RecordPage([render(row, query.tz, spec) for row in page], len(matched))
 
 
 def _get(spec: DatasetSpec, name: str, record: Any, now: datetime) -> Any:
@@ -163,7 +165,7 @@ def report_records(
 ) -> RecordPage:
     spec = query.dataset
     items = [
-        render({name: row.get(api_column(_path(spec, name))) for name in query.fields}, query.tz)
+        render({name: row.get(api_column(_path(spec, name))) for name in query.fields}, query.tz, spec)
         for row in rows[:query.limit]
     ]
     total = None
@@ -185,18 +187,39 @@ def _path(spec: DatasetSpec, name: str) -> str:
 # Hiển thị
 # ---------------------------------------------------------------------------
 
-def render(row: dict[str, Any], tz: tzinfo) -> dict[str, Any]:
-    return {name: render_value(value, tz) for name, value in row.items()}
+def render(row: dict[str, Any], tz: tzinfo, spec: DatasetSpec | None = None) -> dict[str, Any]:
+    def limit(name: str) -> int:
+        column = spec.list_columns.get(name) if spec is not None else None
+        return column.max_chars if column is not None and column.max_chars else MAX_TEXT_CHARS
+
+    return {name: render_value(value, tz, limit(name)) for name, value in row.items()}
 
 
-def render_value(value: Any, tz: tzinfo) -> Any:
+def render_value(value: Any, tz: tzinfo, max_chars: int = MAX_TEXT_CHARS) -> Any:
+    """Giá trị an toàn để đưa LLM; thời điểm đổi sang `tz` (giờ hiển thị cho nhân viên).
+
+    CRM lưu mọi timestamp theo UTC (xác nhận 2026-11-12): giá trị không kèm múi giờ, dù là
+    `datetime` hay chuỗi ("2026-10-01 02:00:00.123456"), được hiểu là UTC. Chuỗi chỉ có ngày
+    (cột `date`, kỳ `*_day/_month`) giữ nguyên.
+    """
     if value is None or value == "":
         return None
     if isinstance(value, bool) or isinstance(value, (int, float)):
         return value
     if isinstance(value, datetime):
-        return value.astimezone(tz).isoformat(timespec="minutes")
+        return _local(value, tz)
+    if isinstance(value, str) and _TIMESTAMP.fullmatch(value):
+        try:
+            return _local(datetime.fromisoformat(value), tz)
+        except ValueError:
+            pass
     text = _CONTROL.sub(" ", str(value)).strip()
-    if len(text) > MAX_TEXT_CHARS:
-        text = text[:MAX_TEXT_CHARS - 1].rstrip() + "…"
+    if len(text) > max_chars:
+        text = text[:max_chars - 1].rstrip() + "…"
     return text
+
+
+def _local(moment: datetime, tz: tzinfo) -> str:
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=UTC)
+    return moment.astimezone(tz).isoformat(timespec="minutes")

@@ -217,6 +217,7 @@ có `param_ref`.
 | GT-20 phần 2: xóa text một list_item trang 14 | `text_coverage_gap` blocking chunk cho đúng `f54:p014`, có mẫu token thiếu | đạt |
 | Caption được đọc như con của picture/table (`Figure 5. F54 controller I/O ports` trang 11) | Có trong phần tử | đạt |
 | SYN `document_index` → T-16: giữ 4 cell, không thành bảng logic, log T-16, V-01 tính nội dung | Đúng | đạt |
+| SYN I-37: tiêu đề "CONTENT" + dòng có chấm dẫn và số trang nằm ngoài `document_index` → cả hai `toc`, phần tử sau không mang nhãn "CONTENT"; tiêu đề không đứng trước mục lục giữ là label heading | Đúng | đạt |
 | SYN nhãn `formula` → `unsupported_element` (blocking chunk) và V-01 không tính → `text_coverage_gap` | Không bỏ im lặng | đạt |
 | SYN phần tử nhân đôi → `duplicate_ratio=0.5`, không đạt | Đúng | đạt |
 | Từ trong header/footer không tính | `page_tokens` chỉ gồm thân trang | đạt |
@@ -325,14 +326,44 @@ có `param_ref`.
 | Chuỗi "Stage n:" + khối dẫn → 1 `procedure` (kèm ảnh); ghi chú "The cause is…" → `alarm` liên kết hai chiều, scope thêm `maintenance` | Đúng | đạt |
 | Thủ tục > 2.500 ký tự tách ở ranh giới bước, phần 2…n có tiêu đề `(phần i/n, bước a–b)`, không mất/lặp bước | Đúng | đạt |
 | Chunk hình: caption + tiêu đề, ảnh, nhãn hình lọc vào `keywords`; furniture, `figure_text`, ảnh trùng không vào chunk; mục chỉ có heading không sinh chunk | Đúng | đạt |
+| I-37: heading + hình không caption gộp vào khối bước sau (1 `procedure`, ảnh vào `assets`); cuối mục thì vào khối trước; mục chỉ có heading + hình vẫn ra chunk hình; trước bảng không gộp | Đúng | đạt |
+| R-04: heading + dòng dẫn kết thúc bằng ":" ngay trước bảng thành dòng dẫn của bảng; câu thường thì không | Đúng | đạt |
+| R-02: khối thủ tục không nhãn ("Step 1:" là text) nối với các khối bước sau thành 1 `procedure`; nhãn "Step 1:" + một dòng "Step 2: …" là `procedure`, một bước đơn lẻ thì không | Đúng | đạt |
+| I-38: bảng 70 dòng chia theo ngân sách token của `embed_text` (800 − 150), mỗi dòng đúng một lần, mọi phần lặp tiêu đề `(phần i/n)` + header, số dòng các phần lệch ≤ 2, không phần nào `embed_truncated`; bảng ngắn giữ một chunk | Đúng | đạt |
+| I-38: dòng nhóm không đứng cuối phần, phần bắt đầu giữa nhóm lặp dòng nhóm dưới header (không tính vào `row_ids`); một dòng dài hơn ngân sách thành phần riêng, CQ-11 không tính lỗi | Đúng | đạt (dữ liệu tổng hợp; F54/F86 chưa có bảng có dòng nhóm) |
 | Cửa sổ cha: `content` = nối nguyên văn các con, assets = hợp ảnh con | Đúng | đạt |
 | Review cấp trang (`ocr_required`) chặn chunk trên trang đó; `extraction = ocr` | Đúng | đạt |
 | `control_interface`/`spec_attributes` từ từ vựng registry + profile | Đúng | đạt |
 | Nhãn OCR ảnh crop → `figure_labels` (`crop_ocr`) + `keywords`, không vào `content`; trang OCR toàn trang không OCR lại | Đúng | đạt |
 | Fixture F54 qua `cli run`: CQ đạt, độ phủ 1,0, adapter không lỗi ràng buộc, `run_report.chunks`, `chunks.html`; trang 19 parameter M1920–M1923; bảng parameter chia phần lặp header, mỗi dòng đúng 1 lần | Đúng | đạt |
-| CQ-01/02/03/06/08/09/10 bắt được vi phạm cố ý | Đúng | đạt |
+| CQ-01/02/03/06/08/09/10/11 bắt được vi phạm cố ý (CQ-11: chunk bảng nhiều dòng có `embed_truncated`) | Đúng | đạt |
 | Ranh giới theo nhãn (precision/recall/loại), so với CSV tay, tổng hợp duyệt (ok/fix/cũ), cổng 2b, adapter `doc_chunks_v1` đúng cột + ràng buộc | Đúng | đạt |
 | Chạy thật (nhãn **tạm**): F54 323 chunk (62 cha), CQ đạt, độ phủ 1,0, ranh giới P 1,0 / R 1,0 / đúng loại 0,9 (10 đơn vị, 5 trang); F86 Installation 26 chunk, CQ đạt, độ phủ 1,0, P/R 1,0, đúng loại 0,71; so với 27 chunk tay: 7/27 có ≥ 60% token trong một chunk builder | Báo cáo | đạt (kiểm tay), cổng 2b chờ team duyệt |
+
+### 6.16 T-20 khung chữ (I-36) + chép verdict khi build lại — `test_text_frames.py`
+
+| Kiểm | Điều kiện đạt | Trạng thái |
+|---|---|---|
+| Khung "Instructions" trên trang text layer: `Step 1:`, câu, caption "Step 2: …" về text thân theo thứ tự đọc, `parent_element_id = null`, cờ `frame_text_released`; picture cờ `text_frame`; tiêu đề khung ("Instructions", "Model: F54") vẫn `figure_text` | Đúng | đạt |
+| Khung ảnh chỉ có "Description images / Model: …" giữ `figure_text`; caption "Figure 9. …" trong khung giữ là caption | Đúng | đạt |
+| Sơ đồ có heading bị nuốt + mảnh "(" ")" (F54 trang 50) và ảnh chụp có caption bước + mảnh chữ (F54 trang 95): không phải khung | Đúng | đạt |
+| Trang OCR hoặc không có S0: không trả chữ | Đúng | đạt |
+| I-37, nhãn khung không được gom: "Instructions" + "Model: F54" ngoài picture → `figure_text` của picture trên trang, cờ `frame_label_attached`, bước sau giữ nhãn "Step 1:"; "Instructions:" + danh sách, trang OCR, trang không có picture: không đổi | Đúng | đạt |
+| I-37: "Model: F54 controller" ngay trên picture hoặc bảng 0 cell → `figure_text` của hình đó, hình không mở khối nhãn mới; câu bắt đầu bằng "Model:" không đứng trên hình giữ là `text` | Đúng | đạt |
+| `carry_review`: khớp theo `content_hash` + `section_path` khi key dịch; chunk mới/đổi nội dung/đổi mục → `pending`; mục cũ stale hoặc `pending` không chép | Đúng | đạt |
+| Chạy thật F54 `eval-c` (2026-11-11): 342 chunk (70 cha), đúng 13 mục đổi so với `eval-b`, mọi mục có đủ Step; CQ-01…CQ-10 đạt, độ phủ 1,0, ranh giới P/R 1,0; BL-34 đạt; `figure_text` loại trừ 518 → 449; chép 306/342 verdict. F86 Installation/Operation, F10T: 0 khung | Báo cáo | đạt (kiểm tay) |
+| Chạy thật F54 `eval-d` (2026-11-11, I-37): 296 chunk (54 cha), 36 mục đổi so với `eval-c`, 34/34 chunk `fix` của I-37 không còn; CQ-01…CQ-10 đạt, độ phủ 1,0, ranh giới P/R 1,0; BL-34 đạt; `figure_text` loại trừ 449 → 500, `toc` 5 → 7; chép 230/296 verdict. Hồi quy (`eval-c-regress`): F86 Installation 26 → 21 chunk (4 mục đổi: bìa, mục lục, 2.5, 2.6), CQ và ranh giới đạt; F86 Operation 0 chunk đổi; F10T chỉ đổi tiêu đề "CONTENT" → `toc` | Báo cáo | đạt (kiểm tay); mục 4.4.3 xấu đi (I-42) |
+| Chạy thật F54 `eval-e` (2026-11-11, I-38, build bằng venv chính có tiktoken): 300 chunk; chỉ 3 mục PART 5 đổi so với `eval-d`; bảng 5.1 → 5 phần, 5.2 → 2, 5.3 → 2, mọi phần ≤ 584 token, mỗi dòng đúng một lần; 0 chunk `embed_truncated`; CQ-01…CQ-11 đạt, độ phủ 1,0, ranh giới P/R 1,0, BL-34 đạt; chép 291/300 verdict. Hồi quy (`eval-d-regress`): F86 Installation 21 → 23 chunk (bảng cổng 3 → 6 phần), F86 Operation 0 chunk đổi | Báo cáo | đạt (kiểm tay) |
+| I-39 (R-12): khối dài có "Case n"/"Example n" chỉ chia ở đầu phần; phần 2…n lặp `(phần i/n)` + phần dẫn; ảnh đi cùng Case; Case một mình quá dài → chia theo phần tử, không trộn với Case khác, cờ `block_part_oversize`; không có đầu phần → chia như cũ; glyph Private Use đầu dòng → `- ` | Đúng | đạt (`test_chunker.py`) |
+| Chạy thật F54 `eval-f` (2026-11-12, I-39, venv chính): 301 chunk (55 cha); chỉ mục 2.6.4.7 đổi so với `eval-e`: B0116/B0117 → 2 phần (551, 410 token), Case 3 cùng kết luận, phần 2 lặp công thức, 0 glyph ``; phần 1 cùng ghi chú mục thành cửa sổ cha mới; CQ-01…CQ-11 đạt, độ phủ 1,0, ranh giới P/R 1,0, BL-34 đạt; chép 298/301 verdict. Hồi quy (`eval-f-regress`): F86 Installation, F86 Operation 0 chunk đổi | Báo cáo | đạt (kiểm tay) |
+| I-40a (T-07): hình + caption nằm trên heading đầu trang nhưng xếp sau → lên trước phần tử đầu tiên nằm dưới nó, thuộc mục trước, cờ `reading_order_fixed`; trang OCR, hình khác cột, có phần tử giữa nằm trên heading: không đổi | Đúng | đạt (`test_sections.py`) |
+| I-42 (R-02): "Step 1" sau "Step 2" mở thủ tục mới; câu dẫn + sơ đồ trang sau đi theo thủ tục mới; khối tiêu đề + sơ đồ + câu dẫn gộp vào thủ tục đầu | Đúng | đạt (`test_chunker.py`) |
+| I-40b: nhãn OCR crop vào `keywords` khi có trong từ vựng tài liệu hoặc khớp `figure_label_trusted_patterns`; nhãn khác `verified = false`, không vào `embed_text` | Đúng | đạt (`test_chunker.py`) |
+| Chạy thật F54 `eval-g` (2026-11-12, I-40a/b, I-42; chuẩn hóa lại từ raw `eval-f`, build venv chính): 301 chunk; chỉ 2.4.3, 2.4.4, 4.4.3 đổi nội dung; 45 chunk đổi từ khóa; Figure 52 về 2.4.3; 4.4.3 thành 2 thủ tục; CQ-01…CQ-11 đạt, độ phủ 1,0, ranh giới P/R 1,0, BL-34 đạt; chép 295/301 verdict. Hồi quy (`eval-g-regress`): F86 Installation, F86 Operation 0 chunk đổi, 0 hình bị dời | Báo cáo | đạt (kiểm tay) |
+| I-43 (D-008, CQ-12): chunk cha dài không mang `embed_truncated`/`embed_over_budget`; chunk lá vượt 800 − 150 mang `embed_over_budget`; CQ-12: phần bảng nhiều dòng vượt → không đạt, lá khác → ghi chú, cha không tính | Đúng | đạt (`test_chunk_quality.py`) |
+| Chạy thật F54 `eval-h` (2026-11-13, I-43, chỉ build từ `normalized` của `eval-g`, venv chính): 301 chunk, 0 nội dung đổi, chỉ cha B0036 bỏ cờ `embed_truncated`; 0 chunk lá vượt ngân sách; CQ-01…CQ-12 đạt, độ phủ 1,0, ranh giới P/R 1,0; chép 301/301 verdict, cổng 2b đạt (tạm). Hồi quy (`eval-h-regress`): F86 Installation, F86 Operation 0 đổi | Báo cáo | đạt (kiểm tay) |
+| Manifest `exclude_pages`/`exclude_sections` → phần tử lý do `manifest_excluded`, không vào chunk, độ phủ không thiếu; khung chữ `text_frame` không là asset, khối chỉ có khung không thành chunk hình (I-44); T-20 nhận khung "Instructions" chỉ còn caption bước, ảnh chụp có caption bước mà không có tiêu đề khung giữ nguyên; nhãn OCR chỉ vào từ khóa chunk wiring/pinout/dimension; ghi chú ngắn sau hình gộp vào chunk hình, ghi chú dài tách (I-45) | Đúng | đạt (`test_chunker.py`, `test_text_frames.py`) |
+| Chạy thật F54 `eval-j` (2026-11-13; chuẩn hóa lại từ raw `eval-i`, build venv chính, carry + chép `enrichment.jsonl`): 296 chunk (trước 301); B0000 (trang 1–2) loại theo manifest (9 phần tử); 2.2 và 2.4.1 gộp ghi chú vào chunk hình; asset lá 234 → 208; 74 lá đổi từ khóa (bỏ nhãn OCR khỏi chunk không phải wiring/pinout/dimension); CQ-01…CQ-12, độ phủ 1,0, ranh giới P/R 1,0; chép 294/296 verdict. Hồi quy (`eval-j-regress`): F86 0 chunk/asset đổi, 1 + 5 chunk đổi từ khóa | Báo cáo | đạt (kiểm tay) |
 
 ### 6.11 Trạng thái GT/CQ hiện có
 

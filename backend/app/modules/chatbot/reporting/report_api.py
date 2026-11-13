@@ -27,7 +27,7 @@ from .validate import Condition, NormalizedQuery
 MAX_ROWS = 1000                 # trần `limit` của API
 BASE_COUNT = "count"
 _EARLIEST = date(1970, 1, 1)
-_OPERATORS = {"eq": "eq", "ne": "neq", "in": "in", "not_in": "not_in"}
+_OPERATORS = {"eq": "eq", "ne": "neq", "in": "in", "not_in": "not_in", "contains": "contains"}
 _COUNTING = ("count", "count_distinct")
 
 

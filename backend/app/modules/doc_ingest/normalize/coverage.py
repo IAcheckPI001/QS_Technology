@@ -6,26 +6,52 @@ lục) giữ nguyên cell, không vào bảng logic, không chunk.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 from app.modules.doc_ingest.normalize.docling_reader import RawItem
 from app.modules.doc_ingest.normalize.recorder import Recorder
+from app.modules.doc_ingest.schemas.profile import Profile
 
 HANDLED_LABELS = frozenset({"table", "document_index", "picture", "page_header", "page_footer"})
 # Giữ nguyên văn, chuẩn hóa ở BL-07…BL-10.
 PENDING_S1_LABELS = frozenset({"title", "section_header", "text", "list_item", "caption", "footnote"})
+# T-16: dòng mục lục = tiêu đề + dãy chấm dẫn + số trang (số hoặc số La Mã) ở cuối dòng.
+# Chấm dẫn: ≥ 8 dấu "." hoặc ≥ 3 dấu "…" (F86 Installation trang 2), có thể lẫn nhau.
+_TOC_LEADER = re.compile(r"(?:\.{8,}|[.…]*…{3,}[.…]*)\s*(\d{1,4}|[ivxlc]{1,6})\s*$", re.IGNORECASE)
+_TOC_LINE_LABELS = frozenset({"text", "section_header", "list_item"})
+_TOC_TITLE_LABELS = frozenset({"title", "section_header", "text"})
 
 
 @dataclass
 class ElementCoverage:
     kept: list[RawItem] = field(default_factory=list)        # phần tử body pipeline giữ lại
     toc: list[RawItem] = field(default_factory=list)         # T-16
+    toc_lines: set[str] = field(default_factory=set)         # T-16: dòng/tiêu đề mục lục ngoài document_index
     unsupported: list[RawItem] = field(default_factory=list)
 
 
-def classify_items(items: Sequence[RawItem], rec: Recorder) -> ElementCoverage:
+def _toc_lines(items: Sequence[RawItem], profile: Profile | None, rec: Recorder) -> set[str]:
+    """T-16 (I-37): dòng mục lục Docling để ngoài `document_index` — dòng kết thúc bằng dãy chấm dẫn + số
+    trang — và tiêu đề mục lục (`toc_title_patterns`) đứng ngay trước một phần tử mục lục."""
+    top = [i for i in items if not i.is_furniture and i.parent_id is None]
+    lines = {i.element_id for i in top if i.label in _TOC_LINE_LABELS and _TOC_LEADER.search(i.text)}
+    titles = [re.compile(p) for p in profile.toc_title_patterns] if profile is not None else []
+    for item, nxt in zip(top, top[1:]):
+        if (item.label in _TOC_TITLE_LABELS and (nxt.label == "document_index" or nxt.element_id in lines)
+                and any(p.fullmatch(" ".join(item.text.split())) for p in titles)):
+            lines.add(item.element_id)
+    for item in top:
+        if item.element_id in lines:
+            rec.add_log("T-16", item.element_id, "table of contents line outside document_index; not chunked",
+                        before={"label": item.label}, after={"normalized_type": "toc"})
+    return lines
+
+
+def classify_items(items: Sequence[RawItem], rec: Recorder, profile: Profile | None = None) -> ElementCoverage:
     result = ElementCoverage()
+    result.toc_lines = _toc_lines(items, profile, rec)
     for item in items:
         if item.is_furniture:
             continue

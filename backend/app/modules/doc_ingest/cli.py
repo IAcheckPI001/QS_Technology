@@ -18,6 +18,13 @@ Chạy (từ thư mục backend):
 `build/chunk_quality.json`, `report/chunks.html` (không ghi DB). `run` gọi `build` ở cuối khi có manifest:
     .\\venv\\Scripts\\python.exe -m app.modules.doc_ingest.cli build --run-dir ..\\data\\ingest_runs\\f54\\<run_id> \\
         --labels tests\\doc_ingest\\fixtures\\eval\\f54.chunks.json
+    # build sang run mới mà giữ verdict đã duyệt (chép theo content_hash + section_path):
+    #   ... build --run-dir <run mới> --carry-review <run cũ>\\build\\chunk_review.json \\
+    #       --carry-chunks <run cũ>\\build\\chunks.jsonl
+
+`enrich`: Bước 3, làm giàu tiếng Việt cho chunk lá bằng LLM (venv chính) → `build/enrichment.jsonl`; chạy lại
+`build` để đưa vào `embed_text`:
+    .\\venv\\Scripts\\python.exe -m app.modules.doc_ingest.cli enrich --run-dir <run> --sample 20 --dry-run
 
 Docling chỉ được import (qua `parse/docling_runner`) khi cần parse hoặc render PDF.
 """
@@ -66,11 +73,139 @@ def _parser() -> argparse.ArgumentParser:
     bd.add_argument("--manifest", type=Path, help="manifests/*.yaml; mặc định: tìm theo doc_id của lần chạy")
     bd.add_argument("--labels", type=Path, help="file {doc_id}.chunks.json: nhãn ranh giới chunk")
     bd.add_argument("--compare-csv", type=Path, help="CSV chunk viết tay để so sánh (vd. doc_chunks_f86.csv)")
+    bd.add_argument("--carry-review", type=Path,
+                    help="chunk_review.json của lần build trước: chép verdict theo content_hash + section_path "
+                         "khi tạo chunk_review.json mới (cần --carry-chunks)")
+    bd.add_argument("--carry-chunks", type=Path, help="chunks.jsonl cùng lần build với --carry-review")
     fo = sub.add_parser("figure-ocr", help="OCR nhãn trong hình trên trang có text layer → build/figure_ocr.jsonl "
                                            "(.venv-ingest; chạy tiếp được; chạy lại build để dùng)")
     fo.add_argument("--run-dir", type=Path, required=True)
     fo.add_argument("--limit", type=int, help="chỉ OCR tối đa N hình trong lần chạy này")
+    en = sub.add_parser("enrich", help="Bước 3: làm giàu tiếng Việt cho chunk lá bằng LLM → build/enrichment.jsonl "
+                                       "(venv chính; cần cổng 2b đạt; chạy lại build để dùng)")
+    en.add_argument("--run-dir", type=Path, required=True)
+    en.add_argument("--limit", type=int, help="tối đa N chunk trong lần chạy này (theo thứ tự đọc)")
+    en.add_argument("--sample", type=int, help="thí điểm: N chunk chọn phân tầng theo loại chunk")
+    en.add_argument("--dry-run", action="store_true", help="không gọi API: chỉ in số chunk và ước tính chi phí")
+    en.add_argument("--only-enriched", action="store_true",
+                    help="chỉ làm lại chunk đã có bản ghi phiên bản cũ (so sánh prompt/thuật ngữ mới)")
+    en.add_argument("--model", help="mặc định: env OPENAI_MODEL (hoặc backend/.env), không có thì gpt-4o-mini")
+    en.add_argument("--input-price", type=float, help="USD / 1M token vào (mặc định: giá gpt-4o-mini)")
+    en.add_argument("--output-price", type=float, help="USD / 1M token ra (mặc định: giá gpt-4o-mini)")
+    es = sub.add_parser("enrich-sample", help="cổng 2c: chọn mẫu chunk lá đã làm giàu để duyệt tay "
+                                              "(đánh dấu enrichment_verdict=pending trong chunk_review.json)")
+    es.add_argument("--run-dir", type=Path, required=True)
+    es.add_argument("--size", type=int, default=30)
+    es.add_argument("--include-pilot", action="store_true", help="không bỏ chunk thí điểm (đã làm giàu nhiều phiên bản)")
+    ea = sub.add_parser("enrich-approve", help="cổng 2c đạt → ghi build/enrichment_approval.json (chạy lại build)")
+    ea.add_argument("--run-dir", type=Path, required=True)
+    ea.add_argument("--reviewer", required=True)
     return parser
+
+
+def cmd_enrich_sample(args: argparse.Namespace) -> None:
+    import json
+
+    from app.modules.doc_ingest.build.loader import ENRICHMENT_FILE, enrichment_key, load_enrichment
+    from app.modules.doc_ingest.enrich import review as rv
+    from app.modules.doc_ingest.enrich.runner import load_chunks
+    from app.modules.doc_ingest.schemas.chunk import ChunkReviewFile
+
+    records = load_enrichment(args.run_dir)
+    if not records:
+        raise SystemExit("chưa có build/enrichment.jsonl: chạy enrich trước")
+    versions: dict[tuple[str, tuple[str, ...]], set[str]] = {}
+    for line in (args.run_dir / "build" / ENRICHMENT_FILE).read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            row = json.loads(line)
+            key = enrichment_key(row["content_hash"], row.get("section_path", []))
+            versions.setdefault(key, set()).add(row["prompt_version"])
+    pilot = frozenset() if args.include_pilot else frozenset(h for h, v in versions.items() if len(v) > 1)
+    chunks = load_chunks(args.run_dir)
+    sample = rv.select_sample(chunks, records, args.size, pilot)
+    path = args.run_dir / "build" / "chunk_review.json"
+    review = ChunkReviewFile.model_validate_json(path.read_text(encoding="utf-8"))
+    marked = rv.mark_sample(review, sample, records)
+    path.write_text(review.model_dump_json(indent=1) + "\n", encoding="utf-8")
+    print(f"Mẫu 2c: {len(sample)} chunk ({marked} mới đánh dấu pending; bỏ {len(pilot)} nội dung thí điểm)")
+    for c in sample:
+        checks = records[enrichment_key(c.content_hash, c.section_path)].checks
+        print(f"  {c.chunk_key} [{c.chunk_type}] {(c.section_path or [c.section_title])[-1][:60]}"
+              f"{' — kiểm: ' + ', '.join(checks) if checks else ''}")
+    print("Ghi verdict vào chunk_review.json (enrichment_verdict ok/fix, enrichment_note, enrichment_severe) rồi build.")
+
+
+def cmd_enrich_approve(args: argparse.Namespace) -> None:
+    from datetime import datetime
+
+    from app.modules.doc_ingest.build.loader import APPROVAL_FILE
+    from app.modules.doc_ingest.schemas.chunk import ChunkQuality, EnrichmentApproval
+
+    quality = ChunkQuality.model_validate_json(
+        (args.run_dir / "build" / "chunk_quality.json").read_text(encoding="utf-8"))
+    e = quality.enrichment
+    if e.passed is not True:
+        raise SystemExit(f"cổng 2c chưa đạt (tự động: {e.auto_passed}; mẫu {e.sample_ok}/{e.sample} ok, "
+                         f"{len(e.severe)} lỗi nặng, {e.sample_pending} chờ): chạy build sau khi ghi verdict")
+    if len(e.versions) != 1:
+        raise SystemExit(f"chunk lá đang ở nhiều phiên bản làm giàu {e.versions}: chạy enrich cho đồng nhất trước")
+    version = next(iter(e.versions))
+    approval = EnrichmentApproval(version=version, approved_at=datetime.now().isoformat(timespec="seconds"),
+                                  reviewer=args.reviewer, sample=e.sample, sample_ok=e.sample_ok)
+    (args.run_dir / "build" / APPROVAL_FILE).write_text(approval.model_dump_json(indent=1) + "\n", encoding="utf-8")
+    print(f"Duyệt làm giàu phiên bản {version} ({e.sample_ok}/{e.sample} mẫu ok). Chạy lại build → approved.")
+
+
+def cmd_enrich(args: argparse.Namespace) -> None:
+    from app.modules.doc_ingest.build.chunker import estimate_tokens
+    from app.modules.doc_ingest.build.fields import token_counter
+    from app.modules.doc_ingest.enrich import env, runner
+
+    try:
+        runner.require_gate(args.run_dir)
+    except runner.GateNotPassed as exc:
+        raise SystemExit(f"enrich dừng: {exc}") from exc
+    model = args.model or env.openai_model()
+    if model != env.DEFAULT_MODEL and (args.input_price is None or args.output_price is None):
+        raise SystemExit(f"model {model}: truyền --input-price và --output-price (chỉ có sẵn giá {env.DEFAULT_MODEL})")
+    price_in = args.input_price if args.input_price is not None else env.GPT4O_MINI_INPUT_USD
+    price_out = args.output_price if args.output_price is not None else env.GPT4O_MINI_OUTPUT_USD
+    from app.modules.doc_ingest.enrich.prompt import prompt_version, system_prompt
+    from app.modules.doc_ingest.schemas.run import RunReport
+
+    report = RunReport.model_validate_json((args.run_dir / "run_report.json").read_text(encoding="utf-8"))
+    glossary = load_profile(report.profile_name).glossary
+    version, system = prompt_version(glossary), system_prompt(glossary)
+    chunks = runner.pending_leaves(runner.load_chunks(args.run_dir), args.run_dir, version, args.only_enriched)
+    if args.sample:
+        chunks = runner.stratified(chunks, args.sample)
+    if args.limit:
+        chunks = chunks[: args.limit]
+    counter, method = token_counter()
+    est_in, est_out = runner.estimate(chunks, counter or estimate_tokens, system)
+    types = ", ".join(f"{t} {n}" for t, n in sorted(
+        {t: sum(1 for c in chunks if c.chunk_type == t) for t in {c.chunk_type for c in chunks}}.items()))
+    print(f"Chunk lá cần làm giàu: {len(chunks)} ({types or '—'}); model {model}; prompt {version} "
+          f"({len(glossary)} thuật ngữ)")
+    print(f"Ước tính: {est_in:,} token vào + {est_out:,} token ra ≈ "
+          f"{runner.cost_usd(est_in, est_out, price_in, price_out):.4f} USD"
+          f"{'' if method == 'tiktoken' else ' (token ước lượng ký tự/4)'}")
+    if args.dry_run or not chunks:
+        return
+    from app.modules.doc_ingest.enrich.client import OpenAIEnricher
+
+    enricher = OpenAIEnricher(model, env.openai_api_key(), system)
+    stats = runner.RunStats()
+    keep_terms = [t.en for t in glossary if not t.vi]
+    for chunk, record, error, stats in runner.run_enrichment(args.run_dir, chunks, enricher, version=version,
+                                                             keep_terms=keep_terms):
+        status = "lỗi: " + error if error else ("ok" + (f" (kiểm: {', '.join(record.checks)})"
+                                                         if record and record.checks else ""))
+        print(f"  {chunk.chunk_key} [{chunk.chunk_type}]: {status}", flush=True)
+    cost = runner.cost_usd(stats.input_tokens, stats.output_tokens, price_in, price_out)
+    print(f"Xong: {stats.done} ghi, {len(stats.failed)} lỗi; thật: {stats.input_tokens:,} vào + "
+          f"{stats.output_tokens:,} ra ≈ {cost:.4f} USD → {args.run_dir / 'build' / 'enrichment.jsonl'}")
+    print("Chạy lại build để đưa làm giàu vào embed_text.")
 
 
 def cmd_figure_ocr(args: argparse.Namespace) -> None:
@@ -86,17 +221,34 @@ def cmd_figure_ocr(args: argparse.Namespace) -> None:
 
 
 def cmd_build(args: argparse.Namespace) -> Path:
-    from app.modules.doc_ingest.build.builder import build_run_dir, write_build
+    from app.modules.doc_ingest.build.builder import build_run_dir, load_carry, write_build
     from app.modules.doc_ingest.manifest import load_manifest
 
+    if (args.carry_review is None) != (args.carry_chunks is None):
+        raise SystemExit("--carry-review và --carry-chunks phải đi cùng nhau")
+    carry = load_carry(args.carry_review, args.carry_chunks) if args.carry_review else None
     manifest = load_manifest(args.manifest) if args.manifest else None
     result = build_run_dir(args.run_dir, manifest, args.labels, args.compare_csv)
-    path = write_build(result)
+    path = write_build(result, carry)
     q = result.quality
     failed = [c.check_id for c in q.checks if c.passed is False]
     verdict = {True: "ĐẠT", False: "KHÔNG ĐẠT", None: "chưa đủ dữ liệu"}[q.gate_passed]
+    if q.token_count_method == "unavailable":
+        print("  CẢNH BÁO: venv này không có tiktoken; token chỉ là ước lượng (ký tự/4), `token_count` để trống, "
+              "`embed_truncated` và CQ-11 không đáng tin. Build lại bằng venv chính trước khi duyệt.", flush=True)
     print(f"Chunk: {q.chunks} ({', '.join(f'{k} {v}' for k, v in q.by_role.items())}); "
           f"CQ không đạt: {', '.join(failed) or 'không'}; cổng 2b: {verdict}{' (tạm)' if q.provisional else ''}")
+    e = q.enrichment
+    if e.enriched:
+        state = {True: "ĐẠT", False: "KHÔNG ĐẠT", None: "chưa đủ"}
+        print(f"Làm giàu (2c): tự động (CQ-13) {state[e.auto_passed]}: {e.enriched}/{e.leaves} chunk lá, mã lạ "
+              f"{len(e.code_mismatch)}, bớt câu hỏi/từ khóa {len(e.trimmed)}, content bị cắt {len(e.truncated)}; "
+              f"mẫu {e.sample_ok}/{e.sample} ok, {len(e.sample_fix)} fix ({len(e.severe)} nặng), {e.sample_pending} "
+              f"chờ; cổng 2c {state[e.passed]}"
+              f"{f'; đã duyệt phiên bản {e.approved_version}' if e.approved_version else ''}")
+    status = ", ".join(f"{k} {v}" for k, v in q.review_status_v2.items())
+    print(f"doc_chunks_v2: {status or '0 dòng'}; lỗi ràng buộc {len(q.export_errors_v2)}"
+          f"{': ' + '; '.join(q.export_errors_v2[:3]) if q.export_errors_v2 else ''}")
     return path
 
 
@@ -238,6 +390,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Báo cáo: {cmd_build(args)}")
     elif args.command == "figure-ocr":
         cmd_figure_ocr(args)
+    elif args.command == "enrich":
+        cmd_enrich(args)
+    elif args.command == "enrich-sample":
+        cmd_enrich_sample(args)
+    elif args.command == "enrich-approve":
+        cmd_enrich_approve(args)
     return 0
 
 

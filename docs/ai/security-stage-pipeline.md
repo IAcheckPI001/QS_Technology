@@ -150,7 +150,7 @@ security stage; lỗi phải được log bằng request ID và trả error code
 ### 5.1 Normalize
 
 Giữ helper hiện tại trong
-[backend/app/util/normalize.py](../backend/app/util/normalize.py) hoặc chuyển
+[backend/app/util/normalize.py](../../backend/app/util/normalize.py) hoặc chuyển
 vào security domain nếu cần thống nhất ownership.
 
 Yêu cầu:
@@ -243,7 +243,8 @@ quan trọng.
 6. nếu `allow`, tiếp tục flow hiện tại;
 7. chỉ ghi `completed` sau khi provider stream thành công.
 
-Router trong [backend/app/modules/chatbot/router.py](../backend/app/modules/chatbot/router.py)
+Router trong [backend/app/modules/chatbot/routers/](../../backend/app/modules/chatbot/routers/)
+(`chat.py`, ánh xạ lỗi ở `sse.py`)
 chỉ nên map decision/error thành transport response. Không đưa rule matching vào
 route handler.
 

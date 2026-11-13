@@ -8,7 +8,7 @@ cấp theo dãy số: `CHAPTER 2` = (2,), `2.1 …` = (2, 1) nằm dưới nó. 
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
+from collections.abc import Sequence, Set
 from dataclasses import dataclass, field
 
 from app.modules.doc_ingest.normalize.docling_reader import RawItem
@@ -58,9 +58,64 @@ class SectionInfo:
     flags: list[str] = field(default_factory=list)
 
 
+VISUAL_LABELS = frozenset({"picture"})
+
+
+def _x_overlap(a, b) -> float:
+    """Tỉ lệ chồng theo trục x so với hộp hẹp hơn."""
+    width = min(a.x1 - a.x0, b.x1 - b.x0)
+    return max(0.0, min(a.x1, b.x1) - max(a.x0, b.x0)) / width if width > 0 else 0.0
+
+
+def fix_figures_above_heading(items: Sequence[RawItem], text_pages: Set[int], profile: Profile,
+                              rec: Recorder) -> tuple[list[RawItem], dict[str, list[str]]]:
+    """T-07 (I-40a): trên trang text layer, hình (kèm caption và phần tử con) nằm hẳn phía trên heading đánh số
+    đầu trang nhưng Docling xếp sau heading đó → chuyển lên trước heading (trước phần tử đầu tiên của trang nằm
+    dưới hình), để thuộc mục trước.
+
+    Chỉ dời khi: hình là phần tử cấp trên (không có cha), đáy hình ở trên đỉnh heading, chồng cột với heading
+    (≥ 50% theo x), và mọi phần tử cấp trên giữa heading và hình đều nằm dưới heading (hình là phần tử lạc thứ
+    tự, không phải trang hai cột). Trang OCR không áp dụng. Trả về (items theo thứ tự mới, cờ theo element_id)."""
+    out = list(items)
+    flags: dict[str, list[str]] = {}
+    for page in sorted({i.page for i in out if i.page in text_pages}):
+        body = [i for i in out if i.page == page and not i.is_furniture and i.parent_id is None]
+        heading = next((i for i in body if i.label in HEADING_LABELS and i.bbox is not None
+                        and parse_heading(i.text, profile) is not None), None)
+        if heading is None:
+            continue
+        after = body[body.index(heading) + 1:]
+        for k, visual in enumerate(after):
+            if (visual.label not in VISUAL_LABELS or visual.bbox is None
+                    or visual.bbox.y1 > heading.bbox.y0 or _x_overlap(visual.bbox, heading.bbox) < 0.5
+                    or any(x.bbox is not None and x.bbox.y0 < heading.bbox.y0 for x in after[:k])):
+                continue
+            nxt = after[k + 1] if k + 1 < len(after) else None
+            caption = (nxt if nxt is not None and nxt.label == "caption" and nxt.bbox is not None
+                       and nxt.bbox.y1 <= heading.bbox.y0 else None)
+            moved_ids = {visual.element_id} | ({caption.element_id} if caption else set())
+            group = [i for i in out if i.element_id in moved_ids or i.parent_id in moved_ids]
+            rest = [i for i in out if i not in group]
+            at = rest.index(heading)
+            # chèn trước phần tử cấp trên đầu tiên của trang (trước heading) nằm dưới hình, mặc định ngay trước heading
+            for j in range(at):
+                x = rest[j]
+                if (x.page == page and x.parent_id is None and not x.is_furniture and x.bbox is not None
+                        and x.bbox.y0 >= visual.bbox.y1):
+                    at = j
+                    break
+            out = rest[:at] + group + rest[at:]
+            for i in group:
+                flags.setdefault(i.element_id, []).append("reading_order_fixed")
+            rec.add_log("T-07", visual.element_id, "figure above first heading moved before it",
+                        after={"heading": heading.element_id, "moved": sorted(moved_ids)})
+    return out, flags
+
+
 def assign_sections(items: Sequence[RawItem], demoted: set[str], profile: Profile,
-                    rec: Recorder) -> dict[str, SectionInfo]:
-    """`demoted`: element_id header/footer được T-17 trả về body làm heading."""
+                    rec: Recorder, skip: Set[str] = frozenset()) -> dict[str, SectionInfo]:
+    """`demoted`: element_id header/footer được T-17 trả về body làm heading. `skip`: phần tử không bao
+    giờ là heading/label heading (dòng và tiêu đề mục lục T-16)."""
     stack: list[tuple[tuple[int, ...], str]] = []
     label: str | None = None
     out: dict[str, SectionInfo] = {}
@@ -68,7 +123,8 @@ def assign_sections(items: Sequence[RawItem], demoted: set[str], profile: Profil
         if item.is_furniture:
             continue
         path = [title for _, title in stack]
-        is_candidate = item.parent_id is None and (item.label in HEADING_LABELS or item.element_id in demoted)
+        is_candidate = (item.parent_id is None and item.element_id not in skip
+                        and (item.label in HEADING_LABELS or item.element_id in demoted))
         if not is_candidate:
             out[item.element_id] = SectionInfo(section_path=path, section_path_source="inherited" if path else "none",
                                                label_heading=label)

@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+from datetime import datetime
 
 import httpx
 import pytest
@@ -90,6 +91,21 @@ def test_strings_are_sanitized_and_cut():
     assert render_value("", TZ) is None and render_value(True, TZ) is True
 
 
+@pytest.mark.parametrize(("value", "expected"), [
+    # CRM lưu UTC: chuỗi không kèm múi giờ (cột timestamp) là UTC.
+    ("2026-10-31 17:30:00.123456", "2026-11-01T00:30+07:00"),
+    ("2026-10-01 02:00:00.5+00", "2026-10-01T09:00+07:00"),           # timestamptz
+    ("2026-10-01T02:00:00.123456789Z", "2026-10-01T09:00+07:00"),
+    ("2026-10-01T09:00:00+07:00", "2026-10-01T09:00+07:00"),
+    (datetime(2026, 10, 1, 2, 0), "2026-10-01T09:00+07:00"),           # datetime không múi giờ
+    ("2026-10-01", "2026-10-01"),                                      # cột date, kỳ _day: giữ
+    ("2026-10", "2026-10"),
+    ("Lắp đặt 2026-10-01 02:00", "Lắp đặt 2026-10-01 02:00"),          # chữ có ngày: giữ
+])
+def test_timestamps_are_shown_in_local_time(value, expected):
+    assert render_value(value, TZ) == expected
+
+
 @pytest.mark.parametrize(("arguments", "message"), [
     ({"dataset": "tickets", "fields": ["full_name"]}, "fields: full_name not allowed here"),
     ({"dataset": "tickets", "fields": ["status"],
@@ -142,9 +158,39 @@ def test_customers_use_report_api_select_plus_count():
     assert count["metrics"] == ["count"] and "select" not in count
     output = outcome.output
     assert output.source == "report_api"
-    assert output.items == [{"code": "KH01", "full_name": "Nguyễn B", "created_at": "2026-10-03 08:00:00"}]
+    # CRM trả UTC không kèm múi giờ: hiển thị giờ Việt Nam.
+    assert output.items == [{"code": "KH01", "full_name": "Nguyễn B", "created_at": "2026-10-03T15:00+07:00"}]
     assert (output.total, output.has_more, output.next_offset) == (41, True, 1)
     assert output.applied.system_filters == ["customer_type not_in [spam, lost] (mặc định)"]
+
+
+def test_customer_search_by_name_reads_contact_columns_and_long_notes():
+    notes = "Gọi lại sau Tết. " * 80          # 1360 ký tự: vượt trần 1000 của notes
+    api = FakeReportApi([
+        {"rows": [{
+            "code": "KH09", "full_name": "Anna Hohmeier", "phone": "0909123456",
+            "email": "anna@example.com", "assigned_sales_id__username": "an", "notes": notes,
+        }]},
+        {"rows": [{"count": 1}]},
+    ])
+    outcome = _invoke(_registry(api=api), {
+        "dataset": "customers",
+        "fields": ["code", "full_name", "phone", "email", "sales_username", "notes"],
+        "filters": [{"field": "full_name", "operator": "contains", "value": "hohmeier"}],
+    })
+
+    assert outcome.ok, outcome.error_detail
+    select, count = api.bodies()
+    assert select["select"] == [
+        "code", "full_name", "phone", "email", "assigned_sales_id.username", "notes",
+    ]
+    name_filter = {"field": "full_name", "op": "contains", "value": "hohmeier"}
+    assert name_filter in select["filters"] and name_filter in count["filters"]
+    [item] = outcome.output.items
+    assert item["full_name"] == "Anna Hohmeier" and item["phone"] == "0909123456"
+    assert item["sales_username"] == "an"
+    assert len(item["notes"]) == 1000 and item["notes"].endswith("…")    # max_chars riêng của notes
+    assert outcome.output.total == 1
 
 
 def test_assignment_list_maps_join_columns_back_to_logical_names():
@@ -189,5 +235,10 @@ def test_schema_converts_for_openai_strict_and_lists_columns():
     ]
     description = tool["function"]["description"]
     assert "Dataset tickets" in description and "case_number" in description
-    for secret in ("subject", "description:", "phone", "email", "password"):
+    # Nội dung phiếu và cột bí mật không bao giờ có; liên hệ chỉ mở ở customers (2026-11-10).
+    for secret in ("subject", "description:", "password", "token"):
         assert secret not in description
+    customers_line = next(line for line in description.splitlines() if line.startswith("Dataset customers"))
+    assert "phone:" in customers_line and "notes:" in customers_line
+    tickets_line = next(line for line in description.splitlines() if line.startswith("Dataset tickets"))
+    assert "phone" not in tickets_line and "email" not in tickets_line

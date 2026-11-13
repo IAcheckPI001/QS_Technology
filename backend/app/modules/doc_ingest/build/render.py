@@ -1,7 +1,8 @@
 """Dựng `content` nguyên văn (contract C2 §6.1): một dòng mỗi phần tử, list lồng theo T-08, bảng dạng markdown.
 
 Không thêm câu tự viết vào content; ngoại lệ duy nhất là dòng tiêu đề lặp lại của phần thủ tục/bảng bị tách
-(`(phần i/n …)`), đã ghi trong contract.
+(`(phần i/n …)`) kèm phần dẫn chung của khối bị tách (I-39), đã ghi trong contract. Bullet là glyph vùng
+Private Use đầu dòng được render thành `- ` (I-39); `text` của phần tử không đổi.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ from app.modules.doc_ingest.schemas.normalized import LogicalTable, NormalizedEl
 
 INDENT = "    "
 _PIPE = re.compile(r"(?<!\\)\|")
+_PUA_BULLET = re.compile(r"^[-](\s+|$)")
 
 
 def element_line(element: NormalizedElement) -> str | None:
@@ -21,6 +23,12 @@ def element_line(element: NormalizedElement) -> str | None:
     text = (element.text or "").strip()
     if not text:
         return None
+    if _PUA_BULLET.match(text):     # I-39: bullet là glyph vùng Private Use của font PDF (" ...")
+        text = _PUA_BULLET.sub("", text, count=1)
+        if not text:
+            return None
+        if element.normalized_type != "list_item" or element.list_info is None:
+            return f"- {text}"
     if element.normalized_type == "list_item" and element.list_info is not None:
         info = element.list_info
         indent = INDENT * info.depth

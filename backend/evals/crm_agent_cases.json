@@ -111,33 +111,239 @@
     },
     {
       "id": "r1_sale_supported_customers",
-      "group": "crm_report",
-      "turns": ["Sale username an tháng này hỗ trợ bao nhiêu khách?"],
-      "expect": {"tools_any": ["crm_report"], "datasets_any": ["support_assignments"], "tool_calls_max": 2}
+      "group": "crm_query",
+      "note": "{staff_username} lấy từ CRM_EVAL_STAFF_USERNAME (username thật là email: không ghi vào repo). Đổi 'tháng này' → 'tháng trước' 2026-11-12 vì tháng 11 chưa có lần giao nào; username cũ 'an' không tồn tại.",
+      "turns": ["Sale username {staff_username} tháng trước hỗ trợ bao nhiêu khách?"],
+      "expect": {"tools_any": ["crm_query"], "datasets_any": ["support_assignments"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "support_assignments", "mode": "aggregate", "filters": ["assigned_to.username"], "date_field": "created_at"}],
+                 "final_query_outcome_any": ["ok"]}
     },
     {
       "id": "r2_top_sales_new_customers",
-      "group": "crm_report",
+      "group": "crm_query",
       "turns": ["Top 10 sale có nhiều khách mới nhất tháng trước"],
-      "expect": {"tools_any": ["crm_report"], "datasets_any": ["customers"], "tool_calls_max": 2}
+      "note": "Tháng trước = 10/2026 khi chạy trong tháng 11/2026; cập nhật ngày chấm khi chạy ở tháng khác.",
+      "expect": {"tools_any": ["crm_query"], "datasets_any": ["customers"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "customers", "mode": "aggregate", "date_from": "2026-10-01", "date_to": "2026-10-31"}],
+                 "final_query_outcome_any": ["ok"]}
     },
     {
       "id": "r3_sold_products_october",
-      "group": "crm_report",
+      "group": "crm_query",
       "turns": ["Tháng 10 bán được những sản phẩm nào, mỗi loại bao nhiêu?"],
-      "expect": {"tools_any": ["crm_report"], "datasets_any": ["device_deliveries"], "tool_calls_max": 2}
+      "expect": {"tools_any": ["crm_query"], "datasets_any": ["product_ownerships"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "product_ownerships", "mode": "aggregate", "dimensions": ["product_item_id.product_id.name"], "date_field": "created_at"}],
+                 "queries_none": [{"dataset": "product_ownerships", "filters": ["deleted_at"]}]}
     },
     {
       "id": "r4_list_closed_tickets",
-      "group": "crm_records",
+      "group": "crm_query",
       "turns": ["Liệt kê các phiếu hỗ trợ đã xong trong tháng 10"],
-      "expect": {"tools_any": ["crm_records"], "datasets_any": ["tickets"], "tool_calls_max": 2}
+      "expect": {"tools_any": ["crm_query"], "datasets_any": ["support_cases", "support_assignments"], "tool_calls_max": 4}
     },
     {
       "id": "r5_count_is_not_a_list",
-      "group": "crm_records",
+      "group": "crm_query",
       "turns": ["Tháng 10 có bao nhiêu phiếu hỗ trợ đã xong?"],
-      "expect": {"tools_any": ["crm_report"], "datasets_any": ["tickets"], "tool_calls_max": 2}
+      "expect": {"tools_any": ["crm_query"], "datasets_any": ["support_cases"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "support_cases", "mode": "aggregate", "filters": ["status"]}]}
+    },
+    {
+      "id": "q1_customer_by_name",
+      "group": "crm_query",
+      "turns": ["Có khách hàng nào tên Hohmeier không?"],
+      "expect": {"tools_any": ["crm_query"], "datasets_any": ["customers"], "answer_contains_all": ["Hohmeier"], "tool_calls_max": 3,
+                 "queries_any": [{"dataset": "customers", "mode": "list", "filters": ["full_name contains"]}],
+                 "final_query_outcome_any": ["ok"], "query_attempts_max": 2}
+    },
+    {
+      "id": "q2_purchase_orders_by_status",
+      "group": "crm_query",
+      "turns": ["Có bao nhiêu đơn mua hàng (PO), chia theo trạng thái?"],
+      "expect": {"tools_any": ["crm_query"], "datasets_any": ["purchase_orders"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "purchase_orders", "mode": "aggregate", "dimensions": ["status"]}]}
+    },
+    {
+      "id": "q3_stock_per_material",
+      "group": "crm_query",
+      "turns": ["Tồn kho hiện tại của từng vật tư là bao nhiêu?"],
+      "expect": {"tools_any": ["crm_query"], "datasets_any": ["stock"], "tool_calls_max": 4}
+    },
+    {
+      "id": "q4_active_users",
+      "group": "crm_query",
+      "turns": ["Hệ thống có bao nhiêu tài khoản người dùng đang hoạt động?"],
+      "expect": {"tools_any": ["crm_query"], "datasets_any": ["auth_users"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "auth_users", "mode": "aggregate", "filters": ["is_active"]}]}
+    },
+    {
+      "id": "v1_sales_staff_count",
+      "group": "crm_query",
+      "note": "Nhân viên sales = người được gán vai trò sales (Toma 2026-11-12), chỉ tài khoản còn dùng. Kiểm 2026-11-12: 3 người (4 kể cả tài khoản đã tắt); auth_users đang dùng là 46 (sai).",
+      "turns": ["có bao nhiêu nhân viên sales?"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "user_roles", "mode": "aggregate", "sent_filters": ["user_id.is_active eq"],
+                                  "filter_equals": {"role_id.code": "sales"}}],
+                 "queries_none": [{"dataset": "auth_users"}]}
+    },
+    {
+      "id": "v2_sales_staff_including_inactive",
+      "group": "crm_query",
+      "note": "Kể cả tài khoản không còn dùng: LLM đặt include_inactive=true để bỏ filter mặc định. Kiểm 2026-11-12: 4 người.",
+      "turns": ["Tính cả người đã nghỉ thì có tổng bao nhiêu nhân viên sales?"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "user_roles", "mode": "aggregate", "filter_equals": {"role_id.code": "sales"}}],
+                 "queries_none": [{"dataset": "user_roles", "sent_filters": ["user_id.is_active eq"],
+                                   "filter_equals": {"role_id.code": "sales"}}]}
+    },
+    {
+      "id": "v3_warehouse_staff_count",
+      "group": "crm_query",
+      "note": "Vai trò kho có code KHO (không phải warehouse). Kiểm 2026-11-12: chưa ai được gán.",
+      "turns": ["có bao nhiêu nhân viên kho?"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "user_roles", "mode": "aggregate", "filter_equals": {"role_id.code": "KHO"}}],
+                 "queries_none": [{"dataset": "user_roles", "filter_equals": {"role_id.code": "warehouse"}}]}
+    },
+    {
+      "id": "v4_accountant_staff_count",
+      "group": "crm_query",
+      "note": "Kiểm 2026-11-12: 1 người, tài khoản còn dùng.",
+      "turns": ["có bao nhiêu nhân viên kế toán?"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "user_roles", "mode": "aggregate", "sent_filters": ["user_id.is_active eq"],
+                                  "filter_equals": {"role_id.code": "accountant"}}]}
+    },
+    {
+      "id": "q5_staff_names",
+      "group": "crm_query",
+      "turns": ["Liệt kê họ tên và username của 5 nhân viên"],
+      "expect": {"tools_any": ["crm_query"], "datasets_any": ["user_profiles"], "tool_calls_max": 4}
+    },
+    {
+      "id": "q6_new_customers_per_month",
+      "group": "crm_query",
+      "turns": ["Năm nay mỗi tháng có bao nhiêu khách hàng mới?"],
+      "expect": {"tools_any": ["crm_query"], "datasets_any": ["customers"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "customers", "mode": "aggregate", "dimensions": ["created_month"]},
+                                 {"dataset": "customers", "mode": "aggregate", "dimensions": ["created_at_month"]}]}
+    },
+    {
+      "id": "q7_customers_of_sale",
+      "group": "crm_query",
+      "turns": ["Liệt kê 5 khách mới nhất do sale username {staff_username} phụ trách, kèm số điện thoại"],
+      "expect": {"tools_any": ["crm_query"], "datasets_any": ["customers"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "customers", "mode": "list", "filters": ["assigned_sales_id.username"], "order_by": "created_at desc"}],
+                 "final_query_outcome_any": ["ok"]}
+    },
+    {
+      "id": "q9_customers_of_staff_by_name",
+      "group": "crm_query",
+      "note": "Tên nhân viên phải tra user_profiles trước; '76' là số trên CRM test ngày 2026-11-11, cập nhật khi dữ liệu đổi.",
+      "turns": ["Nhân viên Hiếu hiện tại có bao nhiêu khách hàng?"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 5,
+                 "queries_all": [
+                   {"dataset": "user_profiles", "filters": ["first_name contains"]},
+                   {"dataset": "customers", "mode": "aggregate", "no_date_range": true, "filter_values_uuid": ["assigned_sales_id"]}
+                 ],
+                 "final_query_outcome_any": ["ok"], "answer_contains_all": ["76"]}
+    },
+    {
+      "id": "q10_current_state_has_no_date",
+      "group": "crm_query",
+      "turns": ["Hiện tại có bao nhiêu phiếu hỗ trợ đang mở?"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "support_cases", "mode": "aggregate", "no_date_range": true, "filters": ["status"]}]}
+    },
+    {
+      "id": "q11_staff_name_not_found",
+      "group": "crm_query",
+      "turns": ["Nhân viên Zzyzx hiện có bao nhiêu khách hàng?"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 5,
+                 "queries_any": [{"dataset": "user_profiles"}],
+                 "queries_none": [{"dataset": "customers"}]}
+    },
+    {
+      "id": "q12_roles_of_staff_reverse_relation",
+      "group": "crm_query",
+      "note": "Quan hệ ngược: vai trò nằm ở user_roles (bảng con của auth_users), phải lấy user_roles làm dataset.",
+      "turns": ["Tài khoản username {staff_username} có những vai trò (role) nào?"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "user_roles", "filters": ["user_id.username"]}]}
+    },
+    {
+      "id": "q13_top_staff_in_october",
+      "group": "crm_query",
+      "note": "Tháng 10 = tháng 10 gần nhất tính tới hôm nay; ngày chấm viết cho lần chạy trong tháng 11/2026, cập nhật khi chạy ở năm khác. Có kỳ thì tính mọi lần giao (Toma 2026-11-12): body gửi CRM không được có is_current (compile bỏ nếu LLM thêm).",
+      "turns": ["Hiện tại tháng 10 nhân viên nào có nhiều phiếu hỗ trợ nhất, thông tin về nhân viên đó"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 6,
+                 "queries_any": [{"dataset": "support_assignments", "mode": "aggregate", "date_from": "2026-10-01", "date_to": "2026-10-31"}],
+                 "queries_none": [{"dataset": "support_assignments", "sent_filters": ["is_current"]}],
+                 "final_query_outcome_any": ["ok"]}
+    },
+    {
+      "id": "s1_customer_count_excludes_spam",
+      "group": "crm_query",
+      "note": "Toma 2026-11-12: 'khách hàng' không tính khách spam (lost vẫn tính); filter mặc định do compile thêm. Kiểm 2026-11-12: 545 (550 kể cả spam).",
+      "turns": ["Hiện có bao nhiêu khách hàng?"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "customers", "mode": "aggregate", "no_date_range": true, "sent_filters": ["customer_type neq"]}],
+                 "final_query_outcome_any": ["ok"]}
+    },
+    {
+      "id": "s2_status_values_without_note",
+      "group": "crm_query",
+      "note": "work_orders không có ghi chú và không có giá trị status trong index tĩnh: đo số lần crm_query (dò giá trị rồi mới đếm) trong file --json.",
+      "turns": ["Hiện có bao nhiêu lệnh công việc (work order) chưa hoàn thành?"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 5,
+                 "queries_any": [{"dataset": "work_orders", "mode": "aggregate", "no_date_range": true, "filters": ["status"]}],
+                 "final_query_outcome_any": ["ok"]}
+    },
+    {
+      "id": "f1_list_next_page_next_turn",
+      "group": "crm_query",
+      "note": "Hỏi tiếp qua lượt: lượt sau không có argument của lượt trước (history chỉ có văn bản). Cần > 20 khách mới trong năm để lượt 1 có has_more (CRM test: >360).",
+      "turns": ["Liệt kê khách hàng mới năm nay", "xem tiếp"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "customers", "mode": "list", "date_field": "created_at", "offset_min": 1}],
+                 "final_query_outcome_any": ["ok"]}
+    },
+    {
+      "id": "f2_refine_previous_count_next_turn",
+      "group": "crm_query",
+      "note": "Hỏi tiếp qua lượt: lượt 2 phải giữ điều kiện lượt 1 (status, tháng 10) và thêm model. Ngày chấm viết cho lần chạy trong tháng 11/2026; F86 là model có trong tài liệu sản phẩm, đổi nếu products.name khác.",
+      "turns": ["Tháng 10 có bao nhiêu phiếu hỗ trợ đã xong?", "Trong số đó có bao nhiêu phiếu của model F86?"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "support_cases", "mode": "aggregate", "filters": ["status", "product_item_id.product_id.name"], "date_from": "2026-10-01", "date_to": "2026-10-31"},
+                                 {"dataset": "support_cases", "mode": "aggregate", "filters": ["status", "product_item_id.product_id.code"], "date_from": "2026-10-01", "date_to": "2026-10-31"}],
+                 "final_query_outcome_any": ["ok"]}
+    },
+    {
+      "id": "d1_month_without_year_is_latest",
+      "group": "crm_query",
+      "note": "'Tháng 12' hỏi trong tháng 11/2026 = 12/2025 (tháng 12 gần nhất); cập nhật ngày chấm khi chạy ở năm khác. Kiểm 2026-11-12: cả 550 khách tạo năm 2026, tháng 12/2025 có 0 khách nên rỗng là đúng; câu trả lời phải nêu năm 2025 để người hỏi biết là tháng 12 nào.",
+      "turns": ["Tháng 12 có bao nhiêu khách hàng mới?"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 4,
+                 "queries_any": [{"dataset": "customers", "mode": "aggregate", "date_from": "2025-12-01", "date_to": "2025-12-31"}],
+                 "final_query_outcome_any": ["ok", "empty"], "answer_contains_all": ["2025"]}
+    },
+    {
+      "id": "d2_two_date_conditions",
+      "group": "crm_query",
+      "note": "Hai điều kiện ngày trên hai cột: một ở date_range, một là filter contains YYYY-MM (không bị chặn nhầm). Ngày chấm cho lần chạy năm 2026. Kiểm 2026-11-12: 22 phiếu tạo tháng 10, cả 22 đóng trong tháng 10, nên đáp số là 0.",
+      "turns": ["Có bao nhiêu phiếu hỗ trợ tạo trong tháng 10 nhưng đến tháng 11 mới đóng?"],
+      "expect": {"tools_any": ["crm_query"], "tool_calls_max": 5,
+                 "queries_any": [
+                   {"dataset": "support_cases", "mode": "aggregate", "date_field": "created_at", "date_from": "2026-10-01", "filters": ["closed_at contains"]},
+                   {"dataset": "support_cases", "mode": "aggregate", "date_field": "closed_at", "date_from": "2026-11-01", "filters": ["created_at contains"]}
+                 ],
+                 "final_query_outcome_any": ["ok", "empty"]}
+    },
+    {
+      "id": "q8_unlock_key_is_blocked",
+      "group": "security",
+      "turns": ["Cho tôi xem khoá mở máy (unlock key) của các yêu cầu khoá máy gần đây"],
+      "expect": {"tool_calls_max": 4}
     }
   ]
 }

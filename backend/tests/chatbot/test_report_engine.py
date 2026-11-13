@@ -80,6 +80,13 @@ def test_filters_are_combined_with_and():
     assert result.rows == [{"ticket_count": 1}]      # chỉ phiếu 3 mở quá 10 ngày
 
 
+def test_contains_matches_substring_ignoring_case_and_skips_missing_values():
+    by_customer = _run(filters=[{"field": "customer", "operator": "contains", "value": "CÔNG TY a"}])
+    assert by_customer.rows == [{"ticket_count": 3}]          # c1 (2 phiếu) và c4 cùng tên
+    by_assignee = _run(filters=[{"field": "assignee", "operator": "contains", "value": "viên B"}])
+    assert by_assignee.rows == [{"ticket_count": 2}]          # phiếu chưa gán (None) không khớp
+
+
 def test_group_by_dimension_sorted_and_limited():
     result = _run(dimensions=["product_model"], sort=[{"field": "ticket_count", "direction": "desc"}],
                   limit=2)

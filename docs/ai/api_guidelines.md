@@ -379,11 +379,16 @@ Body của `/chat/crm` khác website (field lạ, kể cả `client_context` và
 
 - `user_id`: bắt buộc, 1–128 ký tự sau khi strip.
 - `crm_access_token`: tùy chọn, 1–4096 ký tự. Token CRM của chính nhân viên đó;
-  tool báo cáo (`crm_report`, `crm_records`) dùng làm `Authorization: Bearer` khi gọi
+  tool CRM (`crm_schema`, `crm_query`, `crm_report`, `crm_records`) dùng làm `Authorization: Bearer` khi gọi
   API CRM (API danh sách và Reporting Query API `POST /api/v1/reports/query`), nên
   CRM phân quyền/phạm vi dữ liệu theo token. **Không** log, không lưu
   (`chat_sessions`, history, snapshot), không dùng để khớp session. Bỏ trống thì
   tool dùng `user_id` làm Bearer (hành vi cũ).
+- Từ 2026-11-10 tool `crm_records` đọc được mọi cột nghiệp vụ của khách hàng, kể cả
+  liên hệ (phone, email, address) và ghi chú, và `crm_query` (mặc định khi bật tool CRM,
+  D-005) đọc được mọi bảng nghiệp vụ trừ bảng/cột bị chặn, trong phạm vi token. Vì vậy câu
+  trả lời của `/chat/crm` có thể chứa dữ liệu cá nhân của khách: dữ liệu này đi qua
+  provider LLM và được lưu trong `chat_history` như mọi câu trả lời khác.
 - `session_id`: `null`/bỏ trống = hội thoại mới (nút "Cuộc trò chuyện mới");
   lượt sau gửi giá trị từ event `done`. Không phải bí mật: chỉ dùng lại được
   khi session cùng integration **và** cùng `user_id`.
@@ -468,8 +473,10 @@ công khi nhận `done`, và xử lý `error` theo `code`. Các mã lỗi chính
   (`agent_timeout` hết thời gian của lượt, `agent_empty_answer`,
   `agent_context_missing`; mã chi tiết chỉ ghi log). Lỗi của từng tool không làm
   hỏng lượt: agent nhận mã lỗi tool và vẫn trả lời.
-  Mã lỗi của `crm_report`/`crm_records` gửi cho agent (và ghi trong
-  `tool_errors`): `crm_user_missing` (không có nhân viên gắn với lượt),
+  Mã lỗi của tool CRM gửi cho agent (và ghi trong
+  `tool_errors`): `crm_query_invalid` (chỉ `crm_schema`/`crm_query`: CRM trả 400 cho
+  query do LLM dựng hoặc bảng không cho dùng; LLM sửa và gọi lại),
+  `crm_user_missing` (không có nhân viên gắn với lượt),
   `crm_auth_failed` (CRM trả 401), `crm_forbidden` (CRM trả 403: tài khoản không có
   quyền với dataset, vd thiếu `auth.manage_roles`), `crm_report_contract_error`
   (Reporting API trả 400: catalog lệch schema CRM, chi tiết chỉ ghi log ERROR),
@@ -508,37 +515,11 @@ secret hoặc nội dung log nội bộ.
 8. Secrets và cấu hình triển khai lấy từ environment/settings; không ghi vào
    source hoặc response.
 
-## Trạng thái và giới hạn hiện tại
+## Trạng thái
 
-- CORS, OpenAI provider lifecycle và database session được cấu hình ở
-  `backend/app/main.py`. CORS cho phép header request `Content-Type`, `Accept`,
-  `Authorization`, `Idempotency-Key`, `X-Request-ID`, `X-CSRF-Token` và expose
-  `X-Request-ID`. Header request mới mà frontend gửi phải được thêm vào
-  `allow_headers`, nếu không preflight trả `400 Disallowed CORS headers` và trình
-  duyệt chặn request (kiểm bằng `backend/tests/api/test_cors.py`). Đây là danh
-  sách được phép, không phải header bắt buộc.
-- History được ghi vào Supabase `public.chat_history`: `completed`, `error`
-  (đã kiểm chứng commit sau khi stream bằng test, FastAPI 0.143), `blocked` hoặc
-  `cancelled` (hai trạng thái sau commit ngay bằng session riêng).
-  `normalized_query` lưu câu hỏi đã chuẩn hóa tiếng Việt.
-- `client_context.locale` chỉ là nguồn dự phòng cho ngôn ngữ trả lời: ưu tiên
-  ngôn ngữ do analysis phát hiện, rồi ngôn ngữ của phiên. Câu cố định chỉ có
-  `vi`/`en`; ngôn ngữ khác được sinh qua LLM. Output strict của analyzer có thêm
-  `language` (v3.3, nội bộ).
-- Support-chat history endpoints chỉ được enable cùng `LEARNING_API_ENABLED` và
-  chưa có ownership; client legacy `/chats` không phải contract backend hiện tại.
-- Retrieval đã nối ở mức kiểm thử (xem architecture.md bước 8). Tool agent mới
-  có `product_docs_ask` cho kênh CRM (thử nghiệm, xem architecture.md "Luồng
-  agent"); chưa có tool CRM, chưa phân quyền tool theo role/scope (mọi nhân viên
-  CRM dùng được mọi tool), chưa có event SSE tiến trình.
-- Lượt chỉ có chitchat/out_of_scope/handoff trả câu cố định (một chunk SSE)
-  không qua LLM; các lượt khác stream từ provider qua `AnswerComposer`, dựa trên
-  kết quả task của execution plan. Output strict của analyzer có thêm
-  `pending_answer` (v3.1, nội bộ) và `model_dependency` (`general` |
-  `model_specific`, v3.2, nội bộ); `RetrievalPlan.answer_mode` có thêm `general`. Task `retrieve` chạy hybrid
-  search trên `doc_chunks`; lỗi task nội bộ mới là `retrieval_error` (không lộ ra
-  SSE). Schema nội bộ `RetrievalRequest` có thêm `product_scope_mode`,
-  `control_interface`, `spec_attributes`; `RetrievalSubQueryResult` có `hits`
-  (`ChunkHit`, gồm `assets`); `RetrievalFilters.collections` không còn bắt buộc.
-  SSE chưa có event sources/assets. Không viết tài liệu hoặc test như thể RAG đã
-  hoàn thiện (chưa rerank, tham số chưa tối ưu, chưa kiểm thử với Supabase thật).
+File này chỉ giữ contract. Trạng thái và giới hạn hiện tại của từng phần:
+[chat-platform](flows/chat-platform/STATE.md) (CORS, history, session, health),
+[website-qa](flows/website-qa/STATE.md) (retrieval, câu cố định, SSE nguồn),
+[crm-agent](flows/crm-agent/STATE.md) (tool, phân quyền), [learning](flows/learning/STATE.md).
+Nội dung mục "Trạng thái và giới hạn hiện tại" cũ được chép nguyên văn ở
+[chat-platform/LOG-archive-2026-11-11.md](flows/chat-platform/LOG-archive-2026-11-11.md).

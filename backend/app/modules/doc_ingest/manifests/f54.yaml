@@ -10,4 +10,7 @@ default_scopes: [operation]
 scope_rules:
   - {match: '(?i)^PART 2\b|wiring|connection|install', scopes: [installation]}
 storage_bucket: f54-docs
+# 2026-11-13 (duyệt: Toma): trang 1 bìa (ảnh bộ điều khiển + tên tài liệu), trang 2 lời cảm ơn/giới thiệu công ty.
+exclude_pages: [1, 2]
+exclude_reason: bìa và lời cảm ơn/giới thiệu công ty, không có nội dung kỹ thuật
 note: doc_version lấy từ tên file; footer ghi V.01 (chờ xác nhận)

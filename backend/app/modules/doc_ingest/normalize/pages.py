@@ -66,7 +66,9 @@ def _composed(key: str, repeated: Sequence[str]) -> bool:
     return hit and not rest.strip(_PUNCT)
 
 
-def decide_furniture(items: Sequence[RawItem], profile: Profile, rec: Recorder) -> FurnitureRun:
+def decide_furniture(items: Sequence[RawItem], profile: Profile, rec: Recorder,
+                     frames: frozenset[str] = frozenset()) -> FurnitureRun:
+    """`frames`: picture là khung chữ (T-20) — không phải hình nên T-18 không gắn nhãn vào đó."""
     min_pages = profile.thresholds.furniture_min_pages
     patterns = [re.compile(p) for p in profile.furniture_patterns]
     bands = {i.element_id: band_of(i, profile) for i in items}
@@ -79,7 +81,7 @@ def decide_furniture(items: Sequence[RawItem], profile: Profile, rec: Recorder) 
             pages[slot].add(item.page)
             examples.setdefault(slot, " ".join(item.text.split()))
     repeated = {slot for slot, seen in pages.items() if len(seen) >= min_pages}
-    pictures = [i for i in items if i.label == "picture" and i.parent_id is None]
+    pictures = [i for i in items if i.label == "picture" and i.parent_id is None and i.element_id not in frames]
     margin = text_margin(items)
     run = FurnitureRun(items=[])
     run.keys = [FurnitureKey(band=b, key=k, pages=sorted(pages[(b, k)]), example=examples[(b, k)])

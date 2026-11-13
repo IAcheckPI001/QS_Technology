@@ -110,4 +110,8 @@ Thumbs.db
 docs/ai/doc_ingest_spike/source/
 docs/ai/doc_ingest_spike/output/
 data/ingest_runs/
+# Kết quả đánh giá tra cứu (backend/evals/run_retrieval_eval.py)
+data/retrieval_eval/
+# Checkpoint cục bộ (bản sao file + hướng dẫn khôi phục) trước các thay đổi thử nghiệm
+data/checkpoints/
 .venv-ingest/

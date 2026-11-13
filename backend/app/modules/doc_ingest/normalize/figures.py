@@ -1,4 +1,4 @@
-"""Hình (contract §5): T-18 nhãn sát hình, T-09 screenshot, T-10 ứng viên watermark, T-19 gộp
+"""Hình (contract §5): T-20 khung chữ, T-18 nhãn sát hình, T-09 screenshot, T-10 ứng viên watermark, T-19 gộp
 phần tử hình trùng, T-11 gắn caption, T-14 vùng crop. Luật hình học chung, không theo tài liệu.
 
 Đối tượng trang (`raw/p{n}.objects.json`: bitmap kèm kích thước px, nét vector) đo từ PDF bằng
@@ -6,19 +6,21 @@ pypdfium2. Trang không có file này (run cũ, fixture chỉ có Docling JSON):
 T-14 chỉ dùng bbox Docling và nhãn của hình; không đoán.
 
 Chữ trong hình (kể cả nhãn kích thước) chỉ là từ khóa của hình: không vào text thân chunk,
-không thành fact. Nội dung có thẩm quyền là ảnh crop.
+không thành fact. Nội dung có thẩm quyền là ảnh crop. Ngoại lệ T-20: picture là khung chữ hướng
+dẫn trên trang text layer thì chữ của nó là text thân.
 """
 
 from __future__ import annotations
 
 import dataclasses
+import re
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
 from app.modules.doc_ingest.geometry import BBox, iou, overlap_ratio
-from app.modules.doc_ingest.normalize.docling_reader import RawItem
+from app.modules.doc_ingest.normalize.docling_reader import FURNITURE_LABELS, RawItem
 from app.modules.doc_ingest.normalize.recorder import Recorder
 from app.modules.doc_ingest.normalize.sections import parse_heading
 from app.modules.doc_ingest.schemas.normalized import Box, CaptionLink, ImageInfo
@@ -33,6 +35,10 @@ _SAME_POSITION = 1.0   # T-10: sai số vị trí (pt) của cùng một ảnh t
 _MARGIN_TOL = 3.0      # T-18: dòng bắt đầu cách lề trái văn bản ≤ (pt) là dòng văn bản
 _MARGIN_MIN_LINES = 3  # T-18: số dòng tối thiểu để coi một x0 là lề trái văn bản
 _TIE = 1.0             # T-11: hai ứng viên chênh khoảng cách ≤ (pt) → caption_ambiguous
+# T-20: con của picture không bao giờ được trả về text thân (hình/bảng lồng nhau giữ nguyên).
+_FRAME_KEEP = frozenset({"picture", "table", "chart"})
+# T-20: nhãn Docling của dòng nhãn khung nằm ngoài picture.
+_FRAME_LABEL_SOURCES = frozenset({"text", "section_header"})
 
 
 def _bbox(raw: Mapping[str, Any]) -> BBox:
@@ -98,6 +104,133 @@ def label_target(item: RawItem, pictures: Sequence[RawItem], profile: Profile,
             and p.bbox.x0 <= cx <= p.bbox.x1]
     near = [(gap, p) for gap, p in near if gap <= t.figure_label_gap]
     return min(near, key=lambda pair: pair[0])[1] if near else None
+
+
+@dataclass
+class FrameRun:
+    items: list[RawItem]
+    frames: frozenset[str] = frozenset()                     # picture là khung chữ (T-20)
+    flags: dict[str, list[str]] = field(default_factory=dict)
+
+
+def release_text_frames(items: Sequence[RawItem], text_pages: set[int], profile: Profile,
+                        rec: Recorder) -> FrameRun:
+    """T-20 khung chữ (I-36): trên trang có text layer, Docling có thể nhận cả một khung/cột hướng
+    dẫn là picture, làm chữ thật của tài liệu thành chữ trong hình. Picture có con (không phải
+    caption) là nhãn bước (`chunking.step_patterns`) hoặc câu ≥ `frame_sentence_words` từ, và ≥
+    `frame_text_min_ratio` con chữ là dòng ≥ 2 từ, thì là khung chữ; picture giữ
+    nguyên (vẫn là ảnh), con chữ được trả về text thân (bỏ parent) theo thứ tự đọc:
+    - dòng tiêu đề khung (`frame_label_patterns`, vd. "Instructions", "Model: F54") không tính là
+      bằng chứng và vẫn là chữ trong hình: nó lặp ở mỗi khung và cắt chuỗi bước;
+    - caption bắt đầu bằng từ khóa caption giữ là caption của hình (T-11); caption khác ("Step 2: …")
+      là chữ bước (C2 §6) → trả về `text`, không bị kéo lên cạnh hình.
+    Trang OCR không áp dụng: chữ OCR trên sơ đồ là mảnh nhãn (I-23)."""
+    step = [re.compile(p) for p in profile.chunking.step_patterns]
+    labels = [re.compile(p) for p in profile.frame_label_patterns]
+    min_words = profile.thresholds.frame_sentence_words
+    children: dict[str, list[RawItem]] = defaultdict(list)
+    for item in items:
+        if (item.parent_label == "picture" and item.parent_id is not None and item.label not in _FRAME_KEEP
+                and item.text.strip()
+                and not (item.label == "caption" and _starts_with(item.text, profile.caption_keywords))):
+            children[item.parent_id].append(item)
+    pages = {i.element_id: i.page for i in items}
+
+    def frame_label(item: RawItem) -> bool:
+        return any(p.fullmatch(" ".join(item.text.split())) for p in labels)
+
+    def evidence(item: RawItem) -> bool:
+        text = " ".join(item.text.split())
+        return any(p.match(text) for p in step) or len(text.split()) >= min_words
+
+    models = [re.compile(p) for p in profile.frame_model_patterns]
+
+    def frame_title(item: RawItem) -> bool:
+        text = " ".join(item.text.split())
+        return frame_label(item) and not any(p.fullmatch(text) for p in models)
+
+    def is_frame(pid: str) -> bool:
+        # Bằng chứng chỉ từ chữ không phải caption: caption bước của ảnh chụp màn hình thường đã nằm cạnh
+        # hình đúng thứ tự (F54 trang 95). Sơ đồ có nhiều mảnh nhãn ("(", ")") không phải khung dù có một
+        # heading bị nuốt (F54 trang 50): đa số chữ phải là dòng ≥ 2 từ.
+        body = [k for k in children[pid] if k.label != "caption" and not frame_label(k)]
+        if not body and any(frame_title(k) for k in children[pid]):
+            # Khung có tiêu đề khung ("Instructions") mà chữ thân chỉ còn là caption bước (I-44, F54 trang 153:
+            # "Instructions" + "Model: …" + caption "Step 3: …") → caption là bằng chứng.
+            body = [k for k in children[pid] if k.label == "caption"]
+        if pages.get(pid) not in text_pages or not any(evidence(k) for k in body):
+            return False
+        lines = sum(1 for k in body if len(k.text.split()) >= 2)
+        return lines >= profile.thresholds.frame_text_min_ratio * len(body)
+
+    frames = frozenset(pid for pid in children if is_frame(pid))
+    run = FrameRun(items=[], frames=frames)
+    released = {k.element_id for pid in frames for k in children[pid] if not frame_label(k)}
+    for item in items:
+        if item.element_id in frames:
+            run.flags[item.element_id] = ["text_frame"]
+            rec.add_log("T-20", item.element_id, "text frame: text children returned to body",
+                        after={"released": [k.element_id for k in children[item.element_id]
+                                            if k.element_id in released]})
+        elif item.element_id in released:
+            run.flags[item.element_id] = ["frame_text_released"]
+            rec.add_log("T-20", item.element_id, f"text of frame {item.parent_id} returned to body",
+                        target=item.parent_id, before={"parent": item.parent_id, "label": item.label},
+                        after={"parent": None, "label": "text" if item.label == "caption" else item.label})
+            item = dataclasses.replace(item, parent_id=None, parent_label=None,
+                                       label="text" if item.label == "caption" else item.label)
+        run.items.append(item)
+    _attach_loose_frame_labels(run, text_pages, profile, rec)
+    return run
+
+
+def _attach_loose_frame_labels(run: FrameRun, text_pages: set[int], profile: Profile, rec: Recorder) -> None:
+    """T-20 (I-37): nhãn khung Docling để ngoài picture, trên trang có text layer → chữ của hình, như
+    nhãn của khung đã gom:
+    - tiêu đề khung ("Instructions") + phần tử kế tiếp cùng trang là dòng model ("Model: F54") → cả
+      hai gắn vào picture đứng gần nhất phía trước trên trang (không có thì picture đầu tiên phía sau).
+      Phải đủ cặp: "Instructions:" + danh sách là nội dung thật;
+    - dòng model mà phần tử kế tiếp cùng trang là picture hoặc bảng 0 cell ("Model: F54 controller"
+      trên ảnh màn hình) → gắn vào phần tử hình đó.
+    Trang không có picture: không đổi."""
+    models = [re.compile(p) for p in profile.frame_model_patterns]
+    if not models:
+        return
+    labels = [re.compile(p) for p in profile.frame_label_patterns]
+
+    def is_model(item: RawItem) -> bool:
+        return any(p.fullmatch(" ".join(item.text.split())) for p in models)
+
+    def is_title(item: RawItem) -> bool:
+        return not is_model(item) and any(p.fullmatch(" ".join(item.text.split())) for p in labels)
+
+    def loose(item: RawItem) -> bool:
+        return item.label in _FRAME_LABEL_SOURCES and bool(item.text.strip()) and item.page in text_pages
+
+    top = [i for i in run.items if i.parent_id is None and not i.is_furniture and i.label not in FURNITURE_LABELS]
+    targets: dict[str, RawItem] = {}
+    for pos, item in enumerate(top[:-1]):
+        nxt = top[pos + 1]
+        if not loose(item) or nxt.page != item.page:
+            continue
+        # Ảnh chụp màn hình có thể là bảng Docling 0 cell (T-09), F54 trang 148.
+        if is_model(item) and (nxt.label == "picture" or (nxt.label == "table" and not nxt.cells)):
+            targets.setdefault(item.element_id, nxt)
+        elif is_title(item) and loose(nxt) and is_model(nxt):
+            before = [p for p in top[:pos] if p.label == "picture" and p.page == item.page]
+            after = [p for p in top[pos + 2:] if p.label == "picture" and p.page == item.page]
+            picture = before[-1] if before else (after[0] if after else None)
+            if picture is not None:
+                targets[item.element_id] = targets[nxt.element_id] = picture
+    for index, item in enumerate(run.items):
+        picture = targets.get(item.element_id)
+        if picture is None:
+            continue
+        run.flags[item.element_id] = ["frame_label_attached"]
+        rec.add_log("T-20", item.element_id, f"frame label outside picture; figure text of {picture.element_id}",
+                    target=picture.element_id, before={"parent": None, "label": item.label},
+                    after={"parent": picture.element_id})
+        run.items[index] = dataclasses.replace(item, parent_id=picture.element_id, parent_label="picture")
 
 
 @dataclass

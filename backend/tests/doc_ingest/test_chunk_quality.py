@@ -91,6 +91,52 @@ def test_cq01_cq02_on_table_parts() -> None:
     assert A.cq02_rows_whole([good, dup], {"syn:t001": table}).passed is False
     broken = good.model_copy(update={"content": good.content + "\n| #9 | a | extra |"})
     assert A.cq01_table_header([broken], {"syn:t001": table}).passed is False
+    # CQ-11 (I-38): chunk bảng nhiều dòng bị cắt khỏi embed_text là lỗi; phần một dòng thì chỉ ghi chú.
+    assert A.cq11_table_embed([good]).passed is True
+    cut = good.model_copy(update={"flags": ["embed_truncated"]})
+    assert A.cq11_table_embed([cut]).passed is False
+    single = cut.model_copy(update={"row_ids": ["r1"]})
+    result = A.cq11_table_embed([single])
+    assert result.passed is True and "một dòng" in result.note
+    # CQ-12 (I-43, D-008): lá vượt ngân sách embed → phần bảng nhiều dòng không đạt; lá khác chỉ ghi chú; cha bỏ qua.
+    over = good.model_copy(update={"flags": ["embed_over_budget"], "token_count": 700})
+    assert A.cq12_embed_budget([good]).passed is True
+    assert A.cq12_embed_budget([over]).passed is False
+    block = over.model_copy(update={"logical_table_id": None, "row_ids": [], "chunk_type": "procedure"})
+    result = A.cq12_embed_budget([block])
+    assert result.passed is True and "d:B0000 (700)" in result.note
+    parent = over.model_copy(update={"chunk_role": "parent", "chunk_type": "section", "logical_table_id": None})
+    skipped = A.cq12_embed_budget([parent])
+    assert skipped.checked == 0 and not skipped.failures
+
+
+def test_parent_gets_no_embed_flags_but_long_leaf_is_flagged(tmp_path: Path) -> None:
+    """D-008 (I-43): chunk cha không được embed/tìm → không gắn `embed_truncated`/`embed_over_budget` dù dài;
+    chunk lá vượt ngân sách mang `embed_over_budget`. Ngân sách thu nhỏ (300 − 150) để test chạy được cả khi chỉ
+    có ước lượng token (venv ingest)."""
+    from app.modules.doc_ingest.build.builder import build_chunks
+    from app.modules.doc_ingest.build.loader import RunInput
+    from app.modules.doc_ingest.profile import load_profile
+    from tests.doc_ingest.chunk_helpers import MANIFEST, report
+
+    base = load_profile("qs_controller")
+    profile = base.model_copy(update={"chunking": base.chunking.model_copy(update={"embed_max_tokens": 300})})
+    doc = Doc()
+    doc.add("heading", "1 Intro", path=("1 Intro",))
+    sentence = "The operator checks every terminal of the controller before switching the power on. "
+    for i in range(3):
+        doc.add("label_heading", f"Note {i}:", label=f"Note {i}:")
+        doc.add("text", sentence * 7, label=f"Note {i}:")
+    run = RunInput(run_dir=tmp_path, report=report([1]), elements=doc.elements, tables={}, review=[])
+    chunks = build_chunks(run, MANIFEST, profile).chunks
+    parents = [c for c in chunks if c.chunk_role == "parent"]
+    leaves_ = [c for c in chunks if c.chunk_role != "parent"]
+    assert parents and all(p.content not in p.embed_text for p in parents)   # cha dài hơn giới hạn, bị cắt
+    assert not any({"embed_truncated", "embed_over_budget"} & set(p.flags) for p in parents)
+    if any(c.token_count is None for c in leaves_):
+        return   # không có tiktoken (venv ingest): không đo token, không gắn cờ ngân sách — kết quả build là tạm
+    assert any("embed_over_budget" in c.flags for c in leaves_)
+    assert all(("embed_over_budget" in c.flags) == ((c.token_count or 0) > 150) for c in leaves_)
 
 
 def test_boundaries_precision_recall_and_type(tmp_path: Path) -> None:

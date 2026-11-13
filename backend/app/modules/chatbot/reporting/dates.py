@@ -4,6 +4,8 @@ Mọi khoảng là nửa mở [start, end). Preset "this_*" và "last_N_days" k�
 cuối hôm nay (không kéo vào tương lai); "last_*" là kỳ trọn vẹn liền trước.
 """
 
+import re
+from collections.abc import Sequence
 from datetime import date, datetime, time, timedelta, tzinfo
 from typing import Literal
 
@@ -50,6 +52,58 @@ def preset_range(preset: str, now: datetime, tz: tzinfo) -> tuple[datetime, date
     }
     start, end = ranges[preset]
     return local_midnight(start, tz), local_midnight(end, tz)
+
+
+def calendar_range(
+    month: int | None,
+    year: int | None,
+    now: datetime,
+    tz: tzinfo,
+) -> tuple[date, date]:
+    """Kỳ lịch trọn vẹn [ngày đầu, ngày cuối] (bao gồm hai đầu), không cắt ở hôm nay.
+
+    month có, year None: tháng đó gần nhất không sau tháng hiện tại ("tháng 10" hỏi ngày
+    11/11/2026 → 10/2026; "tháng 12" → 12/2025). month có, year có: đúng tháng đó.
+    month None: cả năm `year` (None = năm nay).
+    """
+    today = now.astimezone(tz).date()
+    if month is None:
+        target = year or today.year
+        return date(target, 1, 1), date(target, 12, 31)
+    if year is None:
+        year = today.year if month <= today.month else today.year - 1
+    first = date(year, month, 1)
+    return first, _add_months(first, 1) - timedelta(days=1)
+
+
+_YEAR_DIGITS = re.compile(r"(?<!\d)(20\d\d)(?!\d)")
+# Từ chỉ năm tương đối → độ lệch so với năm nay (có dấu và không dấu).
+_RELATIVE_YEARS: tuple[tuple[str, int], ...] = (
+    ("năm nay", 0), ("nam nay", 0),
+    ("năm ngoái", -1), ("nam ngoai", -1), ("năm trước", -1), ("nam truoc", -1),
+    ("năm kia", -2), ("nam kia", -2),
+)
+
+
+def stated_years(texts: Sequence[str], now: datetime, tz: tzinfo) -> frozenset[int]:
+    """Các năm người dùng nêu trong `texts` (câu hỏi và các lượt trước): số 20xx và "năm nay/ngoái/kia".
+
+    Dùng để bỏ năm LLM tự điền mà câu hỏi không nêu (eval 2026-11-12: "tháng 10" bị điền 2023,
+    "tháng 12" bị điền 2026 dù prompt có ngày hôm nay).
+    """
+    this_year = now.astimezone(tz).year
+    years: set[int] = set()
+    for text in texts:
+        years.update(int(match) for match in _YEAR_DIGITS.findall(text))
+        lowered = text.lower()
+        years.update(this_year + offset for phrase, offset in _RELATIVE_YEARS if phrase in lowered)
+    return frozenset(years)
+
+
+def latest_year_of(month: int, day: int, now: datetime, tz: tzinfo) -> int:
+    """Năm gần nhất mà ngày `day/month` không sau hôm nay (cùng quy tắc với `calendar_range`)."""
+    today = now.astimezone(tz).date()
+    return today.year if (month, day) <= (today.month, today.day) else today.year - 1
 
 
 def end_of_today(now: datetime, tz: tzinfo) -> datetime:

@@ -98,6 +98,22 @@ def test_t16_document_index_is_kept_not_a_logical_table() -> None:
     assert result.tables.review == [] and result.validation[0].passed is True
 
 
+def test_t16_toc_line_and_title_outside_document_index_are_toc() -> None:
+    """I-37 (F54 trang 3): dòng mục lục có chấm dẫn + số trang và tiêu đề "CONTENT" nằm ngoài document_index."""
+    page = (SynPage(3).text("section_header", "CONTENT", 80)
+            .text("text", "PART 1:CONTROLLER OVERVIEW " + "." * 60 + " 1", 100)
+            .text("section_header", "2.5 CONNECTION DIAGRAM PULSE CONTROL" + "…" * 12 + "..15", 115)   # F86: dấu "…"
+            .text("text", "Set the value to 1.", 130))
+    result = run_normalization([page.to_doc()], "syn", DEFAULT)
+    assert [e.normalized_type for e in result.normalized or []] == ["toc", "toc", "toc", "text"]
+    assert (result.normalized or [])[3].label_heading is None       # "CONTENT" không thành label heading
+    assert (result.normalized or [])[3].section_path == []          # dòng mục lục có số không mở mục
+    # Tiêu đề không đứng trước mục lục: giữ nguyên là label heading.
+    plain = SynPage(4).text("section_header", "CONTENT", 80).text("text", "This chapter lists the parts.", 100)
+    result = run_normalization([plain.to_doc()], "syn", DEFAULT)
+    assert [e.normalized_type for e in result.normalized or []] == ["label_heading", "text"]
+
+
 def test_unsupported_label_is_flagged_and_not_counted() -> None:
     page = SynPage(1).text("text", "x squared plus y squared", 100)
     doc = _syn_doc(page, "formula")

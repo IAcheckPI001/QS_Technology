@@ -216,6 +216,42 @@ def cq10_no_split(chunks: Sequence[DraftChunk], by_id: dict[str, NormalizedEleme
     return _result("CQ-10", "Không tách định nghĩa parameter khỏi giá trị, caption khỏi hình", checked, failures)
 
 
+def cq11_table_embed(chunks: Sequence[DraftChunk]) -> CheckResult:
+    """Chunk bảng phải vào trọn `embed_text` (I-38): dòng bị cắt khỏi embedding thì mã ở đó không tìm được.
+    Ngoại lệ: phần chỉ có một dòng mà vẫn vượt giới hạn (không cắt trong dòng) — ghi chú để người duyệt xem."""
+    failures, checked, single = [], 0, 0
+    for c in _leaves(chunks):
+        if c.logical_table_id is None:
+            continue
+        checked += 1
+        if "embed_truncated" not in c.flags:
+            continue
+        if len(c.row_ids) <= 1:
+            single += 1
+        else:
+            failures.append(f"{c.chunk_key}: {len(c.row_ids)} dòng nhưng embed_text bị cắt (embed_truncated)")
+    note = f"{single} phần một dòng vượt giới hạn embed_text (không cắt trong dòng)" if single else ""
+    return _result("CQ-11", "Chunk bảng nằm trọn trong embed_text", checked, failures, note)
+
+
+def cq12_embed_budget(chunks: Sequence[DraftChunk]) -> CheckResult:
+    """Chunk lá có `embed_text` ≤ `embed_max_tokens` − `embed_enrich_reserve` (I-43, D-008: chỉ chunk lá được embed
+    và tìm; chỗ dự trữ dành cho tóm tắt + câu hỏi của Bước 3). Builder gắn cờ `embed_over_budget`.
+    Phần bảng nhiều dòng vượt → không đạt (luật chia bảng I-38 bảo đảm); lá khác vượt (khối nguyên vẹn không cắt,
+    hoặc phần bảng một dòng) → ghi chú để người duyệt xem. Chunk cha không tính."""
+    failures, checked, noted = [], 0, []
+    for c in _leaves(chunks):
+        checked += 1
+        if "embed_over_budget" not in c.flags:
+            continue
+        if c.logical_table_id is not None and len(c.row_ids) > 1:
+            failures.append(f"{c.chunk_key}: phần bảng {len(c.row_ids)} dòng vượt ngân sách embed ({c.token_count} token)")
+        else:
+            noted.append(f"{c.chunk_key} ({c.token_count})")
+    note = f"{len(noted)} chunk lá vượt ngân sách embed: {', '.join(noted)}" if noted else ""
+    return _result("CQ-12", "Chunk lá nằm trong ngân sách embed_text (chừa chỗ Bước 3)", checked, failures, note)
+
+
 def review_blockers_carried(chunks: Sequence[DraftChunk], blocking: dict[str, set[str]],
                             blocking_pages: dict[int, set[str]]) -> CheckResult:
     """Chunk chứa phần tử (hoặc nằm trên trang) có review chặn chunk phải mang `review_blockers`."""
@@ -239,5 +275,5 @@ def run_checks(chunks: Sequence[DraftChunk], tables: dict[str, LogicalTable],
         cq01_table_header(chunks, tables), cq02_rows_whole(chunks, tables), cq03_length(chunks, tables, limit),
         cq04_warning_links(chunks, by_id), cq05_provenance(chunks), cq06_assets(chunks, by_id),
         cq07_not_available(chunks), cq08_parents(chunks), cq09_child_in_parent(chunks),
-        cq10_no_split(chunks, by_id), review_blockers_carried(chunks, blocking, blocking_pages or {}),
+        cq10_no_split(chunks, by_id), cq11_table_embed(chunks), cq12_embed_budget(chunks), review_blockers_carried(chunks, blocking, blocking_pages or {}),
     ]

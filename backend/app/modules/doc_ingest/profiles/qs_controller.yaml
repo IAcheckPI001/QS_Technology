@@ -3,6 +3,44 @@
 name: qs_controller
 extends: default
 code_patterns: ['^#\d', '^M\d{4}', '^[XY]\d{2,3}$', '^CN\d+$']
+# I-40b: nhãn OCR crop (chữ trên hình) khớp mẫu này được giữ làm từ khóa dù tài liệu không nhắc trong chữ:
+# chân xung/hướng/encoder, ngõ vào/ra, G/M-code, nối đất, điện áp. Nhãn khác phải có trong từ vựng tài liệu.
+figure_label_trusted_patterns:
+  - '^(PUL|DIR|EDM)\d[+-]?$'
+  - '^[XY]\d{1,2}$'
+  - '^[ABZ]\d?[+-]$'
+  - '^A[IO]\d$'
+  - '^G\d{1,2}$'
+  - '^M\d{1,4}$'
+  - '^(GND|PE|FG)$'
+  - '^\+?[1-9]\d*(\.\d+)?\s?V(DC|AC)?$'
+  - '^AC-?[1-9]\d*V$'
 param_prefixes: ["#", "M"]
+# Bước 3 (2026-11-13, bản nháp, bổ sung dần khi team kỹ thuật/khách hàng xác nhận): cách gọi tiếng Việt của
+# thuật ngữ trong tài liệu. `vi` rỗng = giữ tiếng Anh, LLM không tự dịch. Sửa bảng → chạy lại `cli enrich`.
+glossary:
+  - {en: parameter, vi: tham số}
+  - {en: axis, vi: trục}
+  - {en: pulse, vi: xung}
+  - {en: servo drive, vi: driver servo}
+  - {en: spindle, vi: trục chính (spindle)}
+  - {en: acceleration, vi: gia tốc}
+  - {en: feedrate, vi: tốc độ chạy dao}
+  - {en: JOG}
+  - {en: MPG, vi: tay quay MPG}
+  - {en: limit switch, vi: công tắc hành trình}
+  - {en: alarm, vi: báo lỗi}
+  - {en: relay, vi: rơ-le trung gian}
+  # Toma 2026-11-13: cách gọi của người dùng là "tỷ số truyền điện tử" (eval Q9: tóm tắt viết "tỉ số bánh răng" → trượt).
+  - {en: electronic gear ratio, vi: tỷ số truyền điện tử}
+  - {en: wiring diagram, vi: sơ đồ đấu dây}
+  - {en: coolant, vi: tưới nguội}
+  - {en: MDI, vi: vận hành bằng tay MDI}
+  - {en: PLC}
+  - {en: macro, vi: macro}
+  - {en: tool setter, vi: bộ so dao}
+  - {en: homing, vi: về home/về 0}
+  - {en: backlash, vi: bù rơ cơ khí}
+  - {en: offset, vi: offset}
 # T-12 trên text: `M` phải đủ 4 chữ số (F54: M100 là M-code, M8 là chân output, không phải parameter).
 param_text_patterns: {'#': '\d{4,5}', 'M': '\d{4}'}

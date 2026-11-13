@@ -64,6 +64,47 @@ def test_before_any_heading_path_source_is_none() -> None:
     assert (element.section_path, element.section_path_source) == ([], "none")
 
 
+def _page_with_late_figure(x: tuple[float, float] = (85.0, 500.0), stray_above: bool = False) -> list:
+    """Trang: ghi chú cuối mục trước (y=220), heading 2.4.4 (y=300), đoạn văn; hình + caption ở đầu trang (y=60–210)
+    nhưng Docling xếp cuối trang (F54 trang 44, Figure 52)."""
+    from app.modules.doc_ingest.normalize.docling_reader import read_items
+
+    page = SynPage(1).text("text", "Note: terminals", 220).text("section_header", "2.4.4 Y43 output", 300)
+    page.text("text", "From the Y43 pin", 330)
+    if stray_above:
+        page.text("text", "Side text at top", 40, x=(85.0, 500.0))
+    page.picture(60, 190, x=x)
+    page.text("caption", "Figure 52. Motor wiring", 200, 210, x=x)
+    return read_items([page.to_doc()], "syn")
+
+
+def _order(items) -> list[str]:
+    return [i.text or i.label for i in items]
+
+
+def test_figure_above_heading_moves_to_previous_section() -> None:
+    """T-07 (I-40a): hình nằm trên heading nhưng xếp sau → lên trước phần tử đầu tiên nằm dưới nó, thuộc mục trước."""
+    from app.modules.doc_ingest.normalize.recorder import Recorder
+    from app.modules.doc_ingest.normalize.sections import fix_figures_above_heading
+
+    items, flags = fix_figures_above_heading(_page_with_late_figure(), {1}, DEFAULT, Recorder())
+    assert _order(items) == ["picture", "Figure 52. Motor wiring", "Note: terminals", "2.4.4 Y43 output",
+                             "From the Y43 pin"]
+    assert sorted(flags) == sorted(i.element_id for i in items[:2])
+    assert all(f == ["reading_order_fixed"] for f in flags.values())
+
+
+@pytest.mark.parametrize("case", ["ocr_page", "other_column", "stray_above"])
+def test_figure_above_heading_kept_when_rule_does_not_apply(case: str) -> None:
+    from app.modules.doc_ingest.normalize.recorder import Recorder
+    from app.modules.doc_ingest.normalize.sections import fix_figures_above_heading
+
+    raw = _page_with_late_figure(x=(85.0, 500.0) if case != "other_column" else (505.0, 590.0),
+                                 stray_above=case == "stray_above")
+    items, flags = fix_figures_above_heading(raw, set() if case == "ocr_page" else {1}, DEFAULT, Recorder())
+    assert _order(items) == _order(raw) and not flags
+
+
 def test_f54_part_and_numbered_sections() -> None:
     result = run_normalization(f54_docs({167, 168, 169}), "f54", DEFAULT)
     headings = [(e.text, e.section_path) for e in result.normalized or [] if e.normalized_type == "heading"]

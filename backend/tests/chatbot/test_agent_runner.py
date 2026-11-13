@@ -134,6 +134,9 @@ def test_history_and_current_message_are_sent_after_system_prompt():
 
     messages = provider.calls[0].messages
     assert messages[0]["role"] == "system" and "<now>" in messages[0]["content"]
+    # <now> trước guide của tool: đặt cuối prompt thì model hay bỏ qua và tự điền năm sai.
+    system = messages[0]["content"]
+    assert "<tool_guides>" not in system or system.index("<now>") < system.index("<tool_guides>")
     assert [m["content"] for m in messages[1:]] == [
         "Lắp đặt Astro 6A?", "Astro 6AH hay Astro 6AV?", "6AV",
     ]

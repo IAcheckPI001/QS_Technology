@@ -28,6 +28,7 @@ _COMPARE: dict[str, Callable[[Any, Any], bool]] = {
     "gte": lambda v, x: v is not None and v >= x,
     "lt": lambda v, x: v is not None and v < x,
     "lte": lambda v, x: v is not None and v <= x,
+    "contains": lambda v, x: isinstance(v, str) and str(x).casefold() in v.casefold(),
 }
 
 

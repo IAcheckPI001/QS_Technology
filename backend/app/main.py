@@ -36,10 +36,22 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
             RetrieverConfig.from_settings(settings),
         )
     agent_runner = None
+    agent_provider = None
     if provider is not None and settings.crm_chat_flow == "agent":
+        if settings.agent_model and settings.agent_model != settings.openai_model:
+            # Model riêng cho vòng lặp agent; luồng website và stage phân tích giữ OPENAI_MODEL.
+            agent_provider = OpenAIProvider(
+                api_key=settings.openai_api_key,
+                model=settings.agent_model,
+                embedding_model=settings.embedding_model,
+                reasoning_effort=settings.agent_reasoning_effort or None,
+            )
         # Provider/tool không đủ điều kiện thì ToolConfigurationError dừng khởi động.
-        agent_runner = build_agent_runner(provider, retriever, settings)
-        logger.info("CRM chat flow: agent (tools=%s)", ", ".join(agent_runner.tool_names))
+        agent_runner = build_agent_runner(provider, retriever, settings, agent_provider=agent_provider)
+        logger.info(
+            "CRM chat flow: agent (model=%s, tools=%s)",
+            agent_runner.model, ", ".join(agent_runner.tool_names),
+        )
     application.state.chatbot_provider = provider
     application.state.chatbot_retriever = retriever
     application.state.chatbot_agent_runner = agent_runner
@@ -58,6 +70,8 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
     finally:
         if provider is not None:
             await provider.close()
+        if agent_provider is not None:
+            await agent_provider.close()
         if privacy_provider is not None:
             await privacy_provider.close()
 

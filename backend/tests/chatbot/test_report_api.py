@@ -6,7 +6,7 @@ import logging
 
 import httpx
 import pytest
-from pydantic import SecretStr
+from pydantic import SecretStr, ValidationError
 
 from app.modules.chatbot.providers.crm_api import CrmApiError, CrmListClient, CrmReportClient
 from app.modules.chatbot.reporting.datasets import DATASETS
@@ -166,6 +166,44 @@ def test_string_filters_keep_case_for_sql_exact_match():
         filters=[{"field": "source", "operator": "eq", "value": "  Facebook "}],
     )
     assert query.filters[0].value == "Facebook"
+
+
+def test_contains_compiles_to_api_contains_for_name_search():
+    query = normalized(
+        dataset="customers", metrics=["customer_count"],
+        filters=[
+            {"field": "full_name", "operator": "contains", "value": " Hohmeier "},
+            {"field": "sales_username", "operator": "eq", "value": "an.nguyen"},
+        ],
+    )
+    body = compile_report(query).queries[0].body
+
+    assert body["filters"] == [
+        {"field": "customer_type", "op": "not_in", "value": ["spam", "lost"]},
+        {"field": "full_name", "op": "contains", "value": "Hohmeier"},
+        {"field": "assigned_sales_id.username", "op": "eq", "value": "an.nguyen"},
+    ]
+
+
+@pytest.mark.parametrize(("fields", "message"), [
+    ({"filters": [{"field": "customer_type", "operator": "contains", "value": "le"}]},
+     r"customer_type \(enum\) supports operators eq, ne, in, not_in$"),
+    ({"filters": [{"field": "full_name", "operator": "contains", "value": ["a", "b"]}]},
+     "needs a single value"),
+])
+def test_contains_is_string_only(fields, message):
+    with pytest.raises(ReportQueryError, match=message):
+        normalized(dataset="customers", metrics=["customer_count"], **fields)
+
+
+def test_text_search_fields_are_not_dimensions():
+    with pytest.raises(ValidationError, match="dimensions.0"):
+        normalized(dataset="customers", metrics=["customer_count"], dimensions=["full_name"])
+
+
+def test_sales_username_groups_by_join_path():
+    query = normalized(dataset="customers", metrics=["customer_count"], dimensions=["sales_username"])
+    assert compile_report(query).queries[0].body["dimensions"] == ["assigned_sales_id.username"]
 
 
 # ---------------------------------------------------------------------------

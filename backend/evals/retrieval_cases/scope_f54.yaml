@@ -1,0 +1,226 @@
+# THỬ NGHIỆM (Toma 2026-11-13): câu phân biệt theo scope — cùng chủ đề, khác loại công việc — để xác định scope
+# (lọc cứng / cộng điểm / bỏ qua) có giúp chọn đúng phần và cải thiện chất lượng không. Chunk đúng và intent do Claude
+# gán theo f54/eval-l (chờ Toma duyệt). scopes = scope đúng của câu (chế độ core lọc theo scope này, giả lập bước
+# phân tích chọn đúng intent); note ghi scope HIỆN TẠI của chunk (gán theo phần tài liệu — I-46).
+source_runs: [f54/eval-l]
+cases:
+  - id: S1
+    question: "Sơ đồ đấu dây cảm biến về home cho các trục F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["phan_biet_scope", "ve_home", "installation"]
+    scopes: ["installation"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0014
+        content_hash: a84c575a6f797b0f1e510466c46c608771885bd0711383a3a71a7fda423b6d44
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.1 [3-wire] homing sensor wiring diagram"]
+        note: "2.3.2.1 [3-wire] homing sensor wiring diagram [wiring; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0015
+        content_hash: e51b67ec75885c4deefec7ca361de25814d3457f441a556035f0f3f1301fb82c
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.2 [2-wire] homing sensor wiring diagram (NPN signal)"]
+        note: "2.3.2.2 [2-wire] homing sensor wiring diagram (NPN signal) [wiring; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0016
+        content_hash: 655f8c9f4606c411d9332034f46626b817287bf5a7a62d688146acb541ff617f
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.3 [2-wire] homing sensor wiring diagram (PNP signal)"]
+        note: "2.3.2.3 [2-wire] homing sensor wiring diagram (PNP signal) [wiring; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0019
+        content_hash: 597bb5927f770ad324ff9bc4cfd846863a704a912db7dc3db73db44cbb5ec1c0
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.4 Homing switch wiring diagram"]
+        note: "2.3.2.4 Homing switch wiring diagram [wiring; scope hiện tại: installation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0013
+        content_hash: 86214e54aa6dffda855a4d0b8b12c3fdeee383cca4e82aaf834b14d0f2d2660e
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor"]
+        note: "2.3.2 Connecting X,Y,Z,A homing sensor [wiring; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0018
+        content_hash: 8cf7e3db7b10ff81db879e9157c81df7da54fd57be14d6dcc5d4c918472ab7e7
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.4 Homing switch wiring diagram"]
+        note: "2.3.2.4 Homing switch wiring diagram [wiring; scope hiện tại: installation]"
+  - id: S2
+    question: "Cài đặt tốc độ chạy về home của các trục F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["phan_biet_scope", "ve_home", "configuration"]
+    scopes: ["configuration"]
+    expected_intent: ["guide.configuration"]
+    expected:
+      - chunk_key: f54_operation_v02:B0149
+        content_hash: 2a229b77fba310a0370c7bca84c911a3d260870561cbcebad590e4fe5b3537ed
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.16 Homing Feedrate 1st"]
+        note: "2.6.4.16 Homing Feedrate 1st [figure; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0151
+        content_hash: 055223fb9dee5e759b43868aea05af1d7ee79a2bd457fb7f8a818ca2a3cb6093
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.16 Homing Feedrate 1st"]
+        note: "2.6.4.16 Homing Feedrate 1st [parameter; scope hiện tại: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0153
+        content_hash: 7b54ff291b4c21dddf23a24d427ba72ddc2232afc5d00aea94918dd7e2948911
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.17 Homing Feedrate 2nd"]
+        note: "2.6.4.17 Homing Feedrate 2nd [figure; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0155
+        content_hash: 185769f659b096cab9e4684f72c60d4543720046082cdcc1925fb61e702a34d4
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.17 Homing Feedrate 2nd"]
+        note: "2.6.4.17 Homing Feedrate 2nd [parameter; scope hiện tại: installation, configuration]"
+      - chunk_key: f54_operation_v02:B0157
+        content_hash: 8940823554c4e81d39e24068897122242d73a4eb0e63b6ad7bde1fb35b8cefae
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.18 Homing Feedrate 3rd"]
+        note: "2.6.4.18 Homing Feedrate 3rd [figure; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0159
+        content_hash: 9a14786ebfb4a66a2aac01f5e25bf4c465582585456f6cc292588285ea3f13e8
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.18 Homing Feedrate 3rd"]
+        note: "2.6.4.18 Homing Feedrate 3rd [parameter; scope hiện tại: installation, configuration]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0150
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.16 Homing Feedrate 1st"]
+        note: "2.6.4.16 Homing Feedrate 1st [procedure; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0154
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.17 Homing Feedrate 2nd"]
+        note: "2.6.4.17 Homing Feedrate 2nd [procedure; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0158
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.18 Homing Feedrate 3rd"]
+        note: "2.6.4.18 Homing Feedrate 3rd [procedure; scope hiện tại: installation]"
+  - id: S3
+    question: "Cách cài kiểu về home DOG hay INDEX cho trục F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["phan_biet_scope", "ve_home", "configuration"]
+    scopes: ["configuration"]
+    expected_intent: ["guide.configuration"]
+    expected:
+      - chunk_key: f54_operation_v02:B0143
+        content_hash: 333cb9133f4b24c6cb638876706052fe7ef4f263c323893fe6b7f58d26b4774a
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.15 Axis homing type"]
+        note: "2.6.4.15 Axis homing type [figure; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0145
+        content_hash: 30be6e4ce8d5bee1f202f770fc2b9da724395bbbf8c32230149554285b289ca1
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.15 Axis homing type"]
+        note: "2.6.4.15 Axis homing type [parameter; scope hiện tại: installation, configuration]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0144
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.15 Axis homing type"]
+        note: "2.6.4.15 Axis homing type [procedure; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0146
+        content_hash: 25a06757cdaebf8c25d1e00d9b22f68675c335e65dffd4840fa185c44cb21068
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.15 Axis homing type"]
+        note: "2.6.4.15 Axis homing type [figure; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0147
+        content_hash: 8ef7487bb7aa3441298b198bc2438b4c815606ef67c20d11c408992e6a05910d
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.4 Axis configuration", "2.6.4.15 Axis homing type"]
+        note: "2.6.4.15 Axis homing type [figure; scope hiện tại: installation]"
+  - id: S4
+    question: "Cách cho máy tự động chạy về home trên F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["phan_biet_scope", "ve_home", "operation"]
+    scopes: ["operation"]
+    expected_intent: ["guide.operation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0188
+        content_hash: cdd6a725b01f4c593b737425f431a16c615bf579ceb978c55b0ade5b178713d5
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.1 Auto home"]
+        note: "3.1 Auto home [figure; scope hiện tại: operation]"
+      - chunk_key: f54_operation_v02:B0191
+        content_hash: 83f44ad8baf76609fa83c34578868689da5d9d55fe536c5f44b9befee524155d
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.1 Auto home"]
+        note: "3.1 Auto home [procedure; scope hiện tại: operation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0189
+        content_hash: 55b7cf7ecdf223ae486735264aebce921949f6306f19759416be4d03239eab1f
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.1 Auto home"]
+        note: "3.1 Auto home [procedure; scope hiện tại: operation]"
+      - chunk_key: f54_operation_v02:B0190
+        content_hash: 333018954e90caee195b940ea9a4ff519164435429745835cc4d073c84febe46
+        section_path: ["PART 3 SPECIAL FUNCTIONS", "3.1 Auto home"]
+        note: "3.1 Auto home [parameter; scope hiện tại: operation, configuration]"
+  - id: S5
+    question: "Đấu dây bộ so dao tự động vào bộ điều khiển F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["phan_biet_scope", "so_dao", "installation"]
+    scopes: ["installation"]
+    expected_intent: ["guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0024
+        content_hash: 8fcadf393d9f0c5b282471db1d04bbac5e22c2c9cc83caee776fa44955a0e8e0
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.1 [3-wire] Automatic tool setter wiring diagram"]
+        note: "2.3.3.1 [3-wire] Automatic tool setter wiring diagram [wiring; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0025
+        content_hash: 65286f2aa56e42a7025eec8b3067d041d24b4a8e8416c7160165eca6e3e396da
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.2 [4-wire] Automatic tool setter wiring diagram (NPN signal)"]
+        note: "2.3.3.2 [4-wire] Automatic tool setter wiring diagram (NPN s [wiring; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0026
+        content_hash: a2ec0babdf752c091d8bbb43014e2d5644b6ddafd701fb05fe52c303a75a092e
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.3 [4-wire] Automatic tool setter wiring diagarm (PNP signal)"]
+        note: "2.3.3.3 [4-wire] Automatic tool setter wiring diagarm (PNP s [wiring; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0027
+        content_hash: 9a37bb0e19d9bea33147e1517be9c0a797cbc89589caa6296f5212e3ff7d0d78
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.4 [6-wire] Automatic tool setter wiring diagram (NPN signal)"]
+        note: "2.3.3.4 [6-wire] Automatic tool setter wiring diagram (NPN s [wiring; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0029
+        content_hash: a7ad0c7bf98e781eb8439eda19be3032d2a712de3b664a9d0d7422689b991577
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.5 [6-wire] Automatic tool setter wiring diagram (PNP signal)"]
+        note: "2.3.3.5 [6-wire] Automatic tool setter wiring diagram (PNP s [wiring; scope hiện tại: installation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0023
+        content_hash: 3262a76ce683fbd785f539232afe85434742085734eecc9c01b508827a89242f
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection"]
+        note: "2.3.3 Automatic tool setter connection [wiring; scope hiện tại: installation]"
+  - id: S6
+    question: "Cài đặt tham số tọa độ bộ so dao tự động F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["phan_biet_scope", "so_dao", "configuration"]
+    scopes: ["configuration"]
+    expected_intent: ["guide.configuration"]
+    expected:
+      - chunk_key: f54_operation_v02:B0172
+        content_hash: 9bf79da1a09620c51b3b807c819bca6a212f1eec3f28bfcb6d2c21c20c3a25bc
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter [figure; scope hiện tại: installation]"
+      - chunk_key: f54_operation_v02:B0173
+        content_hash: a6d974c8f9e5a065bb9ccd0af6aba27a5629a72126624169109661d88dd36edf
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter [parameter; scope hiện tại: installation, configuration]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0174
+        content_hash: 99a2367465c101058ce13ae6484ae6fc655c171e7087dcbf474e71365aecebbb
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter [procedure; scope hiện tại: installation]"
+  - id: S7
+    question: "Quy trình đo dao tự động bằng lệnh M100 trên F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["phan_biet_scope", "so_dao", "operation"]
+    scopes: ["operation"]
+    expected_intent: ["guide.operation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0175
+        content_hash: d2198aafe1963dfed548649aab9b3af56430cea5fee6cbeaeddef78e2fca752f
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter [procedure; scope hiện tại: installation]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0178
+        content_hash: 992b305e320af091d34a07c6442c0fee9ab6ba86377e29d3c1ebb403ff7371a8
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter [overview; scope hiện tại: installation]"
+  - id: S8
+    question: "Máy báo lỗi khi đo dao tự động F54 do nguyên nhân gì"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["phan_biet_scope", "so_dao", "maintenance"]
+    scopes: ["maintenance"]
+    expected_intent: ["troubleshoot.error"]
+    expected:
+      - chunk_key: f54_operation_v02:B0177
+        content_hash: af2b928d7d68bfefea2530afa49e2c68b672804cd9244a53757d4b113968dd95
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter [alarm; scope hiện tại: installation, maintenance]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0178
+        content_hash: 992b305e320af091d34a07c6442c0fee9ab6ba86377e29d3c1ebb403ff7371a8
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.6 Axis connection (X,Y,Z,A)", "2.6.5 Automatic tool setter"]
+        note: "2.6.5 Automatic tool setter [overview; scope hiện tại: installation]"

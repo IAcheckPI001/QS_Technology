@@ -44,7 +44,7 @@ DimensionName = Literal[DIMENSION_NAMES]        # type: ignore[valid-type]
 DateField = Literal[DATE_FIELDS]                # type: ignore[valid-type]
 SortField = Literal[_names((*METRIC_NAMES, *DIMENSION_NAMES, PERIOD))]  # type: ignore[valid-type]
 DatePreset = Literal[DATE_PRESETS]              # type: ignore[valid-type]
-FilterOperator = Literal["eq", "ne", "in", "not_in", "gt", "gte", "lt", "lte"]
+FilterOperator = Literal["eq", "ne", "in", "not_in", "gt", "gte", "lt", "lte", "contains"]
 TimeGrain = Literal["day", "week", "month"]
 SortDirection = Literal["asc", "desc"]
 
@@ -53,7 +53,10 @@ class ReportFilter(SystemModel):
     field: FilterField
     operator: FilterOperator
     value: bool | float | str | list[str] = Field(
-        description="in/not_in: danh sách; bool: true/false; number: số.",
+        description=(
+            "in/not_in: danh sách; bool: true/false; number: số; contains: một chuỗi con "
+            "(trường string, không phân biệt hoa thường)."
+        ),
     )
 
 

@@ -140,16 +140,24 @@ class ToolRegistry:
             return failed("tool_not_found", f"unknown tool {call.name!r}")
         if call.name not in allowed:
             return failed("tool_not_allowed")
+        def invalid(detail: str) -> ToolOutcome:
+            if spec.on_invalid_args is not None:
+                try:
+                    spec.on_invalid_args(call.arguments_raw or "", detail, context)
+                except Exception:
+                    logger.exception("agent tool invalid-args hook failed tool=%s", spec.name)
+            return failed("tool_invalid_args", detail)
+
         try:
             raw = json.loads(call.arguments_raw or "{}")
         except ValueError:
-            return failed("tool_invalid_args", "arguments is not valid JSON")
+            return invalid("arguments is not valid JSON")
         if not isinstance(raw, dict):
-            return failed("tool_invalid_args", "arguments must be a JSON object")
+            return invalid("arguments must be a JSON object")
         try:
             arguments = spec.input_model.model_validate(raw)
         except ValidationError as error:
-            return failed("tool_invalid_args", _summarize(error))
+            return invalid(_summarize(error))
         timeout_s = min(timeout_s, spec.timeout_s)
         if timeout_s <= 0:
             return failed("tool_timeout")

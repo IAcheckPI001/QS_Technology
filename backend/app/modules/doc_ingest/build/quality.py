@@ -148,7 +148,7 @@ def gate(checks: Sequence[CheckResult], cov: Coverage | None, bound: BoundarySco
          review: ReviewSummary) -> tuple[list[GateItem], bool | None, bool]:
     failed = [c.check_id for c in checks if c.passed is False]
     items = [
-        GateItem(name="CQ-01…CQ-10, CQ-RB đạt", value=len(failed), threshold="0 kiểm không đạt",
+        GateItem(name="CQ-01…CQ-12, CQ-RB đạt", value=len(failed), threshold="0 kiểm không đạt",
                  passed=not failed),
         GateItem(name="Độ phủ phần tử", value=cov.char_ratio if cov else None, threshold="= 1,0 và 0 lặp",
                  passed=None if cov is None or cov.char_ratio is None

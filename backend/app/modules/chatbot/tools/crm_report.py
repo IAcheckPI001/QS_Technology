@@ -20,7 +20,13 @@ from typing import Any, Literal
 from pydantic import Field
 
 from app.core.tracing import current_span, span
-from app.modules.chatbot.providers.crm_api import CrmApiError, CrmListClient, CrmReportClient, ReportPage
+from app.modules.chatbot.providers.crm_api import (
+    CrmApiError,
+    CrmListClient,
+    CrmReportClient,
+    InvalidQueryMode,
+    ReportPage,
+)
 from app.modules.chatbot.reporting.catalog import DatasetSpec
 from app.modules.chatbot.reporting.engine import ReportResult, run_report
 from app.modules.chatbot.reporting.report_api import ApiResult, compile_report, merge_report
@@ -51,12 +57,14 @@ CRM_REPORT_GUIDE = """Gọi tool:
 - So sánh các kỳ (tháng 9 với tháng 10): một call, date_range bao cả các kỳ + time_grain; backend trả change.delta/delta_pct so với kỳ liền trước.
 - "Đang mở/tồn đọng": status_group = active hoặc metric active_ticket_count. "Mở quá N ngày": thêm filter age_hours gt N*24.
 - Không có date_range: tính trên toàn bộ dữ liệu.
+- Tìm theo tên/mã/công ty/số điện thoại/email: filter operator contains trên đúng trường đó (full_name, code, company_name, phone, email…), không dùng trường khác như source hay status. contains không phân biệt hoa thường nhưng phân biệt dấu tiếng Việt: giữ đúng chữ người dùng gõ.
 - Chọn dataset theo nghĩa: phiếu hỗ trợ → tickets; khách hàng/khách mới/sale phụ trách → customers; ai được giao/hỗ trợ bao nhiêu phiếu hoặc khách → support_assignments; "bán được", thiết bị giao cho khách → device_deliveries.
 - Câu cần dữ liệu ở hai dataset: gọi từng dataset; không tự cộng/trừ giữa hai kết quả.
 
 Đọc output:
 - Giữ nguyên số liệu; không tự cộng/trừ/chia hay tự tính tỉ lệ. Dùng change cho chênh lệch giữa các kỳ.
 - Nêu khoảng thời gian (applied.date_range, giờ Việt Nam) và các filter đã áp dụng; số liệu là trong phạm vi dữ liệu tài khoản này được xem.
+- customers, support_assignments, device_deliveries: CRM cắt ngày và nhóm theo kỳ theo ngày UTC (ranh giới 07:00 giờ Việt Nam). Chỉ nói rõ điều này khi câu hỏi nhắm vào một ngày hoặc khung giờ cụ thể.
 - Giá trị null của avg/max: không có phiếu thỏa điều kiện. total_groups > row_count: còn nhóm chưa hiện.
 - source_truncated: true: dữ liệu lấy về chưa đủ, nói rõ số liệu có thể thiếu.
 - Trạng thái in_progress chỉ cập nhật khi có người mở chi tiết phiếu nên pending/in_progress có thể lệch thực tế; thời gian tạo→đóng của phiếu mở lại tính từ lúc tạo ban đầu.
@@ -246,11 +254,19 @@ async def _run_report_api(
                    system_filters=list(compiled.applied_filters))
 
 
-async def query_all(client: CrmReportClient, bodies: list[dict[str, Any]], token: str) -> list[ReportPage]:
+async def query_all(
+    client: CrmReportClient,
+    bodies: list[dict[str, Any]],
+    token: str,
+    *,
+    on_invalid: InvalidQueryMode = "contract",
+) -> list[ReportPage]:
     """Chạy các query song song; lỗi CRM đầu tiên thành ToolRejected (query còn lại bị huỷ)."""
     try:
         async with asyncio.TaskGroup() as group:
-            tasks = [group.create_task(client.query(body, token)) for body in bodies]
+            tasks = [
+                group.create_task(client.query(body, token, on_invalid=on_invalid)) for body in bodies
+            ]
     except* CrmApiError as errors:
         error = errors.exceptions[0]
         assert isinstance(error, CrmApiError)

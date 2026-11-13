@@ -167,11 +167,21 @@ def test_agent_setup_registers_product_docs_tool():
     assert runner.tool_names == ["product_docs_ask"]
 
 
-def test_agent_setup_registers_crm_tools_when_enabled():
-    settings = _settings(CRM_REPORT_ENABLED=True, CRM_API_BASE_URL="https://crm.test")
+@pytest.mark.parametrize(("mode", "expected"), [
+    ("query", ["product_docs_ask", "crm_schema", "crm_query"]),
+    ("catalog", ["product_docs_ask", "crm_report", "crm_records"]),
+    ("both", ["product_docs_ask", "crm_report", "crm_records", "crm_schema", "crm_query"]),
+])
+def test_agent_setup_registers_crm_tools_by_mode(mode, expected):
+    settings = _settings(CRM_REPORT_ENABLED=True, CRM_API_BASE_URL="https://crm.test", CRM_TOOLS=mode)
     runner = build_agent_runner(ScriptedToolProvider(), retriever=object(), settings=settings)
 
-    assert runner.tool_names == ["product_docs_ask", "crm_report", "crm_records"]
+    assert runner.tool_names == expected
+
+
+def test_crm_tools_default_to_raw_query():
+    # Đọc default của field: .env cục bộ có thể đặt CRM_TOOLS khác.
+    assert Settings.model_fields["crm_tools"].default == "query"
 
 
 def _settings(**overrides) -> Settings:
@@ -179,6 +189,7 @@ def _settings(**overrides) -> Settings:
     return Settings(**{
         "DATABASE_URL": "postgresql+asyncpg://user:pass@host/db",
         "CRM_REPORT_ENABLED": False,
+        "CRM_TOOLS": "query",
         **overrides,
     })
 

@@ -5,13 +5,14 @@ token; dịch vụ AI không lọc quyền thêm. Không log token, không log n
 
 Mã lỗi gửi agent: 401 → `crm_auth_failed` (token sai/hết hạn), 403 → `crm_forbidden`
 (tài khoản không có quyền với dữ liệu này), 400 của Reporting API →
-`crm_report_contract_error` (catalog lệch schema CRM: lỗi phía dịch vụ AI, không do LLM),
+`crm_report_contract_error` khi query do catalog sinh (lỗi phía dịch vụ AI, không do LLM)
+hoặc `crm_query_invalid` khi query do LLM dựng (tool `crm_query`: LLM đọc lỗi và sửa),
 còn lại → `crm_unavailable`.
 """
 
 import logging
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Literal
 
 import httpx
 
@@ -21,7 +22,13 @@ logger = logging.getLogger(__name__)
 
 PAGE_SIZE = 100
 REPORT_QUERY_PATH = "/api/v1/reports/query"
+REPORT_TABLES_PATH = "/api/v1/reports/tables"
+REPORT_DATASETS_PATH = "/api/v1/reports/datasets"
 REPORT_MAX_ROWS = 1000          # trần `limit` của POST /reports/query
+QUERY_INVALID = "crm_query_invalid"
+
+# 400 của POST /reports/query: query do catalog sinh (lỗi cấu hình) hay do LLM dựng (LLM tự sửa).
+InvalidQueryMode = Literal["contract", "invalid"]
 
 
 class CrmApiError(Exception):
@@ -126,11 +133,46 @@ class ReportPage:
     truncated: bool             # số dòng chạm `limit` đã gửi: có thể còn dòng chưa lấy
 
 
+@dataclass(frozen=True)
+class TableColumn:
+    name: str
+    type: str
+    description: str = ""
+
+
+@dataclass(frozen=True)
+class TableRelation:
+    name: str                   # cột khoá ngoại
+    table: str                  # bảng đích
+    one_to_one: bool = False    # cột khoá ngoại có unique index: mỗi dòng cha có tối đa một dòng con
+    nullable: bool = False      # khoá ngoại tuỳ chọn: join giữ dòng con, cột của cha trống
+
+
+@dataclass(frozen=True)
+class TableReference:
+    table: str                  # bảng con
+    column: str                 # cột khoá ngoại của bảng con trỏ tới bảng này
+    one_to_one: bool = False
+
+
+@dataclass(frozen=True)
+class TableSchema:
+    columns: list[TableColumn]
+    relations: list[TableRelation]
+    referenced_by: list[TableReference] = field(default_factory=list)
+    # "deleted": API tự loại dòng có deleted_at; "ended": deleted_at là lúc kết thúc, API không lọc.
+    deleted_at_meaning: str = ""
+
+
 class CrmReportClient:
     """`POST /api/v1/reports/query`: CRM dựng SQL tham số hoá từ JSON và chạy theo quyền của token.
 
-    Request do `reporting/compile.py` sinh từ catalog, không do LLM viết; vì vậy 400 là lỗi
-    cấu hình catalog (`crm_report_contract_error`), chi tiết chỉ vào log.
+    Mặc định request do `reporting/report_api.py` sinh từ catalog nên 400 là lỗi cấu hình
+    catalog (`crm_report_contract_error`), chi tiết chỉ vào log. Tool `crm_query` gửi query
+    do LLM dựng với `on_invalid="invalid"`: 400 thành `crm_query_invalid` kèm thông báo của
+    CRM (chỉ nêu cột/quan hệ sai, không có dữ liệu) để LLM tự sửa.
+    `GET /api/v1/reports/tables/{table}`: cột, quan hệ (hai chiều) của một bảng (`get_table`).
+    `GET /api/v1/reports/datasets`: chỉ lấy mô tả bảng (`get_table_descriptions`).
     """
 
     def __init__(
@@ -146,8 +188,15 @@ class CrmReportClient:
         self._path = path
         self._transport = transport
 
-    async def query(self, request: dict[str, Any], token: str) -> ReportPage:
+    async def query(
+        self,
+        request: dict[str, Any],
+        token: str,
+        *,
+        on_invalid: InvalidQueryMode = "contract",
+    ) -> ReportPage:
         dataset = str(request.get("dataset"))
+        print(f"\n\n--- \nquery llm gửi tới CRM: {request} \n---\n\n")
         try:
             async with httpx.AsyncClient(
                 base_url=self._base_url,
@@ -167,6 +216,10 @@ class CrmReportClient:
             logger.warning("crm report request failed dataset=%s error=%s", dataset, type(error).__name__)
             raise CrmApiError("crm_unavailable", "CRM is unreachable") from None
         _raise_for_access(response, self._path)
+        if response.status_code == 400 and on_invalid == "invalid":
+            message = _error_message(response)
+            logger.info("crm report rejected llm query dataset=%s error=%s", dataset, message)
+            raise CrmApiError(QUERY_INVALID, message if message != "-" else "CRM rejected the query")
         if response.status_code == 400:
             # Spec do catalog sinh ra: CRM từ chối nghĩa là catalog lệch schema CRM.
             logger.error(
@@ -183,6 +236,7 @@ class CrmReportClient:
             raise CrmApiError("crm_unavailable", f"CRM returned HTTP {response.status_code}")
         try:
             payload = response.json()
+            print(f"\n\n--- \n/api/v1/reports/query response: {payload} \n---\n\n")
         except ValueError:
             payload = None
         rows = payload.get("rows") if isinstance(payload, dict) else None
@@ -194,6 +248,123 @@ class CrmReportClient:
         truncated = isinstance(limit, int) and len(rows) >= limit
         logger.info("crm report fetched dataset=%s rows=%d truncated=%s", dataset, len(rows), truncated)
         return ReportPage(rows=rows, totals=totals if isinstance(totals, dict) else None, truncated=truncated)
+
+    async def get_table(self, table: str, token: str) -> TableSchema:
+        """Cột và quan hệ của một bảng; bảng CRM không cho dùng (404) → `crm_query_invalid`."""
+        path = f"{REPORT_TABLES_PATH}/{table}"
+        print(f"\n\n--- Bảng sử dụng: {table}----\n\n")
+        try:
+            async with httpx.AsyncClient(
+                base_url=self._base_url,
+                headers=_headers(token),
+                timeout=self._timeout_s,
+                transport=self._transport,
+            ) as client:
+                with span("http.crm_schema", "http", table=table) as http_span:
+                    response = await client.get(path)
+                    http_span.set(status_code=response.status_code)
+                    if response.status_code != 200:
+                        http_span.fail(f"http_{response.status_code}")
+        except httpx.TimeoutException:
+            logger.warning("crm schema timed out table=%s", table)
+            raise CrmApiError("crm_unavailable", "CRM did not respond in time") from None
+        except httpx.HTTPError as error:
+            logger.warning("crm schema request failed table=%s error=%s", table, type(error).__name__)
+            raise CrmApiError("crm_unavailable", "CRM is unreachable") from None
+        _raise_for_access(response, path)
+        if response.status_code in (400, 404):
+            logger.info("crm schema unknown table=%s status=%d", table, response.status_code)
+            raise CrmApiError(QUERY_INVALID, f"CRM has no reporting table {table!r}")
+        if response.status_code != 200:
+            logger.warning(
+                "crm schema failed table=%s status=%d error=%s",
+                table, response.status_code, _error_message(response),
+            )
+            raise CrmApiError("crm_unavailable", f"CRM returned HTTP {response.status_code}")
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = None
+        columns = payload.get("columns") if isinstance(payload, dict) else None
+        if not isinstance(columns, list):
+            logger.warning("crm schema returned unexpected body table=%s", table)
+            raise CrmApiError("crm_unavailable", "CRM returned an unexpected response")
+        relations = payload.get("relations")
+        relations = relations if isinstance(relations, list) else []     # bảng không có FK: null
+        references = payload.get("referenced_by")
+        references = references if isinstance(references, list) else []
+        return TableSchema(
+            columns=[
+                TableColumn(str(item["name"]), str(item.get("type") or ""), _text(item.get("description")))
+                for item in columns if isinstance(item, dict) and item.get("name")
+            ],
+            relations=[
+                TableRelation(
+                    str(item["name"]), str(item["table"]),
+                    one_to_one=item.get("cardinality") == "one_to_one",
+                    nullable=item.get("nullable") is True,
+                )
+                for item in relations
+                if isinstance(item, dict) and item.get("name") and item.get("table")
+            ],
+            referenced_by=[
+                TableReference(
+                    str(item["table"]), str(item["column"]),
+                    one_to_one=item.get("cardinality") == "one_to_one",
+                )
+                for item in references
+                if isinstance(item, dict) and item.get("table") and item.get("column")
+            ],
+            deleted_at_meaning=_text(payload.get("deleted_at_meaning")),
+        )
+
+    async def get_table_descriptions(self, token: str) -> dict[str, str]:
+        """Mô tả nghiệp vụ của từng bảng (`GET /reports/datasets`); `/reports/tables` không có.
+
+        Payload lớn (mọi dataset kèm cột) nên chỉ giữ tên bảng → mô tả. Lỗi ném `CrmApiError`
+        như `get_table`; nơi gọi coi mô tả là phần phụ.
+        """
+        try:
+            async with httpx.AsyncClient(
+                base_url=self._base_url,
+                headers=_headers(token),
+                timeout=self._timeout_s,
+                transport=self._transport,
+            ) as client:
+                with span("http.crm_datasets", "http") as http_span:
+                    response = await client.get(REPORT_DATASETS_PATH)
+                    http_span.set(status_code=response.status_code)
+                    if response.status_code != 200:
+                        http_span.fail(f"http_{response.status_code}")
+        except httpx.TimeoutException:
+            logger.warning("crm datasets timed out")
+            raise CrmApiError("crm_unavailable", "CRM did not respond in time") from None
+        except httpx.HTTPError as error:
+            logger.warning("crm datasets request failed error=%s", type(error).__name__)
+            raise CrmApiError("crm_unavailable", "CRM is unreachable") from None
+        _raise_for_access(response, REPORT_DATASETS_PATH)
+        if response.status_code != 200:
+            logger.warning(
+                "crm datasets failed status=%d error=%s", response.status_code, _error_message(response),
+            )
+            raise CrmApiError("crm_unavailable", f"CRM returned HTTP {response.status_code}")
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = None
+        datasets = payload.get("datasets") if isinstance(payload, dict) else None
+        if not isinstance(datasets, list):
+            logger.warning("crm datasets returned unexpected body")
+            raise CrmApiError("crm_unavailable", "CRM returned an unexpected response")
+        return {
+            str(item["name"]): _text(item.get("description"))
+            for item in datasets
+            if isinstance(item, dict) and item.get("name") and _text(item.get("description"))
+        }
+
+
+def _text(value: Any) -> str:
+    return value.strip() if isinstance(value, str) else ""
 
 
 def _headers(token: str) -> dict[str, str]:

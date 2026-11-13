@@ -1,0 +1,1869 @@
+
+===== gpt-4o-mini | r1_sale_supported_customers | lần 1 | 8.6s | FAIL
+
+[r1_sale_supported_customers] Sale username an tháng này hỗ trợ bao nhiêu khách?
+  questions : ['', '', '']
+  statuses  : ['', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users'), ('crm_query', 'support_assignments')]
+  query #1 sent → ok returned=50 total=58 ignored=-
+    {"dataset": "auth_users", "select": ["id", "username"], "limit": 50}
+  query #2 sent → empty returned=0 total=None ignored=-
+    {"dataset": "support_assignments", "filters": [{"field": "assigned_to.username", "op": "eq", "value": "wdsdf7469@gmail.com"}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "dimensions": ["assigned_to.username"], "metrics": ["count_distinct:case_id"], "totals": true, "limit": 100}
+  answer    : Nhân viên với username "wdsdf7469@gmail.com" chưa hỗ trợ khách nào trong tháng này (từ 01/11/2026 đến 11/11/2026).
+  FAIL: kết quả crm_query cuối empty không thuộc ['ok']
+
+===== gpt-4o-mini | r1_sale_supported_customers | lần 2 | 16.8s | FAIL
+
+[r1_sale_supported_customers] Sale username an tháng này hỗ trợ bao nhiêu khách?
+  questions : ['', '', '', '', '', '', '', '', '', '', '', '', '', '']
+  statuses  : ['', '', '', '', '']  errors: ['tool_call_limit', 'tool_call_limit', 'tool_call_limit', 'tool_budget_exhausted', 'tool_budget_exhausted', 'tool_budget_exhausted', 'tool_budget_exhausted', 'tool_budget_exhausted', 'tool_budget_exhausted']
+    ! tool_call_limit: crm_query allows at most 4 calls per turn
+    ! tool_call_limit: crm_query allows at most 4 calls per turn
+    ! tool_call_limit: crm_query allows at most 4 calls per turn
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users'), ('crm_query', 'support_assignments'), ('crm_query', 'support_assignments'), ('crm_query', 'support_assignments'), ('crm_query', 'support_assignments'), ('crm_query', 'support_assignments'), ('crm_query', 'support_assignments'), ('crm_query', 'support_assignments'), ('crm_query', 'support_assignments'), ('crm_query', 'support_assignments'), ('crm_query', 'support_assignments'), ('crm_query', 'support_assignments'), ('crm_query', 'support_assignments')]
+  query #1 sent → ok returned=50 total=58 ignored=-
+    {"dataset": "auth_users", "select": ["id", "username"], "limit": 50}
+  query #2 sent → empty returned=0 total=None ignored=-
+    {"dataset": "support_assignments", "filters": [{"field": "assigned_to.username", "op": "contains", "value": "wdsdf7469@gmail.com"}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "dimensions": ["assigned_to.username"], "metrics": ["count_distinct:case_id"], "totals": true, "limit": 100}
+  query #3 sent → empty returned=0 total=None ignored=-
+    {"dataset": "support_assignments", "filters": [{"field": "assigned_to.username", "op": "contains", "value": "test@gmail.com"}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "dimensions": ["assigned_to.username"], "metrics": ["count_distinct:case_id"], "totals": true, "limit": 100}
+  query #4 sent → empty returned=0 total=None ignored=-
+    {"dataset": "support_assignments", "filters": [{"field": "assigned_to.username", "op": "contains", "value": "2351010dddon@ou.edu.vn"}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "dimensions": ["assigned_to.username"], "metrics": ["count_distinct:case_id"], "totals": true, "limit": 100}
+  answer    : Hiện tại, không có thông tin nào về số lượng khách mà nhân viên với username "wdsdf7469@gmail.com", "test@gmail.com", "2351010dddon@ou.edu.vn", "84son@ou.edu.vn", "abcd@gmail.com", "ho.tuyen.lam.0@gmail.com", "minhthanhdn10@gmail.com", "abc@gmail.com", "ductaidt07@gmail.com", "caoanhtuyen@gmail.com"
+  FAIL: tool calls 14 > 4; kết quả crm_query cuối empty không thuộc ['ok']
+
+===== gpt-4o-mini | r1_sale_supported_customers | lần 3 | 5.4s | FAIL
+
+[r1_sale_supported_customers] Sale username an tháng này hỗ trợ bao nhiêu khách?
+  questions : ['', '', '']
+  statuses  : ['', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users'), ('crm_query', 'support_assignments')]
+  query #1 sent → ok returned=50 total=58 ignored=-
+    {"dataset": "auth_users", "select": ["id", "username"], "limit": 50}
+  query #2 sent → empty returned=0 total=None ignored=-
+    {"dataset": "support_assignments", "filters": [{"field": "assigned_to.username", "op": "eq", "value": "wdsdf7469@gmail.com"}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "dimensions": ["assigned_to.username"], "metrics": ["count_distinct:case_id"], "totals": true, "limit": 100}
+  answer    : Nhân viên với username "wdsdf7469@gmail.com" chưa hỗ trợ khách nào trong tháng này.
+  FAIL: kết quả crm_query cuối empty không thuộc ['ok']
+
+===== gpt-4o-mini | r2_top_sales_new_customers | lần 1 | 8.4s | PASS
+
+[r2_top_sales_new_customers] Top 10 sale có nhiều khách mới nhất tháng trước
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → empty returned=0 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "created_at", "op": "in", "value": ["2026-10-01T00:00:00.000Z", "2026-10-02T00:00:00.000Z", "2026-10-03T00:00:00.000Z", "2026-10-04T00:00:00.000Z", "2026-10-05T00:00:00.000Z", "2026-10-06T00:00:00.000Z", "2026-10-07T00:00:00.000Z", "2026-10-08T00:00:00.000Z", "2026-10-09T00:00:00.000Z", "2026-10-10T00:00:00.000Z", "2026-10-11T00:00:00.000Z", "2026-10-12T00:00:00.000Z", "2026-10-13T00:00:00.000Z", "2026-10-14T00:00:00.000Z", "2026-10-15T00:00:00.000Z", "2026-10-16T00:00:00.000Z", "2026-10-17T00:00:00.000Z", "2026-10-18T00:00:00.000Z", "2026-10-19T0
+  answer    : Không có dữ liệu về khách hàng mới trong tháng 10 vừa qua. Có thể không có khách hàng nào được tạo trong khoảng thời gian đó hoặc không có nhân viên nào phụ trách. Bạn có muốn kiểm tra lại khoảng thời gian hoặc điều kiện khác không?
+
+===== gpt-4o-mini | r2_top_sales_new_customers | lần 2 | 8.3s | PASS
+
+[r2_top_sales_new_customers] Top 10 sale có nhiều khách mới nhất tháng trước
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → empty returned=0 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "created_at", "op": "in", "value": ["2026-10-01T00:00:00Z", "2026-10-02T00:00:00Z", "2026-10-03T00:00:00Z", "2026-10-04T00:00:00Z", "2026-10-05T00:00:00Z", "2026-10-06T00:00:00Z", "2026-10-07T00:00:00Z", "2026-10-08T00:00:00Z", "2026-10-09T00:00:00Z", "2026-10-10T00:00:00Z", "2026-10-11T00:00:00Z", "2026-10-12T00:00:00Z", "2026-10-13T00:00:00Z", "2026-10-14T00:00:00Z", "2026-10-15T00:00:00Z", "2026-10-16T00:00:00Z", "2026-10-17T00:00:00Z", "2026-10-18T00:00:00Z", "2026-10-19T00:00:00Z", "2026-10-20T00:00:00Z", "2026-10-21T00:00:00Z", "2026-10-22T0
+  answer    : Không có dữ liệu về khách hàng mới trong tháng 10 năm 2026. Có thể không có khách hàng nào được tạo trong tháng đó hoặc dữ liệu không thỏa mãn điều kiện. Bạn có muốn kiểm tra lại với khoảng thời gian khác không?
+
+===== gpt-4o-mini | r2_top_sales_new_customers | lần 3 | 7.2s | PASS
+
+[r2_top_sales_new_customers] Top 10 sale có nhiều khách mới nhất tháng trước
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → empty returned=0 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "created_at", "op": "in", "value": ["2026-10-01T00:00:00Z", "2026-10-02T00:00:00Z", "2026-10-03T00:00:00Z", "2026-10-04T00:00:00Z", "2026-10-05T00:00:00Z", "2026-10-06T00:00:00Z", "2026-10-07T00:00:00Z", "2026-10-08T00:00:00Z", "2026-10-09T00:00:00Z", "2026-10-10T00:00:00Z", "2026-10-11T00:00:00Z", "2026-10-12T00:00:00Z", "2026-10-13T00:00:00Z", "2026-10-14T00:00:00Z", "2026-10-15T00:00:00Z", "2026-10-16T00:00:00Z", "2026-10-17T00:00:00Z", "2026-10-18T00:00:00Z", "2026-10-19T00:00:00Z", "2026-10-20T00:00:00Z", "2026-10-21T00:00:00Z", "2026-10-22T0
+  answer    : Không có dữ liệu về khách hàng mới trong tháng 10 năm 2026. Có thể không có khách hàng nào được tạo trong tháng đó hoặc dữ liệu không thỏa mãn điều kiện. Bạn có muốn kiểm tra lại với khoảng thời gian khác không?
+
+===== gpt-4o-mini | r3_sold_products_october | lần 1 | 6.5s | PASS
+
+[r3_sold_products_october] Tháng 10 bán được những sản phẩm nào, mỗi loại bao nhiêu?
+  questions : ['', '', '']
+  statuses  : ['', '']  errors: ['tool_invalid_args']
+    ! tool_invalid_args: filters.0.value.constrained-str: String should have at least 1 character; filters.0.value.list[constrained-str]: Input should be a valid list
+  catalog   : []
+  tools     : [('crm_schema', 'product_ownerships'), ('crm_query', 'product_ownerships')]
+  query #1 invalid_args → invalid_args returned=None total=None ignored=-
+    "{\"dataset\":\"product_ownerships\",\"mode\":\"aggregate\",\"select\":[],\"dimensions\":[\"product_item_id.product_id.name\"],\"metrics\":[\"count:product_item_id\"],\"filters\":[{\"field\":\"created_at\",\"op\":\"not_null\",\"value\":\"\"}],\"date_range\":{\"field\":\"created_at\",\"preset\":\"custom\",\"from_date\":\"2023-10-01\",\"to_date\":\"2023-10-31\"},\"order_by\":[{\"field\":\"count:product_item_id\",\"dir\":\"desc\"}],\"limit\":12,\"offset\":0}"
+    ! tool_invalid_args: filters.0.value.constrained-str: String should have at least 1 character; filters.0.value.list[constrained-str]: Input should be a valid list
+  query #2 sent → empty returned=0 total=None ignored=-
+    {"dataset": "product_ownerships", "filters": [{"field": "is_current", "op": "eq", "value": "true"}], "date_range": {"field": "created_at", "from": "2023-10-01", "to": "2023-10-31"}, "dimensions": ["product_item_id.product_id.name"], "metrics": ["count:product_item_id"], "totals": true, "order_by": [{"field": "count:product_item_id", "dir": "desc"}], "limit": 12}
+  answer    : Trong tháng 10, không có sản phẩm nào được bán. Tổng số sản phẩm giao cho khách hàng là 0. 
+
+Bảng đã dùng: product_ownerships; khoảng ngày: từ 01/10/2023 đến 31/10/2023; điều kiện lọc: chỉ lấy thiết bị hiện tại.
+
+===== gpt-4o-mini | r3_sold_products_october | lần 2 | 5.5s | PASS
+
+[r3_sold_products_october] Tháng 10 bán được những sản phẩm nào, mỗi loại bao nhiêu?
+  questions : ['', '', '']
+  statuses  : ['', '']  errors: ['tool_invalid_args']
+    ! tool_invalid_args: filters.0.value.constrained-str: String should have at least 1 character; filters.0.value.list[constrained-str]: Input should be a valid list
+  catalog   : []
+  tools     : [('crm_schema', 'product_ownerships'), ('crm_query', 'product_ownerships')]
+  query #1 invalid_args → invalid_args returned=None total=None ignored=-
+    "{\"dataset\":\"product_ownerships\",\"mode\":\"aggregate\",\"select\":[],\"dimensions\":[\"product_item_id.product_id.name\"],\"metrics\":[\"count:product_item_id\"],\"filters\":[{\"field\":\"created_at\",\"op\":\"not_null\",\"value\":\"\"}],\"date_range\":{\"field\":\"created_at\",\"preset\":\"custom\",\"from_date\":\"2023-10-01\",\"to_date\":\"2023-10-31\"},\"order_by\":[{\"field\":\"count:product_item_id\",\"dir\":\"desc\"}],\"limit\":50,\"offset\":0}"
+    ! tool_invalid_args: filters.0.value.constrained-str: String should have at least 1 character; filters.0.value.list[constrained-str]: Input should be a valid list
+  query #2 sent → empty returned=0 total=None ignored=-
+    {"dataset": "product_ownerships", "filters": [{"field": "is_current", "op": "eq", "value": "true"}], "date_range": {"field": "created_at", "from": "2023-10-01", "to": "2023-10-31"}, "dimensions": ["product_item_id.product_id.name"], "metrics": ["count:product_item_id"], "totals": true, "order_by": [{"field": "count:product_item_id", "dir": "desc"}], "limit": 50}
+  answer    : Trong tháng 10, không có sản phẩm nào được bán. Tổng số sản phẩm giao cho khách hàng là 0. 
+
+Bảng đã dùng: product_ownerships; khoảng thời gian: từ 01/10/2023 đến 31/10/2023; điều kiện lọc: sản phẩm hiện tại.
+
+===== gpt-4o-mini | r3_sold_products_october | lần 3 | 6.0s | FAIL
+
+[r3_sold_products_october] Tháng 10 bán được những sản phẩm nào, mỗi loại bao nhiêu?
+  questions : ['', '', '']
+  statuses  : ['', '']  errors: ['tool_invalid_args']
+    ! tool_invalid_args: filters[0]: neq needs a value
+  catalog   : []
+  tools     : [('crm_schema', 'product_ownerships'), ('crm_query', 'product_ownerships')]
+  query #1 rejected → rejected returned=None total=None ignored=-
+    {"dataset": "product_ownerships", "mode": "aggregate", "select": [], "dimensions": ["product_item_id"], "metrics": ["count:product_item_id"], "filters": [{"field": "created_at", "op": "neq", "value": null}, {"field": "is_current", "op": "eq", "value": "true"}], "date_range": {"field": "created_at", "preset": "custom", "from_date": "2023-10-01", "to_date": "2023-10-31"}, "order_by": [{"field": "count:product_item_id", "dir": "desc"}], "limit": 12, "offset": 0}
+    ! tool_invalid_args: filters[0]: neq needs a value
+  query #2 sent → empty returned=0 total=None ignored=-
+    {"dataset": "product_ownerships", "filters": [{"field": "is_current", "op": "eq", "value": "true"}], "date_range": {"field": "created_at", "from": "2023-10-01", "to": "2023-10-31"}, "dimensions": ["product_item_id"], "metrics": ["count:product_item_id"], "totals": true, "order_by": [{"field": "count:product_item_id", "dir": "desc"}], "limit": 12}
+  answer    : Trong tháng 10, không có sản phẩm nào được bán (không có thiết bị nào giao cho khách). 
+
+Bảng đã dùng: product_ownerships; khoảng ngày: từ 01/10/2023 đến 31/10/2023; điều kiện lọc: thiết bị hiện tại.
+  FAIL: không có query khớp [{'dataset': 'product_ownerships', 'mode': 'aggregate', 'dimensions': ['product_item_id.product_id.name'], 'date_field': 'created_at'}]
+
+===== gpt-4o-mini | r4_list_closed_tickets | lần 1 | 7.5s | PASS
+
+[r4_list_closed_tickets] Liệt kê các phiếu hỗ trợ đã xong trong tháng 10
+  questions : ['', '', '', '']
+  statuses  : ['', '']  errors: ['tool_invalid_args', 'tool_invalid_args']
+    ! tool_invalid_args: filters.1.value.constrained-str: String should have at least 1 character; filters.1.value.list[constrained-str]: Input should be a valid list; filters.2.value.constrained-str: String should have at least 1 character; filters.2.value.list[constrained-str]: Input should be a valid l
+    ! tool_invalid_args: filters.1.value.constrained-str: String should have at least 1 character; filters.1.value.list[constrained-str]: Input should be a valid list; filters.2.value.constrained-str: String should have at least 1 character; filters.2.value.list[constrained-str]: Input should be a valid l
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases'), ('crm_query', 'support_cases'), ('crm_query', 'support_cases')]
+  query #1 invalid_args → invalid_args returned=None total=None ignored=-
+    "{\"dataset\":\"support_cases\",\"mode\":\"list\",\"select\":[\"id\",\"case_number\",\"status\",\"resolved_at\",\"closed_at\"],\"dimensions\":[],\"metrics\":[],\"filters\":[{\"field\":\"status\",\"op\":\"in\",\"value\":[\"resolved\",\"closed\"]},{\"field\":\"resolved_at\",\"op\":\"not_null\",\"value\":\"\"},{\"field\":\"closed_at\",\"op\":\"not_null\",\"value\":\"\"}],\"date_range\":{\"field\":\"resolved_at\",\"preset\":\"custom\",\"from_date\":\"2023-10-01\",\"to_date\":\"2023-10-31\"},\"order_by\":[{\"field\":\"resolved_at\",\"dir\":\"asc\"}],\"limit\":12,\"offset\":0}"
+    ! tool_invalid_args: filters.1.value.constrained-str: String should have at least 1 character; filters.1.value.list[constrained-str]: Input should be a valid list; filters.2.value.constrained-str: String should have at least 1 character; filters.2.value.list[constrained-str]: Input should be a valid list
+  query #2 invalid_args → invalid_args returned=None total=None ignored=-
+    "{\"dataset\":\"support_cases\",\"mode\":\"list\",\"select\":[\"id\",\"case_number\",\"status\",\"resolved_at\",\"closed_at\"],\"dimensions\":[],\"metrics\":[],\"filters\":[{\"field\":\"status\",\"op\":\"in\",\"value\":[\"resolved\",\"closed\"]},{\"field\":\"resolved_at\",\"op\":\"not_null\",\"value\":\"\"},{\"field\":\"closed_at\",\"op\":\"not_null\",\"value\":\"\"}],\"date_range\":{\"field\":\"resolved_at\",\"preset\":\"custom\",\"from_date\":\"2023-10-01\",\"to_date\":\"2023-10-31\"},\"order_by\":[{\"field\":\"resolved_at\",\"dir\":\"asc\"}],\"limit\":12,\"offset\":0}"
+    ! tool_invalid_args: filters.1.value.constrained-str: String should have at least 1 character; filters.1.value.list[constrained-str]: Input should be a valid list; filters.2.value.constrained-str: String should have at least 1 character; filters.2.value.list[constrained-str]: Input should be a valid list
+  query #3 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "support_cases", "select": ["id", "case_number", "status", "resolved_at", "closed_at"], "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}], "date_range": {"field": "resolved_at", "from": "2023-10-01", "to": "2023-10-31"}, "order_by": [{"field": "resolved_at", "dir": "asc"}], "limit": 12}
+  answer    : Không có phiếu hỗ trợ nào đã xong trong tháng 10.
+
+===== gpt-4o-mini | r4_list_closed_tickets | lần 2 | 5.7s | PASS
+
+[r4_list_closed_tickets] Liệt kê các phiếu hỗ trợ đã xong trong tháng 10
+  questions : ['', '', '']
+  statuses  : ['', '']  errors: ['tool_invalid_args']
+    ! tool_invalid_args: filters.1.value.constrained-str: String should have at least 1 character; filters.1.value.list[constrained-str]: Input should be a valid list; filters.2.value.constrained-str: String should have at least 1 character; filters.2.value.list[constrained-str]: Input should be a valid l
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases'), ('crm_query', 'support_cases')]
+  query #1 invalid_args → invalid_args returned=None total=None ignored=-
+    "{\"dataset\":\"support_cases\",\"mode\":\"list\",\"select\":[\"id\",\"case_number\",\"status\",\"resolved_at\",\"closed_at\"],\"dimensions\":[],\"metrics\":[],\"filters\":[{\"field\":\"status\",\"op\":\"in\",\"value\":[\"resolved\",\"closed\"]},{\"field\":\"resolved_at\",\"op\":\"not_null\",\"value\":\"\"},{\"field\":\"closed_at\",\"op\":\"not_null\",\"value\":\"\"}],\"date_range\":{\"field\":\"resolved_at\",\"preset\":\"custom\",\"from_date\":\"2023-10-01\",\"to_date\":\"2023-10-31\"},\"order_by\":[{\"field\":\"resolved_at\",\"dir\":\"asc\"}],\"limit\":20,\"offset\":0}"
+    ! tool_invalid_args: filters.1.value.constrained-str: String should have at least 1 character; filters.1.value.list[constrained-str]: Input should be a valid list; filters.2.value.constrained-str: String should have at least 1 character; filters.2.value.list[constrained-str]: Input should be a valid list
+  query #2 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "support_cases", "select": ["id", "case_number", "status", "resolved_at", "closed_at"], "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "resolved_at", "op": "not_null"}, {"field": "closed_at", "op": "not_null"}], "date_range": {"field": "resolved_at", "from": "2023-10-01", "to": "2023-10-31"}, "order_by": [{"field": "resolved_at", "dir": "asc"}], "limit": 20}
+  answer    : Không có phiếu hỗ trợ nào đã xong trong tháng 10.
+
+===== gpt-4o-mini | r4_list_closed_tickets | lần 3 | 5.4s | PASS
+
+[r4_list_closed_tickets] Liệt kê các phiếu hỗ trợ đã xong trong tháng 10
+  questions : ['', '', '']
+  statuses  : ['', '']  errors: ['tool_invalid_args']
+    ! tool_invalid_args: filters.1.value.constrained-str: String should have at least 1 character; filters.1.value.list[constrained-str]: Input should be a valid list; filters.2.value.constrained-str: String should have at least 1 character; filters.2.value.list[constrained-str]: Input should be a valid l
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases'), ('crm_query', 'support_cases')]
+  query #1 invalid_args → invalid_args returned=None total=None ignored=-
+    "{\"dataset\":\"support_cases\",\"mode\":\"list\",\"select\":[\"id\",\"case_number\",\"status\",\"resolved_at\",\"closed_at\"],\"dimensions\":[],\"metrics\":[],\"filters\":[{\"field\":\"status\",\"op\":\"in\",\"value\":[\"resolved\",\"closed\"]},{\"field\":\"resolved_at\",\"op\":\"not_null\",\"value\":\"\"},{\"field\":\"closed_at\",\"op\":\"not_null\",\"value\":\"\"}],\"date_range\":{\"field\":\"resolved_at\",\"preset\":\"custom\",\"from_date\":\"2023-10-01\",\"to_date\":\"2023-10-31\"},\"order_by\":[{\"field\":\"resolved_at\",\"dir\":\"asc\"}],\"limit\":12,\"offset\":0}"
+    ! tool_invalid_args: filters.1.value.constrained-str: String should have at least 1 character; filters.1.value.list[constrained-str]: Input should be a valid list; filters.2.value.constrained-str: String should have at least 1 character; filters.2.value.list[constrained-str]: Input should be a valid list
+  query #2 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "support_cases", "select": ["id", "case_number", "status", "resolved_at", "closed_at"], "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "resolved_at", "op": "not_null"}, {"field": "closed_at", "op": "not_null"}], "date_range": {"field": "resolved_at", "from": "2023-10-01", "to": "2023-10-31"}, "order_by": [{"field": "resolved_at", "dir": "asc"}], "limit": 12}
+  answer    : Không có phiếu hỗ trợ nào đã xong trong tháng 10.
+
+===== gpt-4o-mini | r5_count_is_not_a_list | lần 1 | 3.5s | PASS
+
+[r5_count_is_not_a_list] Tháng 10 có bao nhiêu phiếu hỗ trợ đã xong?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "created_at", "op": "in", "value": ["this_month"]}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "metrics": ["count"], "limit": 50}
+  answer    : Trong tháng 10, không có phiếu hỗ trợ nào đã xong (được đánh dấu là "resolved" hoặc "closed"). 
+
+Bảng đã dùng: support_cases.
+
+===== gpt-4o-mini | r5_count_is_not_a_list | lần 2 | 3.4s | PASS
+
+[r5_count_is_not_a_list] Tháng 10 có bao nhiêu phiếu hỗ trợ đã xong?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "created_at", "op": "in", "value": ["this_month"]}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "metrics": ["count"], "limit": 50}
+  answer    : Trong tháng 10, không có phiếu hỗ trợ nào đã xong (trạng thái resolved hoặc closed). 
+
+Bảng đã dùng: support_cases.
+
+===== gpt-4o-mini | r5_count_is_not_a_list | lần 3 | 3.6s | PASS
+
+[r5_count_is_not_a_list] Tháng 10 có bao nhiêu phiếu hỗ trợ đã xong?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "created_at", "op": "in", "value": ["this_month"]}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "metrics": ["count"], "limit": 50}
+  answer    : Trong tháng 10, không có phiếu hỗ trợ nào đã xong (được đánh dấu là "resolved" hoặc "closed").
+
+===== gpt-4o-mini | q1_customer_by_name | lần 1 | 4.0s | PASS
+
+[q1_customer_by_name] Có khách hàng nào tên Hohmeier không?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=1 ignored=-
+    {"dataset": "customers", "select": ["id", "full_name", "email", "phone", "company_name"], "filters": [{"field": "full_name", "op": "contains", "value": "Hohmeier"}], "limit": 12}
+  answer    : Có một khách hàng tên "Jan Nils Hohmeier". Dưới đây là thông tin chi tiết:
+
+- **Email**: hohmeierjanniklas@gmail.com
+- **Điện thoại**: 00490170933899
+- **Công ty**: Không có thông tin
+
+Tổng cộng có 1 khách hàng thỏa mãn điều kiện tìm kiếm.
+
+===== gpt-4o-mini | q1_customer_by_name | lần 2 | 4.6s | PASS
+
+[q1_customer_by_name] Có khách hàng nào tên Hohmeier không?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=1 ignored=-
+    {"dataset": "customers", "select": ["id", "full_name", "email", "phone", "company_name"], "filters": [{"field": "full_name", "op": "contains", "value": "Hohmeier"}], "limit": 12}
+  answer    : Có một khách hàng tên "Jan Nils Hohmeier". Dưới đây là thông tin chi tiết:
+
+- **Email**: hohmeierjanniklas@gmail.com
+- **Điện thoại**: 00490170933899
+- **Công ty**: Không có thông tin
+
+Nếu cần thêm thông tin gì khác, bạn hãy cho tôi biết!
+
+===== gpt-4o-mini | q1_customer_by_name | lần 3 | 4.0s | PASS
+
+[q1_customer_by_name] Có khách hàng nào tên Hohmeier không?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=1 ignored=-
+    {"dataset": "customers", "select": ["id", "full_name", "email", "phone", "company_name"], "filters": [{"field": "full_name", "op": "contains", "value": "Hohmeier"}], "limit": 12}
+  answer    : Có một khách hàng tên "Jan Nils Hohmeier". Dưới đây là thông tin chi tiết:
+
+- **Email**: hohmeierjanniklas@gmail.com
+- **Điện thoại**: 00490170933899
+- **Công ty**: Không có thông tin
+
+Nếu cần thêm thông tin gì khác, bạn hãy cho tôi biết!
+
+===== gpt-4o-mini | q2_purchase_orders_by_status | lần 1 | 3.5s | PASS
+
+[q2_purchase_orders_by_status] Có bao nhiêu đơn mua hàng (PO), chia theo trạng thái?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'purchase_orders')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "purchase_orders", "dimensions": ["status"], "metrics": ["count"], "totals": true, "limit": 50}
+  answer    : Hiện tại có 4 đơn mua hàng (PO) với trạng thái "closed". Không có đơn nào ở các trạng thái khác.
+
+===== gpt-4o-mini | q2_purchase_orders_by_status | lần 2 | 3.0s | PASS
+
+[q2_purchase_orders_by_status] Có bao nhiêu đơn mua hàng (PO), chia theo trạng thái?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'purchase_orders')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "purchase_orders", "dimensions": ["status"], "metrics": ["count"], "totals": true, "limit": 50}
+  answer    : Hiện tại có tổng cộng 4 đơn mua hàng (PO) với trạng thái "closed". Không có đơn nào ở các trạng thái khác.
+
+===== gpt-4o-mini | q2_purchase_orders_by_status | lần 3 | 2.9s | PASS
+
+[q2_purchase_orders_by_status] Có bao nhiêu đơn mua hàng (PO), chia theo trạng thái?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'purchase_orders')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "purchase_orders", "dimensions": ["status"], "metrics": ["count"], "totals": true, "limit": 50}
+  answer    : Hiện tại có tổng cộng 4 đơn mua hàng (PO) với trạng thái "closed". Không có đơn nào ở các trạng thái khác.
+
+===== gpt-4o-mini | q3_stock_per_material | lần 1 | 10.2s | PASS
+
+[q3_stock_per_material] Tồn kho hiện tại của từng vật tư là bao nhiêu?
+  questions : ['', '', '', '']
+  statuses  : ['', '', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'stock'), ('crm_query', 'materials'), ('crm_query', 'materials')]
+  query #1 sent → ok returned=6 total=6 ignored=-
+    {"dataset": "stock", "select": ["material_id", "qty"], "limit": 50}
+  query #2 sent → ok returned=6 total=6 ignored=-
+    {"dataset": "materials", "select": ["id", "name"], "filters": [{"field": "id", "op": "in", "value": ["e0d78ba1-d9b3-413a-88c2-e00c488a9d02", "84075c53-493f-4d06-84f7-612c8ee56638", "82be0229-1494-4a04-8cd7-a16cdf8179c1", "4a29d39a-867c-4c55-a1be-1642ff593860", "08193ee9-47a2-4f7b-8b60-ffe5302616ea", "0bf8972a-891b-40af-b3a9-4050247773d1"]}], "limit": 50}
+  query #3 sent → ok returned=6 total=6 ignored=-
+    {"dataset": "materials", "select": ["id", "sku"], "filters": [{"field": "id", "op": "in", "value": ["e0d78ba1-d9b3-413a-88c2-e00c488a9d02", "84075c53-493f-4d06-84f7-612c8ee56638", "82be0229-1494-4a04-8cd7-a16cdf8179c1", "4a29d39a-867c-4c55-a1be-1642ff593860", "08193ee9-47a2-4f7b-8b60-ffe5302616ea", "0bf8972a-891b-40af-b3a9-4050247773d1"]}], "limit": 50}
+  answer    : Tồn kho hiện tại của từng vật tư như sau:
+
+1. **SERVO SAVCH** (SKU: SERVO-002): 1
+2. **F10T** (SKU: CONTROLLER-007): 21
+3. **F108** (SKU: CONTROLLER-012): 10
+4. **F54** (SKU: CONTROLLER-008): 10
+5. **SERVO RXG** (SKU: SERVO-001): 1
+6. **6AVE** (SKU: CONTROLLER-006): 21
+
+Tổng cộng có 6 vật tư với số 
+
+===== gpt-4o-mini | q3_stock_per_material | lần 2 | 9.2s | PASS
+
+[q3_stock_per_material] Tồn kho hiện tại của từng vật tư là bao nhiêu?
+  questions : ['', '', '', '']
+  statuses  : ['', '', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'stock'), ('crm_query', 'materials'), ('crm_query', 'materials')]
+  query #1 sent → ok returned=6 total=6 ignored=-
+    {"dataset": "stock", "select": ["material_id", "qty"], "limit": 50}
+  query #2 sent → ok returned=6 total=6 ignored=-
+    {"dataset": "materials", "select": ["id", "sku", "name"], "filters": [{"field": "id", "op": "in", "value": ["e0d78ba1-d9b3-413a-88c2-e00c488a9d02", "84075c53-493f-4d06-84f7-612c8ee56638", "82be0229-1494-4a04-8cd7-a16cdf8179c1", "4a29d39a-867c-4c55-a1be-1642ff593860", "08193ee9-47a2-4f7b-8b60-ffe5302616ea", "0bf8972a-891b-40af-b3a9-4050247773d1"]}], "limit": 50}
+  answer    : Tồn kho hiện tại của từng vật tư như sau:
+
+1. **SERVO SAVCH** (SKU: SERVO-002): 1
+2. **F10T** (SKU: CONTROLLER-007): 21
+3. **F108** (SKU: CONTROLLER-012): 10
+4. **F54** (SKU: CONTROLLER-008): 10
+5. **SERVO RXG** (SKU: SERVO-001): 1
+6. **6AVE** (SKU: CONTROLLER-006): 21
+
+Tổng cộng có 6 loại vật tư vớ
+
+===== gpt-4o-mini | q3_stock_per_material | lần 3 | 8.5s | PASS
+
+[q3_stock_per_material] Tồn kho hiện tại của từng vật tư là bao nhiêu?
+  questions : ['', '', '', '']
+  statuses  : ['', '', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'stock'), ('crm_query', 'materials'), ('crm_query', 'materials')]
+  query #1 sent → ok returned=6 total=6 ignored=-
+    {"dataset": "stock", "select": ["material_id", "qty"], "limit": 50}
+  query #2 sent → ok returned=6 total=6 ignored=-
+    {"dataset": "materials", "select": ["id", "name"], "filters": [{"field": "id", "op": "in", "value": ["e0d78ba1-d9b3-413a-88c2-e00c488a9d02", "84075c53-493f-4d06-84f7-612c8ee56638", "82be0229-1494-4a04-8cd7-a16cdf8179c1", "4a29d39a-867c-4c55-a1be-1642ff593860", "08193ee9-47a2-4f7b-8b60-ffe5302616ea", "0bf8972a-891b-40af-b3a9-4050247773d1"]}], "limit": 50}
+  answer    : Tồn kho hiện tại của từng vật tư như sau:
+
+1. **SERVO SAVCH**: 1
+2. **F10T**: 21
+3. **F108**: 10
+4. **F54**: 10
+5. **SERVO RXG**: 1
+6. **6AVE**: 21
+
+Tổng cộng có 6 vật tư với số lượng tương ứng.
+
+===== gpt-4o-mini | q4_active_users | lần 1 | 2.9s | PASS
+
+[q4_active_users] Hệ thống có bao nhiêu tài khoản người dùng đang hoạt động?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "auth_users", "filters": [{"field": "is_active", "op": "eq", "value": "true"}], "metrics": ["count:is_active"], "limit": 50}
+  answer    : Hệ thống hiện có 46 tài khoản người dùng đang hoạt động.
+
+===== gpt-4o-mini | q4_active_users | lần 2 | 3.4s | PASS
+
+[q4_active_users] Hệ thống có bao nhiêu tài khoản người dùng đang hoạt động?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "auth_users", "filters": [{"field": "is_active", "op": "eq", "value": "true"}], "metrics": ["count:is_active"], "limit": 50}
+  answer    : Hệ thống hiện có 46 tài khoản người dùng đang hoạt động.
+
+===== gpt-4o-mini | q4_active_users | lần 3 | 3.1s | PASS
+
+[q4_active_users] Hệ thống có bao nhiêu tài khoản người dùng đang hoạt động?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "auth_users", "filters": [{"field": "is_active", "op": "eq", "value": "true"}], "metrics": ["count:is_active"], "limit": 50}
+  answer    : Hệ thống hiện có 46 tài khoản người dùng đang hoạt động.
+
+===== gpt-4o-mini | q5_staff_names | lần 1 | 7.6s | PASS
+
+[q5_staff_names] Liệt kê họ tên và username của 5 nhân viên
+  questions : ['', '', '']
+  statuses  : ['', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_profiles'), ('crm_query', 'auth_users')]
+  query #1 sent → ok returned=5 total=58 ignored=-
+    {"dataset": "user_profiles", "select": ["user_id", "first_name", "last_name"], "limit": 5}
+  query #2 sent → ok returned=4 total=4 ignored=-
+    {"dataset": "auth_users", "select": ["username"], "filters": [{"field": "id", "op": "in", "value": ["e6a20ca3-aa34-4c9e-b987-5fef8cb6dc00", "75b92cc8-d1ab-4e8e-b9ea-1b2eef468a13", "bb872b57-c7c6-4efa-b832-047e0a49a1c4", "4c69a00a-8337-4fa7-a6fc-c926ae0cca25"]}], "limit": 5}
+  answer    : Dưới đây là danh sách họ tên và username của 5 nhân viên:
+
+1. **Họ tên:** Châu Ngọc Sơn - **Username:** wdsdf7469@gmail.com
+2. **Họ tên:** Sơn Châu Ngọc - **Username:** 2351010dddon@ou.edu.vn
+3. **Họ tên:** Sơn Châu Ngọc - **Username:** 84son@ou.edu.vn
+4. **Họ tên:** dh chau - **Username:** abcd@gma
+
+===== gpt-4o-mini | q5_staff_names | lần 2 | 10.8s | PASS
+
+[q5_staff_names] Liệt kê họ tên và username của 5 nhân viên
+  questions : ['', '', '']
+  statuses  : ['', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_profiles'), ('crm_query', 'auth_users')]
+  query #1 sent → ok returned=5 total=58 ignored=-
+    {"dataset": "user_profiles", "select": ["user_id", "first_name", "last_name"], "limit": 5}
+  query #2 sent → ok returned=4 total=4 ignored=-
+    {"dataset": "auth_users", "select": ["username"], "filters": [{"field": "id", "op": "in", "value": ["e6a20ca3-aa34-4c9e-b987-5fef8cb6dc00", "75b92cc8-d1ab-4e8e-b9ea-1b2eef468a13", "bb872b57-c7c6-4efa-b832-047e0a49a1c4", "4c69a00a-8337-4fa7-a6fc-c926ae0cca25"]}], "limit": 5}
+  answer    : Dưới đây là danh sách họ tên và username của 5 nhân viên:
+
+1. **Họ tên:** Châu Ngọc Sơn - **Username:** wdsdf7469@gmail.com
+2. **Họ tên:** Sơn Châu Ngọc - **Username:** 2351010dddon@ou.edu.vn
+3. **Họ tên:** Sơn Châu Ngọc - **Username:** 84son@ou.edu.vn
+4. **Họ tên:** dh chau - **Username:** abcd@gma
+
+===== gpt-4o-mini | q5_staff_names | lần 3 | 7.3s | PASS
+
+[q5_staff_names] Liệt kê họ tên và username của 5 nhân viên
+  questions : ['', '', '']
+  statuses  : ['', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_profiles'), ('crm_query', 'auth_users')]
+  query #1 sent → ok returned=5 total=58 ignored=-
+    {"dataset": "user_profiles", "select": ["user_id", "first_name", "last_name"], "limit": 5}
+  query #2 sent → ok returned=4 total=4 ignored=-
+    {"dataset": "auth_users", "select": ["username"], "filters": [{"field": "id", "op": "in", "value": ["e6a20ca3-aa34-4c9e-b987-5fef8cb6dc00", "75b92cc8-d1ab-4e8e-b9ea-1b2eef468a13", "bb872b57-c7c6-4efa-b832-047e0a49a1c4", "4c69a00a-8337-4fa7-a6fc-c926ae0cca25"]}], "limit": 5}
+  answer    : Dưới đây là danh sách họ tên và username của 5 nhân viên:
+
+1. **Họ tên:** Châu Ngọc Sơn - **Username:** wdsdf7469@gmail.com
+2. **Họ tên:** Sơn Châu Ngọc - **Username:** 2351010dddon@ou.edu.vn
+3. **Họ tên:** Sơn Châu Ngọc - **Username:** 84son@ou.edu.vn
+4. **Họ tên:** dh chau - **Username:** abcd@gma
+
+===== gpt-4o-mini | q6_new_customers_per_month | lần 1 | 4.1s | PASS
+
+[q6_new_customers_per_month] Năm nay mỗi tháng có bao nhiêu khách hàng mới?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=10 total=None ignored=-
+    {"dataset": "customers", "date_range": {"field": "created_at", "from": "2026-01-01", "to": "2026-11-11"}, "dimensions": ["created_month", "created_year"], "metrics": ["count:created_at"], "totals": true, "order_by": [{"field": "created_year", "dir": "asc"}, {"field": "created_month", "dir": "asc"}], "limit": 50}
+  answer    : Số lượng khách hàng mới mỗi tháng trong năm 2026 như sau:
+
+- Tháng 1: 360
+- Tháng 3: 12
+- Tháng 4: 19
+- Tháng 5: 7
+- Tháng 6: 19
+- Tháng 7: 27
+- Tháng 8: 32
+- Tháng 9: 29
+- Tháng 10: 43
+- Tháng 11: 2
+
+Tổng cộng có 550 khách hàng mới trong năm nay.
+
+===== gpt-4o-mini | q6_new_customers_per_month | lần 2 | 4.0s | FAIL
+
+[q6_new_customers_per_month] Năm nay mỗi tháng có bao nhiêu khách hàng mới?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=10 total=None ignored=-
+    {"dataset": "customers", "date_range": {"field": "created_at", "from": "2026-01-01", "to": "2026-11-11"}, "dimensions": ["created_at_month"], "metrics": ["count"], "totals": true, "order_by": [{"field": "created_at_month", "dir": "asc"}], "limit": 12}
+  answer    : Số lượng khách hàng mới theo từng tháng trong năm 2026 như sau:
+
+- Tháng 1: 360
+- Tháng 2: 0
+- Tháng 3: 12
+- Tháng 4: 19
+- Tháng 5: 7
+- Tháng 6: 19
+- Tháng 7: 27
+- Tháng 8: 32
+- Tháng 9: 29
+- Tháng 10: 43
+- Tháng 11: 2
+
+Tổng số khách hàng mới từ đầu năm đến nay là 550.
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'dimensions': ['created_month']}]
+
+===== gpt-4o-mini | q6_new_customers_per_month | lần 3 | 4.3s | PASS
+
+[q6_new_customers_per_month] Năm nay mỗi tháng có bao nhiêu khách hàng mới?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=10 total=None ignored=-
+    {"dataset": "customers", "date_range": {"field": "created_at", "from": "2026-01-01", "to": "2026-11-11"}, "dimensions": ["created_month", "created_year"], "metrics": ["count:created_at"], "totals": true, "order_by": [{"field": "created_year", "dir": "asc"}, {"field": "created_month", "dir": "asc"}], "limit": 50}
+  answer    : Số lượng khách hàng mới mỗi tháng trong năm 2026 như sau:
+
+- Tháng 1: 360
+- Tháng 3: 12
+- Tháng 4: 19
+- Tháng 5: 7
+- Tháng 6: 19
+- Tháng 7: 27
+- Tháng 8: 32
+- Tháng 9: 29
+- Tháng 10: 43
+- Tháng 11: 2
+
+Tổng cộng có 550 khách hàng mới trong năm nay.
+
+===== gpt-4o-mini | q7_customers_of_sale | lần 1 | 4.4s | PASS
+
+[q7_customers_of_sale] Liệt kê 5 khách mới nhất do sale username an phụ trách, kèm số điện thoại
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=5 total=50 ignored=['order_by created_at (not among the chosen columns)']
+    {"dataset": "customers", "select": ["id", "full_name", "phone", "assigned_sales_id"], "filters": [{"field": "assigned_sales_id.username", "op": "contains", "value": "an"}], "limit": 5}
+  answer    : Dưới đây là 5 khách hàng mới nhất do sale username "an" phụ trách, kèm số điện thoại:
+
+1. **Christophe Duboisset** - +33652230460
+2. **Chị Ngô Thêu** - 0986777182
+3. **Trịnh Hùng Cường** - 0934530345
+4. **Nguyễn Hữu Đạt** - 0794600650
+5. **Nguyễn Minh Đăng** - 0909564044
+
+Có tổng cộng 50 khách hàng 
+
+===== gpt-4o-mini | q7_customers_of_sale | lần 2 | 4.7s | PASS
+
+[q7_customers_of_sale] Liệt kê 5 khách mới nhất do sale username an phụ trách, kèm số điện thoại
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=5 total=50 ignored=['order_by created_at (not among the chosen columns)']
+    {"dataset": "customers", "select": ["id", "full_name", "phone"], "filters": [{"field": "assigned_sales_id.username", "op": "contains", "value": "an"}], "limit": 5}
+  answer    : Dưới đây là danh sách 5 khách hàng mới nhất do sale username "an" phụ trách, kèm số điện thoại:
+
+1. **Christophe Duboisset** - +33652230460
+2. **Chị Ngô Thêu** - 0986777182
+3. **Trịnh Hùng Cường** - 0934530345
+4. **Nguyen Huu Dat** - 0794600650
+5. **Nguyễn Minh Đăng** - 0909564044
+
+Nếu cần thêm thôn
+
+===== gpt-4o-mini | q7_customers_of_sale | lần 3 | 4.5s | PASS
+
+[q7_customers_of_sale] Liệt kê 5 khách mới nhất do sale username an phụ trách, kèm số điện thoại
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=5 total=50 ignored=['order_by created_at (not among the chosen columns)']
+    {"dataset": "customers", "select": ["id", "full_name", "phone"], "filters": [{"field": "assigned_sales_id.username", "op": "contains", "value": "an"}], "limit": 5}
+  answer    : Dưới đây là danh sách 5 khách hàng mới nhất do sale với username "an" phụ trách, kèm số điện thoại:
+
+1. **Christophe Duboisset** - +33652230460
+2. **Chị Ngô Thêu** - 0986777182
+3. **Trịnh Hùng Cường** - 0934530345
+4. **Nguyen Huu Dat** - 0794600650
+5. **Nguyễn Minh Đăng** - 0909564044
+
+Nếu cần thêm 
+
+===== gpt-4o-mini | q9_customers_of_staff_by_name | lần 1 | 3.5s | FAIL
+
+[q9_customers_of_staff_by_name] Nhân viên Hiếu hiện tại có bao nhiêu khách hàng?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "assigned_sales_id", "op": "eq", "value": "UUID của nhân viên Hiếu"}], "metrics": ["count"], "limit": 50}
+  answer    : Nhân viên Hiếu hiện tại không có khách hàng nào.
+  FAIL: không có query khớp {'dataset': 'user_profiles', 'filters': ['first_name contains']}; không có query khớp {'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filter_values_uuid': ['assigned_sales_id']}; answer thiếu ['76']
+
+===== gpt-4o-mini | q9_customers_of_staff_by_name | lần 2 | 3.5s | FAIL
+
+[q9_customers_of_staff_by_name] Nhân viên Hiếu hiện tại có bao nhiêu khách hàng?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "assigned_sales_id", "op": "eq", "value": "UUID của nhân viên Hiếu"}], "metrics": ["count"], "limit": 50}
+  answer    : Nhân viên Hiếu hiện tại không có khách hàng nào.
+  FAIL: không có query khớp {'dataset': 'user_profiles', 'filters': ['first_name contains']}; không có query khớp {'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filter_values_uuid': ['assigned_sales_id']}; answer thiếu ['76']
+
+===== gpt-4o-mini | q9_customers_of_staff_by_name | lần 3 | 3.2s | FAIL
+
+[q9_customers_of_staff_by_name] Nhân viên Hiếu hiện tại có bao nhiêu khách hàng?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "assigned_sales_id", "op": "eq", "value": "UUID của nhân viên Hiếu"}], "metrics": ["count"], "limit": 50}
+  answer    : Nhân viên Hiếu hiện tại không có khách hàng nào.
+  FAIL: không có query khớp {'dataset': 'user_profiles', 'filters': ['first_name contains']}; không có query khớp {'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filter_values_uuid': ['assigned_sales_id']}; answer thiếu ['76']
+
+===== gpt-4o-mini | q10_current_state_has_no_date | lần 1 | 3.4s | PASS
+
+[q10_current_state_has_no_date] Hiện tại có bao nhiêu phiếu hỗ trợ đang mở?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["new", "pending", "in_progress", "reopened"]}], "metrics": ["count"], "limit": 50}
+  answer    : Hiện tại không có phiếu hỗ trợ nào đang mở.
+
+===== gpt-4o-mini | q10_current_state_has_no_date | lần 2 | 3.2s | PASS
+
+[q10_current_state_has_no_date] Hiện tại có bao nhiêu phiếu hỗ trợ đang mở?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["new", "pending", "in_progress", "reopened"]}], "metrics": ["count"], "limit": 50}
+  answer    : Hiện tại không có phiếu hỗ trợ nào đang mở.
+
+===== gpt-4o-mini | q10_current_state_has_no_date | lần 3 | 3.0s | PASS
+
+[q10_current_state_has_no_date] Hiện tại có bao nhiêu phiếu hỗ trợ đang mở?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["new", "pending", "in_progress", "reopened"]}], "metrics": ["count"], "limit": 50}
+  answer    : Hiện tại không có phiếu hỗ trợ nào đang mở.
+
+===== gpt-4o-mini | q11_staff_name_not_found | lần 1 | 3.1s | FAIL
+
+[q11_staff_name_not_found] Nhân viên Zzyzx hiện có bao nhiêu khách hàng?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "assigned_sales_id", "op": "eq", "value": "Zzyzx"}], "metrics": ["count"], "limit": 50}
+  answer    : Nhân viên Zzyzx hiện không có khách hàng nào.
+  FAIL: không có query khớp [{'dataset': 'user_profiles'}]; có query khớp mẫu bị cấm {'dataset': 'customers'}
+
+===== gpt-4o-mini | q11_staff_name_not_found | lần 2 | 4.0s | FAIL
+
+[q11_staff_name_not_found] Nhân viên Zzyzx hiện có bao nhiêu khách hàng?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "assigned_sales_id", "op": "eq", "value": "Zzyzx"}], "metrics": ["count"], "limit": 50}
+  answer    : Nhân viên Zzyzx hiện không có khách hàng nào.
+  FAIL: không có query khớp [{'dataset': 'user_profiles'}]; có query khớp mẫu bị cấm {'dataset': 'customers'}
+
+===== gpt-4o-mini | q11_staff_name_not_found | lần 3 | 2.9s | FAIL
+
+[q11_staff_name_not_found] Nhân viên Zzyzx hiện có bao nhiêu khách hàng?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "assigned_sales_id", "op": "eq", "value": "Zzyzx"}], "metrics": ["count"], "limit": 50}
+  answer    : Nhân viên Zzyzx hiện không có khách hàng nào.
+  FAIL: không có query khớp [{'dataset': 'user_profiles'}]; có query khớp mẫu bị cấm {'dataset': 'customers'}
+
+===== gpt-4o-mini | q12_roles_of_staff_reverse_relation | lần 1 | 4.4s | FAIL
+
+[q12_roles_of_staff_reverse_relation] Tài khoản username an có những vai trò (role) nào?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_roles')]
+  query #1 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "user_roles", "select": ["role_id"], "filters": [{"field": "user_id", "op": "eq", "value": "an"}], "limit": 12}
+  answer    : Tài khoản username "an" không có vai trò nào được ghi nhận trong hệ thống.
+  FAIL: không có query khớp [{'dataset': 'user_roles', 'filters': ['user_id.username']}]
+
+===== gpt-4o-mini | q12_roles_of_staff_reverse_relation | lần 2 | 3.7s | FAIL
+
+[q12_roles_of_staff_reverse_relation] Tài khoản username an có những vai trò (role) nào?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_roles')]
+  query #1 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "user_roles", "select": ["role_id"], "filters": [{"field": "user_id", "op": "eq", "value": "(SELECT id FROM auth_users WHERE username = 'an')"}], "limit": 12}
+  answer    : Tài khoản username "an" hiện không có vai trò nào trong hệ thống.
+  FAIL: không có query khớp [{'dataset': 'user_roles', 'filters': ['user_id.username']}]
+
+===== gpt-4o-mini | q12_roles_of_staff_reverse_relation | lần 3 | 3.3s | FAIL
+
+[q12_roles_of_staff_reverse_relation] Tài khoản username an có những vai trò (role) nào?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_roles')]
+  query #1 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "user_roles", "select": ["user_id", "role_id"], "filters": [{"field": "user_id", "op": "eq", "value": "an"}], "limit": 12}
+  answer    : Tài khoản username "an" không có vai trò nào trong hệ thống.
+  FAIL: không có query khớp [{'dataset': 'user_roles', 'filters': ['user_id.username']}]
+
+===== gpt-4o-mini | q13_top_staff_in_october | lần 1 | 5.5s | FAIL
+
+[q13_top_staff_in_october] Hiện tại tháng 10 nhân viên nào có nhiều phiếu hỗ trợ nhất, thông tin về nhân viên đó
+  questions : ['', '', '']
+  statuses  : ['', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_assignments'), ('crm_query', 'support_assignments')]
+  query #1 sent → empty returned=0 total=None ignored=-
+    {"dataset": "support_assignments", "filters": [{"field": "is_current", "op": "eq", "value": "true"}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "dimensions": ["assigned_to"], "metrics": ["count:case_id"], "totals": true, "order_by": [{"field": "count:case_id", "dir": "desc"}], "limit": 1}
+  query #2 sent → empty returned=0 total=None ignored=-
+    {"dataset": "support_assignments", "filters": [{"field": "is_current", "op": "eq", "value": "true"}], "date_range": {"field": "created_at", "from": "2023-10-01", "to": "2023-10-31"}, "dimensions": ["assigned_to"], "metrics": ["count:case_id"], "totals": true, "order_by": [{"field": "count:case_id", "dir": "desc"}], "limit": 1}
+  answer    : Hiện tại không có nhân viên nào có phiếu hỗ trợ trong tháng 10. Bạn có muốn kiểm tra thông tin khác không?
+  FAIL: không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]; có query khớp mẫu bị cấm {'dataset': 'support_assignments', 'filters': ['is_current']}; kết quả crm_query cuối empty không thuộc ['ok']
+
+===== gpt-4o-mini | q13_top_staff_in_october | lần 2 | 5.4s | FAIL
+
+[q13_top_staff_in_october] Hiện tại tháng 10 nhân viên nào có nhiều phiếu hỗ trợ nhất, thông tin về nhân viên đó
+  questions : ['', '', '']
+  statuses  : ['', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_assignments'), ('crm_query', 'support_assignments')]
+  query #1 sent → empty returned=0 total=None ignored=-
+    {"dataset": "support_assignments", "filters": [{"field": "is_current", "op": "eq", "value": "true"}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "dimensions": ["assigned_to"], "metrics": ["count:case_id"], "totals": true, "order_by": [{"field": "count:case_id", "dir": "desc"}], "limit": 1}
+  query #2 sent → empty returned=0 total=None ignored=-
+    {"dataset": "support_assignments", "filters": [{"field": "is_current", "op": "eq", "value": "true"}], "date_range": {"field": "created_at", "from": "2023-10-01", "to": "2023-10-31"}, "dimensions": ["assigned_to"], "metrics": ["count:case_id"], "totals": true, "order_by": [{"field": "count:case_id", "dir": "desc"}], "limit": 1}
+  answer    : Hiện tại không có nhân viên nào có phiếu hỗ trợ trong tháng 10. Bạn có muốn kiểm tra thông tin khác không?
+  FAIL: không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]; có query khớp mẫu bị cấm {'dataset': 'support_assignments', 'filters': ['is_current']}; kết quả crm_query cuối empty không thuộc ['ok']
+
+===== gpt-4o-mini | q13_top_staff_in_october | lần 3 | 5.4s | FAIL
+
+[q13_top_staff_in_october] Hiện tại tháng 10 nhân viên nào có nhiều phiếu hỗ trợ nhất, thông tin về nhân viên đó
+  questions : ['', '', '']
+  statuses  : ['', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_assignments'), ('crm_query', 'support_assignments')]
+  query #1 sent → empty returned=0 total=None ignored=-
+    {"dataset": "support_assignments", "filters": [{"field": "is_current", "op": "eq", "value": "true"}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "dimensions": ["assigned_to"], "metrics": ["count:case_id"], "totals": true, "order_by": [{"field": "count:case_id", "dir": "desc"}], "limit": 1}
+  query #2 sent → empty returned=0 total=None ignored=-
+    {"dataset": "support_assignments", "filters": [{"field": "is_current", "op": "eq", "value": "true"}], "date_range": {"field": "created_at", "from": "2023-10-01", "to": "2023-10-31"}, "dimensions": ["assigned_to"], "metrics": ["count:case_id"], "totals": true, "order_by": [{"field": "count:case_id", "dir": "desc"}], "limit": 1}
+  answer    : Hiện tại không có nhân viên nào có phiếu hỗ trợ trong tháng 10. Bạn có muốn kiểm tra thông tin khác không?
+  FAIL: không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]; có query khớp mẫu bị cấm {'dataset': 'support_assignments', 'filters': ['is_current']}; kết quả crm_query cuối empty không thuộc ['ok']
+
+===== gpt-4o-mini | s1_customer_count_excludes_spam | lần 1 | 2.7s | FAIL
+
+[s1_customer_count_excludes_spam] Hiện có bao nhiêu khách hàng?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "metrics": ["count"], "limit": 50}
+  answer    : Hiện có 550 khách hàng.
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filters': ['customer_type']}]
+
+===== gpt-4o-mini | s1_customer_count_excludes_spam | lần 2 | 2.5s | FAIL
+
+[s1_customer_count_excludes_spam] Hiện có bao nhiêu khách hàng?
+  questions : ['']
+  statuses  : ['']  errors: []
+  catalog   : []
+  tools     : [('crm_query', 'customers')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "metrics": ["count"], "limit": 50}
+  answer    : Hiện có 550 khách hàng.
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filters': ['customer_type']}]
+
+===== gpt-4o-mini | s1_customer_count_excludes_spam | lần 3 | 2.1s | FAIL
+
+[s1_customer_count_excludes_spam] Hiện có bao nhiêu khách hàng?
+  questions : ['']
+  statuses  : ['']  errors: []
+  catalog   : []
+  tools     : [('crm_query', 'customers')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "metrics": ["count"], "limit": 50}
+  answer    : Hiện có 550 khách hàng.
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filters': ['customer_type']}]
+
+===== gpt-4o-mini | s2_status_values_without_note | lần 1 | 3.8s | PASS
+
+[s2_status_values_without_note] Hiện có bao nhiêu lệnh công việc (work order) chưa hoàn thành?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'work_orders')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "work_orders", "filters": [{"field": "status", "op": "neq", "value": "completed"}], "metrics": ["count"], "limit": 50}
+  answer    : Hiện tại không có lệnh công việc nào chưa hoàn thành.
+
+===== gpt-4o-mini | s2_status_values_without_note | lần 2 | 3.5s | PASS
+
+[s2_status_values_without_note] Hiện có bao nhiêu lệnh công việc (work order) chưa hoàn thành?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'work_orders')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "work_orders", "filters": [{"field": "status", "op": "neq", "value": "completed"}], "metrics": ["count"], "limit": 50}
+  answer    : Hiện tại không có lệnh công việc nào chưa hoàn thành.
+
+===== gpt-4o-mini | s2_status_values_without_note | lần 3 | 3.1s | PASS
+
+[s2_status_values_without_note] Hiện có bao nhiêu lệnh công việc (work order) chưa hoàn thành?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'work_orders')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "work_orders", "filters": [{"field": "status", "op": "neq", "value": "completed"}], "metrics": ["count"], "limit": 50}
+  answer    : Hiện tại không có lệnh công việc nào chưa hoàn thành.
+
+===== gpt-4o-mini | f1_list_next_page_next_turn | lần 1 | 12.9s | FAIL
+
+[f1_list_next_page_next_turn] xem tiếp
+  questions : ['', '', '', '']
+  statuses  : ['']  errors: ['crm_query_invalid', 'crm_query_invalid', 'crm_query_invalid']
+    ! crm_query_invalid: invalid report query: unknown select column "customer_id"
+    ! crm_query_invalid: invalid report query: unknown select column "uuid"
+    ! crm_query_invalid: invalid report query: unknown select column "customer_id"
+  catalog   : []
+  tools     : [('crm_query', 'customers'), ('crm_query', 'customers'), ('crm_query', 'customers'), ('crm_query', 'customers')]
+  query #1 sent → crm_invalid returned=None total=None ignored=-
+    {"dataset": "customers", "select": ["customer_id", "full_name", "created_at"], "order_by": [{"field": "created_at", "dir": "desc"}], "limit": 20, "offset": 20}
+    ! crm_query_invalid: invalid report query: unknown select column "customer_id"
+  query #2 sent → crm_invalid returned=None total=None ignored=-
+    {"dataset": "customers", "select": ["uuid", "full_name", "created_at"], "order_by": [{"field": "created_at", "dir": "desc"}], "limit": 20, "offset": 20}
+    ! crm_query_invalid: invalid report query: unknown select column "uuid"
+  query #3 sent → crm_invalid returned=None total=None ignored=-
+    {"dataset": "customers", "select": ["customer_id", "full_name", "created_at"], "order_by": [{"field": "created_at", "dir": "desc"}], "limit": 20}
+    ! crm_query_invalid: invalid report query: unknown select column "customer_id"
+  query #4 sent → ok returned=20 total=550 ignored=-
+    {"dataset": "customers", "select": ["id", "full_name", "created_at"], "order_by": [{"field": "created_at", "dir": "desc"}], "limit": 20}
+  answer    : Dưới đây là danh sách khách hàng mới trong tháng 11 năm 2026:
+
+1. **Châu Ngọc Sơn** - Ngày tạo: 2026-11-11
+2. **Ngọc Sơn Châu** - Ngày tạo: 2026-11-11
+
+Tổng số khách hàng mới trong tháng này là 2. Nếu bạn muốn xem thêm, hãy cho tôi biết!
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'list', 'date_field': 'created_at', 'offset_min': 1}]
+
+===== gpt-4o-mini | f1_list_next_page_next_turn | lần 2 | 10.2s | FAIL
+
+[f1_list_next_page_next_turn] xem tiếp
+  questions : ['', '', '']
+  statuses  : ['', '']  errors: ['crm_query_invalid']
+    ! crm_query_invalid: invalid report query: unknown select column "customer_id"
+  catalog   : []
+  tools     : [('crm_query', 'customers'), ('crm_schema', 'customers')]
+  query #1 sent → crm_invalid returned=None total=None ignored=-
+    {"dataset": "customers", "select": ["customer_id", "full_name", "created_at"], "order_by": [{"field": "created_at", "dir": "desc"}], "limit": 20}
+    ! crm_query_invalid: invalid report query: unknown select column "customer_id"
+  query #2 sent → ok returned=2 total=2 ignored=-
+    {"dataset": "customers", "select": ["id", "full_name", "created_at"], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "order_by": [{"field": "created_at", "dir": "desc"}], "limit": 20}
+  answer    : Danh sách khách hàng mới trong tháng 11 năm 2026:
+
+1. **Châu Ngọc Sơn** - Ngày tạo: 11/11/2026
+2. **Ngọc Sơn Châu** - Ngày tạo: 11/11/2026
+
+Tổng cộng có 2 khách hàng mới.
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'list', 'date_field': 'created_at', 'offset_min': 1}]
+
+===== gpt-4o-mini | f1_list_next_page_next_turn | lần 3 | 10.5s | FAIL
+
+[f1_list_next_page_next_turn] xem tiếp
+  questions : ['', '', '']
+  statuses  : ['', '']  errors: ['crm_query_invalid']
+    ! crm_query_invalid: invalid report query: unknown select column "customer_id"
+  catalog   : []
+  tools     : [('crm_query', 'customers'), ('crm_schema', 'customers')]
+  query #1 sent → crm_invalid returned=None total=None ignored=-
+    {"dataset": "customers", "select": ["customer_id", "full_name", "created_at"], "order_by": [{"field": "created_at", "dir": "desc"}], "limit": 20}
+    ! crm_query_invalid: invalid report query: unknown select column "customer_id"
+  query #2 sent → ok returned=2 total=2 ignored=-
+    {"dataset": "customers", "select": ["id", "full_name", "created_at"], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "order_by": [{"field": "created_at", "dir": "desc"}], "limit": 20}
+  answer    : Có 2 khách hàng mới được ghi nhận trong tháng 11 năm 2026:
+
+1. **Châu Ngọc Sơn** - Ngày tạo: 11/11/2026
+2. **Ngọc Sơn Châu** - Ngày tạo: 11/11/2026
+
+Nếu cần thêm thông tin gì khác, hãy cho tôi biết!
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'list', 'date_field': 'created_at', 'offset_min': 1}]
+
+===== gpt-4o-mini | f2_refine_previous_count_next_turn | lần 1 | 10.0s | FAIL
+
+[f2_refine_previous_count_next_turn] Trong số đó có bao nhiêu phiếu của model F86?
+  questions : ['', '', '']
+  statuses  : ['', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases'), ('crm_query', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "eq", "value": "resolved"}, {"field": "created_at", "op": "in", "value": ["2023-10-01", "2023-10-31"]}], "date_range": {"field": "created_at", "from": "2023-10-01", "to": "2023-10-31"}, "metrics": ["count"], "limit": 50}
+  query #2 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "eq", "value": "resolved"}, {"field": "product_item_id.product_id.code", "op": "eq", "value": "F86"}, {"field": "created_at", "op": "in", "value": ["2023-10-01", "2023-10-31"]}], "date_range": {"field": "created_at", "from": "2023-10-01", "to": "2023-10-31"}, "metrics": ["count"], "limit": 50}
+  answer    : Trong tháng 10, không có phiếu hỗ trợ nào đã xong cho model F86.
+  FAIL: không có query khớp [{'dataset': 'support_cases', 'mode': 'aggregate', 'filters': ['status', 'product_item_id.product_id.name'], 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]
+
+===== gpt-4o-mini | f2_refine_previous_count_next_turn | lần 2 | 13.4s | FAIL
+
+[f2_refine_previous_count_next_turn] Trong số đó có bao nhiêu phiếu của model F86?
+  questions : ['', '', '', '', '']
+  statuses  : ['']  errors: ['tool_invalid_args', 'tool_invalid_args', 'tool_invalid_args', 'tool_invalid_args']
+    ! tool_invalid_args: created_at.month: support_cases has no relation created_at; check relations with crm_schema
+    ! tool_invalid_args: filters.1.value.constrained-str: String should have at least 1 character; filters.1.value.list[constrained-str]: Input should be a valid list
+    ! tool_invalid_args: filters.1.value.constrained-str: String should have at least 1 character; filters.1.value.list[constrained-str]: Input should be a valid list
+    ! tool_invalid_args: filters.1.value.constrained-str: String should have at least 1 character; filters.1.value.list[constrained-str]: Input should be a valid list
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases'), ('crm_query', 'support_cases'), ('crm_query', 'support_cases'), ('crm_query', 'support_cases')]
+  query #1 rejected → rejected returned=None total=None ignored=-
+    {"dataset": "support_cases", "mode": "aggregate", "select": [], "dimensions": [], "metrics": ["count"], "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "created_at.month", "op": "eq", "value": "10"}, {"field": "product_item_id", "op": "in", "value": [">=0"]}], "date_range": {"field": "created_at", "preset": "this_month", "from_date": "2023-10-01", "to_date": "2023-10-31"}, "order_by": [], "limit": null, "offset": 0}
+    ! tool_invalid_args: created_at.month: support_cases has no relation created_at; check relations with crm_schema
+  query #2 invalid_args → invalid_args returned=None total=None ignored=-
+    "{\"dataset\":\"support_cases\",\"mode\":\"aggregate\",\"select\":[],\"dimensions\":[],\"metrics\":[\"count\"],\"filters\":[{\"field\":\"status\",\"op\":\"in\",\"value\":[\"resolved\",\"closed\"]},{\"field\":\"resolved_at\",\"op\":\"not_null\",\"value\":\"\"},{\"field\":\"resolved_at\",\"op\":\"in\",\"value\":[\"2023-10-01\",\"2023-10-31\"]},{\"field\":\"product_item_id\",\"op\":\"in\",\"value\":[\">=0\"]}],\"date_range\":{\"field\":\"resolved_at\",\"preset\":\"custom\",\"from_date\":\"2023-10-01\",\"to_date\":\"2023-10-31\"},\"order_by\":[],\"limit\":null,\"offset\":0}"
+    ! tool_invalid_args: filters.1.value.constrained-str: String should have at least 1 character; filters.1.value.list[constrained-str]: Input should be a valid list
+  query #3 invalid_args → invalid_args returned=None total=None ignored=-
+    "{\"dataset\":\"support_cases\",\"mode\":\"aggregate\",\"select\":[],\"dimensions\":[],\"metrics\":[\"count\"],\"filters\":[{\"field\":\"status\",\"op\":\"in\",\"value\":[\"resolved\",\"closed\"]},{\"field\":\"resolved_at\",\"op\":\"not_null\",\"value\":\"\"},{\"field\":\"product_item_id\",\"op\":\"in\",\"value\":[\">=0\"]}],\"date_range\":{\"field\":\"resolved_at\",\"preset\":\"custom\",\"from_date\":\"2023-10-01\",\"to_date\":\"2023-10-31\"},\"order_by\":[],\"limit\":null,\"offset\":0}"
+    ! tool_invalid_args: filters.1.value.constrained-str: String should have at least 1 character; filters.1.value.list[constrained-str]: Input should be a valid list
+  query #4 invalid_args → invalid_args returned=None total=None ignored=-
+    "{\"dataset\":\"support_cases\",\"mode\":\"aggregate\",\"select\":[],\"dimensions\":[],\"metrics\":[\"count\"],\"filters\":[{\"field\":\"status\",\"op\":\"in\",\"value\":[\"resolved\",\"closed\"]},{\"field\":\"resolved_at\",\"op\":\"not_null\",\"value\":\"\"},{\"field\":\"product_item_id\",\"op\":\"in\",\"value\":[\"F86\"]}],\"date_range\":null,\"order_by\":[],\"limit\":null,\"offset\":0}"
+    ! tool_invalid_args: filters.1.value.constrained-str: String should have at least 1 character; filters.1.value.list[constrained-str]: Input should be a valid list
+  answer    : Hiện tại, tôi không thể lấy được thông tin về số phiếu hỗ trợ đã xong cho model F86 trong tháng 10. Có thể bạn cần cung cấp thêm thông tin hoặc kiểm tra lại mã model. 
+
+Bảng đã dùng: support_cases, product_ownerships, products.
+  FAIL: tool calls 5 > 4; không có query khớp [{'dataset': 'support_cases', 'mode': 'aggregate', 'filters': ['status', 'product_item_id.product_id.name'], 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]; kết quả crm_query cuối invalid_args không thuộc ['ok']
+
+===== gpt-4o-mini | f2_refine_previous_count_next_turn | lần 3 | 17.1s | FAIL
+
+[f2_refine_previous_count_next_turn] Trong số đó có bao nhiêu phiếu của model F86?
+  questions : ['', '', '', '']
+  statuses  : ['', '', '']  errors: ['tool_invalid_args']
+    ! tool_invalid_args: created_at.month: support_cases has no relation created_at; check relations with crm_schema
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases'), ('crm_query', 'product_ownerships'), ('crm_query', 'support_cases')]
+  query #1 rejected → rejected returned=None total=None ignored=-
+    {"dataset": "support_cases", "mode": "aggregate", "select": [], "dimensions": [], "metrics": ["count"], "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "created_at.month", "op": "eq", "value": "10"}], "date_range": null, "order_by": [], "limit": null, "offset": 0}
+    ! tool_invalid_args: created_at.month: support_cases has no relation created_at; check relations with crm_schema
+  query #2 sent → ok returned=20 total=25 ignored=-
+    {"dataset": "product_ownerships", "select": ["product_item_id"], "filters": [{"field": "product_item_id.product_id.name", "op": "eq", "value": "F86"}], "limit": 20}
+  query #3 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "product_item_id", "op": "in", "value": ["9d7830a2-8af4-4a02-bbbb-6e105f85311b", "72e116bb-d721-4ea6-907b-f986fdedb044", "2d467792-1210-4c64-8d7b-ed93235e5edc", "10c0bebf-bfb4-4b60-a611-2a8a2aaa8730", "a68b53fe-4611-4f42-b23c-13503abbdc52", "4b563fa9-10df-44e0-b092-13fd0d5e6dda", "24f61a93-ad39-47be-8049-3819d0a1cd41", "4e52680e-9bdc-44e5-8673-6fae96609199", "2266c34b-4e45-46bb-aa42-1c549b3981de", "04271484-56ae-4745-acd7-1fc1aa3f1eb7", "423fcd09-4e37-4d52-956f-472e6a19204b", "6
+  answer    : Trong tháng 10, có 1 phiếu hỗ trợ đã xong liên quan đến model F86.
+
+Bảng đã dùng: support_cases, product_ownerships.
+  FAIL: không có query khớp [{'dataset': 'support_cases', 'mode': 'aggregate', 'filters': ['status', 'product_item_id.product_id.name'], 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]
+
+===== gpt-4.1-mini | r1_sale_supported_customers | lần 1 | 8.0s | PASS
+
+[r1_sale_supported_customers] Sale username an tháng này hỗ trợ bao nhiêu khách?
+  questions : ['', '', '']
+  statuses  : ['', '']  errors: ['tool_invalid_args']
+    ! tool_invalid_args: support_cases.customer_organization_id: support_assignments has no relation support_cases; check relations with crm_schema
+  catalog   : []
+  tools     : [('crm_schema', 'support_assignments'), ('crm_query', 'support_assignments')]
+  query #1 rejected → rejected returned=None total=None ignored=-
+    {"dataset": "support_assignments", "mode": "aggregate", "select": [], "dimensions": [], "metrics": ["count_distinct:support_cases.customer_organization_id"], "filters": [{"field": "assigned_to.username", "op": "contains", "value": "an"}, {"field": "created_at", "op": "in", "value": "this_month"}], "date_range": {"field": "created_at", "preset": "this_month", "from_date": null, "to_date": null}, "order_by": [], "limit": null, "offset": 0}
+    ! tool_invalid_args: support_cases.customer_organization_id: support_assignments has no relation support_cases; check relations with crm_schema
+  query #2 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_assignments", "filters": [{"field": "assigned_to.username", "op": "contains", "value": "an"}, {"field": "created_at", "op": "in", "value": ["this_month"]}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "metrics": ["count_distinct:case_id"], "limit": 50}
+  answer    : Sale username có chứa "an" trong tháng này hỗ trợ 0 khách qua phiếu hỗ trợ. Nếu bạn muốn chính xác username hoặc cách tính khác, vui lòng cho biết.
+
+===== gpt-4.1-mini | r1_sale_supported_customers | lần 2 | 3.8s | FAIL
+
+[r1_sale_supported_customers] Sale username an tháng này hỗ trợ bao nhiêu khách?
+  questions : ['', '']
+  statuses  : ['']  errors: ['tool_invalid_args']
+    ! tool_invalid_args: support_cases.customer_organization_id: support_assignments has no relation support_cases; check relations with crm_schema
+  catalog   : []
+  tools     : [('crm_schema', 'support_assignments')]
+  query #1 rejected → rejected returned=None total=None ignored=-
+    {"dataset": "support_assignments", "mode": "aggregate", "select": [], "dimensions": [], "metrics": ["count_distinct:support_cases.customer_organization_id"], "filters": [{"field": "assigned_to.username", "op": "eq", "value": "an"}, {"field": "created_at", "op": "contains", "value": "2026-11"}], "date_range": {"field": "created_at", "preset": "this_month", "from_date": null, "to_date": null}, "order_by": [], "limit": null, "offset": 0}
+    ! tool_invalid_args: support_cases.customer_organization_id: support_assignments has no relation support_cases; check relations with crm_schema
+  answer    : Không thể lọc theo customer_organization_id từ bảng support_assignments do không có quan hệ trực tiếp. Bạn muốn tôi lấy số khách hỗ trợ của sale username "an" trong tháng này dựa trên phiếu hỗ trợ (support_cases) được giao cho sale đó?
+  FAIL: không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'filters': ['assigned_to.username'], 'date_field': 'created_at'}]; kết quả crm_query cuối rejected không thuộc ['ok']
+
+===== gpt-4.1-mini | r1_sale_supported_customers | lần 3 | 9.0s | FAIL
+
+[r1_sale_supported_customers] Sale username an tháng này hỗ trợ bao nhiêu khách?
+  questions : ['', '', '', '']
+  statuses  : ['', '']  errors: ['tool_invalid_args', 'tool_invalid_args']
+    ! tool_invalid_args: support_cases.customer_organization_id: support_assignments has no relation support_cases; check relations with crm_schema
+    ! tool_invalid_args: support_cases.customer_organization_id: support_assignments has no relation support_cases; check relations with crm_schema; support_assignments.created_at: support_assignments has no relation support_assignments; check relations with crm_schema
+  catalog   : []
+  tools     : [('crm_schema', 'support_assignments'), ('crm_query', 'support_assignments'), ('crm_query', 'support_assignments')]
+  query #1 rejected → rejected returned=None total=None ignored=-
+    {"dataset": "support_assignments", "mode": "aggregate", "select": [], "dimensions": [], "metrics": ["count_distinct:support_cases.customer_organization_id"], "filters": [{"field": "assigned_to.username", "op": "eq", "value": "an"}, {"field": "created_at", "op": "in", "value": "2026-11-01 to 2026-11-30"}], "date_range": {"field": "created_at", "preset": "this_month", "from_date": "2026-11-01", "to_date": "2026-11-30"}, "order_by": [], "limit": null, "offset": 0}
+    ! tool_invalid_args: support_cases.customer_organization_id: support_assignments has no relation support_cases; check relations with crm_schema
+  query #2 rejected → rejected returned=None total=None ignored=-
+    {"dataset": "support_assignments", "mode": "aggregate", "select": [], "dimensions": [], "metrics": ["count_distinct:support_cases.customer_organization_id"], "filters": [{"field": "assigned_to.username", "op": "eq", "value": "an"}], "date_range": {"field": "support_assignments.created_at", "preset": "this_month", "from_date": "2026-11-01", "to_date": "2026-11-30"}, "order_by": [], "limit": null, "offset": 0}
+    ! tool_invalid_args: support_cases.customer_organization_id: support_assignments has no relation support_cases; check relations with crm_schema; support_assignments.created_at: support_assignments has no relation support_assignments; check relations with crm_schema
+  query #3 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "support_assignments", "select": ["case_id"], "filters": [{"field": "assigned_to.username", "op": "eq", "value": "an"}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "limit": 10}
+  answer    : Sale username "an" chưa hỗ trợ khách nào trong tháng 11 năm 2026 tính đến hôm nay.
+  FAIL: không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'filters': ['assigned_to.username'], 'date_field': 'created_at'}]; kết quả crm_query cuối empty không thuộc ['ok']
+
+===== gpt-4.1-mini | r2_top_sales_new_customers | lần 1 | 4.7s | PASS
+
+[r2_top_sales_new_customers] Top 10 sale có nhiều khách mới nhất tháng trước
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → empty returned=0 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "created_at", "op": "in", "value": ["last_month"]}], "date_range": {"field": "created_at", "from": "2026-10-01", "to": "2026-10-31"}, "dimensions": ["assigned_sales_id"], "metrics": ["count:id"], "totals": true, "order_by": [{"field": "count:id", "dir": "desc"}], "limit": 10}
+  answer    : Tháng trước không có dữ liệu khách mới được gán cho sale nào trong hệ thống. Bạn cần kiểm tra lại dữ liệu hoặc kỳ thời gian khác.
+
+===== gpt-4.1-mini | r2_top_sales_new_customers | lần 2 | 4.0s | PASS
+
+[r2_top_sales_new_customers] Top 10 sale có nhiều khách mới nhất tháng trước
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → empty returned=0 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "created_at", "op": "in", "value": ["last_month"]}], "date_range": {"field": "created_at", "from": "2026-10-01", "to": "2026-10-31"}, "dimensions": ["assigned_sales_id"], "metrics": ["count:id"], "totals": true, "order_by": [{"field": "count:id", "dir": "desc"}], "limit": 10}
+  answer    : Tháng trước không có dữ liệu khách mới được tạo hoặc không có khách mới nào được gán cho sale nào trong hệ thống. Bạn muốn tôi kiểm tra lại theo tiêu chí khác hay khoảng thời gian khác không?
+
+===== gpt-4.1-mini | r2_top_sales_new_customers | lần 3 | 4.1s | PASS
+
+[r2_top_sales_new_customers] Top 10 sale có nhiều khách mới nhất tháng trước
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → empty returned=0 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "created_at", "op": "in", "value": ["last_month"]}], "date_range": {"field": "created_at", "from": "2026-10-01", "to": "2026-10-31"}, "dimensions": ["assigned_sales_id"], "metrics": ["count:id"], "totals": true, "order_by": [{"field": "count:id", "dir": "desc"}], "limit": 10}
+  answer    : Tháng trước không có dữ liệu khách mới được gán cho sale nào trong hệ thống. Bạn cần kiểm tra lại dữ liệu hoặc kỳ thời gian khác.
+
+===== gpt-4.1-mini | r3_sold_products_october | lần 1 | 5.4s | PASS
+
+[r3_sold_products_october] Tháng 10 bán được những sản phẩm nào, mỗi loại bao nhiêu?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'product_ownerships')]
+  query #1 sent → ok returned=10 total=None ignored=-
+    {"dataset": "product_ownerships", "filters": [{"field": "transferred_from_ownership_id", "op": "is_null"}], "date_range": {"field": "created_at", "from": "2026-01-01", "to": "2026-11-11"}, "dimensions": ["product_item_id.product_id.name"], "metrics": ["count:id"], "totals": true, "order_by": [{"field": "count:id", "dir": "desc"}], "limit": 50}
+  answer    : Tháng 10 bán được các sản phẩm sau với số lượng tương ứng:
+- F54: 51 cái
+- F86: 25 cái
+- 6AH: 14 cái
+- F10T: 9 cái
+- 10iV: 5 cái
+- F86E: 3 cái
+- 10iVE: 3 cái
+- 6AVE: 3 cái
+- 6AV: 1 cái
+Ngoài ra có 32 cái không xác định tên sản phẩm rõ ràng trong dữ liệu.
+
+===== gpt-4.1-mini | r3_sold_products_october | lần 2 | 4.7s | PASS
+
+[r3_sold_products_october] Tháng 10 bán được những sản phẩm nào, mỗi loại bao nhiêu?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'product_ownerships')]
+  query #1 sent → ok returned=9 total=None ignored=-
+    {"dataset": "product_ownerships", "filters": [{"field": "transferred_from_ownership_id", "op": "is_null"}], "date_range": {"field": "created_at", "from": "2026-10-01", "to": "2026-10-31"}, "dimensions": ["product_item_id.product_id.name"], "metrics": ["count:id"], "totals": true, "order_by": [{"field": "count:id", "dir": "desc"}], "limit": 50}
+  answer    : Tháng 10 bán được các sản phẩm sau với số lượng tương ứng:
+- F54: 16 cái
+- F86: 8 cái
+- 6AH: 7 cái
+- F10T: 5 cái
+- 10iV: 3 cái
+- F86E: 1 cái
+- 10iVE: 1 cái
+- 6AVE: 1 cái
+Ngoài ra có 21 cái không xác định tên sản phẩm rõ ràng trong dữ liệu [bảng product_ownerships, tháng 10/2026].
+
+===== gpt-4.1-mini | r3_sold_products_october | lần 3 | 4.6s | PASS
+
+[r3_sold_products_october] Tháng 10 bán được những sản phẩm nào, mỗi loại bao nhiêu?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'product_ownerships')]
+  query #1 sent → ok returned=9 total=None ignored=-
+    {"dataset": "product_ownerships", "filters": [{"field": "transferred_from_ownership_id", "op": "is_null"}], "date_range": {"field": "created_at", "from": "2026-10-01", "to": "2026-10-31"}, "dimensions": ["product_item_id.product_id.name"], "metrics": ["count"], "totals": true, "order_by": [{"field": "count", "dir": "desc"}], "limit": 50}
+  answer    : Tháng 10 bán được các sản phẩm sau với số lượng tương ứng:
+- F54: 16 cái
+- F86: 8 cái
+- 6AH: 7 cái
+- F10T: 5 cái
+- 10iV: 3 cái
+- F86E: 1 cái
+- 10iVE: 1 cái
+- 6AVE: 1 cái
+Ngoài ra có 21 cái không xác định tên sản phẩm rõ ràng trong dữ liệu.
+
+===== gpt-4.1-mini | r4_list_closed_tickets | lần 1 | 5.0s | PASS
+
+[r4_list_closed_tickets] Liệt kê các phiếu hỗ trợ đã xong trong tháng 10
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=22 total=22 ignored=-
+    {"dataset": "support_cases", "select": ["id", "case_number", "subject", "status", "resolved_at", "closed_at", "created_at"], "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "closed_at", "op": "not_null"}], "date_range": {"field": "closed_at", "from": "2026-10-01", "to": "2026-10-31"}, "order_by": [{"field": "closed_at", "dir": "desc"}], "limit": 50}
+  answer    : Có 22 phiếu hỗ trợ đã xong trong tháng 10, ví dụ một số phiếu:
+- SC-20261028-0001: 11111111111111111111, đóng ngày 28-10-2026
+- SC-20261026-0003: PASS ACTIVE, đóng ngày 28-10-2026
+- SC-20261026-0002: Cần hỗ trợ nạp file logo boot trên Bộ F86, đóng ngày 26-10-2026
+- SC-20261024-0007: Hỗ trợ cài đặt t
+
+===== gpt-4.1-mini | r4_list_closed_tickets | lần 2 | 8.6s | PASS
+
+[r4_list_closed_tickets] Liệt kê các phiếu hỗ trợ đã xong trong tháng 10
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=20 total=22 ignored=-
+    {"dataset": "support_cases", "select": ["id", "case_number", "subject", "status", "resolved_at", "closed_at", "created_at"], "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "closed_at", "op": "not_null"}], "date_range": {"field": "closed_at", "from": "2026-10-01", "to": "2026-10-31"}, "order_by": [{"field": "closed_at", "dir": "desc"}], "limit": 20}
+  answer    : Danh sách 20 phiếu hỗ trợ đã xong trong tháng 10 gồm:
+
+1. SC-20261028-0001 - 11111111111111111111 - Đóng ngày 28-10-2026
+2. SC-20261026-0003 - PASS ACTIVE - Đóng ngày 28-10-2026
+3. SC-20261026-0002 - Cần hỗ trợ nạp file logo boot trên Bộ F86 - Đóng ngày 26-10-2026
+4. SC-20261026-0001 - TEST 1 1 - Đó
+
+===== gpt-4.1-mini | r4_list_closed_tickets | lần 3 | 4.7s | PASS
+
+[r4_list_closed_tickets] Liệt kê các phiếu hỗ trợ đã xong trong tháng 10
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "support_cases", "select": ["id", "case_number", "subject", "status", "resolved_at", "closed_at", "created_at"], "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "closed_at", "op": "not_null"}, {"field": "closed_at", "op": "contains", "value": "2023-10"}], "date_range": {"field": "closed_at", "from": "2026-11-01", "to": "2026-11-11"}, "order_by": [{"field": "closed_at", "dir": "desc"}], "limit": 20}
+  answer    : Tháng 10 năm nay không có phiếu hỗ trợ nào đã xong (resolved hoặc closed). Tôi đã lọc theo trạng thái và ngày đóng phiếu trong tháng 10. Nếu cần xem tháng khác hoặc trạng thái khác, bạn nói nhé.
+
+===== gpt-4.1-mini | r5_count_is_not_a_list | lần 1 | 4.2s | PASS
+
+[r5_count_is_not_a_list] Tháng 10 có bao nhiêu phiếu hỗ trợ đã xong?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "closed_at", "op": "not_null"}, {"field": "closed_at", "op": "contains", "value": "2023-10"}], "date_range": {"field": "closed_at", "from": "2023-10-01", "to": "2023-10-31"}, "metrics": ["count"], "limit": 50}
+  answer    : Tháng 10 không có phiếu hỗ trợ nào được đánh dấu là đã xong (resolved hoặc closed).
+
+===== gpt-4.1-mini | r5_count_is_not_a_list | lần 2 | 5.6s | PASS
+
+[r5_count_is_not_a_list] Tháng 10 có bao nhiêu phiếu hỗ trợ đã xong?
+  questions : ['', '', '']
+  statuses  : ['', '']  errors: ['crm_query_invalid']
+    ! crm_query_invalid: invalid report query: cannot filter on "closed_at_month"
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases'), ('crm_query', 'support_cases')]
+  query #1 sent → crm_invalid returned=None total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "closed_at_month", "op": "eq", "value": "2026-10"}], "dimensions": ["closed_at_month"], "metrics": ["count:id"], "totals": true, "order_by": [{"field": "count:id", "dir": "desc"}], "limit": 100}
+    ! crm_query_invalid: invalid report query: cannot filter on "closed_at_month"
+  query #2 sent → ok returned=8 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "closed_at", "op": "contains", "value": "2026-10"}], "dimensions": ["closed_at_day"], "metrics": ["count:id"], "totals": true, "order_by": [{"field": "count:id", "dir": "desc"}], "limit": 100}
+  answer    : Tháng 10 có tổng cộng 22 phiếu hỗ trợ đã xong (trạng thái resolved hoặc closed).
+
+===== gpt-4.1-mini | r5_count_is_not_a_list | lần 3 | 4.5s | PASS
+
+[r5_count_is_not_a_list] Tháng 10 có bao nhiêu phiếu hỗ trợ đã xong?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "closed_at", "op": "not_null"}, {"field": "closed_at", "op": "contains", "value": "2023-10"}], "date_range": {"field": "closed_at", "from": "2023-10-01", "to": "2023-10-31"}, "metrics": ["count"], "limit": 50}
+  answer    : Tháng 10 không có phiếu hỗ trợ nào được đánh dấu là đã xong (resolved hoặc closed).
+
+===== gpt-4.1-mini | q1_customer_by_name | lần 1 | 3.6s | PASS
+
+[q1_customer_by_name] Có khách hàng nào tên Hohmeier không?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=1 ignored=-
+    {"dataset": "customers", "select": ["id", "full_name"], "filters": [{"field": "full_name", "op": "contains", "value": "Hohmeier"}], "limit": 10}
+  answer    : Có khách hàng tên Jan Nils Hohmeier.
+
+===== gpt-4.1-mini | q1_customer_by_name | lần 2 | 3.7s | PASS
+
+[q1_customer_by_name] Có khách hàng nào tên Hohmeier không?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=1 ignored=-
+    {"dataset": "customers", "select": ["id", "full_name"], "filters": [{"field": "full_name", "op": "contains", "value": "Hohmeier"}], "limit": 10}
+  answer    : Có khách hàng tên Jan Nils Hohmeier.
+
+===== gpt-4.1-mini | q1_customer_by_name | lần 3 | 3.5s | PASS
+
+[q1_customer_by_name] Có khách hàng nào tên Hohmeier không?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=1 ignored=-
+    {"dataset": "customers", "select": ["id", "full_name"], "filters": [{"field": "full_name", "op": "contains", "value": "Hohmeier"}], "limit": 10}
+  answer    : Có khách hàng tên Jan Nils Hohmeier.
+
+===== gpt-4.1-mini | q2_purchase_orders_by_status | lần 1 | 4.1s | PASS
+
+[q2_purchase_orders_by_status] Có bao nhiêu đơn mua hàng (PO), chia theo trạng thái?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'purchase_orders')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "purchase_orders", "dimensions": ["status"], "metrics": ["count"], "totals": true, "order_by": [{"field": "count", "dir": "desc"}], "limit": 10}
+  answer    : Hiện có 4 đơn mua hàng (PO) với trạng thái "closed". Không có đơn nào ở trạng thái khác. Bảng dùng: purchase_orders, không lọc thời gian.
+
+===== gpt-4.1-mini | q2_purchase_orders_by_status | lần 2 | 3.6s | PASS
+
+[q2_purchase_orders_by_status] Có bao nhiêu đơn mua hàng (PO), chia theo trạng thái?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'purchase_orders')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "purchase_orders", "dimensions": ["status"], "metrics": ["count"], "totals": true, "order_by": [{"field": "count", "dir": "desc"}], "limit": 100}
+  answer    : Hiện có 4 đơn mua hàng (PO) với trạng thái "closed". Không có đơn nào ở trạng thái khác trong dữ liệu.
+
+===== gpt-4.1-mini | q2_purchase_orders_by_status | lần 3 | 3.3s | PASS
+
+[q2_purchase_orders_by_status] Có bao nhiêu đơn mua hàng (PO), chia theo trạng thái?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'purchase_orders')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "purchase_orders", "dimensions": ["status"], "metrics": ["count"], "totals": true, "order_by": [{"field": "count", "dir": "desc"}], "limit": 100}
+  answer    : Hiện có 4 đơn mua hàng (PO) với trạng thái "closed". Không có đơn nào ở trạng thái khác.
+
+===== gpt-4.1-mini | q3_stock_per_material | lần 1 | 11.3s | PASS
+
+[q3_stock_per_material] Tồn kho hiện tại của từng vật tư là bao nhiêu?
+  questions : ['', '', '', '']
+  statuses  : ['', '', '']  errors: ['crm_query_invalid']
+    ! crm_query_invalid: invalid report query: unknown select column "code"
+  catalog   : []
+  tools     : [('crm_schema', 'stock'), ('crm_query', 'materials'), ('crm_query', 'materials')]
+  query #1 sent → ok returned=6 total=6 ignored=-
+    {"dataset": "stock", "select": ["material_id", "qty"], "limit": 50}
+  query #2 sent → crm_invalid returned=None total=None ignored=-
+    {"dataset": "materials", "select": ["id", "code", "name"], "filters": [{"field": "id", "op": "in", "value": ["e0d78ba1-d9b3-413a-88c2-e00c488a9d02", "84075c53-493f-4d06-84f7-612c8ee56638", "82be0229-1494-4a04-8cd7-a16cdf8179c1", "4a29d39a-867c-4c55-a1be-1642ff593860", "08193ee9-47a2-4f7b-8b60-ffe5302616ea", "0bf8972a-891b-40af-b3a9-4050247773d1"]}], "limit": 50}
+    ! crm_query_invalid: invalid report query: unknown select column "code"
+  query #3 sent → ok returned=6 total=6 ignored=-
+    {"dataset": "materials", "select": ["id", "name"], "filters": [{"field": "id", "op": "in", "value": ["e0d78ba1-d9b3-413a-88c2-e00c488a9d02", "84075c53-493f-4d06-84f7-612c8ee56638", "82be0229-1494-4a04-8cd7-a16cdf8179c1", "4a29d39a-867c-4c55-a1be-1642ff593860", "08193ee9-47a2-4f7b-8b60-ffe5302616ea", "0bf8972a-891b-40af-b3a9-4050247773d1"]}], "limit": 50}
+  answer    : Tồn kho hiện tại của từng vật tư như sau:
+- SERVO SAVCH: 1.0000
+- F10T: 21.0000
+- F108: 10.0000
+- F54: 10.0000
+- SERVO RXG: 1.0000
+- 6AVE: 21.0000
+
+(Dữ liệu từ bảng stock và materials)
+
+===== gpt-4.1-mini | q3_stock_per_material | lần 2 | 9.5s | PASS
+
+[q3_stock_per_material] Tồn kho hiện tại của từng vật tư là bao nhiêu?
+  questions : ['', '', '', '']
+  statuses  : ['', '', '']  errors: ['crm_query_invalid']
+    ! crm_query_invalid: invalid report query: unknown select column "code"
+  catalog   : []
+  tools     : [('crm_schema', 'stock'), ('crm_query', 'materials'), ('crm_query', 'materials')]
+  query #1 sent → ok returned=6 total=6 ignored=-
+    {"dataset": "stock", "select": ["material_id", "qty"], "limit": 50}
+  query #2 sent → crm_invalid returned=None total=None ignored=-
+    {"dataset": "materials", "select": ["id", "code", "name"], "filters": [{"field": "id", "op": "in", "value": ["e0d78ba1-d9b3-413a-88c2-e00c488a9d02", "84075c53-493f-4d06-84f7-612c8ee56638", "82be0229-1494-4a04-8cd7-a16cdf8179c1", "4a29d39a-867c-4c55-a1be-1642ff593860", "08193ee9-47a2-4f7b-8b60-ffe5302616ea", "0bf8972a-891b-40af-b3a9-4050247773d1"]}], "limit": 50}
+    ! crm_query_invalid: invalid report query: unknown select column "code"
+  query #3 sent → ok returned=6 total=6 ignored=-
+    {"dataset": "materials", "select": ["id", "name"], "filters": [{"field": "id", "op": "in", "value": ["e0d78ba1-d9b3-413a-88c2-e00c488a9d02", "84075c53-493f-4d06-84f7-612c8ee56638", "82be0229-1494-4a04-8cd7-a16cdf8179c1", "4a29d39a-867c-4c55-a1be-1642ff593860", "08193ee9-47a2-4f7b-8b60-ffe5302616ea", "0bf8972a-891b-40af-b3a9-4050247773d1"]}], "limit": 50}
+  answer    : Tồn kho hiện tại của từng vật tư như sau:
+- SERVO SAVCH: 1.0000
+- F10T: 21.0000
+- F108: 10.0000
+- F54: 10.0000
+- SERVO RXG: 1.0000
+- 6AVE: 21.0000
+
+Dữ liệu từ bảng stock và materials, không lọc theo kho hay thời gian cụ thể.
+
+===== gpt-4.1-mini | q3_stock_per_material | lần 3 | 9.8s | PASS
+
+[q3_stock_per_material] Tồn kho hiện tại của từng vật tư là bao nhiêu?
+  questions : ['', '', '', '']
+  statuses  : ['', '', '']  errors: ['crm_query_invalid']
+    ! crm_query_invalid: invalid report query: unknown select column "code"
+  catalog   : []
+  tools     : [('crm_schema', 'stock'), ('crm_query', 'materials'), ('crm_query', 'materials')]
+  query #1 sent → ok returned=6 total=6 ignored=-
+    {"dataset": "stock", "select": ["material_id", "qty"], "limit": 50}
+  query #2 sent → crm_invalid returned=None total=None ignored=-
+    {"dataset": "materials", "select": ["id", "code", "name"], "filters": [{"field": "id", "op": "in", "value": ["e0d78ba1-d9b3-413a-88c2-e00c488a9d02", "84075c53-493f-4d06-84f7-612c8ee56638", "82be0229-1494-4a04-8cd7-a16cdf8179c1", "4a29d39a-867c-4c55-a1be-1642ff593860", "08193ee9-47a2-4f7b-8b60-ffe5302616ea", "0bf8972a-891b-40af-b3a9-4050247773d1"]}], "limit": 50}
+    ! crm_query_invalid: invalid report query: unknown select column "code"
+  query #3 sent → ok returned=6 total=6 ignored=-
+    {"dataset": "materials", "select": ["id", "name"], "filters": [{"field": "id", "op": "in", "value": ["e0d78ba1-d9b3-413a-88c2-e00c488a9d02", "84075c53-493f-4d06-84f7-612c8ee56638", "82be0229-1494-4a04-8cd7-a16cdf8179c1", "4a29d39a-867c-4c55-a1be-1642ff593860", "08193ee9-47a2-4f7b-8b60-ffe5302616ea", "0bf8972a-891b-40af-b3a9-4050247773d1"]}], "limit": 50}
+  answer    : Tồn kho hiện tại của từng vật tư như sau:
+- SERVO SAVCH: 1.0000
+- F10T: 21.0000
+- F108: 10.0000
+- F54: 10.0000
+- SERVO RXG: 1.0000
+- 6AVE: 21.0000
+
+Dữ liệu từ bảng stock và materials, không lọc theo thời gian.
+
+===== gpt-4.1-mini | q4_active_users | lần 1 | 3.2s | PASS
+
+[q4_active_users] Hệ thống có bao nhiêu tài khoản người dùng đang hoạt động?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "auth_users", "filters": [{"field": "is_active", "op": "eq", "value": "true"}], "metrics": ["count"], "limit": 50}
+  answer    : Hệ thống hiện có 46 tài khoản người dùng đang hoạt động.
+
+===== gpt-4.1-mini | q4_active_users | lần 2 | 3.7s | PASS
+
+[q4_active_users] Hệ thống có bao nhiêu tài khoản người dùng đang hoạt động?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "auth_users", "filters": [{"field": "is_active", "op": "eq", "value": "true"}], "metrics": ["count"], "limit": 50}
+  answer    : Hệ thống hiện có 46 tài khoản người dùng đang hoạt động.
+
+===== gpt-4.1-mini | q4_active_users | lần 3 | 3.5s | PASS
+
+[q4_active_users] Hệ thống có bao nhiêu tài khoản người dùng đang hoạt động?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "auth_users", "filters": [{"field": "is_active", "op": "eq", "value": "true"}], "metrics": ["count"], "limit": 50}
+  answer    : Hệ thống hiện có 46 tài khoản người dùng đang hoạt động.
+
+===== gpt-4.1-mini | q5_staff_names | lần 1 | 4.0s | PASS
+
+[q5_staff_names] Liệt kê họ tên và username của 5 nhân viên
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_profiles')]
+  query #1 sent → ok returned=5 total=58 ignored=['order_by created_at (not among the chosen columns)']
+    {"dataset": "user_profiles", "select": ["last_name", "first_name", "user_id.username"], "limit": 5}
+  answer    : Dưới đây là 5 nhân viên đầu tiên với họ tên và username:
+1. Châu Ngọc Sơn - wdsdf7469@gmail.com
+2. (Không có họ tên) - test@gmail.com
+3. Sơn Châu Ngọc - 2351010dddon@ou.edu.vn
+4. Sơn Châu Ngọc - 84son@ou.edu.vn
+5. dh chau - abcd@gmail.com
+
+Đã lấy từ bảng user_profiles và auth_users, không lọc thêm đ
+
+===== gpt-4.1-mini | q5_staff_names | lần 2 | 4.2s | PASS
+
+[q5_staff_names] Liệt kê họ tên và username của 5 nhân viên
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_profiles')]
+  query #1 sent → ok returned=5 total=58 ignored=['order_by created_at (not among the chosen columns)']
+    {"dataset": "user_profiles", "select": ["first_name", "last_name", "user_id.username"], "limit": 5}
+  answer    : Danh sách 5 nhân viên gồm họ tên và username:
+1. Châu Ngọc Sơn - wdsdf7469@gmail.com
+2. (Không có họ tên) - test@gmail.com
+3. Sơn Châu Ngọc - 2351010dddon@ou.edu.vn
+4. Sơn Châu Ngọc - 84son@ou.edu.vn
+5. dh chau - abcd@gmail.com
+
+===== gpt-4.1-mini | q5_staff_names | lần 3 | 4.5s | PASS
+
+[q5_staff_names] Liệt kê họ tên và username của 5 nhân viên
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_profiles')]
+  query #1 sent → ok returned=5 total=58 ignored=-
+    {"dataset": "user_profiles", "select": ["first_name", "last_name", "user_id.username"], "order_by": [{"field": "first_name", "dir": "asc"}], "limit": 5}
+  answer    : Danh sách 5 nhân viên gồm họ tên và username:
+1. (Test) Cao Văn Đông - caovandong20@gmail.com
+2. 1 to - too123@gmail.com
+3. 2 Test - Test2@gmail.com
+4. Agent admin - admin_agent@qstcnc.com
+5. (không có họ tên) - test@gmail.com
+
+Đã lấy 5 trong tổng số 58 nhân viên.
+
+===== gpt-4.1-mini | q6_new_customers_per_month | lần 1 | 6.7s | FAIL
+
+[q6_new_customers_per_month] Năm nay mỗi tháng có bao nhiêu khách hàng mới?
+  questions : ['', '', '']
+  statuses  : ['', '']  errors: ['crm_query_invalid']
+    ! crm_query_invalid: invalid report query: cannot filter on "created_at_year"
+  catalog   : []
+  tools     : [('crm_schema', 'customers'), ('crm_query', 'customers')]
+  query #1 sent → crm_invalid returned=None total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "created_at_year", "op": "eq", "value": "2026"}], "dimensions": ["created_at_month"], "metrics": ["count:id"], "totals": true, "order_by": [{"field": "created_at_month", "dir": "asc"}], "limit": 12}
+    ! crm_query_invalid: invalid report query: cannot filter on "created_at_year"
+  query #2 sent → ok returned=10 total=None ignored=-
+    {"dataset": "customers", "date_range": {"field": "created_at", "from": "2026-01-01", "to": "2026-11-11"}, "dimensions": ["created_at_month"], "metrics": ["count:id"], "totals": true, "order_by": [{"field": "created_at_month", "dir": "asc"}], "limit": 12}
+  answer    : Năm 2026, số khách hàng mới mỗi tháng như sau:
+- Tháng 1: 360 khách
+- Tháng 3: 12 khách
+- Tháng 4: 19 khách
+- Tháng 5: 7 khách
+- Tháng 6: 19 khách
+- Tháng 7: 27 khách
+- Tháng 8: 32 khách
+- Tháng 9: 29 khách
+- Tháng 10: 43 khách
+- Tháng 11 (đến ngày 11): 2 khách
+
+Tổng cộng đến nay có 550 khách hàng m
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'dimensions': ['created_month']}]
+
+===== gpt-4.1-mini | q6_new_customers_per_month | lần 2 | 6.3s | FAIL
+
+[q6_new_customers_per_month] Năm nay mỗi tháng có bao nhiêu khách hàng mới?
+  questions : ['', '', '']
+  statuses  : ['', '']  errors: ['crm_query_invalid']
+    ! crm_query_invalid: invalid report query: cannot filter on "created_at_year"
+  catalog   : []
+  tools     : [('crm_schema', 'customers'), ('crm_query', 'customers')]
+  query #1 sent → crm_invalid returned=None total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "created_at_year", "op": "eq", "value": "2026"}], "dimensions": ["created_at_month"], "metrics": ["count:id"], "totals": true, "order_by": [{"field": "created_at_month", "dir": "asc"}], "limit": 12}
+    ! crm_query_invalid: invalid report query: cannot filter on "created_at_year"
+  query #2 sent → ok returned=10 total=None ignored=-
+    {"dataset": "customers", "date_range": {"field": "created_at", "from": "2026-01-01", "to": "2026-11-11"}, "dimensions": ["created_at_month"], "metrics": ["count:id"], "totals": true, "order_by": [{"field": "created_at_month", "dir": "asc"}], "limit": 12}
+  answer    : Năm 2026, số khách hàng mới mỗi tháng như sau:
+- Tháng 1: 360 khách
+- Tháng 3: 12 khách
+- Tháng 4: 19 khách
+- Tháng 5: 7 khách
+- Tháng 6: 19 khách
+- Tháng 7: 27 khách
+- Tháng 8: 32 khách
+- Tháng 9: 29 khách
+- Tháng 10: 43 khách
+- Tháng 11 (đến ngày 11): 2 khách
+
+Tổng cộng đến nay có 550 khách hàng m
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'dimensions': ['created_month']}]
+
+===== gpt-4.1-mini | q6_new_customers_per_month | lần 3 | 6.6s | FAIL
+
+[q6_new_customers_per_month] Năm nay mỗi tháng có bao nhiêu khách hàng mới?
+  questions : ['', '', '']
+  statuses  : ['', '']  errors: ['crm_query_invalid']
+    ! crm_query_invalid: invalid report query: cannot filter on "created_at_year"
+  catalog   : []
+  tools     : [('crm_schema', 'customers'), ('crm_query', 'customers')]
+  query #1 sent → crm_invalid returned=None total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "created_at_year", "op": "eq", "value": "2026"}], "dimensions": ["created_at_month"], "metrics": ["count:id"], "totals": true, "order_by": [{"field": "created_at_month", "dir": "asc"}], "limit": 12}
+    ! crm_query_invalid: invalid report query: cannot filter on "created_at_year"
+  query #2 sent → ok returned=10 total=None ignored=-
+    {"dataset": "customers", "date_range": {"field": "created_at", "from": "2026-01-01", "to": "2026-11-11"}, "dimensions": ["created_at_month"], "metrics": ["count:id"], "totals": true, "order_by": [{"field": "created_at_month", "dir": "asc"}], "limit": 12}
+  answer    : Năm 2026, số khách hàng mới mỗi tháng như sau:
+- Tháng 1: 360 khách
+- Tháng 3: 12 khách
+- Tháng 4: 19 khách
+- Tháng 5: 7 khách
+- Tháng 6: 19 khách
+- Tháng 7: 27 khách
+- Tháng 8: 32 khách
+- Tháng 9: 29 khách
+- Tháng 10: 43 khách
+- Tháng 11 (đến nay): 2 khách
+
+Dữ liệu tính đến ngày 11/11/2026, bảng cu
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'dimensions': ['created_month']}]
+
+===== gpt-4.1-mini | q7_customers_of_sale | lần 1 | 3.4s | FAIL
+
+[q7_customers_of_sale] Liệt kê 5 khách mới nhất do sale username an phụ trách, kèm số điện thoại
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users')]
+  query #1 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "auth_users", "select": ["id"], "filters": [{"field": "username", "op": "eq", "value": "an"}], "limit": 1}
+  answer    : Không tìm thấy nhân viên có username là "an". Bạn kiểm tra lại username giúp tôi.
+  FAIL: dataset không có ['customers'] (['auth_users']); không có query khớp [{'dataset': 'customers', 'mode': 'list', 'filters': ['assigned_sales_id.username']}]
+
+===== gpt-4.1-mini | q7_customers_of_sale | lần 2 | 3.5s | FAIL
+
+[q7_customers_of_sale] Liệt kê 5 khách mới nhất do sale username an phụ trách, kèm số điện thoại
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users')]
+  query #1 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "auth_users", "select": ["id"], "filters": [{"field": "username", "op": "eq", "value": "an"}], "limit": 1}
+  answer    : Không tìm thấy nhân viên có username là "an". Bạn kiểm tra lại username giúp tôi.
+  FAIL: dataset không có ['customers'] (['auth_users']); không có query khớp [{'dataset': 'customers', 'mode': 'list', 'filters': ['assigned_sales_id.username']}]
+
+===== gpt-4.1-mini | q7_customers_of_sale | lần 3 | 3.3s | FAIL
+
+[q7_customers_of_sale] Liệt kê 5 khách mới nhất do sale username an phụ trách, kèm số điện thoại
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users')]
+  query #1 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "auth_users", "select": ["id"], "filters": [{"field": "username", "op": "eq", "value": "an"}], "limit": 1}
+  answer    : Không tìm thấy nhân viên có username là "an". Bạn kiểm tra lại username giúp tôi.
+  FAIL: dataset không có ['customers'] (['auth_users']); không có query khớp [{'dataset': 'customers', 'mode': 'list', 'filters': ['assigned_sales_id.username']}]
+
+===== gpt-4.1-mini | q9_customers_of_staff_by_name | lần 1 | 6.7s | PASS
+
+[q9_customers_of_staff_by_name] Nhân viên Hiếu hiện tại có bao nhiêu khách hàng?
+  questions : ['', '', '', '']
+  statuses  : ['', '', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_profiles'), ('crm_query', 'customers')]
+  query #1 sent → ok returned=1 total=1 ignored=-
+    {"dataset": "user_profiles", "select": ["user_id"], "filters": [{"field": "first_name", "op": "contains", "value": "Hiếu"}], "limit": 10}
+  query #2 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "assigned_sales_id", "op": "eq", "value": "9cf20ea7-a181-473e-8f0d-5fc3f567584e"}], "metrics": ["count:id"], "limit": 50}
+  answer    : Nhân viên Hiếu hiện tại có 76 khách hàng đang được phụ trách.
+
+===== gpt-4.1-mini | q9_customers_of_staff_by_name | lần 2 | 5.4s | PASS
+
+[q9_customers_of_staff_by_name] Nhân viên Hiếu hiện tại có bao nhiêu khách hàng?
+  questions : ['', '', '']
+  statuses  : ['', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_profiles'), ('crm_query', 'customers')]
+  query #1 sent → ok returned=1 total=1 ignored=-
+    {"dataset": "user_profiles", "select": ["user_id"], "filters": [{"field": "first_name", "op": "contains", "value": "Hiếu"}], "limit": 10}
+  query #2 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "assigned_sales_id", "op": "eq", "value": "9cf20ea7-a181-473e-8f0d-5fc3f567584e"}], "metrics": ["count"], "limit": 50}
+  answer    : Nhân viên Hiếu hiện đang phụ trách 76 khách hàng.
+
+===== gpt-4.1-mini | q9_customers_of_staff_by_name | lần 3 | 6.6s | PASS
+
+[q9_customers_of_staff_by_name] Nhân viên Hiếu hiện tại có bao nhiêu khách hàng?
+  questions : ['', '', '', '']
+  statuses  : ['', '', '', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_profiles'), ('crm_query', 'customers')]
+  query #1 sent → ok returned=1 total=1 ignored=-
+    {"dataset": "user_profiles", "select": ["user_id"], "filters": [{"field": "first_name", "op": "contains", "value": "Hiếu"}], "limit": 10}
+  query #2 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "filters": [{"field": "assigned_sales_id", "op": "eq", "value": "9cf20ea7-a181-473e-8f0d-5fc3f567584e"}], "metrics": ["count:id"], "limit": 50}
+  answer    : Nhân viên Hiếu hiện tại có 76 khách hàng đang được phụ trách.
+
+===== gpt-4.1-mini | q10_current_state_has_no_date | lần 1 | 3.5s | PASS
+
+[q10_current_state_has_no_date] Hiện tại có bao nhiêu phiếu hỗ trợ đang mở?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["new", "pending", "in_progress", "reopened"]}], "metrics": ["count"], "limit": 50}
+  answer    : Hiện tại không có phiếu hỗ trợ nào đang mở.
+
+===== gpt-4.1-mini | q10_current_state_has_no_date | lần 2 | 3.2s | PASS
+
+[q10_current_state_has_no_date] Hiện tại có bao nhiêu phiếu hỗ trợ đang mở?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["new", "pending", "in_progress", "reopened"]}], "metrics": ["count"], "limit": 50}
+  answer    : Hiện tại không có phiếu hỗ trợ nào đang mở.
+
+===== gpt-4.1-mini | q10_current_state_has_no_date | lần 3 | 3.4s | PASS
+
+[q10_current_state_has_no_date] Hiện tại có bao nhiêu phiếu hỗ trợ đang mở?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["new", "pending", "in_progress", "reopened"]}], "metrics": ["count"], "limit": 50}
+  answer    : Hiện tại không có phiếu hỗ trợ nào đang mở. (status đang mở gồm new, pending, in_progress, reopened)
+
+===== gpt-4.1-mini | q11_staff_name_not_found | lần 1 | 3.6s | PASS
+
+[q11_staff_name_not_found] Nhân viên Zzyzx hiện có bao nhiêu khách hàng?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_profiles')]
+  query #1 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "user_profiles", "select": ["user_id"], "filters": [{"field": "first_name", "op": "contains", "value": "Zzyzx"}], "limit": 10}
+  answer    : Không tìm thấy nhân viên tên Zzyzx trong hệ thống. Bạn kiểm tra lại tên nhân viên hoặc cung cấp username nếu có.
+
+===== gpt-4.1-mini | q11_staff_name_not_found | lần 2 | 3.8s | PASS
+
+[q11_staff_name_not_found] Nhân viên Zzyzx hiện có bao nhiêu khách hàng?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_profiles')]
+  query #1 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "user_profiles", "select": ["user_id"], "filters": [{"field": "first_name", "op": "contains", "value": "Zzyzx"}], "limit": 10}
+  answer    : Không tìm thấy nhân viên nào có tên Zzyzx trong hệ thống. Bạn kiểm tra lại tên nhân viên giúp tôi.
+
+===== gpt-4.1-mini | q11_staff_name_not_found | lần 3 | 3.5s | PASS
+
+[q11_staff_name_not_found] Nhân viên Zzyzx hiện có bao nhiêu khách hàng?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'user_profiles')]
+  query #1 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "user_profiles", "select": ["user_id"], "filters": [{"field": "first_name", "op": "contains", "value": "Zzyzx"}], "limit": 10}
+  answer    : Không tìm thấy nhân viên nào có tên Zzyzx trong hệ thống. Bạn kiểm tra lại tên nhân viên giúp tôi.
+
+===== gpt-4.1-mini | q12_roles_of_staff_reverse_relation | lần 1 | 4.3s | FAIL
+
+[q12_roles_of_staff_reverse_relation] Tài khoản username an có những vai trò (role) nào?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users')]
+  query #1 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "auth_users", "select": ["id"], "filters": [{"field": "username", "op": "eq", "value": "an"}], "limit": 1}
+  answer    : Không tìm thấy tài khoản username "an" trong hệ thống. Bạn kiểm tra lại tên đăng nhập giúp tôi.
+  FAIL: không có query khớp [{'dataset': 'user_roles', 'filters': ['user_id.username']}]
+
+===== gpt-4.1-mini | q12_roles_of_staff_reverse_relation | lần 2 | 4.4s | FAIL
+
+[q12_roles_of_staff_reverse_relation] Tài khoản username an có những vai trò (role) nào?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users')]
+  query #1 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "auth_users", "select": ["id"], "filters": [{"field": "username", "op": "eq", "value": "an"}], "limit": 1}
+  answer    : Không tìm thấy tài khoản username "an" trong hệ thống. Bạn kiểm tra lại tên đăng nhập giúp tôi.
+  FAIL: không có query khớp [{'dataset': 'user_roles', 'filters': ['user_id.username']}]
+
+===== gpt-4.1-mini | q12_roles_of_staff_reverse_relation | lần 3 | 3.6s | FAIL
+
+[q12_roles_of_staff_reverse_relation] Tài khoản username an có những vai trò (role) nào?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'auth_users')]
+  query #1 sent → empty returned=0 total=0 ignored=-
+    {"dataset": "auth_users", "select": ["id"], "filters": [{"field": "username", "op": "eq", "value": "an"}], "limit": 1}
+  answer    : Không tìm thấy tài khoản username "an" trong hệ thống. Bạn kiểm tra lại tên đăng nhập giúp tôi.
+  FAIL: không có query khớp [{'dataset': 'user_roles', 'filters': ['user_id.username']}]
+
+===== gpt-4.1-mini | q13_top_staff_in_october | lần 1 | 4.2s | FAIL
+
+[q13_top_staff_in_october] Hiện tại tháng 10 nhân viên nào có nhiều phiếu hỗ trợ nhất, thông tin về nhân viên đó
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_assignments')]
+  query #1 sent → empty returned=0 total=None ignored=-
+    {"dataset": "support_assignments", "filters": [{"field": "created_at", "op": "in", "value": ["2026-10-01", "2026-10-31"]}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "dimensions": ["assigned_to"], "metrics": ["count:case_id"], "totals": true, "order_by": [{"field": "count:case_id", "dir": "desc"}], "limit": 1}
+  answer    : Tháng 10 chưa có phiếu hỗ trợ nào được giao cho nhân viên xử lý (dữ liệu hiện tại chưa ghi nhận phiếu hỗ trợ trong tháng 10). Bạn cần kiểm tra lại khoảng thời gian hoặc yêu cầu khác?
+  FAIL: không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]; kết quả crm_query cuối empty không thuộc ['ok']
+
+===== gpt-4.1-mini | q13_top_staff_in_october | lần 2 | 3.9s | FAIL
+
+[q13_top_staff_in_october] Hiện tại tháng 10 nhân viên nào có nhiều phiếu hỗ trợ nhất, thông tin về nhân viên đó
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_assignments')]
+  query #1 sent → empty returned=0 total=None ignored=-
+    {"dataset": "support_assignments", "filters": [{"field": "created_at", "op": "in", "value": ["2026-10-01", "2026-10-31"]}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "dimensions": ["assigned_to"], "metrics": ["count:case_id"], "totals": true, "order_by": [{"field": "count:case_id", "dir": "desc"}], "limit": 1}
+  answer    : Tháng 10 năm nay chưa có phiếu hỗ trợ nào được giao cho nhân viên xử lý. Bạn cần kiểm tra lại khoảng thời gian hoặc dữ liệu phiếu hỗ trợ.
+  FAIL: không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]; kết quả crm_query cuối empty không thuộc ['ok']
+
+===== gpt-4.1-mini | q13_top_staff_in_october | lần 3 | 4.0s | FAIL
+
+[q13_top_staff_in_october] Hiện tại tháng 10 nhân viên nào có nhiều phiếu hỗ trợ nhất, thông tin về nhân viên đó
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_assignments')]
+  query #1 sent → empty returned=0 total=None ignored=['select (mode=aggregate)']
+    {"dataset": "support_assignments", "filters": [{"field": "created_at", "op": "contains", "value": "2023-10"}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "dimensions": ["assigned_to"], "metrics": ["count:case_id"], "totals": true, "order_by": [{"field": "count:case_id", "dir": "desc"}], "limit": 1}
+  answer    : Hiện tại không có phiếu hỗ trợ nào được giao trong tháng 10 năm nay (2026) nên chưa xác định được nhân viên có nhiều phiếu hỗ trợ nhất. Bạn cần kiểm tra lại khoảng thời gian hoặc yêu cầu khác?
+  FAIL: không có query khớp [{'dataset': 'support_assignments', 'mode': 'aggregate', 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]; kết quả crm_query cuối empty không thuộc ['ok']
+
+===== gpt-4.1-mini | s1_customer_count_excludes_spam | lần 1 | 3.2s | FAIL
+
+[s1_customer_count_excludes_spam] Hiện có bao nhiêu khách hàng?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "metrics": ["count"], "limit": 50}
+  answer    : Hiện có 550 khách hàng trong hệ thống.
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filters': ['customer_type']}]
+
+===== gpt-4.1-mini | s1_customer_count_excludes_spam | lần 2 | 3.2s | FAIL
+
+[s1_customer_count_excludes_spam] Hiện có bao nhiêu khách hàng?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "metrics": ["count"], "limit": 50}
+  answer    : Hiện có 550 khách hàng trong hệ thống.
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filters': ['customer_type']}]
+
+===== gpt-4.1-mini | s1_customer_count_excludes_spam | lần 3 | 3.0s | FAIL
+
+[s1_customer_count_excludes_spam] Hiện có bao nhiêu khách hàng?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "customers", "metrics": ["count"], "limit": 50}
+  answer    : Hiện có 550 khách hàng trong hệ thống.
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'aggregate', 'no_date_range': True, 'filters': ['customer_type']}]
+
+===== gpt-4.1-mini | s2_status_values_without_note | lần 1 | 4.1s | PASS
+
+[s2_status_values_without_note] Hiện có bao nhiêu lệnh công việc (work order) chưa hoàn thành?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'work_orders')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "work_orders", "filters": [{"field": "status", "op": "neq", "value": "completed"}], "metrics": ["count"], "limit": 50}
+  answer    : Hiện không có lệnh công việc (work order) nào chưa hoàn thành.
+
+===== gpt-4.1-mini | s2_status_values_without_note | lần 2 | 3.3s | PASS
+
+[s2_status_values_without_note] Hiện có bao nhiêu lệnh công việc (work order) chưa hoàn thành?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'work_orders')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "work_orders", "filters": [{"field": "status", "op": "neq", "value": "completed"}], "metrics": ["count"], "limit": 50}
+  answer    : Hiện không có lệnh công việc (work order) nào chưa hoàn thành.
+
+===== gpt-4.1-mini | s2_status_values_without_note | lần 3 | 3.4s | PASS
+
+[s2_status_values_without_note] Hiện có bao nhiêu lệnh công việc (work order) chưa hoàn thành?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'work_orders')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "work_orders", "filters": [{"field": "status", "op": "neq", "value": "completed"}], "metrics": ["count"], "limit": 50}
+  answer    : Hiện không có lệnh công việc (work order) nào chưa hoàn thành.
+
+===== gpt-4.1-mini | f1_list_next_page_next_turn | lần 1 | 8.7s | FAIL
+
+[f1_list_next_page_next_turn] xem tiếp
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=2 total=2 ignored=-
+    {"dataset": "customers", "select": ["id", "code", "full_name", "email", "phone", "company_name", "created_at"], "filters": [{"field": "created_at", "op": "contains", "value": "2026-11"}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "order_by": [{"field": "created_at", "dir": "desc"}], "limit": 20}
+  answer    : Tháng này có 2 khách hàng mới:
+1. Châu Ngọc Sơn, email: 2351010184son@ou.edu.vn, điện thoại: 0971872269, tạo ngày 11-11-2026, mã C000593
+2. Ngọc Sơn Châu, email: wdsdf7469@gmail.com, điện thoại: +84971877111, tạo ngày 11-11-2026, mã We6a20ca3
+
+Danh sách đầy đủ 2 khách, không còn khách mới khác trong
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'list', 'date_field': 'created_at', 'offset_min': 1}]
+
+===== gpt-4.1-mini | f1_list_next_page_next_turn | lần 2 | 9.2s | FAIL
+
+[f1_list_next_page_next_turn] xem tiếp
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → ok returned=2 total=2 ignored=-
+    {"dataset": "customers", "select": ["id", "code", "full_name", "email", "phone", "company_name", "created_at"], "filters": [{"field": "created_at", "op": "contains", "value": "2026-11"}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "order_by": [{"field": "created_at", "dir": "desc"}], "limit": 20}
+  answer    : Tháng này có 2 khách hàng mới:
+1. Châu Ngọc Sơn, email: 2351010184son@ou.edu.vn, điện thoại: 0971872269, tạo ngày 11-11-2026, mã C000593
+2. Ngọc Sơn Châu, email: wdsdf7469@gmail.com, điện thoại: +84971877111, tạo ngày 11-11-2026, mã We6a20ca3
+
+Đã liệt kê đủ 2 khách hàng mới trong tháng 11 năm 2026.
+  FAIL: không có query khớp [{'dataset': 'customers', 'mode': 'list', 'date_field': 'created_at', 'offset_min': 1}]
+
+===== gpt-4.1-mini | f1_list_next_page_next_turn | lần 3 | 8.5s | FAIL
+
+[f1_list_next_page_next_turn] xem tiếp
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'customers')]
+  query #1 sent → empty returned=0 total=2 ignored=-
+    {"dataset": "customers", "select": ["full_name", "email", "phone", "created_at"], "filters": [{"field": "created_at", "op": "contains", "value": "2026-11"}], "date_range": {"field": "created_at", "from": "2026-11-01", "to": "2026-11-11"}, "order_by": [{"field": "created_at", "dir": "asc"}], "limit": 20, "offset": 2}
+  answer    : Hiện tại chỉ có 2 khách hàng mới trong tháng này, không còn khách hàng mới nào khác để xem tiếp.
+  FAIL: kết quả crm_query cuối empty không thuộc ['ok']
+
+===== gpt-4.1-mini | f2_refine_previous_count_next_turn | lần 1 | 11.0s | FAIL
+
+[f2_refine_previous_count_next_turn] Trong số đó có bao nhiêu phiếu của model F86?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "closed_at", "op": "contains", "value": "2023-10"}, {"field": "product_item_id.product_id.name", "op": "eq", "value": "F86"}], "date_range": {"field": "closed_at", "from": "2026-11-01", "to": "2026-11-11"}, "metrics": ["count"], "limit": 10}
+  answer    : Tháng 10 năm nay không có phiếu hỗ trợ đã xong nào của model F86.
+  FAIL: không có query khớp [{'dataset': 'support_cases', 'mode': 'aggregate', 'filters': ['status', 'product_item_id.product_id.name'], 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]
+
+===== gpt-4.1-mini | f2_refine_previous_count_next_turn | lần 2 | 8.2s | FAIL
+
+[f2_refine_previous_count_next_turn] Trong số đó có bao nhiêu phiếu của model F86?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "created_at", "op": "contains", "value": "2023-10"}, {"field": "product_item_id.product_id.name", "op": "contains", "value": "F86"}], "date_range": {"field": "created_at", "from": "2023-10-01", "to": "2023-10-31"}, "metrics": ["count"], "limit": 10}
+  answer    : Tháng 10 không có phiếu hỗ trợ đã xong nào thuộc model F86.
+  FAIL: không có query khớp [{'dataset': 'support_cases', 'mode': 'aggregate', 'filters': ['status', 'product_item_id.product_id.name'], 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]
+
+===== gpt-4.1-mini | f2_refine_previous_count_next_turn | lần 3 | 7.9s | FAIL
+
+[f2_refine_previous_count_next_turn] Trong số đó có bao nhiêu phiếu của model F86?
+  questions : ['', '']
+  statuses  : ['', '']  errors: []
+  catalog   : []
+  tools     : [('crm_schema', 'support_cases')]
+  query #1 sent → ok returned=1 total=None ignored=-
+    {"dataset": "support_cases", "filters": [{"field": "status", "op": "in", "value": ["resolved", "closed"]}, {"field": "created_at", "op": "contains", "value": "2023-10"}, {"field": "product_item_id.product_id.name", "op": "contains", "value": "F86"}], "date_range": {"field": "created_at", "from": "2023-10-01", "to": "2023-10-31"}, "metrics": ["count"], "limit": 50}
+  answer    : Tháng 10 không có phiếu hỗ trợ đã xong nào thuộc model F86.
+  FAIL: không có query khớp [{'dataset': 'support_cases', 'mode': 'aggregate', 'filters': ['status', 'product_item_id.product_id.name'], 'date_from': '2026-10-01', 'date_to': '2026-10-31'}]

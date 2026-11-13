@@ -40,6 +40,8 @@ class FigureLabel(StrictModel):
     element_id: str                              # picture/screenshot chứa nhãn
     bbox: Box | None = None
     source: Literal["text_layer", "ocr", "crop_ocr"]
+    # I-40b: nhãn `crop_ocr` không có trong từ vựng text layer của tài liệu → không vào `keywords`/`embed_text`
+    verified: bool = True
 
 
 class DraftChunk(StrictModel):
@@ -95,6 +97,62 @@ class DraftChunk(StrictModel):
     review_notes: list[str] = Field(default_factory=list)      # mã review chặn fact (thông tin cho người duyệt)
     flags: list[str] = Field(default_factory=list)
     enrichment_status: Literal["none", "draft", "approved"] = "none"
+
+
+class EnrichmentOutput(StrictModel):
+    """Đầu ra LLM của Bước 3 cho một chunk lá (contract C2 §8): tiếng Việt, chỉ nói điều có trong `content`."""
+
+    summary_vi: str
+    faq_vi: list[str]
+    keywords_vi: list[str]
+
+
+class EnrichmentRecord(EnrichmentOutput):
+    """Một dòng `build/enrichment.jsonl`: khóa theo `content_hash` (+ `prompt_version`) để build lại không mất và
+    không trả tiền LLM lại. `checks`: lỗi kiểm tự động lúc làm giàu (vd. `enrich_code_mismatch`)."""
+
+    content_hash: str
+    # Khóa = (`content_hash`, `section_path`): cùng nội dung ở mục khác nhau có nghĩa khác (F54: thủ tục "vào màn
+    # hình PARAMETER, đặt giá trị" lặp ở 13 mục tham số) → làm giàu riêng.
+    section_path: list[str] = Field(default_factory=list)
+    chunk_key: str                               # key lúc làm giàu (chỉ để tra cứu; key dịch khi build lại)
+    model: str
+    prompt_version: str
+    created_at: str
+    input_tokens: int = 0
+    output_tokens: int = 0
+    checks: list[str] = Field(default_factory=list)
+
+
+class EnrichmentApproval(StrictModel):
+    """`build/enrichment_approval.json`: phiên bản làm giàu đã qua cổng 2c → chunk lá có bản ghi cùng phiên bản mang
+    `enrichment_status = approved`."""
+
+    version: str
+    approved_at: str
+    reviewer: str
+    sample: int
+    sample_ok: int
+
+
+class EnrichmentSummary(StrictModel):
+    """Kiểm 2c (CQ-13, contract C2 §10): làm giàu trên chunk lá."""
+
+    leaves: int = 0
+    enriched: int = 0
+    code_mismatch: list[str] = Field(default_factory=list)
+    trimmed: list[str] = Field(default_factory=list)
+    truncated: list[str] = Field(default_factory=list)   # lá có làm giàu mà content vẫn bị cắt khỏi embed_text
+    versions: dict[str, int] = Field(default_factory=dict)   # phiên bản làm giàu -> số chunk lá
+    auto_passed: bool | None = None              # phần tự động (CQ-13); None: chưa làm giàu chunk nào
+    # mẫu duyệt tay (chỉ verdict cùng phiên bản làm giàu hiện tại của chunk)
+    sample: int = 0
+    sample_ok: int = 0
+    sample_fix: list[str] = Field(default_factory=list)
+    sample_pending: int = 0
+    severe: list[str] = Field(default_factory=list)
+    approved_version: str | None = None          # phiên bản đã duyệt (`build/enrichment_approval.json`)
+    passed: bool | None = None                   # cổng 2c: tự động đạt + mẫu đạt ngưỡng; None: chưa đủ dữ liệu
 
 
 class CheckResult(StrictModel):
@@ -198,9 +256,13 @@ class ChunkQuality(StrictModel):
     manual: ManualComparison | None = None
     review: ReviewSummary = Field(default_factory=ReviewSummary)
     export_errors: list[str] = Field(default_factory=list)
+    # Adapter bảng `doc_chunks_v2` (D-009): lỗi ràng buộc + số dòng theo `review_status`.
+    export_errors_v2: list[str] = Field(default_factory=list)
+    review_status_v2: dict[str, int] = Field(default_factory=dict)
     gate: list[GateItem] = Field(default_factory=list)
     gate_passed: bool | None = None
     provisional: bool = True
+    enrichment: EnrichmentSummary = Field(default_factory=EnrichmentSummary)
 
 
 class ChunkReviewEntry(StrictModel):
@@ -209,6 +271,13 @@ class ChunkReviewEntry(StrictModel):
     verdict: Literal["pending", "ok", "fix"] = "pending"
     note: str = ""
     reviewer: str = ""
+    # Cổng 2c (duyệt mẫu làm giàu): `none` = không thuộc mẫu. Verdict gắn với phiên bản làm giàu lúc duyệt
+    # (`enrichment_version`); làm giàu đổi phiên bản → verdict hết hạn. `enrichment_severe`: sai sự thật (thêm số,
+    # giá trị, bước, model, mã không có trong content).
+    enrichment_verdict: Literal["none", "pending", "ok", "fix"] = "none"
+    enrichment_note: str = ""
+    enrichment_version: str = ""
+    enrichment_severe: bool = False
 
 
 class ChunkReviewFile(StrictModel):

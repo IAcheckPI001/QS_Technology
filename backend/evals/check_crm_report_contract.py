@@ -3,7 +3,8 @@
 Với mỗi dataset report_api, gửi tới `POST /api/v1/reports/query` các query nhỏ do chính
 `reporting/report_api.py` và `reporting/records.py` sinh ra:
 - mỗi metric (không dimension), mỗi dimension (metric đầu tiên), mỗi kỳ chia được;
-- một query `select` mọi cột danh sách, `limit` 1.
+- query `select` mọi cột danh sách (từng nhóm 8 cột), `limit` 1;
+- mỗi trường string lọc được: một query `contains`.
 Query nào bị CRM từ chối (400) là đường dẫn cột/tên dimension trong catalog lệch schema
 CRM: script in thông báo lỗi của CRM để sửa catalog. Chỉ in số dòng, không in dữ liệu.
 
@@ -64,15 +65,27 @@ def _checks(spec: DatasetSpec, now: datetime) -> list[tuple[str, dict[str, Any]]
             ReportQuery.model_validate({"dataset": spec.name, **fields}), DATASETS, now=now, tz=tz,
         )
         bodies += [(f"{label} [{item.role}]", item.body) for item in compile_report(query).queries]
-    if spec.list_columns:
+    columns = list(spec.list_columns)
+    for start in range(0, len(columns), 8):
         records = validate_records(
             RecordQuery.model_validate({
-                "dataset": spec.name, "fields": list(spec.list_columns)[:8], "limit": 1,
+                "dataset": spec.name, "fields": columns[start:start + 8], "limit": 1,
             }),
             DATASETS, now=now, tz=tz,
         )
         select, count, _ = compile_records(records)
-        bodies += [("select list_columns", select), ("select count", count)]
+        bodies += [(f"select list_columns[{start}:{start + 8}]", select), ("select count", count)]
+    for name, field in spec.fields.items():
+        if not field.filterable or field.values or field.type != "string":
+            continue
+        query = validate_query(
+            ReportQuery.model_validate({
+                "dataset": spec.name, "metrics": [first_metric],
+                "filters": [{"field": name, "operator": "contains", "value": "a"}],
+            }),
+            DATASETS, now=now, tz=tz,
+        )
+        bodies += [(f"filter {name} contains", item.body) for item in compile_report(query).queries]
     return bodies
 
 

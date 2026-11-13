@@ -6,9 +6,10 @@ import hashlib
 import re
 from collections.abc import Callable, Iterable, Sequence
 
-from app.modules.doc_ingest.build.chunker import VISUAL, ChunkPlan, Unit
-from app.modules.doc_ingest.build.loader import RunInput
-from app.modules.doc_ingest.schemas.chunk import ChunkAsset, DraftChunk, FigureLabel
+from app.modules.doc_ingest.build.chunker import VISUAL, ChunkPlan, Unit, estimate_tokens
+from app.modules.doc_ingest.build.loader import RunInput, enrichment_key
+from app.modules.doc_ingest.enrich.checks import missing_codes
+from app.modules.doc_ingest.schemas.chunk import ChunkAsset, DraftChunk, EnrichmentRecord, FigureLabel
 from app.modules.doc_ingest.schemas.manifest import SCOPE_ORDER, DocManifest, Scope
 from app.modules.doc_ingest.schemas.normalized import ApplicabilityCandidate, NormalizedElement
 from app.modules.doc_ingest.schemas.profile import Profile
@@ -19,6 +20,7 @@ _SECTION_NO = re.compile(r"^\s*(\d+(?:\.\d+)*)\.?\s")
 _TOC_LINE = re.compile(r"(\.{4,}|…{2,}|�{3,})\s*\.?\s*\d*\s*$")
 _TOKEN = re.compile(r"#?[A-Za-z0-9][A-Za-z0-9_\-+]*")
 _SENTENCE_END = re.compile(r"(?<=[.!?:;])\s+")
+_VOCAB_SPLIT = re.compile(r"[\s,;:()\[\]/|=]+|\.(?=\s|$)")   # giữ "+", "-" và dấu chấm giữa token (DIR1+, 0.5)
 
 
 def token_counter() -> tuple[TokenCounter | None, str]:
@@ -30,10 +32,6 @@ def token_counter() -> tuple[TokenCounter | None, str]:
     except Exception:   # venv ingest không có tiktoken, hoặc không tải được file mã hóa
         return None, "unavailable"
     return (lambda text: len(encoding.encode(text))), "tiktoken"
-
-
-def _estimate(text: str) -> int:
-    return (len(text) + 3) // 4
 
 
 def _dedupe(values: Iterable[str]) -> list[str]:
@@ -95,9 +93,16 @@ class Assembler:
         for e in run.elements:
             if e.normalized_type == "figure_text" and e.parent_element_id:
                 self.figure_text.setdefault(e.parent_element_id, []).append(e)
+        self.vocab = self._vocab(run)
         self.interface_terms = self._terms(profile.vocabulary.control_interface, self.cfg.control_interface_terms)
         self.spec_terms = self._terms(profile.vocabulary.spec_attributes, self.cfg.spec_attribute_terms)
         self.param_patterns = [re.compile(re.escape(p) + rx + r"$") for p, rx in profile.param_text_patterns.items()]
+        self._scope_rules = [(r.scope, re.compile(r.title) if r.title else None,
+                              re.compile(r.content) if r.content else None, set(r.chunk_types))
+                             for r in self.cfg.scope_content_rules]
+        # Phần đầu `embed_text` chung cho mọi chunk; chunker dùng để chia phần bảng theo ngân sách token (I-38).
+        self.head_tokens = (self.counter or estimate_tokens)(
+            f"{', '.join(manifest.product_models)} · {manifest.doc_title} · ")
         self.review_by_element, self.review_by_page = review_index(run)
         self.review_by_table: dict[str, list[tuple[str, str, str | None]]] = {}
         for item in run.review:
@@ -126,7 +131,25 @@ class Assembler:
             scopes.add("configuration")
         if unit.chunk_type == "alarm":
             scopes.add("maintenance")
+        scopes |= self._content_scopes(unit)
         return [s for s in SCOPE_ORDER if s in scopes]
+
+    def _content_scopes(self, unit: Unit) -> set[Scope]:
+        """I-46: scope THÊM theo nội dung (luật `chunking.scope_content_rules` của profile; chỉ thêm, không bớt)."""
+        if not self._scope_rules:
+            return set()
+        titles = list(unit.section_path[max(self.cfg.scope_title_min_level - 1, 0):])
+        if unit.label:
+            titles.append(unit.label)
+        title_text = " › ".join(titles)
+        content = unit.content
+        found: set[Scope] = set()
+        for scope, title_rx, content_rx, types in self._scope_rules:
+            if ((title_rx is not None and title_text and title_rx.search(title_text))
+                    or (content_rx is not None and content_rx.search(content))
+                    or unit.chunk_type in types):
+                found.add(scope)  # type: ignore[arg-type]
+        return found
 
     def _matches(self, terms: dict[str, list[re.Pattern[str]]], text: str) -> list[str]:
         return [key for key, patterns in terms.items() if any(p.search(text) for p in patterns)]
@@ -164,6 +187,24 @@ class Assembler:
                 codes.append(token)
         return _dedupe(codes)
 
+    @staticmethod
+    def _vocab(run: RunInput) -> set[str]:
+        """Từ vựng text layer của tài liệu (I-40b): token của mọi phần tử trên trang không OCR (kể cả chữ trong hình
+        của text layer) và ô bảng, casefold. Nhãn OCR crop chỉ được tin khi xuất hiện ở đây."""
+        texts = [e.text or "" for e in run.elements if e.pdf_page_index not in run.ocr_pages]
+        texts += [c.text for t in run.tables.values() for r in t.rows for c in r.cells]
+        return {tok.casefold() for text in texts for tok in _VOCAB_SPLIT.split(text) if tok}
+
+    def _in_vocab(self, label: str) -> bool:
+        """Nhãn OCR crop đáng tin: khớp mẫu tin cậy của profile, hoặc mọi token có trong từ vựng tài liệu."""
+        def trusted(text: str) -> bool:
+            return any(re.fullmatch(p, text) for p in self.profile.figure_label_trusted_patterns)
+
+        if trusted(label):
+            return True
+        tokens = [t for t in _VOCAB_SPLIT.split(label) if t]
+        return bool(tokens) and all(trusted(t) or t.casefold() in self.vocab for t in tokens)
+
     def _keep_label(self, text: str) -> list[str]:
         t = " ".join(text.split())
         if len(t) < 2 or not any(ch.isalnum() for ch in t):
@@ -181,7 +222,8 @@ class Assembler:
                 labels += [FigureLabel(text=t, element_id=visual.element_id, bbox=ft.bbox, source=source)
                            for t in self._keep_label(ft.text or "")]
             for raw in self.run.figure_ocr.get(visual.element_id, []):
-                labels += [FigureLabel(text=t, element_id=visual.element_id, source="crop_ocr")
+                labels += [FigureLabel(text=t, element_id=visual.element_id, source="crop_ocr",
+                                       verified=not self.cfg.figure_label_require_vocab or self._in_vocab(t))
                            for t in self._keep_label(raw)]
         seen: set[tuple[str, str]] = set()
         out = []
@@ -195,7 +237,8 @@ class Assembler:
     def _assets(self, unit: Unit) -> tuple[list[ChunkAsset], bool]:
         assets, missing = [], False
         for e in unit.elements:
-            if e.normalized_type not in VISUAL:
+            # I-44: khung chữ (T-20 `text_frame`) chỉ lặp lại chữ đã tách vào `content` → không là asset
+            if e.normalized_type not in VISUAL or "text_frame" in e.flags:
                 continue
             local = e.image.original_path if e.image is not None else None
             missing = missing or local is None or not (self.run.run_dir / local).is_file()
@@ -233,13 +276,46 @@ class Assembler:
         return "ocr" if all(ocr) else "mixed" if any(ocr) else "text_layer"
 
     def _keywords(self, refs: Sequence[ParamRef], io: Sequence[str], sid: str | None, labels: Sequence[FigureLabel],
-                  path: Sequence[str], label: str | None) -> list[str]:
+                  path: Sequence[str], label: str | None, extra: Sequence[str] = (),
+                  chunk_type: str | None = None) -> list[str]:
+        """`extra`: từ khóa tiếng Việt của Bước 3, luôn giữ (chỗ của chúng trừ vào `max_keywords` trước).
+        Nhãn hình nguồn OCR chỉ vào từ khóa khi `chunk_type` thuộc `figure_label_keyword_types`."""
         title = path[-1] if path else ""
         number = _SECTION_NO.match(title)
         terms = [title[number.end():].strip() if number else title, (label or "").rstrip(" :")]
+        ocr_ok = chunk_type is None or chunk_type in self.cfg.figure_label_keyword_types
         values = ([r.label for r in refs] + list(io) + list(self.manifest.product_models) + ([sid] if sid else [])
-                  + [lb.text for lb in labels] + terms)
-        return _dedupe(v.strip() for v in values if v and v.strip())[: self.cfg.max_keywords]
+                  + [lb.text for lb in labels if lb.verified and (lb.source == "text_layer" or ocr_ok)] + terms)
+        vi = _dedupe(v.strip() for v in extra if v and v.strip())
+        base = [v for v in _dedupe(v.strip() for v in values if v and v.strip()) if v not in vi]
+        return base[: max(0, self.cfg.max_keywords - len(vi))] + vi
+
+    def _enriched_embed(self, path: Sequence[str], label: str | None, base_keywords: Callable[[Sequence[str]], list[str]],
+                        content: str, record: EnrichmentRecord) -> tuple[list[str], str, int | None, bool, list[str]]:
+        """Dựng `embed_text` có làm giàu (C2 §8) mà **không đẩy `content` ra ngoài**: vượt `embed_max_tokens` thì bớt
+        câu hỏi cuối, rồi bớt từ khóa tiếng Việt, rồi bỏ tóm tắt; cờ `enrich_trimmed`. Trả về (keywords, embed,
+        tokens, truncated, flags)."""
+        summary: str | None = record.summary_vi
+        faq = list(record.faq_vi)
+        vi = list(record.keywords_vi)
+        trimmed = False
+        while True:
+            keywords = base_keywords(vi)
+            embed, tokens, truncated = self._embed(path, label, keywords, content, summary, faq)
+            if not truncated or (not faq and not vi and summary is None):
+                break
+            trimmed = True
+            if faq:
+                faq.pop()
+            elif vi:
+                vi.pop()
+            else:
+                summary = None
+        flags = ["enrich_trimmed"] if trimmed else []
+        context = "\n".join([content, " ".join(self.manifest.product_models), " › ".join(path)])   # = chunk_context
+        if missing_codes(" ".join([record.summary_vi, *record.faq_vi]), context):
+            flags.append("enrich_code_mismatch")
+        return keywords, embed, tokens, truncated, flags
 
     def _embed(self, path: Sequence[str], label: str | None, keywords: Sequence[str], content: str,
                summary: str | None = None, faq: Sequence[str] = ()) -> tuple[str, int | None, bool]:
@@ -253,7 +329,7 @@ class Assembler:
         if keywords:
             head.append(f"Từ khóa: {', '.join(keywords)}")
         head.append("---")
-        count = self.counter or _estimate
+        count = self.counter or estimate_tokens
         text = "\n".join(head + [content])
         truncated = False
         if count(text) > self.cfg.embed_max_tokens:
@@ -268,7 +344,7 @@ class Assembler:
         return text, (self.counter(text) if self.counter else None), truncated
 
     def _flags(self, unit_flags: Sequence[str], content: str, extraction: str, asset_missing: bool,
-               truncated: bool) -> list[str]:
+               truncated: bool, over_budget: bool = False) -> list[str]:
         flags = set(unit_flags)
         lines = [line for line in content.split("\n") if line.strip()]
         if len(lines) >= 3 and sum(1 for line in lines if _TOC_LINE.search(line)) >= len(lines) / 2:
@@ -281,6 +357,8 @@ class Assembler:
             flags.add("asset_missing")
         if truncated:
             flags.add("embed_truncated")
+        if over_budget:
+            flags.add("embed_over_budget")
         return sorted(flags)
 
     def _chunk(self, index: int, units: Sequence[Unit], role: str, parent_key: str | None,
@@ -300,8 +378,23 @@ class Assembler:
         io = self._io_codes(content)
         labels = self._figure_labels(merged)
         sid = section_id(path)
-        keywords = self._keywords(refs, io, sid, labels, path, merged.label)
-        embed, tokens, truncated = self._embed(path, merged.label, keywords, content)
+        # D-008 (I-43): chỉ chunk lá được embed, tìm và làm giàu; `embed_text` của cha giữ cho schema/export.
+        leaf = role != "parent"
+        content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        record = self.run.enrichment.get(enrichment_key(content_hash, path)) if leaf else None
+        enrich_flags: list[str] = []
+        ctype = merged.chunk_type
+        if record is None:
+            keywords = self._keywords(refs, io, sid, labels, path, merged.label, chunk_type=ctype)
+            embed, tokens, truncated = self._embed(path, merged.label, keywords, content)
+        else:
+            keywords, embed, tokens, truncated, enrich_flags = self._enriched_embed(
+                path, merged.label,
+                lambda vi: self._keywords(refs, io, sid, labels, path, merged.label, vi, chunk_type=ctype),
+                content, record)
+        # Chưa làm giàu: phải chừa `embed_enrich_reserve`; đã làm giàu: chỗ dự trữ đã dùng, giới hạn là `embed_max_tokens`.
+        budget = self.cfg.embed_max_tokens - (0 if record is not None else self.cfg.embed_enrich_reserve)
+        over_budget = leaf and tokens is not None and tokens > budget
         assets, missing = self._assets(merged)
         blockers, notes = self._reviews(merged)
         extraction = self._extraction(pages)
@@ -321,13 +414,18 @@ class Assembler:
             doc_version=self.manifest.doc_version, lang=self.manifest.lang, section_id=sid, section_path=path,
             section_title=title, page_start=pages[0], page_end=pages[-1], printed_page_start=printed_start,
             printed_page_end=printed_end, assets=assets, content=content, keywords=keywords, embed_text=embed,
-            token_count=tokens, content_hash=hashlib.sha256(content.encode("utf-8")).hexdigest(),
+            summary_vi=record.summary_vi if record else None, faq_vi=list(record.faq_vi) if record else [],
+            enrichment_status=("none" if record is None else "approved"
+                               if self.run.approval is not None and record.prompt_version == self.run.approval.version
+                               else "draft"),
+            token_count=tokens, content_hash=content_hash,
             element_ids=[e.element_id for e in merged.elements], extraction=extraction,  # type: ignore[arg-type]
             logical_table_id=merged.table.logical_table_id if merged.table is not None else None,
             row_ids=merged.row_ids, param_refs=refs, io_codes=io, applicability=applicability,
             applies_to_models=sorted({m for c in applicability if c.status == "available_only" for m in c.models}),
             figure_labels=labels, review_blockers=blockers, review_notes=notes,
-            flags=self._flags(merged.flags, content, extraction, missing, truncated),
+            flags=self._flags([*merged.flags, *enrich_flags], content, extraction, missing, truncated and leaf,
+                              over_budget),
         )
 
     def assemble(self, plan: ChunkPlan) -> list[DraftChunk]:
