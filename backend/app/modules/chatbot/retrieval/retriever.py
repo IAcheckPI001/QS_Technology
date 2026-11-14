@@ -207,7 +207,8 @@ class Retriever:
         """Gộp kết quả các lần tra cứu, dedupe theo id và giữ điểm fused cao nhất.
 
         Các lần tra cứu theo từng model được xen kẽ (round-robin) để top-k chia
-        đều giữa các model khi so sánh.
+        đều giữa các model khi so sánh. Ngoài so sánh, kết quả của target có
+        `boost` được cộng điểm khi xếp chung (target chính của luật định tuyến).
         """
         per_run = [
             sorted(
@@ -224,11 +225,16 @@ class Retriever:
             for position in range(max((len(items) for items in per_run), default=0)):
                 ordered.extend(items[position] for items in per_run if position < len(items))
         else:
-            ordered = sorted(
-                (match for items in per_run for match in items),
-                key=lambda match: match.fused_score,
+            scored = sorted(
+                (
+                    (match.fused_score + run.request.boost, match)
+                    for run, items in zip(runs, per_run)
+                    for match in items
+                ),
+                key=lambda pair: pair[0],
                 reverse=True,
             )
+            ordered = [match for _, match in scored]
 
         seen: set[int] = set()
         merged: list[ChunkMatch] = []

@@ -13,8 +13,8 @@ from app.modules.chatbot.extraction.validate_registry import (
 )
 from tests.chatbot.agent_fakes import sub_query
 
-ETHERCAT = ["F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE"]
-ASTRO_MECHATROLINK = ["6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE"]
+ETHERCAT = ["F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE", "10S", "10i"]
+ASTRO_MECHATROLINK = ["6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE", "10i"]
 
 
 @pytest.mark.parametrize(("required", "excluded", "match", "expected"), [
@@ -22,7 +22,7 @@ ASTRO_MECHATROLINK = ["6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE"]
     (["ethercat", "mechatrolink"], [], "all", ASTRO_MECHATROLINK),
     (["ethercat", "mechatrolink"], [], "any", ETHERCAT),
     (["pulse_train"], [], "all", REGISTRY["product_models"]),
-    (["ethercat"], ["mechatrolink"], "all", ["F86", "F86E", "F10T"]),
+    (["ethercat"], ["mechatrolink"], "all", ["F86", "F86E", "F10T", "10S"]),
     (["mechatrolink"], ["ethercat"], "all", []),
     ([], ["ethercat"], "all", ["F54"]),
 ])
@@ -50,7 +50,8 @@ def test_catalog_models_carry_names_and_documentation_coverage():
     ("F86E khác gì 6AHE", ["F86E", "6AHE"]),   # mã ngắn không khớp bên trong mã dài
     ("mã cũ ASTRO_6AH", ["6AH"]),
     ("Astro 6A có 6 trục", []),          # alias mơ hồ không chỉ ra model nào
-    ("dòng astro-10i và 10S", []),       # 10i mơ hồ, 10S không có trong danh mục
+    ("dòng astro-10i và 10S", ["10S", "10i"]),   # model catalog QS (2026-11-14), không còn mơ hồ với 10iV/10iVE
+    ("dòng Astro 10 mới", []),                   # "Astro 10" vẫn mơ hồ (10iV, 10iVE, 10i, 10S)
     ("Không nhắc model", []),
 ])
 def test_models_in_text(text, expected):
@@ -59,8 +60,10 @@ def test_models_in_text(text, expected):
 
 @pytest.mark.parametrize(("names", "expected"), [
     (["Astro 6AH", "ASTRO_6AV", "10iv"], (["6AH", "6AV", "10iV"], [], [])),
-    (["10i", "Astro 10i"], ([], ["10i", "Astro 10i"], [])),
-    (["10S", "ASTRO_10S"], ([], [], ["10S", "ASTRO_10S"])),
+    (["10i", "Astro 10i"], (["10i"], [], [])),
+    (["10S", "ASTRO_10S"], (["10S"], [], [])),
+    (["Astro 10"], ([], ["Astro 10"], [])),
+    (["10X"], ([], [], ["10X"])),
 ])
 def test_resolve_models_uses_crm_codes(names, expected):
     assert resolve_models(names) == expected

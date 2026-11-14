@@ -29,6 +29,12 @@ cases:
         content_hash: bb576c3cad733e48e2ff040adb91ad31b484b5af8672c36796ca8e252e363884
         section_path: ["PART 1:CONTROLLER OVERVIEW", "1.1 Overview"]
         note: "1.1 Overview [figure; scope: operation]"
+      # Toma 2026-11-14: chunk catalog có "Voltage input: 24VDC" trả lời được câu hỏi → chấp nhận. `expected` và domain
+      # mong đợi (technical_docs) giữ nguyên: câu này đo luật RT-1 (tìm cả catalog lẫn tài liệu kỹ thuật).
+      - chunk_key: qs_product_catalogue:C0000
+        content_hash: 7472976e81fa3a1fa210bd9c8b4f63a71d731d22829411780d3e59f7c7aa358b
+        section_path: ["MOTION CONTROLLER", "QS F54"]
+        note: "QS F54 [overview; product_catalog]"
   - id: D02
     question: "F54 điều khiển được mấy trục, có điều khiển trục chính không?"
     domain: technical_docs

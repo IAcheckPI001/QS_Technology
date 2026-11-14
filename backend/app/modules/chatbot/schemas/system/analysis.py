@@ -44,6 +44,9 @@ class ExtractedEntities(SystemModel):
 class RetrievalTarget(SystemModel):
     domain: NonEmptyStr
     scopes: list[NonEmptyStr] = Field(default_factory=list)
+    # Điểm cộng cho kết quả của target này khi gộp nhiều target của một sub-query (luật định tuyến RT-1…:
+    # target chính được ưu tiên). 0 = không ưu tiên (hành vi cũ).
+    boost: float = Field(default=0.0, ge=0)
 
 
 class RetrievalPlan(SystemModel):

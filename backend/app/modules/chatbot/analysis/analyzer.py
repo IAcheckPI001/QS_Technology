@@ -8,7 +8,7 @@ from app.modules.chatbot.schemas.system import Analysis
 from app.modules.chatbot.extraction.validate_registry import plan_turn, resolve_with_raw
 from app.modules.chatbot.extraction.schema_builder import build_output_schema
 from app.modules.chatbot.providers.openai import OpenAIProvider
-from app.modules.chatbot.analysis.prompt.prompt_builder import build_analysis_prompt
+from app.modules.chatbot.analysis.prompt.prompt_builder import analysis_prompt_info, build_analysis_prompt
 
 log = logging.getLogger(__name__)
 
@@ -26,11 +26,18 @@ class QueryAnalyzer:
         self,
         provider: OpenAIProvider,
         n_examples: int = 5,
-        timeout_s: float = 8.0
+        timeout_s: float = 8.0,
+        prompt_version: str | None = None,
+        intent_desc_version: str | None = None,
     ) -> None:
         self._provider = provider
-        self._prompt = build_analysis_prompt(n_examples=n_examples)
+        self._prompt = build_analysis_prompt(
+            n_examples=n_examples, version=prompt_version, intent_desc_version=intent_desc_version)
+        # Nhãn prompt (phiên bản khung, phiên bản mô tả intent, dấu nội dung) cho log và báo cáo eval.
+        self.prompt_info = analysis_prompt_info(
+            n_examples, version=prompt_version, intent_desc_version=intent_desc_version)
         self._timeout = timeout_s
+        log.info("query_analysis prompt %s", self.prompt_info)
 
     def _coerce(self, resp: Any) -> dict | None:
         """Provider có thể trả dict, chuỗi JSON, hoặc chuỗi bị cắt do max_tokens."""
@@ -85,8 +92,12 @@ def build_analysis(
     resumed: bool = False,
     last_models: list[str] | tuple = (),
     active_model: str | None = None,
+    routing_version: str | None = None,
 ) -> Analysis:
-    """Resolve raw LLM sub-queries into a typed turn plan without calling the LLM."""
+    """Resolve raw LLM sub-queries into a typed turn plan without calling the LLM.
+
+    routing_version: phiên bản luật định tuyến (None = production, `registry.ROUTING_VERSION`).
+    """
     if not raw_sub_queries:
         raise AnalysisError("analysis_invalid_output", "Query analysis returned no sub-query.")
     try:
@@ -94,6 +105,7 @@ def build_analysis(
             {"sub_queries": raw_sub_queries},
             last_models=last_models,
             active_model=active_model,
+            routing_version=routing_version,
         )
         analysis = Analysis.from_plan(plan_turn(sub_queries))
     except (TypeError, ValueError, KeyError) as exc:

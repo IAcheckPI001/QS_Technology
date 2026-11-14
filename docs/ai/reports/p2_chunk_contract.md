@@ -123,7 +123,7 @@ trường ứng viên có kiểu (§13). Adapter `export/doc_chunks_v1.py` ra d�
 |---|---|---|
 | `chunk_key` | builder | `{doc_id}:B{chunk_index:04d}` (B = builder, phân biệt chunk viết tay `I-04`) |
 | `parent_key` | builder | `chunk_key` của cửa sổ cha, hoặc `null` (§5) |
-| `domain` | cố định | `technical_docs` |
+| `domain` | cố định | `technical_docs` (chunk builder). Nhánh nguồn biên soạn (§15): `product_catalog` / `company_info`, `scopes = []` |
 | `scopes` | manifest + luật | `scope_rules` theo `section_path` → nếu không khớp thì `default_scopes`. Ghi đè theo loại: `parameter` → thêm `configuration`; `alarm` → thêm `maintenance`. **I-46 (2026-11-13, thử nghiệm sau checkpoint CP-I46, chờ chốt bằng đo):** cộng thêm scope theo nội dung — luật `chunking.scope_content_rules` của profile (regex tiêu đề các cấp từ `scope_title_min_level` = 2 trở xuống + label, regex nội dung, loại chunk); **chỉ thêm, không bớt**; một chunk mang nhiều scope khi đúng |
 | `product_models` | manifest | Cả tài liệu. Ghi chú áp dụng (T-13) giữ nguyên văn trong `content`, không lọc |
 | `control_interface` | registry snapshot | Khớp từ/nhãn (`pulse_train`: "Pulse Train", "xung"; `ethercat`; `mechatrolink`) trong `content` + `section_path`; không khớp → `[]` (= áp dụng chung) |
@@ -368,6 +368,25 @@ Chunk thủ tục dài, F54 M100 Stage 1–10 (trang 88–90, ≈ 1.500 ký tự
 - Tài liệu scan tiếng Việt (chờ I-28, I-29, I-30).
 - Đổi schema `doc_chunks`, mở rộng AnalysisStage (§13: chỉ đề xuất kèm bằng chứng; migration là thay đổi riêng ở module
   chatbot).
+
+## 15. Nhánh nguồn biên soạn có duyệt (`curated/`, 2026-11-14)
+
+Cho tài liệu mà pipeline trích còn lỗi cấu trúc (catalog QS: I-48 cặp "nhãn: giá trị" tách, I-49 bảng ✓/✗ là icon).
+Quyết định Toma (doc-ingest LOG 2026-11-14).
+
+- **Nguồn**: `doc_ingest/curated/products/<model>.yaml`, `curated/selection_matrix.yaml` (schema `curated/schema.py`).
+  Mỗi giá trị ghi `page`, `origin` (`text` | `recovered` | `image`), `verified`; giá trị đã chốt khác bản in ghi
+  `page_value` + `decision` (C-xx). Chỉ giá trị `verified` được sinh chunk.
+- **Kiểm** (`curate-check`): chữ/nhãn/giá trị `text|recovered` có trong chữ PDF của trang (elements, ô bảng, text layer
+  `raw/p{n}.words.json`); key trùng giữa file model và bảng chọn cùng giá trị; `sha256` nguồn khớp run.
+- **Nội dung bám sát PDF**: `content` dựng lại tiêu đề mục, nhãn, giá trị như in, theo thứ tự in; không thêm câu, không
+  dịch. Ngoại lệ: giá trị đã chốt (C-xx) → in giá trị đã chốt, ghi `DraftChunk.curated_decisions` → `metadata.
+  curated_decisions`. Nhãn tiếng Việt do người biên soạn đặt chỉ vào `keywords` khi bật `--vi-keywords`. Kiểm sau sinh:
+  mọi từ trong `content` có trong chữ trang nguồn (`curated/check.content_issues`).
+- **Cột**: `source = manual`, `chunk_role = standalone`, `chunk_key = {doc_id}:C{index:04d}`, `domain` theo nguồn,
+  `scopes = []`, `control_interface` = giao tiếp model hỗ trợ (cấp sản phẩm), `spec_attributes` theo key thông số.
+- **Cổng**: không qua cổng 2b (builder) và 2c (làm giàu). `review_status = approved` khi nguồn đã `verified` hết + verdict
+  `ok` đúng `content_hash` trong `chunk_review.json` (`export/doc_chunks_v2.review_status`).
 
 ## 13. Ứng viên mở rộng schema (chờ đánh giá)
 

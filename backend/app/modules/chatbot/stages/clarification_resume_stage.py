@@ -18,6 +18,10 @@ class ClarificationResumeStage:
 
     name = "clarification_resume_stage"
 
+    def __init__(self, routing_version: str | None = None) -> None:
+        # None = luật định tuyến production; bản khác chỉ công cụ eval truyền vào.
+        self._routing_version = routing_version
+
     async def execute(self, state: RunState) -> RunState:
         if state.context is None or state.analysis is not None:
             return state
@@ -34,6 +38,7 @@ class ClarificationResumeStage:
             resumed=True,
             last_models=state.context.conversation.state.last_models,
             active_model=state.context.conversation.state.active_model,
+            routing_version=self._routing_version,
         )
         return state
 

@@ -69,6 +69,15 @@ widget → widget-backend → POST /chat/website
   ngữ trả lời = `analysis.language` → ngôn ngữ phiên → locale client → `vi`.
 - Model trong câu hỏi phải có trong câu, lịch sử hoặc `last_models` (`guard_extracted_models`);
   không âm thầm đổi model.
+- Prompt phân tích có hai phiên bản riêng: `PROMPT_VERSION` (khung: các khối quy tắc + ví dụ mẫu,
+  `analysis/prompt/prompt_builder.py`) và `INTENT_DESC_VERSION` (mô tả intent, `extraction/registry.py`). Không sửa
+  nội dung tại chỗ: thêm bản mới và tăng phiên bản (`test_analysis_prompt_version` ghim dấu nội dung từng bản).
+  Production dùng bản mặc định; bản khác chỉ `evals/run_retrieval_eval.py --prompt-version / --intent-desc-version`
+  chọn, báo cáo eval ghi phiên bản + sha256 của prompt đã gửi.
+- Luật định tuyến bằng code (áp sau khi LLM chọn intent, `validate_registry.resolve_sub_query`) có phiên bản:
+  `registry.ROUTING_VERSION` (production, hiện `r0` = không luật) và `ROUTING_RULES`. Luật mới thêm vào một phiên bản
+  mới, chỉ eval chọn (`--routing-version`) tới khi được duyệt làm mặc định; luật chạy ghi `routing_rule:<mã>` vào
+  `warnings` của sub-query. Một sub-query có thể có nhiều target; `RetrievalTarget.boost` ưu tiên target chính khi gộp.
 - Sub-query cần làm rõ bị giữ, không tra cứu; các ý đã rõ vẫn chạy.
 - Context chỉ đọc history `status='completed'`.
 - Service key chỉ nằm ở widget-backend; trình duyệt không thấy `session_id`.

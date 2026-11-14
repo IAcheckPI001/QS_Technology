@@ -83,9 +83,9 @@ def test_v2_repository_params_and_extra_columns() -> None:
 def test_default_options_are_production_behaviour() -> None:
     o = MatchV2Options()
     assert o.approved_only and not o.include_parents and not o.unaccent and o.codes == () and o.type_boost == 0
-    # Toma 2026-11-13: bật làm sạch câu FTS; trọng số giữ 1; scope lọc cứng tới khi sửa I-46.
+    # Toma 2026-11-13: bật làm sạch câu FTS; trọng số giữ 1. Toma 2026-11-14 (R-2): scope cộng điểm 0,003.
     assert (o.vector_weight, o.fts_weight, o.code_weight, o.fts_clean) == (1.0, 1.0, 1.0, True)
-    assert o.scope_mode == "filter" and o.scope_boost == 0.0
+    assert o.scope_mode == "boost" and o.scope_boost == 0.003
     session = _Session([])
     repo = DocChunkV2Repository(session_factory=lambda: session)
     asyncio.run(repo.match(embedding=[0.1], query_text="Cách đấu cảm biến về home trên bộ điều khiển F54",
@@ -185,3 +185,109 @@ def test_eval_routing(tmp_path: Path) -> None:
     assert (right.intent_ok, right.route_ok, right.domain_ok) == (True, True, True)
     assert ev.summarize_routing([wrong, right]) == {"intent_dung": 0.5, "route_dung": 1.0, "domain_dung": 0.5,
                                                     "tat_ca_dung": 0.5}
+    # Route `retrieve` nhưng execution không phát lệnh tìm (sub-query bị giữ chờ làm rõ, D26) → route sai, và là một
+    # quyết định khác với lần có tìm (không ổn định).
+    held = ev.routing_result(case, "website", analysis("guide.installation", "retrieve", "technical_docs"), False,
+                             searched=False)
+    assert held.intent_ok and held.domain_ok and not held.route_ok and not held.all_ok
+    assert held.signature != right.signature
+    # `expected_domain` dạng danh sách: tìm ở một trong các domain là đúng.
+    cases_file.write_text(
+        "cases:\n  - id: H1\n    question: F86 cấp nguồn bao nhiêu volt?\n    models: [F86]\n"
+        "    expected_intent: [lookup.product_info, guide.installation]\n"
+        "    expected_domain: [product_catalog, technical_docs]\n    expected: []\n", encoding="utf-8")
+    both = ev.load_cases(cases_file)[0]
+    assert both.expected_domain == "product_catalog|technical_docs"
+    assert ev.routing_result(both, "web1", analysis("guide.installation", "retrieve", "technical_docs"), False).all_ok
+    assert ev.routing_result(both, "web1", analysis("lookup.product_info", "retrieve", "product_catalog"), False).all_ok
+    assert not ev.routing_result(both, "web1", analysis("lookup.company_info", "retrieve", "company_info"),
+                                 False).domain_ok
+
+
+def test_eval_repeat_stability_confusion_and_split(tmp_path: Path) -> None:
+    """R-1 giai đoạn A: nhiều lần chạy bước phân tích, bảng nhầm intent, định tuyến theo tag, phần dev/test."""
+    from types import SimpleNamespace as NS
+
+    ev = _eval_module()
+    cases_file = tmp_path / "c.yaml"
+    cases_file.write_text(
+        "cases:\n"
+        "  - id: R1\n    question: 'Tham số #12100 trên F54 là gì'\n    models: [F54]\n"
+        "    tags: ['cap:product_info~configuration']\n    expected_intent: [guide.configuration]\n"
+        "  - id: R2\n    question: F54 có mấy cổng USB\n    models: [F54]\n    domain: product_catalog\n"
+        "    tags: ['cap:product_info~configuration']\n    expected_intent: [lookup.product_info]\n    split: test\n",
+        encoding="utf-8")
+    cases = ev.load_cases(cases_file)
+    assert [c.split for c in cases] == ["dev", "test"]
+    assert [c.id for c in ev.load_cases(cases_file, split="test")] == ["R2"]
+    assert [c.id for c in ev.load_cases(cases_file, split="dev")] == ["R1"]
+    assert len(ev.load_cases(cases_file, split="all")) == 2
+    r1, r2 = cases
+
+    def analysis(intent: str, domain: str) -> NS:
+        return NS(sub_queries=[NS(intent=intent, route=NS(value="retrieve"), clarification=None,
+                                  retrieval_scope=NS(targets=[NS(domain=domain)]),
+                                  entities=NS(product_models=["F54"]))])
+
+    routing = [
+        ev.routing_result(r1, "web1", analysis("lookup.product_info", "product_catalog"), False, run=1),
+        ev.routing_result(r1, "web1", analysis("guide.configuration", "technical_docs"), False, run=2),
+        ev.routing_result(r1, "web1", None, False, run=3, error="analysis_timeout"),
+        *(ev.routing_result(r2, "web1", analysis("lookup.product_info", "product_catalog"), False, run=n)
+          for n in (1, 2, 3)),
+    ]
+    assert routing[2].error == "analysis_timeout" and not routing[2].all_ok and routing[1].all_ok
+    stability = ev.routing_stability(routing)
+    assert stability["so_lan"] == 3 and stability["on_dinh"] == 0.5 and stability["khong_on_dinh"] == ["R1"]
+    assert stability["bien_tat_ca_dung"] == (0.5, 1.0) and stability["loi_phan_tich"] == 1
+    assert ev.intent_confusion(routing) == {
+        ("guide.configuration", "lookup.product_info"): ["R1"],
+        ("guide.configuration", "(lỗi: analysis_timeout)"): ["R1"]}
+    by_tag = ev.summarize_routing_by_tag(cases, routing)["cap:product_info~configuration"]
+    assert by_tag["n"] == 2 and by_tag["tat_ca_dung"] == round(4 / 6, 3)
+    assert ev.percentile([], 95) == 0.0 and ev.percentile([10.0, 30.0, 20.0, 40.0], 50) == 20.0
+    assert ev.percentile([10.0, 30.0, 20.0, 40.0], 95) == 40.0
+
+    report = ev.render(cases, [], {"at": "t", "cases": "c.yaml", "retriever": "r", "repeat": 3, "mode": "routing",
+                                   "split": "all", "analysis_latency": {"so_lan_goi": 6, "p50_ms": 900,
+                                                                        "p95_ms": 1500, "max_ms": 1600}}, routing)
+    # R1: lần 1 sai intent + domain, lần 2 đúng, lần 3 lỗi (sai cả ba); R2 đúng cả 3 lần.
+    assert "| web1 | 3 | 0.667 | 0.833 | 0.667 | 0.667 | 0.5 | 0.5–1.0 | 1 |" in report
+    assert "| web1 | guide.configuration | lookup.product_info | 1 | R1 |" in report
+    assert "Câu không ổn định (web1):" in report and "| R2 |" in report and "✔✔✔" in report and "✘✔✘" in report
+    assert "p50 900 ms, p95 1500 ms" in report
+
+
+def test_eval_target_boost_variant_overrides_primary_targets_only() -> None:
+    from app.modules.chatbot.schemas.system import RetrievalQuery, RetrievalRequest
+
+    ev = _eval_module()
+    query = RetrievalQuery(sub_query_id="q1", query="q", answer_mode="full")
+    primary = RetrievalRequest(task_id="t", domain="product_catalog", queries=[query], boost=0.003)
+    secondary = RetrievalRequest(task_id="t", domain="technical_docs", queries=[query])
+    swept = ev._with_target_boost([primary, secondary], ev.WEB_VARIANTS["sb0.003_tb0.005"])
+    assert [r.boost for r in swept] == [0.005, 0.0] and primary.boost == 0.003
+    assert [r.boost for r in ev._with_target_boost([primary, secondary], ev.WEB_VARIANTS["sb0.003_tb0"])] == [0, 0]
+    assert ev._with_target_boost([primary], ev.WEB_VARIANTS["scope_boost0.003"]) == [primary]
+    assert ev._with_target_boost(None, ev.WEB_VARIANTS["sb0.003_tb0"]) is None
+    options = ev._options(ev.WEB_VARIANTS["sb0.003_tb0.005"], [])       # target_boost không phải tham số SQL
+    assert (options.scope_mode, options.scope_boost) == ("boost", 0.003)
+
+
+def test_eval_timed_provider_and_null_retriever() -> None:
+    from types import SimpleNamespace as NS
+
+    ev = _eval_module()
+
+    class Provider:
+        model = "m"
+
+        async def chat_complete_json(self, messages: list, response_format: Any = None) -> dict:
+            return {"sub_queries": []}
+
+    timed = ev.TimedProvider(Provider())
+    assert asyncio.run(timed.chat_complete_json(messages=[])) == {"sub_queries": []}
+    assert timed.model == "m" and timed.summary()["so_lan_goi"] == 1
+    request = NS(queries=[NS(sub_query_id="q1")])
+    result = asyncio.run(ev.NullRetriever().search([request]))
+    assert result.sub_query_id == "q1" and result.hits == [] and result.metadata == {"no_hits": "true"}

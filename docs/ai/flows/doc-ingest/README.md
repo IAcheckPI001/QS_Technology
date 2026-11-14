@@ -34,6 +34,8 @@ CLI `backend/app/modules/doc_ingest/cli.py`, chạy từ thư mục `backend`:
 | `eval --run-dir <dir> --labels <file>` | Chấm run theo nhãn mẫu → `report/eval.json`, `eval.html` | cả hai |
 | `build --run-dir <dir> [--manifest …] [--labels …] [--carry-review … --carry-chunks …]` | Chunk builder + kiểm chất lượng trên run có sẵn | `backend/venv` |
 | `figure-ocr --run-dir <dir>` | OCR nhãn trong hình ở trang có text layer → `build/figure_ocr.jsonl` | `.venv-ingest` |
+| `curate-check --catalog-run <dir>` | Kiểm dữ liệu biên soạn `curated/` với chữ PDF của run nguồn | cả hai |
+| `curated-build --catalog-run <dir> --doc-version <v>` | Dữ liệu biên soạn đã duyệt → chunk `product_catalog` (`source = manual`) → `qs_catalog/<run_id>/build/` | `backend/venv` |
 
 ```powershell
 ..\.venv-ingest\Scripts\python.exe -m app.modules.doc_ingest.cli run --pdf "<file.pdf>" --pages 11,14,167-171 --doc-id f54 --profile qs_controller
@@ -82,6 +84,7 @@ Module (`backend/app/modules/doc_ingest/`):
 | Đánh giá | `eval/` | Độ khớp profile, chấm theo nhãn mẫu |
 | Manifest | `manifest.py`, `manifests/*.yaml` | Thông tin cấp tài liệu cho chunk: doc_id, loại, model, scope, bucket |
 | Chunk builder | `build/` (`loader`, `chunker`, `render`, `fields`, `assertions`, `quality`, `builder`) | Chia đơn vị, cửa sổ cha–con, gán trường, CQ-01…CQ-10, cổng 2b, chép verdict theo `content_hash` + `section_path` |
+| Nguồn biên soạn | `curated/` (`schema`, `check`, `build`, `products/*.yaml`, `selection_matrix.yaml`) | Tài liệu pipeline trích lỗi cấu trúc (catalog): dữ liệu YAML có duyệt → chunk bám sát chữ PDF (contract C2 §15) |
 | Xuất | `export/doc_chunks_v1.py` | `DraftChunk` → dòng bảng `doc_chunks` hiện tại (chỉ ghi file) |
 | OCR nhãn hình | `parse/figure_ocr.py` | RapidOCR trên ảnh crop; nhãn chỉ vào `keywords`/`figure_labels` |
 | Duyệt | `review/approval.py` | Lõi trạng thái unit, approval theo hash |

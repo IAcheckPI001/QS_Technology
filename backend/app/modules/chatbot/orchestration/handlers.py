@@ -52,6 +52,7 @@ def build_retrieval_requests(
             control_interface=sub_query.entities.control_interface,
             spec_attributes=sub_query.entities.spec_attributes,
             queries=[query],
+            boost=target.boost,
         )
 
     return (

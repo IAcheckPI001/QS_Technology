@@ -91,6 +91,8 @@ class RetrievalRequest(SystemModel):
     control_interface: list[NonEmptyStr] = Field(default_factory=list)
     spec_attributes: list[NonEmptyStr] = Field(default_factory=list)
     queries: list[RetrievalQuery] = Field(min_length=1)
+    # Điểm cộng cho kết quả của lần tra cứu này khi gộp với các target khác (`RetrievalTarget.boost`).
+    boost: float = Field(default=0.0, ge=0)
 
 
 class ChunkAsset(SystemModel):

@@ -1,0 +1,118 @@
+# Dữ liệu biên soạn: QS ASTRO 6AH (bộ điều khiển). Quy ước: xem F54.yaml; page_value: xem F86.yaml.
+# Trang riêng 6AH (trang 12) có mục Phần mềm/Thông số trục chép từ mẫu F86 → nhiều giá trị chốt theo bảng chọn và trang
+# 6AV (C-02…C-05, C-08).
+schema_version: 1
+model: 6AH
+display_name: QS ASTRO 6AH
+family: controller
+domain: product_catalog
+sources:
+  cat: {pdf: QS_Product_Catalogue.pdf, sha256: ffff897f68d8a64ac6adf63d55d1ec47d89cabe05056b32744f5b8ca072aabf1}
+
+heading:   # tiêu đề trang riêng model (in hoa trên trang; text layer có thể ghi chữ thường)
+  title: QS ASTRO 6AH
+  subtitle: BỘ ĐIỀU KHIỂN 6 AXIS
+  interfaces: Pulse Train, EtherCAT, Mechatrolink MII/MIII
+  page: 12
+  origin: text
+  verified: true
+control_interface: [pulse_train, ethercat, mechatrolink]
+
+specs:
+  # --- Đầu trang riêng model (catalog trang 12)
+  - {key: dimension, vi: Kích thước, en: Dimension, value: "325 x 285 x 42 (mm)", page: 12, origin: text, verified: true}
+  - {key: monitor_size, vi: Màn hình, en: Monitor size, value: "8 inches", page: 12, origin: text, verified: true}
+  - {key: axis_control, vi: Số trục điều khiển, en: Axis control, value: "6 axis", page: 12, origin: text, verified: true}
+  - {key: io_link, vi: I/O tích hợp, en: I/O link, value: {pulse_train: "24/16", ethercat: "16/16", mechatrolink: "16/16"},
+     page_value: "24/16", page: 12, origin: text, verified: true, decision: C-13}
+  # --- Kết nối (trang 12)
+  - {key: connection_type, vi: Kiểu đấu nối, en: Connection type, value: Terminal block/D-Sub, page: 12, origin: text, verified: true}
+  - {key: io_integrated, vi: I/O tích hợp, en: I/O integrated, value: "24/16 (Max.Optional 256/256)", page: 12, origin: text, verified: true}
+  - {key: usb_port, vi: Cổng USB, en: USB port, value: {pulse_train: "1", ethercat: "2", mechatrolink: "2"}, page_value: "1",
+     page: 12, origin: text, verified: true, decision: C-08}
+  - {key: mpg_port, vi: Cổng MPG, en: MPG port, value: "1", page: 12, origin: text, verified: true}
+  - {key: voltage_input, vi: Điện áp vào, en: Voltage input, value: 24VDC, page: 12, origin: text, verified: true}
+  # --- Phần mềm (trang 12)
+  - {key: control_system, vi: Hệ thống điều khiển, en: Control system, value: Closed loop, page_value: Open loop,
+     page: 12, origin: text, verified: true, decision: C-02}
+  - {key: plc_ladder, vi: Tích hợp PLC Ladder, en: PLC Ladder integrated, value: "Yes", page: 12, origin: text, verified: true}
+  - {key: macro, vi: Tích hợp Macro, en: Macro integrated, value: "Yes", page: 12, origin: text, verified: true}
+  - {key: backlash_compensation, vi: Bù rơ cơ khí, en: Backlash compensation, value: "Yes", page: 12, origin: text, verified: true}
+  - {key: pitch_error_compensation, vi: Bù sai số hành trình, en: Pitch error compensation, value: "Yes", page: 12, origin: text, verified: true}
+  - {key: encoder_feedback, vi: Phản hồi encoder, en: Encoder feedback,
+     value: {pulse_train: Full axis, ethercat: Absolute, mechatrolink: Absolute},
+     page_value: "Pulse Train: Index Z; EtherCAT: Full axis", page: 12, origin: recovered, verified: true, decision: C-04}
+  - {key: torque_feedback, vi: Phản hồi mô-men, en: Torque feedback, value: {pulse_train: "No", ethercat: "Yes", mechatrolink: "Yes"},
+     page_value: "Torque feedback (EtherCAT): Yes", page: 12, origin: recovered, verified: true, decision: C-05}
+  - {key: servo_parameter_management, vi: Quản lý tham số servo, en: Servo Parameters Management,
+     value: {pulse_train: "No", ethercat: "Yes", mechatrolink: "Yes"}, page: 12, origin: recovered, verified: true, decision: C-05}
+  # --- Thông số trục (trang 12)
+  - {key: feedrate_override, vi: Điều chỉnh tốc độ chạy dao, en: Feedrate override, value: "0 - 150%", page: 12, origin: text, verified: true}
+  - {key: feedrate_interpolation, vi: Nội suy tốc độ chạy dao, en: Feedrate interpolation, value: "Yes", page: 12, origin: text, verified: true}
+  - {key: pulse_output_frequency, vi: Tần số phát xung, en: Pulse output frequency, value: "500 KHz", page: 12, origin: text, verified: true}
+  - {key: mpg_feed, vi: Chạy dao bằng tay quay MPG, en: MPG Feed, value: "Yes", page: 12, origin: text, verified: true}
+  - {key: rotary_axis_endless, vi: Trục xoay quay vô tận, en: "Rotary axis, turning endlessly", value: "Yes", page: 12, origin: text, verified: true}
+  - {key: max_spindle, vi: Số trục chính tối đa, en: Max. Spindle, value: "2", page: 12, origin: text, verified: true,
+     note: "Khác 'Max. Spindle Simultaneous Control' của bảng chọn (C-07)"}
+  - {key: look_ahead, vi: Look-ahead, en: Look-Ahead, value: "1000 lines", page_value: "500 lines",
+     page: 12, origin: recovered, verified: true, decision: C-03}
+
+summary_page:   # khối "QS - ASTRO 6AH CONTROLLER" của trang tóm tắt (catalog trang 5), nguyên văn
+  heading: QS - ASTRO 6AH CONTROLLER
+  items:
+    - "Dimension: 325 x 285 x 42 (mm)"
+    - "Monitor size: 8 Inches"
+    - "Max 6 axis"
+    - "Control interface: Pulse Train, EtherCAT, Mechatrolink MII/MIII"
+    - "I/O integrated: 24/16 (Pulse Train) - Max optional 256/256"
+    - "I/O integrated: 16/16 (EtherCAT) - Max optional 256/256"
+    - "PLC, Macro integrated"
+    - "RTCP function (Option)"
+    - "Closed loop control"
+    - "Emergency button integrated"
+  page: 5
+  origin: text
+  verified: true
+
+features:   # trang 12
+  vi:
+    - Hệ thống điều khiển closed loop
+    - Tích hợp module xử lý PLC Ladder
+    - Bù rơ cơ khí, sai số hành trình (Backlash/Pitch error)
+    - Thay dao tự động (ATC)
+    - Chạy lại chương trình khi gặp sự cố
+  en:
+    - Closed loop control system
+    - Integrated PLC Ladder processing module
+    - Backlash/Pitch error compensation
+    - Automatic Tool Changer (ATC) support
+    - Program resume after interruption or fault recovery
+  page: 12
+  origin: text
+  verified: true
+
+operation_interface:   # trang 12
+  vi:
+    - Giao diện trực quan, hiển thị trạng thái vận hành
+    - Theo dõi tọa độ và thông số thời gian thực
+    - Hỗ trợ giám sát chương trình gia công dễ dàng
+    - Điều khiển thao tác nhanh, thân thiện người dùng
+  en:
+    - Intuitive operation status display
+    - Real-time coordinate and parameter monitoring
+    - Easy machining program supervision
+    - Fast operation and user-friendly control
+  page: 12
+  origin: text
+  verified: true
+
+system_package:   # khối "MODEL: ASTRO 6AH" của trang CNC Solution Controller (trang 20), nguyên văn
+  label: "MODEL: ASTRO 6AH"
+  specifications: ["6 axis (Closed loop)"]
+  control_interface: ["Pulse Train / EtherCAT", "Mechatrolink MII/MIII"]
+  items: [Astro 6AH Controller, Servo drive, Servo motor, Power supply, 4 axis MPG, I/O Link board 32, Tool Setter, 3D Touch Probe]
+  page: 20
+  origin: text
+  verified: true
+
+spec_attributes: [dimension, monitor_size, max_axis, io, loop_type, look_ahead, spindle, rtcp, ports]

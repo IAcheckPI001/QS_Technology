@@ -7,57 +7,70 @@ Cập nhật: 2026-11-14
 ## Tóm tắt
 
 - Chạy trọn luồng: security → context → làm rõ → analysis → retrieve → stream câu trả lời.
-- Retrieval mới kiểm **ở mức test**: chưa kiểm với Supabase thật, tham số chưa tối ưu, chưa
-  rerank.
-- Handoff là scaffold: không tạo ticket, `mode` luôn là `bot`.
-- Chưa gửi nguồn hoặc ảnh về frontend qua SSE; số `[S#]` đánh lại từ S1 mỗi lượt.
-- Chưa có eval cho luồng.
+- **Chat production vẫn dùng bảng cũ `doc_chunks`.** Bảng mới `doc_chunks_v2` (F54 296 chunk, F86 Installation 23, catalog 37; đều `draft`) mới chỉ công cụ eval dùng; tích hợp vào chat ("bước 6") chưa làm.
+- Đang làm **R-1**: tối ưu bước phân tích (intent, mô tả, model LLM) và định tuyến tra cứu. Kế hoạch 4 giai đoạn A–D đã duyệt; A và phần code của B đã xong. **Đang chặn: tài khoản OpenAI hết credit (2026-11-14)** → không đo được.
+- Production không đổi hành vi trong R-1: mặc định prompt `v1`, mô tả intent `v1`, luật định tuyến `r0`.
+- Handoff là scaffold; chưa gửi nguồn/ảnh qua SSE; số `[S#]` đánh lại mỗi lượt. Thay đổi từ catalog tới R-1 **chưa commit**.
 
 ## Độ chín từng phần
 
 | Phần | Trạng thái | Ghi chú |
 |---|---|---|
-| SecurityStage | có | [security-stage-pipeline.md](../../security-stage-pipeline.md) |
-| Context, Prune, `ConversationState` | có | Cần cột `chat_history.conversation_state` (thêm tay, chưa kiểm live); chưa nạp summary |
-| Vòng làm rõ | có | |
-| Analysis đa ngôn ngữ | có | Câu cố định chỉ có `vi`, `en` |
-| Retrieve hybrid có lọc | có, mức test | Không rerank, không `unaccent` cho FTS; chưa dùng `chunk_type`, `doc_type`, `keywords` |
-| Handoff | scaffold | Chưa nối nền tảng nhân viên, chưa có đường trả về `mode=bot` |
-| SSE nguồn/ảnh | chưa có | |
-| `chat_history.retrieved_chunk_ids` | chưa điền | Cột là `UUID[]`, `doc_chunks.id` là `bigint` |
+| SecurityStage, Context, Prune | có | [security-stage-pipeline.md](../../security-stage-pipeline.md); cột `chat_history.conversation_state` thêm tay, chưa kiểm live |
+| Vòng làm rõ | có | Sub-query có cụm lạ bị giữ lại, không tra cứu (lỗi D26, xem R-1) |
+| Analysis đa ngôn ngữ | có | Prompt và mô tả intent có phiên bản (`v1`); câu cố định chỉ có `vi`, `en` |
+| Luật định tuyến bằng code | có, chỉ eval | `r0` (production) = không luật; `r1`, `r2`, RT-3b chờ đo và duyệt |
+| Retrieve hybrid | có, mức test | Production: bảng cũ, không rerank. Repository v2 (eval): FTS sạch, scope cộng điểm 0,003 |
+| Eval tra cứu + định tuyến | có | `evals/run_retrieval_eval.py`; 5 bộ câu (2 bộ nháp chờ duyệt) |
+| Handoff; SSE nguồn/ảnh; `retrieved_chunk_ids` | scaffold; chưa có; chưa điền | Cột là `UUID[]`, `doc_chunks.id` là `bigint` |
+
+## R-1: tiến độ, quyết định, kết quả
+
+Kế hoạch đầy đủ (đã duyệt): [p3_r1_routing_plan.md](../../reports/p3_r1_routing_plan.md). Diễn biến: LOG 2026-11-14.
+
+| Giai đoạn | Trạng thái | Còn lại |
+|---|---|---|
+| Gắn phiên bản prompt | xong | `PROMPT_VERSION = "v1"`, `INTENT_DESC_VERSION = "v1"`; test ghim dấu nội dung |
+| A. Công cụ đo + bộ câu | công cụ xong; bộ câu nháp | Toma duyệt `routing_intent.yaml` (120 câu), `dual_source.yaml` (19 câu); mốc 3 bộ còn thiếu |
+| B. Luật định tuyến `r1`/`r2` | code + test xong | Đo (cần credit); Toma chọn bản + `target_boost`; chọn RT-3 hay RT-3b |
+| C. Mô tả intent + khung prompt `v2` | chưa bắt đầu | Tổng hợp nội dung nguồn → soạn → Toma duyệt câu chữ → đo |
+| D. So model LLM | chưa bắt đầu | Toma chốt 2–3 model ứng viên |
+
+Quyết định đã chốt (Toma 2026-11-14): scope cộng điểm 0,003 thay lọc cứng (R-2, đã là mặc định `MatchV2Options`); mọi thay đổi prompt/mô tả intent/luật định tuyến có phiên bản, bản mới chỉ eval chọn tới khi duyệt; D01 sửa bằng luật RT-1 (tìm cả catalog lẫn tài liệu kỹ thuật), không nới nhãn; K09 chấp nhận cả hai intent tra catalog; không làm fallback theo ngưỡng điểm (điểm chunk sai 0,53–0,65 chồng lên chunk đúng).
+
+Kết quả đo (prompt `v1`, luật `r0`, gpt-4.1-mini, 3 lần mỗi câu; thư mục trong `data/retrieval_eval/`):
+
+| Bộ câu | Đúng cả ba web1 / web2 | Ổn định | Ghi chú |
+|---|---|---|---|
+| 40 câu (`20261114-154614-baseline-v1-r0-diverse40`) | 0,867 / 0,867 | 0,925 / 0,95 | Nhiễu giữa các lần 2,5–5 điểm %; web2 scope 0,003: recall@5 0,853, MRR 0,798. Ước tính có luật (không gọi LLM, chưa phải số đo): domain đúng 0,90 → 1,0 |
+| 120 câu nháp (`20261114-155459-draft-v1-r0-routing120`) | 0,936 / 0,942 | 0,975 / 0,983 | Nhóm tên board/phụ kiện 0,29 / 0,71 |
+| 14 câu, catalog 20, hai nguồn 19 | **chưa có** | — | Dừng vì hết credit |
 
 ## Vấn đề mở
 
 | ID | Vấn đề |
 |---|---|
-| H1 | Handoff hứa chuyển nhân viên nhưng không tạo ticket |
-| H6 | `[S#]` không lưu, đánh lại mỗi lượt |
-| E-05 | Nhánh FTS của `match_doc_chunks` bỏ mọi dòng khi bộ lọc model là mảng rỗng (nhánh vector coi là không lọc); ghi ở [p2_chunk_contract.md](../../reports/p2_chunk_contract.md). **Trên Supabase thật nặng hơn** (đọc 2026-11-13): cả hai nhánh dùng `p_models is null` → `[]` làm cả vector lẫn FTS trả rỗng |
-| L-2 | Supabase thật chưa áp `migrate_product_models_crm.sql`: check `product_models` còn ASTRO_*; `embedding` nullable (repo ghi not null). Chi tiết: [p2_doc_chunks_schema_review.md](../../reports/p2_doc_chunks_schema_review.md) §1 |
-| L-4 | Supabase thật có 0 dòng `technical_docs` (3 dòng thử: product_catalog, company_info) trong khi registry khai báo coverage F86 |
-| R-1 | Bước phân tích chọn sai intent → sai domain: 40 câu đúng cả ba 0,875 (D21 "#12100", D30 không dấu → `lookup.product_info`; D06 → troubleshoot). Kế hoạch: rà soát độ phủ intent/trường ↔ chunk trước, rồi luật code có phiên bản, fallback khi yếu, mô tả intent |
-| R-2 | **Đã chốt cộng điểm 0,003** (Toma 2026-11-14). 40 câu web2: lọc 0,735 / 0,673 → 0,853 / 0,798; 8 câu scope MRR 1,0. Chưa đổi mặc định `MatchV2Options` (làm cùng R-1) |
-| R-3 | `coverage` của registry viết cứng (chỉ F86); nạp tài liệu mới phải sửa code |
-| R-4 | FTS OR từ phổ biến làm chunk tổng quan thắng chunk đúng. `fts_clean` **đã bật** mặc định ở repository v2 (Toma 2026-11-13; core MRR 0,643 → 0,861); vẫn đo song song (`no_fts_clean`) với câu hỏi đa dạng |
-| D-008 | Quyết định 2026-11-13: chỉ tìm trên chunk con/độc lập, cha chỉ mở rộng ngữ cảnh ([decisions.md](../../decisions.md)). Chưa làm: cột `chunk_role` trong `doc_chunks` + điều kiện trong `match_doc_chunks`; làm cùng bước xuất bản chunk builder (loader mới, E-01) |
-| — | Mã model dính chữ tiếng Việt ("F86có") không còn được nhận vì yêu cầu ranh giới mã |
-| — | Dữ liệu capabilities của F86E, 6AHE, 6AVE, 10iV, 10iVE là tạm (chép từ model gốc); Supabase cần `backend/sql/migrate_product_models_crm.sql` |
+| **B-1** | **Tài khoản OpenAI hết credit** (429 `credit_balance_exhausted`, 2026-11-14). Chặn mọi phép đo; dịch vụ chat dùng cùng key cũng lỗi cho tới khi nạp |
+| R-1 | Bước phân tích chọn sai intent → sai nguồn; còn nguyên ở production (`r0`): (a) câu có mã hoặc hỏi "là gì"/"cài ở đâu"/"công thức" bị xếp `lookup.product_info` → chỉ tìm catalog (D21, D30, Q8, Q9, R004, R008, R022); (b) câu thông số có câu trả lời ở manual chỉ tìm catalog (D01, Q12, D39); (c) tên board/phụ kiện/thiết bị hãng khác bị coi là model lạ → **không tra cứu** (D26, R107–R114); (d) vận hành ↔ xử lý sự cố (D06), phụ kiện ↔ công ty (R104). Luật `r1`/`r2` nhắm (a)–(c), chưa đo |
+| R-1a/b/c | (a) Hai nguồn định nghĩa intent lệch nhau: `desc` (registry) và `<intent_rules>` (quy tắc 4 đòi "CÁC BƯỚC") → sửa ở giai đoạn C. (b) Chọn RT-3 (danh sách `non_model_terms`, nháp: 08_RLTR, RBT-01) hay RT-3b (cụm lạ không có model gần giống; thăm dò ủng hộ) — chờ Toma. (c) "Đúng cả ba" vẫn tính sai khi intent lệch nhãn dù tìm đúng nguồn → sau RT-1 quyết định theo "domain đúng" + `ngu_canh` |
+| R-2, R-4 | Scope cộng điểm đã áp (khi intent chắc chắn đúng thì lọc cứng vẫn nhỉnh hơn, câu S8). `fts_clean` đã bật ở repository v2, vẫn đo song song `no_fts_clean` |
+| R-3 | `coverage` của registry viết cứng (chỉ F86 có `technical_docs`); eval phải thêm F54 trong bộ nhớ; nạp tài liệu mới phải sửa code |
+| C-1, C-2 | Registry thêm `10S`, `10i` (tên tạm, chờ CRM). Catalog 7 bộ điều khiển đã nạp (37 chunk, draft, chưa gắn hình); câu tiếng Việt vs nhãn tiếng Anh xếp thấp (K09 hạng 3, K10, K19) → `--vi-keywords` **chờ Toma**. Còn thiếu servo, board (trang 22), phụ kiện (trang 23), thông tin công ty (D39 chờ dữ liệu board) |
+| E-05 | Nhánh FTS của `match_doc_chunks` bỏ mọi dòng khi bộ lọc model là mảng rỗng; trên Supabase thật cả hai nhánh trả rỗng với `[]` ([p2_chunk_contract.md](../../reports/p2_chunk_contract.md)) |
+| L-2, L-4 | Supabase thật chưa áp `migrate_product_models_crm.sql` (check `product_models` còn ASTRO_*, `embedding` nullable; [p2_doc_chunks_schema_review.md](../../reports/p2_doc_chunks_schema_review.md) §1); bảng cũ có 0 dòng `technical_docs` dù registry khai báo coverage F86 |
+| D-008 | Chỉ tìm trên chunk con/độc lập ([decisions.md](../../decisions.md)); bảng cũ chưa có cột `chunk_role` + điều kiện trong `match_doc_chunks` |
+| H1, H6, T-1 | Handoff không tạo ticket; `[S#]` không lưu qua lượt; trace production chưa ghi phiên bản prompt/luật định tuyến (mới có log và `warnings`) |
+| — | Mã model dính chữ tiếng Việt ("F86có") không được nhận; capabilities của F86E, 6AHE, 6AVE, 10iV, 10iVE là tạm |
 
 ## Kết quả kiểm gần nhất
 
-2026-11-11:
-- Từ `backend/`: `.\venv\Scripts\python.exe -m pytest tests` → 938 passed, 14 skipped.
-- Trong `widget-backend/`: `npm test` → 22 pass.
-- Từ root: `npm run build` đạt; `npm run lint` lỗi sẵn có (429 lỗi: 139 trong `src/`, 290 do
-  eslint quét `.claude/worktrees/`).
+2026-11-14, từ `backend/`: `pytest tests` → 1120 passed, 14 skipped; `pytest tests\doc_ingest` (venv ingest) → 376 passed; `scripts\check_ai_docs.py` → đạt.
+Chưa chạy lại đợt này (không đổi frontend): `npm test` widget-backend, `npm run build`, `npm run lint` (số 2026-11-11: 22 pass; build đạt; lint 429 lỗi sẵn có).
 
 ## Bước tiếp theo
 
-1. `doc_chunks_v2` + `match_doc_chunks_v2` đã áp lên Supabase (2026-11-13, D-009,
-   [p2_doc_chunks_schema_review.md](../../reports/p2_doc_chunks_schema_review.md)); đã nạp F54 (296) + F86
-   Installation (23), đều `draft`. Eval 14 câu: core recall@5 0,929; web lượt 2 recall@5 0,643; định tuyến đúng cả
-   ba 0,786 (R-1…R-4). Tiếp: tối ưu định tuyến + trộn điểm dần dần (kế hoạch riêng), bộ câu hỏi lớn dần.
-2. Sửa E-05 (trong `match_doc_chunks_v2`).
-3. SSE nguồn/ảnh và quyết định kiểu `retrieved_chunk_ids`.
-4. Handoff thật (H1), lưu `[S#]` qua lượt (H6).
-5. Eval cho luồng website.
+1. **Toma:** nạp credit OpenAI; duyệt `evals/retrieval_cases/routing_intent.yaml` và `dual_source.yaml` (nên thêm 20–30 câu `test` theo cách hỏi thật); chọn RT-3 hay RT-3b; quyết `--vi-keywords`.
+2. Khi có credit, từ `backend/`: `evals\run_retrieval_eval.py --cases evals\retrieval_cases\<bộ>.yaml --mode website --repeat 3 --label <nhãn>` cho mốc còn thiếu (`sample_f54_f86`, `catalog_f54_astro`, `dual_source`); rồi thêm `--routing-version r1` / `r2` / `RT-1+RT-2+RT-3b` trên cả 5 bộ (bộ 120 câu dùng `--mode routing`). Biến thể `sb0.003_tb0`, `sb0.003_tb0.005` để chọn `target_boost`. Quyết định theo `ngu_canh`, MRR web2, "domain đúng"; chênh lệch dưới biên nhiễu không tính.
+3. Cổng B: Toma chọn bản luật; đổi `ROUTING_VERSION` mặc định cùng lúc tích hợp `doc_chunks_v2` vào chat.
+4. Giai đoạn C (prompt `v2`), rồi D (so model bằng `--analysis-model`).
+5. Sau R-1: tích hợp `doc_chunks_v2` vào chat, sửa E-05, SSE nguồn/ảnh, handoff thật (H1), lưu `[S#]` (H6).

@@ -47,8 +47,9 @@ def test_product_model_uses_registry_aliases(value, expected):
 
 
 def test_ambiguous_product_model_is_rejected():
-    detail = _error(filters=[{"field": "product_model", "operator": "eq", "value": "10i"}])
-    assert "unknown value '10i'" in detail and "10iV" in detail
+    # "Astro 10" mơ hồ (10iV, 10iVE, 10i, 10S); "10i" là model catalog từ 2026-11-14.
+    detail = _error(filters=[{"field": "product_model", "operator": "eq", "value": "Astro 10"}])
+    assert "unknown value 'Astro 10'" in detail and "10iV" in detail
 
 
 def test_string_values_compare_case_insensitively():

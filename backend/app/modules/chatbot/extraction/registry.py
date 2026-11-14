@@ -115,25 +115,30 @@ REGISTRY: dict[str, Any] = {
     # ----------------------------------------------------------------- entities
     # Mã canonical = `product_name` của CRM (danh mục đầy đủ), để báo cáo CRM và tra cứu
     # tài liệu dùng chung một mã. Model chưa có alias chính thức dùng chính mã làm tên.
+    # 10S, 10i (2026-11-14): model trong catalog QS (ASTRO 10S, ASTRO 10i). Tên chuẩn model đang được CRM chuẩn hóa →
+    # tạm dùng mã "10S", "10i"; "Astro 10i" là alias của 10i (không còn mơ hồ với 10iV/10iVE). Xem lại khi CRM chốt tên.
     "product_models": [
-        "F54", "F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE",
+        "F54", "F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE", "10S", "10i",
     ],
     # So khớp bỏ qua hoa/thường, khoảng trắng, "_" và "-": "Astro 6AH" cũng nhận mã cũ ASTRO_6AH.
     "aliases": {
         "Astro 6AH": "6AH",
         "Astro 6AV": "6AV",
+        "Astro 10S": "10S",
+        "Astro 10i": "10i",
     },
     "ambiguous_aliases": {
-        "10i": ["10iV", "10iVE"], "Astro 10i": ["10iV", "10iVE"],
-        "Astro 10": ["10iV", "10iVE"],
+        "Astro 10": ["10iV", "10iVE", "10i", "10S"],
         "Astro 6A": ["6AH", "6AHE", "6AV", "6AVE"],
         "6A": ["6AH", "6AHE", "6AV", "6AVE"],
-        "Astro": ["6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE"],
+        "Astro": ["6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE", "10S", "10i"],
     },
     # Tên hiển thị khi hỏi lại/nút bấm; model không có ở đây hiển thị bằng mã.
     "display_names": {
         "6AH": "Astro 6AH",
         "6AV": "Astro 6AV",
+        "10S": "Astro 10S",
+        "10i": "Astro 10i",
     },
     "control_interface": {
         "pulse_train": "Pulse Train/xung",
@@ -173,6 +178,9 @@ REGISTRY: dict[str, Any] = {
             "6AVE": ["pulse_train", "ethercat", "mechatrolink"],
             "10iV": ["pulse_train", "ethercat", "mechatrolink"],
             "10iVE": ["pulse_train", "ethercat", "mechatrolink"],
+            # Theo bảng chọn catalog QS trang 6–7 (doc_ingest/curated/selection_matrix.yaml).
+            "10S": ["pulse_train", "ethercat"],
+            "10i": ["pulse_train", "ethercat", "mechatrolink"],
         },
     },
 
@@ -181,12 +189,17 @@ REGISTRY: dict[str, Any] = {
     # list[model]     : model có dữ liệu
     # dict[model, ifs]: [C7] model có dữ liệu, chỉ cho các control_interface liệt kê
     "coverage": {
-        # Theo doc_chunks sau backend/sql/migrate_product_models_crm.sql (ASTRO_10I -> 10iV).
-        "product_catalog": ["F54", "F86", "F10T", "6AH", "6AV", "10iV"],
+        # Theo doc_chunks sau backend/sql/migrate_product_models_crm.sql (ASTRO_10I -> 10iV); 10S, 10i: catalog QS
+        # biên soạn (doc_ingest/curated, doc_chunks_v2). Giữ 10iV theo Toma 2026-11-14.
+        "product_catalog": ["F54", "F86", "F10T", "6AH", "6AV", "10iV", "10S", "10i"],
         "technical_docs": {"F86": ["pulse_train", "ethercat"]},
         "company_info": None,
     },
  
+    # [RT-3] Tên board/phụ kiện đã biết: KHÔNG phải model bộ điều khiển. LLM hay ghi các tên này vào
+    # unresolved_mentions → hỏi lại "model lạ" và không tra cứu. NHÁP 2026-11-14, chờ Toma duyệt danh sách.
+    "non_model_terms": ["08_RLTR", "RBT-01"],
+
     # Thứ tự ưu tiên khi nhiều lý do cùng đúng (cụ thể -> chung)
     "clarification_order": [
         "ambiguous_product_model",
@@ -200,3 +213,68 @@ REGISTRY: dict[str, Any] = {
  
 class RegistryError(ValueError):
     pass
+
+
+# ---------------------------------------------------------------- phiên bản luật định tuyến (R-1)
+# Luật bằng code áp sau khi LLM chọn intent (`validate_registry.resolve_sub_query`). Production dùng
+# ROUTING_VERSION; bản khác chỉ công cụ eval chọn (evals/run_retrieval_eval.py --routing-version).
+# Mỗi luật chạy ghi `routing_rule:<mã>` vào warnings của sub-query.
+#   RT-1  sub-query tra catalog (lookup.*, không phải so sánh) có model có tài liệu kỹ thuật → tìm thêm
+#         technical_docs; target catalog được cộng ROUTING_TARGET_BOOST khi gộp kết quả.
+#   RT-2  như RT-1 nhưng câu có mã kỹ thuật (ROUTING_CODE_PATTERN) → technical_docs là target chính.
+#   RT-3  cụm trong non_model_terms không phải model lạ (bỏ khỏi unresolved_mentions).
+#   RT-3b cụm lạ KHÔNG có model nào gần giống (suggest_models rỗng) không phải model lạ. Tổng quát hơn RT-3:
+#         bao cả tên thiết bị hãng khác ("Yaskawa Sigma-7"); model gõ sai ("F84") vẫn có gợi ý nên vẫn hỏi lại.
+#   RT-4  như RT-1 nhưng câu có cụm cấu hình/cách làm (ROUTING_CONFIG_CUES) → technical_docs là target chính.
+ROUTING_VERSION = "r0"
+ROUTING_RULES: dict[str, frozenset[str]] = {
+    "r0": frozenset(),
+    "r1": frozenset({"RT-1", "RT-2", "RT-3"}),
+    "r2": frozenset({"RT-1", "RT-2", "RT-3", "RT-4"}),
+}
+ROUTING_RULE_IDS = frozenset({"RT-1", "RT-2", "RT-3", "RT-3b", "RT-4"})
+ROUTING_TARGET_BOOST = 0.003
+# Mã kỹ thuật trong câu: tham số (#12100), connector/tín hiệu (CN10, X40, Y41), alarm (AL12, E05), lệnh M/G
+# (M100, G00). Không khớp tên cổng chung (RS485, USB2) hay mã model.
+ROUTING_CODE_PATTERN = re.compile(
+    r"(?<![a-z0-9])(?:#\s?\d+|cn\d+|[xy]\d+|al\d+|e\d{2,}|[mg]\d{1,4})(?![a-z0-9])", re.I)
+# So trên câu đã bỏ dấu, viết thường.
+ROUTING_CONFIG_CUES = (
+    "tham so", "cai o dau", "chinh o dau", "dat o dau", "cai dat", "thiet lap", "khai bao", "cong thuc",
+    "parameter", "formula", "how to set", "how do i set", "configure",
+)
+
+
+def routing_rules(version: str | None = None) -> frozenset[str]:
+    """Tập luật của một phiên bản (None = production). Thử nghiệm: chuỗi mã nối bằng "+" ("RT-1+RT-3b")."""
+    version = version or ROUTING_VERSION
+    if version in ROUTING_RULES:
+        return ROUTING_RULES[version]
+    rules = frozenset(version.split("+"))
+    if not rules <= ROUTING_RULE_IDS:
+        raise RegistryError(f"không có phiên bản luật định tuyến {version!r}")
+    return rules
+
+
+# ---------------------------------------------------------------- phiên bản mô tả intent
+# Trường "desc" của REGISTRY["intents"] là bản INTENT_DESC_VERSION (production dùng bản này).
+# Bản thử nghiệm đặt ở INTENT_DESC_VARIANTS[<phiên bản>] = {intent: desc}, chỉ ghi intent có mô tả
+# KHÁC bản mặc định; chỉ công cụ eval chọn (evals/run_retrieval_eval.py --intent-desc-version).
+# Sửa "desc" thì tăng INTENT_DESC_VERSION: tests/chatbot/test_analysis_prompt_version.py ghim dấu
+# nội dung của từng phiên bản.
+INTENT_DESC_VERSION = "v1"
+INTENT_DESC_VARIANTS: dict[str, dict[str, str]] = {}
+
+
+def intent_descriptions(version: str | None = None) -> dict[str, str]:
+    """Mô tả của mọi intent theo phiên bản (None = bản production)."""
+    base = {name: spec["desc"] for name, spec in REGISTRY["intents"].items()}
+    if version in (None, INTENT_DESC_VERSION):
+        return base
+    if version not in INTENT_DESC_VARIANTS:
+        raise RegistryError(f"không có phiên bản mô tả intent {version!r}")
+    variant = INTENT_DESC_VARIANTS[version]
+    unknown = sorted(set(variant) - set(base))
+    if unknown:
+        raise RegistryError(f"mô tả intent {version}: intent không có trong registry: {unknown}")
+    return {**base, **variant}

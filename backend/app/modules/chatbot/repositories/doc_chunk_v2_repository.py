@@ -59,11 +59,12 @@ _FETCH_SQL = text("""
 @dataclass(frozen=True)
 class MatchV2Options:
     """Tham số riêng của `match_doc_chunks_v2`. Mặc định = hành vi production dự kiến (chỉ chunk approved, không
-    tìm cha, không nhánh mã, không bỏ dấu, không cộng điểm loại, **làm sạch câu FTS**, scope lọc cứng).
+    tìm cha, không nhánh mã, không bỏ dấu, không cộng điểm loại, **làm sạch câu FTS**, **scope cộng điểm 0,003**).
 
     Toma 2026-11-13: bật `fts_clean` (eval 14 câu: MRR core 0,643 → 0,861, không câu nào tụt) nhưng tiếp tục đo song
-    song với câu hỏi đa dạng; trọng số giữ 1 (giảm FTS có hại); scope giữ `filter` tới khi sửa I-46 và đo lại
-    `filter`/`boost` với câu phân biệt theo scope."""
+    song với câu hỏi đa dạng; trọng số giữ 1 (giảm FTS có hại).
+    Toma 2026-11-14 (R-2): scope cộng điểm 0,003 thay cho lọc cứng — intent do LLM chọn hay sai scope, lọc cứng làm
+    mất chunk đúng (40 câu web2: recall@5 0,735 → 0,853). Khi intent chắc chắn đúng thì lọc vẫn nhỉnh hơn (S8)."""
 
     codes: tuple[str, ...] = ()
     chunk_types: tuple[str, ...] = ()
@@ -78,8 +79,8 @@ class MatchV2Options:
     code_weight: float = 1.0
     fts_clean: bool = True
     # R-2: "filter" = scope là bộ lọc cứng (như cũ); "boost" = không lọc, cộng `scope_boost` cho chunk đúng scope.
-    scope_mode: str = "filter"
-    scope_boost: float = 0.0
+    scope_mode: str = "boost"
+    scope_boost: float = 0.003
 
     def with_(self, **changes: Any) -> MatchV2Options:
         return replace(self, **changes)

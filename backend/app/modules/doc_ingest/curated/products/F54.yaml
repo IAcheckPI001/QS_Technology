@@ -1,0 +1,116 @@
+# Dữ liệu biên soạn: QS F54 (bộ điều khiển). Nguồn biên soạn có duyệt (doc-ingest LOG 2026-11-14).
+# Quy ước:
+#   page    : số trang PDF (pdf_page_index) trong nguồn `source`.
+#   origin  : text     = có trong text layer, trích đúng
+#             recovered= có trong text layer nhưng pipeline tách/loại (I-48: giá trị bị T-17 loại, cặp tên–giá trị tách)
+#             image    = chỉ có trên ảnh trang (icon ✓/✗, ô gộp), Claude chép lại
+#   verified: true cho tới khi người duyệt xác nhận; chỉ giá trị verified: true mới được sinh chunk.
+#   decision: mã quyết định khi hai nguồn mâu thuẫn (C-xx, doc-ingest LOG 2026-11-14).
+# Thông số có trong bảng chọn model nằm ở selection_matrix.yaml (một nguồn duy nhất); file này giữ thông số của trang
+# riêng model, trang tóm tắt và trọn bộ hệ thống. curate_check so các key trùng giữa hai file và báo lệch.
+schema_version: 1
+model: F54
+display_name: QS F54
+family: controller
+domain: product_catalog
+sources:
+  cat: {pdf: QS_Product_Catalogue.pdf, sha256: ffff897f68d8a64ac6adf63d55d1ec47d89cabe05056b32744f5b8ca072aabf1}
+  # Trang 7 hồ sơ công ty lặp lại trang tóm tắt 4 của catalog: không chép, catalog là nguồn chuẩn thông số.
+
+heading:   # tiêu đề trang riêng model (in hoa trên trang; text layer có thể ghi chữ thường)
+  title: QS F54
+  subtitle: BỘ ĐIỀU KHIỂN 4 AXIS
+  interfaces: Pulse Train
+  page: 8
+  origin: text
+  verified: true
+control_interface: [pulse_train]
+
+specs:
+  # --- Đầu trang riêng model (catalog trang 8), khớp trang tóm tắt (trang 4)
+  - {key: dimension, vi: Kích thước, en: Dimension, value: "220 x 140 x 30 (mm)", page: 8, origin: text, verified: true}
+  - {key: monitor_size, vi: Màn hình, en: Monitor size, value: "5 inches", page: 8, origin: text, verified: true}
+  - {key: axis_control, vi: Số trục điều khiển, en: Axis control, value: "4 axis", page: 8, origin: text, verified: true}
+  - {key: io_link, vi: I/O tích hợp, en: I/O link, value: "16/6", page: 8, origin: text, verified: true}
+  # --- Kết nối (trang 8)
+  - {key: connection_type, vi: Kiểu đấu nối, en: Connection type, value: Terminal block, page: 8, origin: text, verified: true}
+  - {key: io_integrated, vi: I/O tích hợp, en: I/O integrated, value: "16/6 (Max.Optional 256/256)", page: 8, origin: text, verified: true}
+  - {key: usb_port, vi: Cổng USB, en: USB port, value: "1", page: 8, origin: text, verified: true}
+  - {key: mpg_port, vi: Cổng MPG, en: MPG port, value: "1", page: 8, origin: text, verified: true}
+  - {key: voltage_input, vi: Điện áp vào, en: Voltage input, value: 24VDC, page: 8, origin: text, verified: true}
+  # --- Phần mềm (trang 8). Giá trị cột phải bị tách khỏi tên (I-48), "Index Z" bị T-17 loại → recovered
+  - {key: control_system, vi: Hệ thống điều khiển, en: Control system, value: Open loop, page: 8, origin: recovered, verified: true}
+  - {key: plc_ladder, vi: Tích hợp PLC Ladder, en: PLC Ladder integrated, value: "Yes", page: 8, origin: recovered, verified: true}
+  - {key: macro, vi: Tích hợp Macro, en: Macro integrated, value: "Yes", page: 8, origin: recovered, verified: true}
+  - {key: backlash_compensation, vi: Bù rơ cơ khí, en: Backlash compensation, value: "Yes", page: 8, origin: recovered, verified: true,
+     note: "Trang ghi dòng gộp 'Backlash/Pitch error compensation: Yes'; tách theo C-01"}
+  - {key: pitch_error_compensation, vi: Bù sai số hành trình, en: Pitch error compensation, value: "No", page: 6, origin: image, verified: true,
+     decision: C-01}
+  - {key: encoder_feedback, vi: Phản hồi encoder, en: Encoder feedback (Pulse Train), value: Index Z, interface: pulse_train, page: 8, origin: recovered, verified: true}
+  # --- Thông số trục (trang 8)
+  - {key: feedrate_override, vi: Điều chỉnh tốc độ chạy dao, en: Feedrate override, value: "0 - 150%", page: 8, origin: recovered, verified: true}
+  - {key: feedrate_interpolation, vi: Nội suy tốc độ chạy dao, en: Feedrate interpolation, value: "Yes", page: 8, origin: recovered, verified: true}
+  - {key: pulse_output_frequency, vi: Tần số phát xung, en: Pulse output frequency, value: "500 KHz", page: 8, origin: recovered, verified: true}
+  - {key: mpg_feed, vi: Chạy dao bằng tay quay MPG, en: MPG Feed, value: "Yes", page: 8, origin: recovered, verified: true}
+  - {key: rotary_axis_endless, vi: Trục xoay quay vô tận, en: "Rotary axis, turning endlessly", value: "Yes", page: 8, origin: recovered, verified: true}
+  - {key: max_spindle, vi: Số trục chính tối đa, en: Max. Spindle, value: "1", page: 8, origin: recovered, verified: true,
+     note: "Khác 'Max. Spindle Simultaneous Control' của bảng chọn (C-07)"}
+  - {key: look_ahead, vi: Look-ahead, en: Look-Ahead, value: "250 lines", page: 8, origin: recovered, verified: true}
+
+summary_page:   # khối "QS - F54 CONTROLLER" của trang tóm tắt (catalog trang 4), nguyên văn
+  heading: QS - F54 CONTROLLER
+  items:
+    - "Dimension: 220 x 140 x 30 (mm)"
+    - "Monitor size: 5 Inches"
+    - "Max 4 axis"
+    - "Control interface: Pulse Train"
+    - "I/O integrated: 16/6 (Pulse Train) - Max optional 256/256"
+    - "PLC, Macro integrated"
+    - "Open loop control"
+  page: 4
+  origin: text
+  verified: true
+
+features:   # "Tính năng nổi bật / Advanced features" (trang 8), giữ nguyên văn hai ngôn ngữ
+  vi:
+    - Hệ thống điều khiển Open loop
+    - Tích hợp module xử lý PLC Ladder
+    - Bù rơ cơ khí (Backlash)
+    - Thay dao tự động (ATC)
+    - Chạy lại chương trình khi gặp sự cố
+  en:
+    - Open loop control system
+    - Integrated PLC Ladder processing module
+    - Backlash compensation
+    - Automatic Tool Changer (ATC) support
+    - Program resume after interruption or fault recovery
+  page: 8
+  origin: text
+  verified: true
+
+operation_interface:   # "Giao diện vận hành" (trang 8)
+  vi:
+    - Giao diện trực quan, hiển thị trạng thái vận hành
+    - Theo dõi tọa độ và thông số thời gian thực
+    - Hỗ trợ giám sát chương trình gia công dễ dàng
+    - Điều khiển thao tác nhanh, thân thiện người dùng
+  en:
+    - Intuitive operation status display
+    - Real-time coordinate and parameter monitoring
+    - Easy machining program supervision
+    - Fast operation and user-friendly control
+  page: 8
+  origin: text
+  verified: true
+
+system_package:   # khối "MODEL: F54" của trang CNC Solution Controller (trang 19), nguyên văn
+  label: "MODEL: F54"
+  specifications: ["4 axis (Openloop)"]
+  control_interface: ["Pulse Train"]
+  items: [F54 Controller, Servo drive, Servo motor, Power supply, 4 axis MPG, I/O Link board RLTR]
+  page: 19
+  origin: text
+  verified: true
+
+# Gán cho bước sinh chunk (không phải dữ liệu nguồn): trường lọc/cộng điểm của match_doc_chunks_v2.
+spec_attributes: [dimension, monitor_size, max_axis, io, loop_type, look_ahead, spindle, ports]

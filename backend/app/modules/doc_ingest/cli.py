@@ -26,6 +26,11 @@ Chạy (từ thư mục backend):
 `build` để đưa vào `embed_text`:
     .\\venv\\Scripts\\python.exe -m app.modules.doc_ingest.cli enrich --run-dir <run> --sample 20 --dry-run
 
+`curate-check` / `curated-build`: nhánh nguồn biên soạn có duyệt (`curated/`, catalog) — kiểm dữ liệu với chữ PDF
+của run nguồn, rồi sinh chunk `product_catalog` (`source = manual`) → `<out>/qs_catalog/<run_id>/build/`:
+    .\\venv\\Scripts\\python.exe -m app.modules.doc_ingest.cli curated-build \\
+        --catalog-run ..\\data\\ingest_runs\\qs_catalog\\<run_id> --doc-version 2026-11-14
+
 Docling chỉ được import (qua `parse/docling_runner`) khi cần parse hoặc render PDF.
 """
 
@@ -100,7 +105,65 @@ def _parser() -> argparse.ArgumentParser:
     ea = sub.add_parser("enrich-approve", help="cổng 2c đạt → ghi build/enrichment_approval.json (chạy lại build)")
     ea.add_argument("--run-dir", type=Path, required=True)
     ea.add_argument("--reviewer", required=True)
+    cc = sub.add_parser("curate-check", help="kiểm dữ liệu biên soạn (curated/) với chữ PDF của run tài liệu nguồn")
+    cc.add_argument("--catalog-run", type=Path, required=True, help="thư mục run `run` của PDF nguồn (vd. qs_catalog)")
+    cb = sub.add_parser("curated-build", help="dữ liệu biên soạn đã duyệt → chunk + doc_chunks_v2.jsonl (venv chính)")
+    cb.add_argument("--catalog-run", type=Path, required=True, help="run `run` của PDF nguồn (kiểm chữ in, sha256)")
+    cb.add_argument("--doc-version", required=True, help="phiên bản tài liệu, vd. 2026-11-14 (ngày nhận PDF)")
+    cb.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    cb.add_argument("--run-id", help="mặc định: curated-YYYYmmdd-HHMMSS")
+    cb.add_argument("--vi-keywords", action="store_true",
+                    help="đưa nhãn tiếng Việt do người biên soạn đặt vào keywords (mặc định chỉ đề xuất trong báo cáo)")
     return parser
+
+
+def _curated_check(catalog_run: Path):
+    from app.modules.doc_ingest.curated import check as ck
+    from app.modules.doc_ingest.curated.schema import load_matrix, load_products
+
+    products, matrix = load_products(), load_matrix()
+    pages = ck.page_texts(catalog_run)
+    report = ck.check(products, matrix, pages, ck.run_sha256(catalog_run))
+    print(f"Dữ liệu biên soạn: {len(products)} sản phẩm, bảng chọn {len(matrix.rows)} hàng; kiểm {report.checked_texts} "
+          f"chuỗi với chữ PDF")
+    for name, items in (("chưa duyệt", report.unverified), ("không có trong PDF", report.text_missing),
+                        ("khác thứ tự (đủ từ)", report.text_reordered), ("lệch bảng chọn", report.matrix_mismatch),
+                        ("sha256 khác run", report.source_mismatch)):
+        print(f"  {name}: {len(items)}")
+        for item in items[:20]:
+            print(f"    {item}")
+    print(f"Kết quả: {'ĐẠT' if report.passed else 'KHÔNG ĐẠT'}")
+    return products, matrix, pages, report
+
+
+def cmd_curate_check(args: argparse.Namespace) -> int:
+    return 0 if _curated_check(args.catalog_run)[3].passed else 1
+
+
+def cmd_curated_build(args: argparse.Namespace) -> Path:
+    from app.modules.doc_ingest.build.builder import source_run
+    from app.modules.doc_ingest.build.fields import token_counter
+    from app.modules.doc_ingest.curated import check as ck
+    from app.modules.doc_ingest.curated.build import DOC_ID, build_chunks, write_build
+
+    products, matrix, pages, report = _curated_check(args.catalog_run)
+    if report.text_missing or report.matrix_mismatch or report.source_mismatch:
+        raise SystemExit("curated-build dừng: sửa lỗi kiểm ở trên trước")
+    counter, method = token_counter()
+    if counter is None:
+        raise SystemExit("venv này không có tiktoken: chạy bằng venv chính (.\\venv\\Scripts\\python.exe)")
+    result = build_chunks(products, matrix, args.doc_version, counter, args.vi_keywords)
+    issues = ck.content_issues(result.chunks, pages)
+    run_id = args.run_id or datetime.now().strftime("curated-%Y%m%d-%H%M%S")
+    out_dir = args.out / "qs_catalog" / run_id
+    summary = write_build(result, out_dir, source_run(out_dir), all_verified=not report.unverified)
+    print(f"Chunk {DOC_ID}: {summary['chunks']} (bỏ {len(result.unverified)} giá trị chưa duyệt; vượt token "
+          f"{len(result.over_budget)}); doc_chunks_v2: {summary['review_status']}; lỗi ràng buộc "
+          f"{len(summary['export_errors'])}; verdict {summary['verdicts']}")
+    print(f"Kiểm bám sát PDF trên content: {len(issues)} dòng có từ lạ")
+    for item in issues[:20]:
+        print(f"  {item}")
+    return out_dir / "report" / "chunks.html"
 
 
 def cmd_enrich_sample(args: argparse.Namespace) -> None:
@@ -396,6 +459,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         cmd_enrich_sample(args)
     elif args.command == "enrich-approve":
         cmd_enrich_approve(args)
+    elif args.command == "curate-check":
+        return cmd_curate_check(args)
+    elif args.command == "curated-build":
+        print(f"Báo cáo: {cmd_curated_build(args)}")
     return 0
 
 

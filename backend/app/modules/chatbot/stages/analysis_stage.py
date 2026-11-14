@@ -16,9 +16,16 @@ class AnalysisStage:
     def __init__(
         self,
         provider: OpenAIProvider,
-        n_examples: int = 4
+        n_examples: int = 4,
+        prompt_version: str | None = None,
+        intent_desc_version: str | None = None,
+        routing_version: str | None = None,
     ) -> None:
-        self.analyzer = QueryAnalyzer(provider=provider, n_examples=n_examples)
+        # prompt_version / intent_desc_version / routing_version = None: bản production; bản khác chỉ công cụ
+        # eval truyền vào.
+        self.analyzer = QueryAnalyzer(provider=provider, n_examples=n_examples, prompt_version=prompt_version,
+                                      intent_desc_version=intent_desc_version)
+        self._routing_version = routing_version
 
     def build_context_analysis(self, context: RunContext) -> str:
         parts = []
@@ -84,6 +91,7 @@ class AnalysisStage:
             if held:
                 state.analysis = build_analysis(
                     held, resumed=True, last_models=last_models, active_model=active_model,
+                    routing_version=self._routing_version,
                 )
                 state.analysis.language = _language(data.get("language"))
                 return state
@@ -98,6 +106,7 @@ class AnalysisStage:
             resumed=bool(pending and answer),
             last_models=last_models,
             active_model=active_model,
+            routing_version=self._routing_version,
         )
         state.analysis.language = _language(data.get("language"))
         return state

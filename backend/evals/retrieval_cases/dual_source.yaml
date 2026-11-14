@@ -1,0 +1,435 @@
+# Bộ câu "hai nguồn" (R-1 giai đoạn A5; Claude soạn 2026-11-14, CHỜ TOMA DUYỆT). Câu hỏi thông số/đặc điểm của
+# F54, F86 mà câu trả lời nằm ở tài liệu kỹ thuật (hoặc ở cả tài liệu kỹ thuật lẫn catalog). Bước phân tích
+# thường xếp các câu này là lookup.product_info → chỉ tìm catalog → thiếu nguồn (như D01, Q12, D39). Dùng để đo luật
+# RT-1 (tìm thêm technical_docs): so r0 ↔ r1. `expected` = chunk tài liệu kỹ thuật; chunk catalog trả lời được một
+# phần nằm ở `acceptable`. HC1–HC4 = đối chứng: câu trả lời chỉ có ở catalog, RT-1 không được làm tụt hạng.
+source_runs: ["f54/eval-m", "f86_italliation/eval-m", "qs_catalog/curated-a"]
+cases:
+  - id: H01
+    question: "Kích thước lắp đặt của bộ điều khiển F54, cần khoét lỗ tủ bao nhiêu?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["hai_nguon", "khach_hang", "kich_thuoc"]
+    expected_intent: ["lookup.product_info", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0002
+        content_hash: b0144453db790fbc41813ca29155a5e1680fe92c7b5bcffae24c9e9a19278882
+        section_path: ["PART 1:CONTROLLER OVERVIEW", "1.2 Dimension"]
+        note: "1.2 Dimension [dimension; F54; technical_docs]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0000
+        content_hash: 7472976e81fa3a1fa210bd9c8b4f63a71d731d22829411780d3e59f7c7aa358b
+        section_path: ["MOTION CONTROLLER", "QS F54"]
+        note: "QS F54 [overview; F54; product_catalog]"
+      - chunk_key: qs_product_catalogue:C0002
+        content_hash: faf5c528bd0b97fc4df04398a5ff33004e8cee4c93bf289a9b2e5109ea19b5a4
+        section_path: ["MOTION CONTROLLER", "QS - F54 CONTROLLER"]
+        note: "QS - F54 CONTROLLER [overview; F54; product_catalog]"
+  - id: H02
+    question: "Trên thân bộ điều khiển F54 có những cổng vào ra nào?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["hai_nguon", "khach_hang", "cong"]
+    expected_intent: ["lookup.product_info", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0004
+        content_hash: 12ea88ea1b1f92f82cd0312e8a82de32770a74f630ad618b3a837c94e7754ffe
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.1 Controller I/O ports"]
+        note: "2.1 Controller I/O ports [figure; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0005
+        content_hash: f9f6fd384c3f15802bbfa3ffa084c5ffb409771bce99b8a22fdc0da49cd40d44
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.1 Controller I/O ports"]
+        note: "2.1 Controller I/O ports [table; F54; technical_docs]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0000
+        content_hash: 7472976e81fa3a1fa210bd9c8b4f63a71d731d22829411780d3e59f7c7aa358b
+        section_path: ["MOTION CONTROLLER", "QS F54"]
+        note: "QS F54 [overview; F54; product_catalog]"
+  - id: H03
+    question: "F54 dùng nguồn một chiều bao nhiêu volt, đấu nguồn cần lưu ý gì?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["hai_nguon", "khach_hang", "nguon"]
+    expected_intent: ["lookup.product_info", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0006
+        content_hash: 8688c3cfea694690fe8fa93fe1d15aad0c115cc208a5469dc8eb869f927b0ba5
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.2 Controller power supply"]
+        note: "2.2 Controller power supply [figure; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0007
+        content_hash: 2629f41e8f652df32f6d108472e1eedb97080ce1682eaf9a3a290b2232384086
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.2 Controller power supply", "2.2.1 Powering instructions"]
+        note: "2.2.1 Powering instructions [figure; F54; technical_docs]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0000
+        content_hash: 7472976e81fa3a1fa210bd9c8b4f63a71d731d22829411780d3e59f7c7aa358b
+        section_path: ["MOTION CONTROLLER", "QS F54"]
+        note: "QS F54 [overview; F54; product_catalog]"
+  - id: H04
+    question: "F54 có bao nhiêu ngõ vào số và địa chỉ của chúng là gì?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["hai_nguon", "nhan_vien", "io"]
+    expected_intent: ["lookup.product_info", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0008
+        content_hash: becb23f31a5caed6124a3fd442e3b863f64e9c97e977c9c6bb601ad05d46a6df
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection"]
+        note: "2.3 Input devices connection [figure; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0009
+        content_hash: ff891e3012d9f33040b39691132108fafb8906f158aff21e9db01ef6605da033
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection"]
+        note: "2.3 Input devices connection › Input devices connection address table on F54 controller [table; F54; technical_docs]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0005
+        content_hash: f9f6fd384c3f15802bbfa3ffa084c5ffb409771bce99b8a22fdc0da49cd40d44
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.1 Controller I/O ports"]
+        note: "2.1 Controller I/O ports [table; F54; technical_docs]"
+  - id: H05
+    question: "Các ngõ ra của F54 có chức năng mặc định là gì?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["hai_nguon", "nhan_vien", "io"]
+    expected_intent: ["lookup.product_info", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0057
+        content_hash: f32fce82c6f19e39080cd98882d989e0e688d9f6ff7b6a64d0bb1ed8e2220caf
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram"]
+        note: "2.4 Output signal wiring diagram [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0058
+        content_hash: ae35e4f187d5a68a7a2470dad32421e80114c006ba669e562a2b5c23f42371fd
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram"]
+        note: "2.4 Output signal wiring diagram › Output signal functions table [table; F54; technical_docs]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0059
+        content_hash: 170ccc5390a1b2941f6e4779b8d78f7bb5f21889325704429cbbf0e35b8f6caa
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram"]
+        note: "2.4 Output signal wiring diagram › Output signal functions table [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0005
+        content_hash: f9f6fd384c3f15802bbfa3ffa084c5ffb409771bce99b8a22fdc0da49cd40d44
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.1 Controller I/O ports"]
+        note: "2.1 Controller I/O ports [table; F54; technical_docs]"
+  - id: H06
+    question: "F54 dùng được những loại tay quay MPG nào?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["hai_nguon", "khach_hang", "tu_van"]
+    expected_intent: ["lookup.product_info", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0042
+        content_hash: 1b079f42ed8d25a9eee75a4797af0d5a4f4213d4a41f578425f6011ad8528580
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle"]
+        note: "2.3.5 MPG Handle [wiring; F54; technical_docs]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0043
+        content_hash: c832866681f078a629bdc0ff98fd717e243088980b9f751b06d1cde5dafee737
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.1 MPG wiring diagram (4-wire type - differential output signal)"]
+        note: "2.3.5.1 MPG wiring diagram (4-wire type - differential output signal) [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0044
+        content_hash: 017841d7b9ef630e52bcc16b014d6bacdb546eeae2450d383c71bd2b7c6a6ec7
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.2 MPG wiring diagram (6-wire type - differential output signal)"]
+        note: "2.3.5.2 MPG wiring diagram (6-wire type - differential output signal) [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0045
+        content_hash: dda03ff7ad9f2425e8d7554efac2390ba596d35f3b82493b079ae3e405abb4be
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.3 MPG wiring diagram(4-wire type - NPN output signal)"]
+        note: "2.3.5.3 MPG wiring diagram(4-wire type - NPN output signal) [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0046
+        content_hash: 857095d01d336003d2b3aca99955f2580eb6b44f66ed8deee8191f49bf186049
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.4 MPG wiring diagram (4-wire type - PNP output signal)"]
+        note: "2.3.5.4 MPG wiring diagram (4-wire type - PNP output signal) [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0047
+        content_hash: 2f78ba374cdbf52968af6b2fe0344ecdc703e8d8245a8a14f6e4c75db7dea093
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.5 MPG wiring diagram (6-wire - NPN output)"]
+        note: "2.3.5.5 MPG wiring diagram (6-wire - NPN output) [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0048
+        content_hash: dda8ccc8d4d8ed8c7754ae2389f95b3abb377acc075d368fad4dade9f11a16bd
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.6 MPG wiring diagram (6-wire - PNP output)"]
+        note: "2.3.5.6 MPG wiring diagram (6-wire - PNP output) [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0050
+        content_hash: c9ba8c26ad7a5e59345e119686ad3135744e9de9f0b7d8446933952e0dd87b99
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.5 MPG Handle", "2.3.5.7 MPG pendant with EMG button"]
+        note: "2.3.5.7 MPG pendant with EMG button [wiring; F54; technical_docs]"
+  - id: H07
+    question: "F54 hỗ trợ cảm biến về home loại 2 dây hay 3 dây?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["hai_nguon", "khach_hang", "tu_van"]
+    expected_intent: ["lookup.product_info", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0013
+        content_hash: 86214e54aa6dffda855a4d0b8b12c3fdeee383cca4e82aaf834b14d0f2d2660e
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor"]
+        note: "2.3.2 Connecting X,Y,Z,A homing sensor [wiring; F54; technical_docs]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0014
+        content_hash: a84c575a6f797b0f1e510466c46c608771885bd0711383a3a71a7fda423b6d44
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.1 [3-wire] homing sensor wiring diagram"]
+        note: "2.3.2.1 [3-wire] homing sensor wiring diagram [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0015
+        content_hash: e51b67ec75885c4deefec7ca361de25814d3457f441a556035f0f3f1301fb82c
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.2 [2-wire] homing sensor wiring diagram (NPN signal)"]
+        note: "2.3.2.2 [2-wire] homing sensor wiring diagram (NPN signal) [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0016
+        content_hash: 655f8c9f4606c411d9332034f46626b817287bf5a7a62d688146acb541ff617f
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.3 [2-wire] homing sensor wiring diagram (PNP signal)"]
+        note: "2.3.2.3 [2-wire] homing sensor wiring diagram (PNP signal) [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0018
+        content_hash: 8cf7e3db7b10ff81db879e9157c81df7da54fd57be14d6dcc5d4c918472ab7e7
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.4 Homing switch wiring diagram"]
+        note: "2.3.2.4 Homing switch wiring diagram [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0019
+        content_hash: 597bb5927f770ad324ff9bc4cfd846863a704a912db7dc3db73db44cbb5ec1c0
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.2 Connecting X,Y,Z,A homing sensor", "2.3.2.4 Homing switch wiring diagram"]
+        note: "2.3.2.4 Homing switch wiring diagram › Homing switch wiring diagram for NPN, PNP signal [wiring; F54; technical_docs]"
+  - id: H08
+    question: "F54 tương thích với bộ so dao tự động loại mấy dây?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["hai_nguon", "khach_hang", "tu_van"]
+    expected_intent: ["lookup.product_info", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0023
+        content_hash: 3262a76ce683fbd785f539232afe85434742085734eecc9c01b508827a89242f
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection"]
+        note: "2.3.3 Automatic tool setter connection [wiring; F54; technical_docs]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0024
+        content_hash: 8fcadf393d9f0c5b282471db1d04bbac5e22c2c9cc83caee776fa44955a0e8e0
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.1 [3-wire] Automatic tool setter wiring diagram"]
+        note: "2.3.3.1 [3-wire] Automatic tool setter wiring diagram [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0025
+        content_hash: 65286f2aa56e42a7025eec8b3067d041d24b4a8e8416c7160165eca6e3e396da
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.2 [4-wire] Automatic tool setter wiring diagram (NPN signal)"]
+        note: "2.3.3.2 [4-wire] Automatic tool setter wiring diagram (NPN signal) [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0026
+        content_hash: a2ec0babdf752c091d8bbb43014e2d5644b6ddafd701fb05fe52c303a75a092e
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.3 [4-wire] Automatic tool setter wiring diagarm (PNP signal)"]
+        note: "2.3.3.3 [4-wire] Automatic tool setter wiring diagarm (PNP signal) [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0027
+        content_hash: 9a37bb0e19d9bea33147e1517be9c0a797cbc89589caa6296f5212e3ff7d0d78
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.4 [6-wire] Automatic tool setter wiring diagram (NPN signal)"]
+        note: "2.3.3.4 [6-wire] Automatic tool setter wiring diagram (NPN signal) [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0029
+        content_hash: a7ad0c7bf98e781eb8439eda19be3032d2a712de3b664a9d0d7422689b991577
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.3 Input devices connection", "2.3.3 Automatic tool setter connection", "2.3.3.5 [6-wire] Automatic tool setter wiring diagram (PNP signal)"]
+        note: "2.3.3.5 [6-wire] Automatic tool setter wiring diagram (PNP signal) [wiring; F54; technical_docs]"
+  - id: H09
+    question: "F54 mở rộng thêm ngõ vào ra bằng những board nào?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["hai_nguon", "nhan_vien", "tu_van"]
+    expected_intent: ["lookup.product_info", "lookup.product_catalog", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0073
+        content_hash: 26ec873043d1a06ae4487c5173a7fbad2ed4cd330a243036075e679d6e4dd52c
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.5 I/O link board connection"]
+        note: "2.5 I/O link board connection [overview; F54; technical_docs]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0074
+        content_hash: 535dfd1cad56d43524a0bea35f8fc7aa317d9a0c47381dfe15dab08501595480
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.5 I/O link board connection", "2.5.1 I/O link 32_V1.1_0722 board wiring diagram"]
+        note: "2.5.1 I/O link 32_V1.1_0722 board wiring diagram › Specification : [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0075
+        content_hash: c3fd27d027e2216e284359c257c2cf0cfcfd9e6111f317ff9167e048a9c0f80b
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.5 I/O link board connection", "2.5.2 I/O Link 08_RLTR board wiring diagram"]
+        note: "2.5.2 I/O Link 08_RLTR board wiring diagram › Specification: [wiring; F54; technical_docs]"
+  - id: H10
+    question: "F54 có ngõ ra analog để điều khiển biến tần không?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["hai_nguon", "khach_hang", "tu_van"]
+    expected_intent: ["lookup.product_info", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0070
+        content_hash: acb6f9e4e0c87fa036336fe843fb3e1b0027cbe9993ece573ea4eaa04b3f2b01
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram", "2.4.7 Analog signal wiring diagram for the inverter"]
+        note: "2.4.7 Analog signal wiring diagram for the inverter [wiring; F54; technical_docs]"
+    acceptable:
+      - chunk_key: f54_operation_v02:B0071
+        content_hash: 54b32a49afdbc84010ea0fbfec14200a8fd547124b4cc4b571d1172b5c7e5dbc
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram", "2.4.7 Analog signal wiring diagram for the inverter", "2.4.7.1 Analog signal connection diagram to the inverter using 0-10V voltage"]
+        note: "2.4.7.1 Analog signal connection diagram to the inverter using 0-10V voltage [wiring; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0072
+        content_hash: 2278de100f9746bf87d8cff62a6b599d6b195cd67934450c27ede5a4f3583cf9
+        section_path: ["PART 2: WIRING - CONNECTION - SETTING", "2.4 Output signal wiring diagram", "2.4.7 Analog signal wiring diagram for the inverter", "2.4.7.2 Analog signal connection diagram to the inverter using 0-20mA current"]
+        note: "2.4.7.2 Analog signal connection diagram to the inverter using 0-20mA current [wiring; F54; technical_docs]"
+  - id: H11
+    question: "Phần mềm trên bộ điều khiển F54 được tổ chức thành những phần nào?"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["hai_nguon", "khach_hang", "tong_quan"]
+    expected_intent: ["lookup.product_info", "guide.operation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0003
+        content_hash: 3b7215ac127dd90ba6371fc28a88733576d18f007572da4da76c12e4d093b79e
+        section_path: ["PART 1:CONTROLLER OVERVIEW", "1.3 Software structure"]
+        note: "1.3 Software structure [figure; F54; technical_docs]"
+    acceptable: []
+  - id: H12
+    question: "Tổng quan các bộ phận trên mặt bộ điều khiển F54"
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["hai_nguon", "khach_hang", "tong_quan"]
+    expected_intent: ["lookup.product_info", "guide.operation", "guide.installation"]
+    expected:
+      - chunk_key: f54_operation_v02:B0000
+        content_hash: 607713d1ed2766509404b172c2087654d350213308535c2d34ebd9f65c1e00d1
+        section_path: ["PART 1:CONTROLLER OVERVIEW", "1.1 Overview"]
+        note: "1.1 Overview [table; F54; technical_docs]"
+      - chunk_key: f54_operation_v02:B0001
+        content_hash: bb576c3cad733e48e2ff040adb91ad31b484b5af8672c36796ca8e252e363884
+        section_path: ["PART 1:CONTROLLER OVERVIEW", "1.1 Overview"]
+        note: "1.1 Overview [figure; F54; technical_docs]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0000
+        content_hash: 7472976e81fa3a1fa210bd9c8b4f63a71d731d22829411780d3e59f7c7aa358b
+        section_path: ["MOTION CONTROLLER", "QS F54"]
+        note: "QS F54 [overview; F54; product_catalog]"
+  - id: H13
+    question: "Bộ điều khiển F86 cấp nguồn bao nhiêu volt?"
+    domain: technical_docs
+    models: ["F86"]
+    tags: ["hai_nguon", "khach_hang", "nguon"]
+    expected_intent: ["lookup.product_info", "guide.installation"]
+    expected:
+      - chunk_key: f86_installation_2024-04-25:B0022
+        content_hash: 7f4ee2deddba88b54ddee6dd96047bef9c957092c7f3628da7f3baa37d698c59
+        section_path: ["PART 2", "2.8 POWER CONNECTION"]
+        note: "2.8 POWER CONNECTION [figure; F86; technical_docs]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0003
+        content_hash: de9d55182f875f65e038399987150db454f749e27e625eae0f993e334f2f7a5f
+        section_path: ["MOTION CONTROLLER", "QS F86"]
+        note: "QS F86 [overview; F86; product_catalog]"
+  - id: H14
+    question: "F86 dùng được tay quay mấy trục, tín hiệu ra loại nào?"
+    domain: technical_docs
+    models: ["F86"]
+    tags: ["hai_nguon", "khach_hang", "tu_van"]
+    expected_intent: ["lookup.product_info", "guide.installation"]
+    expected:
+      - chunk_key: f86_installation_2024-04-25:B0015
+        content_hash: c87a28d2cfdcd782a7f6c548bc72bb6a34e6220312232ec1057244ef6bd50605
+        section_path: ["PART 2", "2.6 HANDWHEEL WIRING DIAGRAM", "2.6.1 USE FOR DIFFERENTIAL OUTPUT SIGNAL OF 4 AXIS HANDWHEEL"]
+        note: "2.6.1 USE FOR DIFFERENTIAL OUTPUT SIGNAL OF 4 AXIS HANDWHEEL [figure; F86; technical_docs]"
+      - chunk_key: f86_installation_2024-04-25:B0018
+        content_hash: 734384f98bad038e27e6fbe9ff0d3558c696f1b1ddb6a0da8dc499bcbc844c8d
+        section_path: ["PART 2", "2.6 HANDWHEEL WIRING DIAGRAM", "2.6.4 USE FOR DIFFERENTIAL OUPUT SIGNAL OF 6 AXIS HANDWHEEL"]
+        note: "2.6.4 USE FOR DIFFERENTIAL OUPUT SIGNAL OF 6 AXIS HANDWHEEL [figure; F86; technical_docs]"
+    acceptable:
+      - chunk_key: f86_installation_2024-04-25:B0016
+        content_hash: dc8db4894c5d89931fc9119ddce1bf6854e853b832bc353940927347142af762
+        section_path: ["PART 2", "2.6 HANDWHEEL WIRING DIAGRAM", "2.6.2 USE FOR NPN OUTPUT SIGNAL OF 4 AXIS HANDWHEEL"]
+        note: "2.6.2 USE FOR NPN OUTPUT SIGNAL OF 4 AXIS HANDWHEEL [figure; F86; technical_docs]"
+      - chunk_key: f86_installation_2024-04-25:B0017
+        content_hash: 71c900b9a576c542824fb2650b0583559f02fb8deadb01d0c8017fb77f4ba198
+        section_path: ["PART 2", "2.6 HANDWHEEL WIRING DIAGRAM", "2.6.3 USE FOR PNP OUTPUT SIGNAL OF 4 AXIS HANDWHEEL"]
+        note: "2.6.3 USE FOR PNP OUTPUT SIGNAL OF 4 AXIS HANDWHEEL [figure; F86; technical_docs]"
+      - chunk_key: f86_installation_2024-04-25:B0019
+        content_hash: 4e77a69a13560cbd43387f6cc7bbfc8458b2e4803575e16873c4ac23c582a64f
+        section_path: ["PART 2", "2.6 HANDWHEEL WIRING DIAGRAM", "2.6.5 USE FOR NPN OUTPUT SIGNAL OF 6 AXIS HANDWHEEL"]
+        note: "2.6.5 USE FOR NPN OUTPUT SIGNAL OF 6 AXIS HANDWHEEL [figure; F86; technical_docs]"
+      - chunk_key: f86_installation_2024-04-25:B0020
+        content_hash: 9af670020d7d550ab787afc1911207e2837bfbefa0184fb84ab069384135bcb1
+        section_path: ["PART 2", "2.6 HANDWHEEL WIRING DIAGRAM", "2.6.6 USE FOR PNP OUTPUT SIGNAL OF 6 AXIS HANDWHEEL"]
+        note: "2.6.6 USE FOR PNP OUTPUT SIGNAL OF 6 AXIS HANDWHEEL [figure; F86; technical_docs]"
+  - id: H15
+    question: "F86 có cổng RS485 để nối board I/O link không?"
+    domain: technical_docs
+    models: ["F86"]
+    tags: ["hai_nguon", "khach_hang", "cong"]
+    expected_intent: ["lookup.product_info", "guide.installation"]
+    expected:
+      - chunk_key: f86_installation_2024-04-25:B0021
+        content_hash: a6b7ecef8ad457e17eb94898a2bbac12f74ddf6a94ece4388b34ac13439316b7
+        section_path: ["PART 2", "2.7 RS485, I/O-LINK"]
+        note: "2.7 RS485, I/O-LINK [wiring; F86; technical_docs]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0022
+        content_hash: b3bb61c661e4b80f768b1a0b0d0ec93ed8783273a44dd787b5f7d99a3fc81476
+        section_path: ["MOTION CONTROLLER", "Selection table", "Hardware Specification"]
+        note: "Selection table › Hardware Specification [table; F54, F86, F10T, 10S; product_catalog]"
+      - chunk_key: qs_product_catalogue:C0003
+        content_hash: de9d55182f875f65e038399987150db454f749e27e625eae0f993e334f2f7a5f
+        section_path: ["MOTION CONTROLLER", "QS F86"]
+        note: "QS F86 [overview; F86; product_catalog]"
+  - id: HC1
+    question: "Look-ahead của F54 là bao nhiêu dòng?"
+    domain: product_catalog
+    models: ["F54"]
+    tags: ["doi_chung_catalog", "nhan_vien", "thong_so"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0001
+        content_hash: 61cc763933282baacf4cd987adafcd24d823bbe194a8486a64b6a2f0634e83fb
+        section_path: ["MOTION CONTROLLER", "QS F54", "THÔNG SỐ KỸ THUẬT (SPECIFICATIONS)"]
+        note: "QS F54 › THÔNG SỐ KỸ THUẬT (SPECIFICATIONS) [spec; F54; product_catalog]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0021
+        content_hash: a6fa8a1615ff22da0b5a5339df26d6feda99b4d28bd0d0d1e5f0117a09004e03
+        section_path: ["MOTION CONTROLLER", "Selection table", "General"]
+        note: "Selection table › General [table; F54, F86, F10T, 10S; product_catalog]"
+  - id: HC2
+    question: "Màn hình của bộ điều khiển F86 bao nhiêu inch?"
+    domain: product_catalog
+    models: ["F86"]
+    tags: ["doi_chung_catalog", "khach_hang", "thong_so"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0003
+        content_hash: de9d55182f875f65e038399987150db454f749e27e625eae0f993e334f2f7a5f
+        section_path: ["MOTION CONTROLLER", "QS F86"]
+        note: "QS F86 [overview; F86; product_catalog]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0005
+        content_hash: 64312b961805266a92a706e724c1550986b0788ad9f15693429fc81e1653c399
+        section_path: ["MOTION CONTROLLER", "QS - F86 CONTROLLER"]
+        note: "QS - F86 CONTROLLER [overview; F86; product_catalog]"
+      - chunk_key: qs_product_catalogue:C0022
+        content_hash: b3bb61c661e4b80f768b1a0b0d0ec93ed8783273a44dd787b5f7d99a3fc81476
+        section_path: ["MOTION CONTROLLER", "Selection table", "Hardware Specification"]
+        note: "Selection table › Hardware Specification [table; F54, F86, F10T, 10S; product_catalog]"
+  - id: HC3
+    question: "F54 dùng giao tiếp điều khiển gì, có EtherCAT không?"
+    domain: product_catalog
+    models: ["F54"]
+    tags: ["doi_chung_catalog", "khach_hang", "giao_tiep"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0002
+        content_hash: faf5c528bd0b97fc4df04398a5ff33004e8cee4c93bf289a9b2e5109ea19b5a4
+        section_path: ["MOTION CONTROLLER", "QS - F54 CONTROLLER"]
+        note: "QS - F54 CONTROLLER [overview; F54; product_catalog]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0021
+        content_hash: a6fa8a1615ff22da0b5a5339df26d6feda99b4d28bd0d0d1e5f0117a09004e03
+        section_path: ["MOTION CONTROLLER", "Selection table", "General"]
+        note: "Selection table › General [table; F54, F86, F10T, 10S; product_catalog]"
+      - chunk_key: qs_product_catalogue:C0000
+        content_hash: 7472976e81fa3a1fa210bd9c8b4f63a71d731d22829411780d3e59f7c7aa358b
+        section_path: ["MOTION CONTROLLER", "QS F54"]
+        note: "QS F54 [overview; F54; product_catalog]"
+  - id: HC4
+    question: "F86 điều khiển được tối đa mấy trục?"
+    domain: product_catalog
+    models: ["F86"]
+    tags: ["doi_chung_catalog", "khach_hang", "thong_so"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0003
+        content_hash: de9d55182f875f65e038399987150db454f749e27e625eae0f993e334f2f7a5f
+        section_path: ["MOTION CONTROLLER", "QS F86"]
+        note: "QS F86 [overview; F86; product_catalog]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0005
+        content_hash: 64312b961805266a92a706e724c1550986b0788ad9f15693429fc81e1653c399
+        section_path: ["MOTION CONTROLLER", "QS - F86 CONTROLLER"]
+        note: "QS - F86 CONTROLLER [overview; F86; product_catalog]"
+      - chunk_key: qs_product_catalogue:C0004
+        content_hash: 1d09dc802a0851aeb3d57c7cb88922fb98d4f31eec59a52cffc1fe1b6a07334f
+        section_path: ["MOTION CONTROLLER", "QS F86", "THÔNG SỐ KỸ THUẬT (SPECIFICATIONS)"]
+        note: "QS F86 › THÔNG SỐ KỸ THUẬT (SPECIFICATIONS) [spec; F86; product_catalog]"
+      - chunk_key: qs_product_catalogue:C0021
+        content_hash: a6fa8a1615ff22da0b5a5339df26d6feda99b4d28bd0d0d1e5f0117a09004e03
+        section_path: ["MOTION CONTROLLER", "Selection table", "General"]
+        note: "Selection table › General [table; F54, F86, F10T, 10S; product_catalog]"

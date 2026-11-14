@@ -1,9 +1,14 @@
 
 import re
+import unicodedata
 from typing import Any
 import difflib
 
-from app.modules.chatbot.extraction.registry import (MAX_SUB_QUERIES, MAX_CANDIDATES, DOMAINS, FUZZY_CUTOFF, MODEL_POLICIES, MODEL_SPECIFIC_PATTERN, NO_TARGET_ROUTES, SCOPES, REGISTRY as R, RegistryError)
+from app.modules.chatbot.extraction.registry import (
+    MAX_SUB_QUERIES, MAX_CANDIDATES, DOMAINS, FUZZY_CUTOFF, MODEL_POLICIES, MODEL_SPECIFIC_PATTERN, NO_TARGET_ROUTES,
+    ROUTING_CODE_PATTERN, ROUTING_CONFIG_CUES, ROUTING_TARGET_BOOST, SCOPES, REGISTRY as R, RegistryError,
+    routing_rules,
+)
 from typing import Literal
 
 InterfaceMatch = Literal["all", "any"]
@@ -59,6 +64,8 @@ def validate_registry() -> None:
     for cands in R["ambiguous_aliases"].values():
         check(set(cands) <= models, "ambiguous alias trỏ tới model không tồn tại")
     check(not set(_ALIAS) & set(_AMBIG), "alias trùng với alias mơ hồ")
+    non_models = {_norm(t) for t in R["non_model_terms"]}
+    check(not non_models & (set(_ALIAS) | set(_AMBIG)), "non_model_terms trùng với tên/alias model")
     check(set(R["display_names"]) <= models, "display_names có model lạ")
     for dom, cov in R["coverage"].items():
         check(dom in DOMAINS, f"coverage domain lạ: {dom}")
@@ -222,6 +229,37 @@ def _supported(models: list[str], targets: list[dict]) -> tuple[list[str], list[
     return supported, unsupported
 
 
+def _fold(text: str) -> str:
+    """Viết thường, bỏ dấu tiếng Việt (so cụm từ với câu gõ có dấu lẫn không dấu)."""
+    text = unicodedata.normalize("NFD", text.lower().replace("đ", "d"))
+    return "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
+
+
+def _also_technical(spec: dict, targets: list[dict], models: list[str], query: str,
+                    rules: frozenset[str]) -> tuple[list[dict], list[str]]:
+    """[RT-1, RT-2, RT-4] Sub-query tra catalog có model có tài liệu kỹ thuật → tìm cả hai nguồn.
+
+    Không áp cho so sánh (tìm riêng từng model). Target chính được cộng điểm khi gộp kết quả: mặc định
+    catalog; câu có mã kỹ thuật (RT-2) hoặc cụm cấu hình (RT-4) thì tài liệu kỹ thuật là chính.
+    """
+    if "RT-1" not in rules or spec.get("min_models", 1) > 1 or not targets:
+        return targets, []
+    if any(t["domain"] != "product_catalog" for t in targets):
+        return targets, []
+    technical = _covered("technical_docs")
+    if not any(technical is None or m in technical for m in models):
+        return targets, []
+    fired = ["RT-1"]
+    if "RT-2" in rules and ROUTING_CODE_PATTERN.search(query):
+        fired.append("RT-2")
+    if "RT-4" in rules and any(cue in _fold(query) for cue in ROUTING_CONFIG_CUES):
+        fired.append("RT-4")
+    catalog, docs = {"domain": "product_catalog"}, {"domain": "technical_docs"}
+    if len(fired) > 1:
+        return [{**docs, "boost": ROUTING_TARGET_BOOST}, catalog], fired
+    return [{**catalog, "boost": ROUTING_TARGET_BOOST}, docs], fired
+
+
 # ----------------------------------------------------- resolve sub_query (code)
 def resolve_sub_query(
     sq: dict,
@@ -229,11 +267,13 @@ def resolve_sub_query(
     *,
     last_models: list[str] | tuple = (),
     active_model: str | None = None,
+    routing_version: str | None = None,
 ) -> dict:
     intent = sq.get("intent")
     if intent not in R["intents"]:
         return _unclear(sq.get("standalone_query") or "", idx)
     spec = R["intents"][intent]
+    rules = routing_rules(routing_version)
     included = _unique(sq.get("control_interface"))
     excluded = _unique(sq.get("excluded_control_interface"))
     if set(included) & set(excluded):
@@ -246,6 +286,18 @@ def resolve_sub_query(
     # 1. Chuẩn hóa model (LLM có thể đặt alias/chuỗi lạ ở cả hai trường)
     names = list(sq.get("product_models") or []) + list(sq.get("unresolved_mentions") or [])
     models, ambiguous, unknown = resolve_models(names)
+    # [RT-3, RT-3b] Cụm lạ không phải tên model (board, phụ kiện, thiết bị hãng khác) không được coi là
+    # "model lạ": nếu để lại, sub-query bị giữ chờ làm rõ và không tra cứu (planner.held_sub_query_ids).
+    non_models: list[str] = []
+    if "RT-3" in rules:
+        known = {_norm(t) for t in R["non_model_terms"]}
+        non_models += [m for m in unknown if _norm(m) in known]
+    if "RT-3b" in rules:
+        non_models += [m for m in unknown if m not in non_models and not suggest_models(m)]
+    if non_models:
+        unknown = [m for m in unknown if m not in non_models]
+        warnings.append("routing_rule:" + ("RT-3b" if "RT-3b" in rules else "RT-3"))
+        warnings += [f"non_model_mention:{m}" for m in non_models]
     candidates = {m: _AMBIG[_norm(m)] for m in ambiguous}
     candidates.update({m: suggest_models(m) for m in unknown})          # [C1]
 
@@ -318,7 +370,10 @@ def resolve_sub_query(
         d_sup, d_unsup = _supported(models, spec["degrade_to"])
         if d_sup:
             targets, supported, unsupported, degraded = spec["degrade_to"], d_sup, d_unsup, True
- 
+    if supported and not degraded:
+        targets, fired = _also_technical(spec, targets, supported, sq.get("standalone_query") or "", rules)
+        warnings += [f"routing_rule:{rule}" for rule in fired]
+
     # 5. Route
     if not spec["targets"]:
         route = spec["route"]                                           # [C6]
@@ -419,6 +474,7 @@ def resolve_with_raw(
     *,
     last_models: list[str] | tuple = (),
     active_model: str | None = None,
+    routing_version: str | None = None,
 ) -> tuple[list[dict], dict[str, dict]]:
     """Như resolve(), kèm sub_query thô của LLM theo id đã cấp (dùng để vá khi làm rõ)."""
     out, raws, seen = [], {}, set()
@@ -429,6 +485,7 @@ def resolve_with_raw(
         seen.add(key)
         resolved = resolve_sub_query(
             sq, len(out), last_models=last_models, active_model=active_model,
+            routing_version=routing_version,
         )
         raws[resolved["id"]] = sq
         out.append(resolved)

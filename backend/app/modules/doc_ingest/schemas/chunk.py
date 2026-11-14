@@ -44,16 +44,27 @@ class FigureLabel(StrictModel):
     verified: bool = True
 
 
+class CuratedDecision(StrictModel):
+    """Giá trị chunk biên soạn khác bản in PDF theo quyết định người duyệt (mã C-xx, doc-ingest LOG)."""
+
+    code: str
+    key: str
+    value: str
+    page_value: str | None = None
+    model: str | None = None
+
+
 class DraftChunk(StrictModel):
     schema_version: Literal[1] = 1
     # định danh, quan hệ
-    chunk_key: str                               # "{doc_id}:B{chunk_index:04d}"
+    chunk_key: str                               # builder: "{doc_id}:B{chunk_index:04d}"; biên soạn: ":C{…}"
     parent_key: str | None = None
     chunk_role: ChunkRole
-    source: Literal["builder"] = "builder"
+    # builder = chunk builder từ run `run`; manual = nguồn biên soạn có duyệt (`curated/`, không qua làm giàu 2c)
+    source: Literal["builder", "manual"] = "builder"
     chunk_index: int
     # lọc
-    domain: Literal["technical_docs"] = "technical_docs"
+    domain: Literal["technical_docs", "company_info", "product_catalog"] = "technical_docs"
     scopes: list[Scope]
     product_models: list[str]
     control_interface: list[str] = Field(default_factory=list)
@@ -97,6 +108,7 @@ class DraftChunk(StrictModel):
     review_notes: list[str] = Field(default_factory=list)      # mã review chặn fact (thông tin cho người duyệt)
     flags: list[str] = Field(default_factory=list)
     enrichment_status: Literal["none", "draft", "approved"] = "none"
+    curated_decisions: list[CuratedDecision] = Field(default_factory=list)   # chỉ chunk `source = manual`
 
 
 class EnrichmentOutput(StrictModel):

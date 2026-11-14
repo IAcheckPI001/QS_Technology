@@ -7,6 +7,14 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-14 · Registry thêm model 10S, 10i: ảnh hưởng tìm model theo tiêu chí và báo cáo · loại: thay đổi
+
+- Registry chung (chi tiết: website-qa LOG cùng ngày) thêm `10S`, `10i` (tên tạm, chờ CRM chuẩn hóa). Với crm-agent:
+  `product_docs_ask` tìm theo tiêu chí trả thêm 10S/10i ("EtherCAT" 11 model; "EtherCAT, không Mechatrolink" 4 model →
+  `ask_selection` thay `lookup_each`); "10i" không còn là alias mơ hồ; `crm_report` nhận product_name "10S"/"10i".
+- Test cập nhật: `test_catalog_lookup_tool.py`, `test_crm_catalog_flow.py`, `test_report_validate.py`. Không đổi code
+  agent/tool.
+
 ## 2026-11-12 · Giới hạn gọi tool: đếm call thật chạy, trần CRM riêng của crm_query · loại: thay đổi
 
 - Vấn đề: câu "còn 2 sale kìa… khách đầu tiên tên gì" chạm giới hạn gọi tool, câu trả lời "thử lại sau".

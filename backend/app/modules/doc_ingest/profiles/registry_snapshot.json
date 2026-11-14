@@ -10,11 +10,15 @@
     "6AV",
     "6AVE",
     "10iV",
-    "10iVE"
+    "10iVE",
+    "10S",
+    "10i"
   ],
   "aliases": {
     "Astro 6AH": "6AH",
-    "Astro 6AV": "6AV"
+    "Astro 6AV": "6AV",
+    "Astro 10S": "10S",
+    "Astro 10i": "10i"
   },
   "control_interface": {
     "pulse_train": "Pulse Train/xung",

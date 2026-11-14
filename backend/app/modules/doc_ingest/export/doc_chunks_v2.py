@@ -63,21 +63,29 @@ def _page(value: str | None) -> int | None:
 
 @dataclass(frozen=True)
 class ApprovalContext:
-    """Dữ liệu cổng của một lần build. `gate_2b_final`: cổng 2b đạt và không tạm (nhãn đã xác nhận)."""
+    """Dữ liệu cổng của một lần build. `gate_2b_final`: cổng 2b đạt và không tạm (nhãn đã xác nhận).
+    `curated_verified`: nguồn biên soạn (`curated/`) đã duyệt hết giá trị — thay cổng 2b/2c cho chunk `manual`."""
 
     gate_2b_final: bool
     ok_hashes: dict[str, str] = field(default_factory=dict)   # chunk_key -> content_hash có verdict `ok`
+    curated_verified: bool = False
 
     @classmethod
     def from_build(cls, quality: ChunkQuality, review: ChunkReviewFile | None) -> ApprovalContext:
-        ok = {e.chunk_key: e.content_hash for e in (review.reviews if review else []) if e.verdict == "ok"}
-        return cls(gate_2b_final=quality.gate_passed is True and not quality.provisional, ok_hashes=ok)
+        return cls(gate_2b_final=quality.gate_passed is True and not quality.provisional, ok_hashes=ok_hashes(review))
+
+
+def ok_hashes(review: ChunkReviewFile | None) -> dict[str, str]:
+    return {e.chunk_key: e.content_hash for e in (review.reviews if review else []) if e.verdict == "ok"}
 
 
 def review_status(chunk: DraftChunk, ctx: ApprovalContext) -> str:
-    if not ctx.gate_2b_final or chunk.review_blockers:
+    if chunk.review_blockers or ctx.ok_hashes.get(chunk.chunk_key) != chunk.content_hash:
         return "draft"
-    if ctx.ok_hashes.get(chunk.chunk_key) != chunk.content_hash:
+    if chunk.source == "manual":
+        # Nguồn biên soạn: không qua chunk builder (cổng 2b) và không làm giàu (2c); cổng = nguồn đã duyệt + verdict.
+        return "approved" if ctx.curated_verified else "draft"
+    if not ctx.gate_2b_final:
         return "draft"
     if chunk.chunk_role != "parent" and chunk.enrichment_status != "approved":
         return "draft"
@@ -96,6 +104,7 @@ def to_row(chunk: DraftChunk, ctx: ApprovalContext, source_run: str | None = Non
         "enrichment": {"status": chunk.enrichment_status}, "faq_vi": chunk.faq_vi,
         # Trang in không phải số (vd. "iv") vẫn giữ nguyên văn ở đây.
         "printed_page_start": chunk.printed_page_start, "printed_page_end": chunk.printed_page_end,
+        "curated_decisions": [d.model_dump(mode="json", exclude_none=True) for d in chunk.curated_decisions],
     }
     return {
         "parent_key": chunk.parent_key,

@@ -38,7 +38,7 @@ Cập nhật: 2026-11-14
 ## Đang làm
 
 Cổng 2c v4 **không đạt** (chờ prompt v5); vision (`vision-trial-3`, 14 chunk) chờ duyệt. Ảnh (chốt 2026-11-14):
-`embed_text` chỉ câu mô tả có mã phân biệt; bỏ fact dịch nhãn; fact có quan hệ ngoài embed. Build/`enrich`: venv chính.
+`embed_text` chỉ câu mô tả có mã phân biệt, bỏ fact dịch nhãn. Catalog `curated-a` chờ Toma (verdict 37 chunk, `--vi-keywords`); còn soạn servo/board/phụ kiện/công ty. Gọi LLM (enrich, embed) đang chặn: OpenAI hết credit.
 
 ## Vấn đề mở
 
@@ -46,6 +46,7 @@ Cổng 2c v4 **không đạt** (chờ prompt v5); vision (`vision-trial-3`, 14 c
 |---|---|---|
 | D-008 (tra cứu) | — | Cột `chunk_role` + lọc cha trong `match_doc_chunks` chưa làm (cùng bước xuất bản, E-01) |
 | I-40 (c), (d) | P2 | Đoạn lặp nguyên văn ở nhiều mục; lỗi in của PDF gốc (cần errata cấp manifest) |
+| I-47…I-50 | P0 | Brochure công ty/catalog (2026-11-14): lỗi bảng mã font không bị S0 bắt; cặp "tên \| giá trị" tách + T-17 loại giá trị lặp; bảng ✓/✗ dạng icon; không heading số → `section_path` rỗng. Hướng tạm: nguồn biên soạn `curated/` (C2 §15): 7 bộ điều khiển → 37 chunk (`qs_catalog/curated-a`, đã nạp draft, chờ verdict; chưa gắn hình). Chi tiết: LOG |
 | I-46 | P1 | Scope theo nội dung (`eval-m`, đã nạp, đo **đạt**; CP-I46 để khôi phục). Còn: siết luật `maintenance` (B0175 M100 bị gán bảo trì) |
 | I-41 | P2 | Số mục in sai (3.3.x) làm `section_path` của 3.3.4, 3.3.5, 3.9.2 và 4.3.6 thành mục gốc |
 | I-32 | P0 (bảng cổng) | Bảng cổng F86 Installation lệch ô mô tả giữa các dòng |
@@ -54,7 +55,6 @@ Cổng 2c v4 **không đạt** (chờ prompt v5); vision (`vision-trial-3`, 14 c
 | I-22, I-31, I-33…I-35 | — | Bảng vẽ dạng ảnh (F86 trang 15); mục lục F86 không nhận; chunk hình không caption; độ hạt bảng cổng; luật loại chunk thô |
 
 Mô tả đầy đủ: [p1_chunking_impact_assessment.md](../../reports/p1_chunking_impact_assessment.md); I-46: website-qa LOG.
-
 ## Kết quả kiểm gần nhất
 
 Chunk nháp, đọc từ `chunk_quality.json` và `chunk_review.json` ngày 2026-11-13:
@@ -67,7 +67,7 @@ Chunk nháp, đọc từ `chunk_quality.json` và `chunk_review.json` ngày 2026
 
 Mốc so sánh: `f54/eval-i` (301, thí điểm làm giàu), `f54/eval-h` (301, chưa làm giàu), `f54/eval-c` (342, 42 fix); lớp chuẩn hóa: [archive](LOG-archive-2026-11-09.md) mục 7.
 
-Test (2026-11-13, từ `backend/`): `..\.venv-ingest\Scripts\python.exe -m pytest tests\doc_ingest` → 358 passed.
+Test (2026-11-14, từ `backend/`): `..\.venv-ingest\Scripts\python.exe -m pytest tests\doc_ingest` → 376 passed.
 
 ## Bước tiếp theo
 

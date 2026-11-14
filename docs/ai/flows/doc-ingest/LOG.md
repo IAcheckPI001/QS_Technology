@@ -6,7 +6,81 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 
 Các mục tới 2026-11-09: [LOG-archive-2026-11-09.md](LOG-archive-2026-11-09.md).
 
-## 2026-11-14 · Nội dung ảnh (vision) trong chunk: chỉ câu mô tả vào phần tìm kiếm · loại: quyết định
+## 2026-11-14 · Catalog: code nhánh nguồn biên soạn + 37 chunk 7 bộ điều khiển (run `qs_catalog/curated-a`) · loại: thay đổi
+
+- Toma duyệt nội dung 7 file + bảng chọn khớp PDF; chốt C-13 (`io_link` 6AH/6AV/10i theo bảng chọn); giữ 10iV trong
+  coverage catalog; làm trọn 7 bộ điều khiển trước. Yêu cầu: **nội dung chunk bám sát nội dung PDF**.
+- Dữ liệu: `verified: true` toàn bộ; chuẩn hóa về chữ in (kích thước "(mm)", nhãn "Max.Spindle…", "Max.Number…");
+  thay `title` (Claude đặt) bằng `heading` in trên trang; thay `summary_highlights` bằng `summary_page` (khối "QS - <MODEL>
+  CONTROLLER" trang 4–5, nguyên văn từ `elements.jsonl`); `system_package` theo khối "MODEL: …" trang 19–21; bảng chọn
+  thêm `column` (tên cột in).
+- Code mới `doc_ingest/curated/`: `schema.py` (Pydantic), `check.py` (`curate-check`: chữ in trên trang gồm text layer
+  `raw/p{n}.words.json`, đối chiếu bảng chọn, sha256; `content_issues` kiểm từ lạ trong `content`), `build.py`
+  (`curated-build`: chunk theo mục in trên trang, report `chunks.html`, `chunk_review.json`). CLI 2 lệnh mới.
+- Contract C2 §15: `DraftChunk.domain` nhận 3 domain, `source` `builder|manual`, `curated_decisions`;
+  `review_status` của chunk `manual` = nguồn verified + verdict `ok` (không cổng 2b/2c). SQL không đổi.
+- Kết quả `curated-a` (`--doc-version 2026-11-14`): `curate-check` ĐẠT (961 chuỗi; 5 "khác thứ tự" do in xuống dòng);
+  37 chunk (overview 14, spec 7, table 16), ≤ 506 token, 0 lỗi ràng buộc, 0 dòng có từ lạ; tất cả `draft` (chờ verdict).
+  Loader `--dry-run`: 37 dòng, ~10k token embed ≈ 0,0002 USD.
+- Registry chatbot: thêm `10S`, `10i` (website-qa LOG cùng ngày). Test: `tests/doc_ingest` 376 passed (`test_curated.py`
+  10 test); `tests/chatbot` 597 passed.
+
+## 2026-11-14 · Catalog: Bước 1 — dữ liệu biên soạn 7 bộ điều khiển + bảng chọn · loại: thay đổi
+
+- Toma duyệt cấu trúc `curated/products/F54.yaml` và `curated/selection_matrix.yaml` (43 hàng × 7 model). Claude soạn
+  tiếp `F86`, `F10T`, `10S`, `6AH`, `6AV`, `10i` từ ảnh trang 9–14, 19–21 và trang tóm tắt 4–5. Thêm `page_value`
+  (giá trị in trên trang khi đã chốt khác, kèm `decision`) và `summary_highlights` (dòng chỉ có ở trang tóm tắt, vd.
+  RTCP option, nút dừng khẩn cấp, phím nhôm 10i). Mọi giá trị `verified: false`.
+- Kiểm chéo (script tạm, chỉ đọc): mọi giá trị `text`/`recovered` có trong chữ PDF của trang đã ghi, trừ 2 `page_value`
+  mô tả gộp của 6AH (đúng dự kiến); các key trùng với bảng chọn khớp, trừ **C-13** mới: `io_link` 6AH/6AV/10i — trang
+  riêng 24/16, bảng chọn theo giao tiếp 24/16 / 16/16 / 16/16 (cùng dạng C-12, chờ Toma chốt).
+- Chưa có code (`curate_check`, `curated-build` làm ở bước sau khi đủ dữ liệu); chưa soạn servo, board, phụ kiện, công ty.
+
+## 2026-11-14 · Catalog/công ty: chốt Bước 0 (C-01…C-12, mã model) · loại: quyết định
+
+- Toma chốt: C-01 Pitch error **không có** ở F54/F86/F10T/10S (dòng gộp ở trang model là mẫu chung); C-02 6AH
+  **closed loop**; C-03 6AH look-ahead **1000**; C-04 6AH encoder theo trang 6AV (trang 6AH chép mẫu F86); C-05 6AH
+  torque/servo parameter theo bảng chọn; C-06 "Max. PLC Axis control" ≠ "Axis control" (2 trường; 10S: 16 trục điều
+  khiển, 14 trục PLC); C-07 "Max. Spindle" ≠ "Max. Spindle Simultaneous Control" (2 trường); C-08 USB/RS485 theo bảng
+  chọn (theo giao tiếp); **C-09 10S: RTCP, DWO, TWP đều tùy chọn** (bảng chọn đánh ✗ là sai); C-10 servo đến **55kW**;
+  C-11 tên đúng **RBT-01**; C-12 I/O F86/F10T theo giao tiếp (bảng chọn).
+- Registry: thêm mã **`10S`**, **`10i`**. Tên chuẩn model đang được CRM chuẩn hóa → **tạm** dùng "Astro 10i" làm tên
+  hiển thị và alias của `10i` (bỏ khỏi alias mơ hồ của 10iV/10iVE); xem lại khi CRM chốt tên.
+- Tiếp: Bước 1 — mẫu `curated/products/F54.yaml` + `curated/selection_matrix.yaml` để Toma duyệt định dạng.
+
+## 2026-11-14 · Catalog/công ty theo hướng "nguồn biên soạn có duyệt": Bước 0 · loại: quyết định
+
+- Toma duyệt hướng: pipeline trích chữ → dữ liệu biên soạn YAML (`doc_ingest/curated/`, `verified` từng giá trị) →
+  sinh chunk `product_catalog`/`company_info` → loader v2. Là ghi đè cấp tài liệu có lý do; I-47…I-50 sửa riêng.
+- Quyết định Bước 0: (1) mâu thuẫn giữa bảng chọn model và trang từng model → Claude liệt kê từng điểm (C-01…),
+  Toma chốt từng giá trị; điểm chưa chốt giữ `verified: false`, không nạp. (2) Thêm model **ASTRO 10S** vào registry.
+  (3) Thêm model **ASTRO 10i** (mã riêng, không gán 10iV/10iVE). (4) 6 trang lỗi font của hồ sơ công ty: Claude chép
+  từ ảnh trang (`origin: image`), Toma duyệt.
+- Danh sách mâu thuẫn C-01…C-12 gửi Toma trong hội thoại 2026-11-14; chờ chốt trước Bước 1.
+
+## 2026-11-14 · Rà soát run đầu tài liệu công ty và catalog (`qs_company/20261114-084505`, `qs_catalog/20261114-090524`) · loại: phân tích
+
+- Toma chạy `run --profile default --no-build` trên `docs/ai/doc_ingest_spike/source/QS_Company_Profile.pdf` và
+  `QS_Product_Catalogue.pdf` (24 trang mỗi file, brochure thiết kế, nền ảnh toàn trang, song ngữ VI/EN). Claude đọc
+  `elements.jsonl`, `tables.jsonl`, `review_queue.jsonl`, đối chiếu ảnh trang (company p4; catalog p6, p8). Không sửa code.
+- **Company: chưa đạt.** 28 phần tử (28,3% ký tự chữ, trang 4, 6, 11, 13, 19, 20) bị **lỗi bảng mã font**
+  ("KṩnṖ nṊṖṩḸẶ" thay "Kinh nghiệm"): ảnh trang đúng, text layer sai. S0 không bắt (`bad_char_ratio` 0 vì ký tự vẫn
+  là chữ Latin hợp lệ) → **I-47**. `section_path` rỗng 308/517; 209 phần tử còn lại nằm sai dưới "7 AXES JEWELRY
+  MILLING MACHINE ." (heading duy nhất được nhận vì bắt đầu bằng số) → **I-50**. Trang 7–8 (thông số 7 bộ điều
+  khiển), 10 (servo), 12 (board), 14–18, 21–22 (máy, nâng cấp) sạch.
+- **Catalog: chữ sạch (0% lỗi font), cấu trúc chưa đạt.** V-01 23/24 (p17 trùng 20,7%).
+  - Bảng chọn model p6–p7 (`t001`, `t002`): gộp nhiều hàng vào một ô, cột lệch, tiêu đề hút cả cột; các ô ✓/✗ là
+    **icon ảnh** → ma trận tính năng (bù rơ, pitch error, ATC, tool-life, torque feedback…) mất hoàn toàn → **I-49**.
+  - Trang thông số từng model p8–p14: bố cục 2 cột "tên | giá trị" bị tách — tên thành list item, giá trị dồn một
+    dòng ("0 - 150% Yes 500 KHz Yes Yes 1") hoặc bị **T-17 loại thành header/footer** vì lặp giữa các trang
+    (33 giá trị: "Index Z", "Full axis", "250/500/1000/2000 lines"…) → mất dữ liệu → **I-48**.
+  - p17 bảng mã model servo chỉ còn `figure_text` (không vào thân chunk); 3 bảng nhỏ (điện áp, công suất) đúng.
+  - `section_path` rỗng toàn bộ (I-50); địa chỉ p1/p24 tách nhãn khỏi giá trị, nhãn lặp đôi.
+- Nội dung nguồn cần Toma xác nhận: servo "400W~45KW" (đoạn văn) vs "400W ~ 55KW" (danh sách); ASTRO 10S chưa có
+  trong registry; "ASTRO 10i" (registry 10iV/10iVE); cột "ASTRO 6AV/H" gộp 2 model; RTB-01 / RBT-01. Trùng nội dung
+  giữa hai file: thông số 7 bộ điều khiển, board, servo, giới thiệu công ty.
+- Chưa sang `build` (schema chunk/manifest chỉ nhận `technical_docs`).
+
 
 - Toma xác nhận hướng đã thảo luận ngày 2026-11-13 trên B0074 (bảng `item | detail` của f54:p049:e013, e019). Lý do:
   bảng facts không giúp lọc (không nằm trong cột lọc nào), làm loãng vector (B0074 vượt 800 token, đẩy tóm tắt VI ra

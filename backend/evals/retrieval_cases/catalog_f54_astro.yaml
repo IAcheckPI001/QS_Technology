@@ -1,0 +1,396 @@
+# Bộ câu hỏi catalog 7 bộ điều khiển (Claude soạn 2026-11-14, chờ Toma duyệt). Chunk đúng theo run
+# qs_catalog/curated-a (nguồn biên soạn, contract C2 §15). Câu tư vấn không nêu model → lookup.product_catalog.
+# Tag `quyet_dinh`: đáp án là giá trị đã chốt khác bản in (C-xx); `model_moi`: model mới trong registry (10S, 10i).
+source_runs: [qs_catalog/curated-a]
+cases:
+  - id: K01
+    question: "Kích thước bộ điều khiển F54 là bao nhiêu?"
+    domain: product_catalog
+    models: ["F54"]
+    tags: ["khach_hang", "thong_so"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0000
+        content_hash: 7472976e81fa3a1fa210bd9c8b4f63a71d731d22829411780d3e59f7c7aa358b
+        section_path: ["MOTION CONTROLLER", "QS F54"]
+        note: "QS F54 [overview; F54; trang 8]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0002
+        content_hash: faf5c528bd0b97fc4df04398a5ff33004e8cee4c93bf289a9b2e5109ea19b5a4
+        section_path: ["MOTION CONTROLLER", "QS - F54 CONTROLLER"]
+        note: "QS - F54 CONTROLLER [overview; F54; trang 4]"
+      - chunk_key: qs_product_catalogue:C0021
+        content_hash: a6fa8a1615ff22da0b5a5339df26d6feda99b4d28bd0d0d1e5f0117a09004e03
+        section_path: ["MOTION CONTROLLER", "Selection table", "General"]
+        note: "Selection table › General [table; F54, F86, F10T, 10S; trang 6]"
+  - id: K02
+    question: "F86 hỗ trợ những giao tiếp điều khiển nào?"
+    domain: product_catalog
+    models: ["F86"]
+    tags: ["khach_hang", "giao_tiep"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0003
+        content_hash: de9d55182f875f65e038399987150db454f749e27e625eae0f993e334f2f7a5f
+        section_path: ["MOTION CONTROLLER", "QS F86"]
+        note: "QS F86 [overview; F86; trang 9]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0005
+        content_hash: 64312b961805266a92a706e724c1550986b0788ad9f15693429fc81e1653c399
+        section_path: ["MOTION CONTROLLER", "QS - F86 CONTROLLER"]
+        note: "QS - F86 CONTROLLER [overview; F86; trang 4]"
+      - chunk_key: qs_product_catalogue:C0021
+        content_hash: a6fa8a1615ff22da0b5a5339df26d6feda99b4d28bd0d0d1e5f0117a09004e03
+        section_path: ["MOTION CONTROLLER", "Selection table", "General"]
+        note: "Selection table › General [table; F54, F86, F10T, 10S; trang 6]"
+  - id: K03
+    question: "Look-ahead của Astro 10i bao nhiêu dòng?"
+    domain: product_catalog
+    models: ["10i"]
+    tags: ["nhan_vien", "thong_so", "alias"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0019
+        content_hash: 01df0ab6dcf082e302a5797dc48c6702c1e93d7f4bbb9eee908c44284970ea7d
+        section_path: ["MOTION CONTROLLER", "QS ASTRO 10i", "THÔNG SỐ KỸ THUẬT (SPECIFICATIONS)"]
+        note: "QS ASTRO 10i › THÔNG SỐ KỸ THUẬT (SPECIFICATIONS) [spec; 10i; trang 14]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0029
+        content_hash: fbe45c5ef11801d26f73fe3ad0da643b437b857689f55f4eb645cf4d4dad98af
+        section_path: ["MOTION CONTROLLER", "Selection table", "General"]
+        note: "Selection table › General [table; 6AV, 6AH, 10i; trang 7]"
+  - id: K04
+    question: "F54 có bù sai số hành trình (pitch error) không?"
+    domain: product_catalog
+    models: ["F54"]
+    tags: ["nhan_vien", "tinh_nang", "quyet_dinh"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0023
+        content_hash: 51670808dda8a39bc5a3cf4818dfffb135402364bf898517b935b5d3e9b3d2c2
+        section_path: ["MOTION CONTROLLER", "Selection table", "Compensation"]
+        note: "Selection table › Compensation [table; F54, F86, F10T, 10S; trang 6]"
+      - chunk_key: qs_product_catalogue:C0001
+        content_hash: 61cc763933282baacf4cd987adafcd24d823bbe194a8486a64b6a2f0634e83fb
+        section_path: ["MOTION CONTROLLER", "QS F54", "THÔNG SỐ KỸ THUẬT (SPECIFICATIONS)"]
+        note: "QS F54 › THÔNG SỐ KỸ THUẬT (SPECIFICATIONS) [spec; F54; trang 8]"
+    acceptable: []
+  - id: K05
+    question: "Bộ điều khiển nào của QS có chức năng RTCP?"
+    domain: product_catalog
+    models: []
+    tags: ["khach_hang", "tu_van", "khong_model"]
+    expected_intent: ["lookup.product_catalog"]
+    expected_route: retrieve
+    expected:
+      - chunk_key: qs_product_catalogue:C0024
+        content_hash: 821a7b10e8a45f55b2bc0946f0e844e5bf77ed7dbb5f377d99c663cecb8652f9
+        section_path: ["MOTION CONTROLLER", "Selection table", "Multi axis control mode (Optional)"]
+        note: "Selection table › Multi axis control mode (Optional) [table; F54, F86, F10T, 10S; trang 6]"
+      - chunk_key: qs_product_catalogue:C0032
+        content_hash: 378ac11e68cdab3fbf482a7d41565598d7d7fb65507e9979336a301361d8bdba
+        section_path: ["MOTION CONTROLLER", "Selection table", "Multi axis control mode (Optional)"]
+        note: "Selection table › Multi axis control mode (Optional) [table; 6AV, 6AH, 10i; trang 7]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0005
+        content_hash: 64312b961805266a92a706e724c1550986b0788ad9f15693429fc81e1653c399
+        section_path: ["MOTION CONTROLLER", "QS - F86 CONTROLLER"]
+        note: "QS - F86 CONTROLLER [overview; F86; trang 4]"
+      - chunk_key: qs_product_catalogue:C0008
+        content_hash: c7965e3e921791fecd6a811e249d7a5c6a811006243ffa889d72ab8ffe3e67d9
+        section_path: ["MOTION CONTROLLER", "QS - F10T CONTROLLER"]
+        note: "QS - F10T CONTROLLER [overview; F10T; trang 4]"
+      - chunk_key: qs_product_catalogue:C0011
+        content_hash: 6e2ed7c99652b03a1a291b6cabda45ba37423d8e8d439ddbf3b7f2f551f2ad08
+        section_path: ["MOTION CONTROLLER", "QS - ASTRO 10S CONTROLLER"]
+        note: "QS - ASTRO 10S CONTROLLER [overview; 10S; trang 4]"
+      - chunk_key: qs_product_catalogue:C0014
+        content_hash: 7fde12d2a74e96514150e6c28db2cc33a94c3130347c00504dcda17ad7a08727
+        section_path: ["MOTION CONTROLLER", "QS - ASTRO 6AH CONTROLLER"]
+        note: "QS - ASTRO 6AH CONTROLLER [overview; 6AH; trang 5]"
+      - chunk_key: qs_product_catalogue:C0017
+        content_hash: 144760c2e1741a3bb1c471b992de76af80c08acfd9ae78cb0259b36365d8b796
+        section_path: ["MOTION CONTROLLER", "QS - ASTRO 6AV CONTROLLER"]
+        note: "QS - ASTRO 6AV CONTROLLER [overview; 6AV; trang 5]"
+      - chunk_key: qs_product_catalogue:C0020
+        content_hash: b02a1d484d2dcbefa55dcb055bbce6ee17e8ed84212ac9c5bfba00d31ca43c2b
+        section_path: ["MOTION CONTROLLER", "QS - ASTRO 10i CONTROLLER"]
+        note: "QS - ASTRO 10i CONTROLLER [overview; 10i; trang 5]"
+  - id: K06
+    question: "So sánh F86 và F10T khác nhau những gì?"
+    domain: product_catalog
+    models: ["F86", "F10T"]
+    tags: ["khach_hang", "so_sanh"]
+    expected_intent: ["compare.product_models"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0021
+        content_hash: a6fa8a1615ff22da0b5a5339df26d6feda99b4d28bd0d0d1e5f0117a09004e03
+        section_path: ["MOTION CONTROLLER", "Selection table", "General"]
+        note: "Selection table › General [table; F54, F86, F10T, 10S; trang 6]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0003
+        content_hash: de9d55182f875f65e038399987150db454f749e27e625eae0f993e334f2f7a5f
+        section_path: ["MOTION CONTROLLER", "QS F86"]
+        note: "QS F86 [overview; F86; trang 9]"
+      - chunk_key: qs_product_catalogue:C0006
+        content_hash: 83dccd1aa82fc0488c3d27c0830ac5a8067a73e11b4eef9dfccd5d177e752e0e
+        section_path: ["MOTION CONTROLLER", "QS F10T"]
+        note: "QS F10T [overview; F10T; trang 10]"
+      - chunk_key: qs_product_catalogue:C0022
+        content_hash: b3bb61c661e4b80f768b1a0b0d0ec93ed8783273a44dd787b5f7d99a3fc81476
+        section_path: ["MOTION CONTROLLER", "Selection table", "Hardware Specification"]
+        note: "Selection table › Hardware Specification [table; F54, F86, F10T, 10S; trang 6]"
+      - chunk_key: qs_product_catalogue:C0005
+        content_hash: 64312b961805266a92a706e724c1550986b0788ad9f15693429fc81e1653c399
+        section_path: ["MOTION CONTROLLER", "QS - F86 CONTROLLER"]
+        note: "QS - F86 CONTROLLER [overview; F86; trang 4]"
+      - chunk_key: qs_product_catalogue:C0008
+        content_hash: c7965e3e921791fecd6a811e249d7a5c6a811006243ffa889d72ab8ffe3e67d9
+        section_path: ["MOTION CONTROLLER", "QS - F10T CONTROLLER"]
+        note: "QS - F10T CONTROLLER [overview; F10T; trang 4]"
+  - id: K07
+    question: "Astro 6AH điều khiển vòng hở hay vòng kín?"
+    domain: product_catalog
+    models: ["6AH"]
+    tags: ["nhan_vien", "thong_so", "quyet_dinh"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0013
+        content_hash: 8d29178bc066003a0c95c1c53a20e18a6612eb2f5863a0dc9c06c9c905585442
+        section_path: ["MOTION CONTROLLER", "QS ASTRO 6AH", "THÔNG SỐ KỸ THUẬT (SPECIFICATIONS)"]
+        note: "QS ASTRO 6AH › THÔNG SỐ KỸ THUẬT (SPECIFICATIONS) [spec; 6AH; trang 12]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0035
+        content_hash: 4c8c3011cde36d0c4ba0e5c6311ee64794f316d6c978002e142eee236cf25ef9
+        section_path: ["MOTION CONTROLLER", "Selection table", "Control"]
+        note: "Selection table › Control [table; 6AV, 6AH, 10i; trang 7]"
+      - chunk_key: qs_product_catalogue:C0014
+        content_hash: 7fde12d2a74e96514150e6c28db2cc33a94c3130347c00504dcda17ad7a08727
+        section_path: ["MOTION CONTROLLER", "QS - ASTRO 6AH CONTROLLER"]
+        note: "QS - ASTRO 6AH CONTROLLER [overview; 6AH; trang 5]"
+      - chunk_key: qs_product_catalogue:C0012
+        content_hash: 1c9b187a6f824764c7e21e2aa433e3d115d00a84b60dee333bf8c9694c4d671f
+        section_path: ["MOTION CONTROLLER", "QS ASTRO 6AH"]
+        note: "QS ASTRO 6AH [overview; 6AH; trang 12]"
+  - id: K08
+    question: "Màn hình bộ điều khiển F10T có cảm ứng không?"
+    domain: product_catalog
+    models: ["F10T"]
+    tags: ["khach_hang", "thong_so"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0022
+        content_hash: b3bb61c661e4b80f768b1a0b0d0ec93ed8783273a44dd787b5f7d99a3fc81476
+        section_path: ["MOTION CONTROLLER", "Selection table", "Hardware Specification"]
+        note: "Selection table › Hardware Specification [table; F54, F86, F10T, 10S; trang 6]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0006
+        content_hash: 83dccd1aa82fc0488c3d27c0830ac5a8067a73e11b4eef9dfccd5d177e752e0e
+        section_path: ["MOTION CONTROLLER", "QS F10T"]
+        note: "QS F10T [overview; F10T; trang 10]"
+  - id: K09
+    question: "Trọn bộ hệ thống của F54 gồm những thiết bị gì?"
+    domain: product_catalog
+    models: ["F54"]
+    tags: ["khach_hang", "tu_van"]
+    # Toma 2026-11-14: câu đã nêu model thì hai intent tra catalog cho cùng kết quả tìm → chấp nhận cả hai.
+    expected_intent: ["lookup.product_info", "lookup.product_catalog"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0002
+        content_hash: faf5c528bd0b97fc4df04398a5ff33004e8cee4c93bf289a9b2e5109ea19b5a4
+        section_path: ["MOTION CONTROLLER", "QS - F54 CONTROLLER"]
+        note: "QS - F54 CONTROLLER [overview; F54; trang 4]"
+    acceptable: []
+  - id: K10
+    question: "F86 có quản lý tuổi thọ dao không?"
+    domain: product_catalog
+    models: ["F86"]
+    tags: ["nhan_vien", "tinh_nang"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0026
+        content_hash: 0b527c4d65743dc2557a2da3c23a33f96ca5589e0921f437978fd9a386cf9e4b
+        section_path: ["MOTION CONTROLLER", "Selection table", "Tool Manager"]
+        note: "Selection table › Tool Manager [table; F54, F86, F10T, 10S; trang 6]"
+    acceptable: []
+  - id: K11
+    question: "Astro 6AV có tích hợp sẵn tay quay MPG không?"
+    domain: product_catalog
+    models: ["6AV"]
+    tags: ["khach_hang", "tinh_nang"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0017
+        content_hash: 144760c2e1741a3bb1c471b992de76af80c08acfd9ae78cb0259b36365d8b796
+        section_path: ["MOTION CONTROLLER", "QS - ASTRO 6AV CONTROLLER"]
+        note: "QS - ASTRO 6AV CONTROLLER [overview; 6AV; trang 5]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0015
+        content_hash: a5f1949d45b4b4ac809317f851877b96b61a0440c9144094c7fdad174d42caa2
+        section_path: ["MOTION CONTROLLER", "QS ASTRO 6AV"]
+        note: "QS ASTRO 6AV [overview; 6AV; trang 13]"
+  - id: K12
+    question: "Astro 10S điều khiển được tối đa bao nhiêu trục?"
+    domain: product_catalog
+    models: ["10S"]
+    tags: ["khach_hang", "thong_so", "model_moi"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0009
+        content_hash: d137614382657e84d4a2c1c3968ba8b3960d81f7d66dec6d16dc4a6c6d4406c2
+        section_path: ["MOTION CONTROLLER", "QS ASTRO 10S"]
+        note: "QS ASTRO 10S [overview; 10S; trang 11]"
+      - chunk_key: qs_product_catalogue:C0011
+        content_hash: 6e2ed7c99652b03a1a291b6cabda45ba37423d8e8d439ddbf3b7f2f551f2ad08
+        section_path: ["MOTION CONTROLLER", "QS - ASTRO 10S CONTROLLER"]
+        note: "QS - ASTRO 10S CONTROLLER [overview; 10S; trang 4]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0021
+        content_hash: a6fa8a1615ff22da0b5a5339df26d6feda99b4d28bd0d0d1e5f0117a09004e03
+        section_path: ["MOTION CONTROLLER", "Selection table", "General"]
+        note: "Selection table › General [table; F54, F86, F10T, 10S; trang 6]"
+  - id: K13
+    question: "I/O tích hợp của F86 khi dùng EtherCAT là bao nhiêu?"
+    domain: product_catalog
+    models: ["F86"]
+    tags: ["nhan_vien", "thong_so", "quyet_dinh"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0003
+        content_hash: de9d55182f875f65e038399987150db454f749e27e625eae0f993e334f2f7a5f
+        section_path: ["MOTION CONTROLLER", "QS F86"]
+        note: "QS F86 [overview; F86; trang 9]"
+      - chunk_key: qs_product_catalogue:C0005
+        content_hash: 64312b961805266a92a706e724c1550986b0788ad9f15693429fc81e1653c399
+        section_path: ["MOTION CONTROLLER", "QS - F86 CONTROLLER"]
+        note: "QS - F86 CONTROLLER [overview; F86; trang 4]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0022
+        content_hash: b3bb61c661e4b80f768b1a0b0d0ec93ed8783273a44dd787b5f7d99a3fc81476
+        section_path: ["MOTION CONTROLLER", "Selection table", "Hardware Specification"]
+        note: "Selection table › Hardware Specification [table; F54, F86, F10T, 10S; trang 6]"
+  - id: K14
+    question: "Torque feedback của Astro 6AH hỗ trợ ở giao tiếp nào?"
+    domain: product_catalog
+    models: ["6AH"]
+    tags: ["nhan_vien", "thong_so", "quyet_dinh"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0013
+        content_hash: 8d29178bc066003a0c95c1c53a20e18a6612eb2f5863a0dc9c06c9c905585442
+        section_path: ["MOTION CONTROLLER", "QS ASTRO 6AH", "THÔNG SỐ KỸ THUẬT (SPECIFICATIONS)"]
+        note: "QS ASTRO 6AH › THÔNG SỐ KỸ THUẬT (SPECIFICATIONS) [spec; 6AH; trang 12]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0035
+        content_hash: 4c8c3011cde36d0c4ba0e5c6311ee64794f316d6c978002e142eee236cf25ef9
+        section_path: ["MOTION CONTROLLER", "Selection table", "Control"]
+        note: "Selection table › Control [table; 6AV, 6AH, 10i; trang 7]"
+  - id: K15
+    question: "Điện áp nguồn cấp cho Astro 10i là bao nhiêu?"
+    domain: product_catalog
+    models: ["10i"]
+    tags: ["khach_hang", "nguon"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0018
+        content_hash: 47dee6e5873dfe3e640cbac7ed91f1734a5847d03f1c9be9fbb87f7acc090542
+        section_path: ["MOTION CONTROLLER", "QS ASTRO 10i"]
+        note: "QS ASTRO 10i [overview; 10i; trang 14]"
+    acceptable: []
+  - id: K16
+    question: "Những bộ điều khiển nào hỗ trợ Mechatrolink?"
+    domain: product_catalog
+    models: []
+    tags: ["khach_hang", "tu_van", "khong_model"]
+    expected_intent: ["lookup.product_catalog"]
+    expected_route: retrieve
+    expected:
+      - chunk_key: qs_product_catalogue:C0029
+        content_hash: fbe45c5ef11801d26f73fe3ad0da643b437b857689f55f4eb645cf4d4dad98af
+        section_path: ["MOTION CONTROLLER", "Selection table", "General"]
+        note: "Selection table › General [table; 6AV, 6AH, 10i; trang 7]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0012
+        content_hash: 1c9b187a6f824764c7e21e2aa433e3d115d00a84b60dee333bf8c9694c4d671f
+        section_path: ["MOTION CONTROLLER", "QS ASTRO 6AH"]
+        note: "QS ASTRO 6AH [overview; 6AH; trang 12]"
+      - chunk_key: qs_product_catalogue:C0014
+        content_hash: 7fde12d2a74e96514150e6c28db2cc33a94c3130347c00504dcda17ad7a08727
+        section_path: ["MOTION CONTROLLER", "QS - ASTRO 6AH CONTROLLER"]
+        note: "QS - ASTRO 6AH CONTROLLER [overview; 6AH; trang 5]"
+      - chunk_key: qs_product_catalogue:C0015
+        content_hash: a5f1949d45b4b4ac809317f851877b96b61a0440c9144094c7fdad174d42caa2
+        section_path: ["MOTION CONTROLLER", "QS ASTRO 6AV"]
+        note: "QS ASTRO 6AV [overview; 6AV; trang 13]"
+      - chunk_key: qs_product_catalogue:C0017
+        content_hash: 144760c2e1741a3bb1c471b992de76af80c08acfd9ae78cb0259b36365d8b796
+        section_path: ["MOTION CONTROLLER", "QS - ASTRO 6AV CONTROLLER"]
+        note: "QS - ASTRO 6AV CONTROLLER [overview; 6AV; trang 5]"
+      - chunk_key: qs_product_catalogue:C0018
+        content_hash: 47dee6e5873dfe3e640cbac7ed91f1734a5847d03f1c9be9fbb87f7acc090542
+        section_path: ["MOTION CONTROLLER", "QS ASTRO 10i"]
+        note: "QS ASTRO 10i [overview; 10i; trang 14]"
+      - chunk_key: qs_product_catalogue:C0020
+        content_hash: b02a1d484d2dcbefa55dcb055bbce6ee17e8ed84212ac9c5bfba00d31ca43c2b
+        section_path: ["MOTION CONTROLLER", "QS - ASTRO 10i CONTROLLER"]
+        note: "QS - ASTRO 10i CONTROLLER [overview; 10i; trang 5]"
+  - id: K17
+    question: "kich thuoc bo dieu khien astro 6av"
+    domain: product_catalog
+    models: ["6AV"]
+    tags: ["khach_hang", "thong_so", "khong_dau"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0015
+        content_hash: a5f1949d45b4b4ac809317f851877b96b61a0440c9144094c7fdad174d42caa2
+        section_path: ["MOTION CONTROLLER", "QS ASTRO 6AV"]
+        note: "QS ASTRO 6AV [overview; 6AV; trang 13]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0017
+        content_hash: 144760c2e1741a3bb1c471b992de76af80c08acfd9ae78cb0259b36365d8b796
+        section_path: ["MOTION CONTROLLER", "QS - ASTRO 6AV CONTROLLER"]
+        note: "QS - ASTRO 6AV CONTROLLER [overview; 6AV; trang 5]"
+      - chunk_key: qs_product_catalogue:C0029
+        content_hash: fbe45c5ef11801d26f73fe3ad0da643b437b857689f55f4eb645cf4d4dad98af
+        section_path: ["MOTION CONTROLLER", "Selection table", "General"]
+        note: "Selection table › General [table; 6AV, 6AH, 10i; trang 7]"
+  - id: K18
+    question: "What is the block processing time of the F10T controller?"
+    domain: product_catalog
+    models: ["F10T"]
+    tags: ["nhan_vien", "tieng_anh"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0021
+        content_hash: a6fa8a1615ff22da0b5a5339df26d6feda99b4d28bd0d0d1e5f0117a09004e03
+        section_path: ["MOTION CONTROLLER", "Selection table", "General"]
+        note: "Selection table › General [table; F54, F86, F10T, 10S; trang 6]"
+    acceptable: []
+  - id: K19
+    question: "Số hệ tọa độ chương trình tối đa của F54 là bao nhiêu?"
+    domain: product_catalog
+    models: ["F54"]
+    tags: ["nhan_vien", "thong_so"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0021
+        content_hash: a6fa8a1615ff22da0b5a5339df26d6feda99b4d28bd0d0d1e5f0117a09004e03
+        section_path: ["MOTION CONTROLLER", "Selection table", "General"]
+        note: "Selection table › General [table; F54, F86, F10T, 10S; trang 6]"
+    acceptable: []
+  - id: K20
+    question: "Astro 10i có những điểm gì nổi bật về bàn phím, núm xoay?"
+    domain: product_catalog
+    models: ["10i"]
+    tags: ["khach_hang", "tinh_nang"]
+    expected_intent: ["lookup.product_info"]
+    expected:
+      - chunk_key: qs_product_catalogue:C0020
+        content_hash: b02a1d484d2dcbefa55dcb055bbce6ee17e8ed84212ac9c5bfba00d31ca43c2b
+        section_path: ["MOTION CONTROLLER", "QS - ASTRO 10i CONTROLLER"]
+        note: "QS - ASTRO 10i CONTROLLER [overview; 10i; trang 5]"
+    acceptable:
+      - chunk_key: qs_product_catalogue:C0018
+        content_hash: 47dee6e5873dfe3e640cbac7ed91f1734a5847d03f1c9be9fbb87f7acc090542
+        section_path: ["MOTION CONTROLLER", "QS ASTRO 10i"]
+        note: "QS ASTRO 10i [overview; 10i; trang 14]"

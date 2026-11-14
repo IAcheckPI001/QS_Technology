@@ -9,10 +9,10 @@ STATE của luồng đổi trạng thái tổng.
 | Luồng | Trạng thái | Chưa kiểm trên hệ thống thật | Chi tiết |
 |---|---|---|---|
 | chat-platform | Service key, session, lease, history, trace có code và test; GET Support Workspace chưa xác thực; `Idempotency-Key` chưa chống trùng | Supabase (`/health/db`, insert `chat_history`, lease trên khóa dòng) | [STATE](flows/chat-platform/STATE.md) |
-| website-qa | Chạy trọn luồng; retrieval mức test, tham số chưa tối ưu; handoff là scaffold; chưa có SSE nguồn/ảnh | Retrieval trên Supabase thật | [STATE](flows/website-qa/STATE.md) |
+| website-qa | Chạy trọn luồng; chat vẫn dùng bảng cũ `doc_chunks`. Đang làm R-1 (tối ưu bước phân tích + định tuyến, [kế hoạch](reports/p3_r1_routing_plan.md)): công cụ đo và luật định tuyến `r1`/`r2` đã có code (chỉ eval dùng, production giữ `r0`), **chưa đo được vì OpenAI hết credit (2026-11-14)**; handoff là scaffold; chưa có SSE nguồn/ảnh | Chat trên bảng mới `doc_chunks_v2`; số đo luật định tuyến | [STATE](flows/website-qa/STATE.md) |
 | crm-agent | Thử nghiệm; tool CRM sau `CRM_REPORT_ENABLED` (mặc định tắt), mặc định phương án C (`crm_schema`/`crm_query`, chưa commit); chưa phân quyền tool | OpenAI tool calling; eval tay chưa chạy | [STATE](flows/crm-agent/STATE.md) |
 | learning | Tới hết bước privacy sau `LEARNING_API_ENABLED`, chưa xác thực; segment/extract, job, index chưa nối | Supabase, Ollama | [STATE](flows/learning/STATE.md) |
-| doc-ingest | PDF → chunk nháp; chưa ghi DB; F54 (run `eval-k`, 296 chunk) đạt cổng 2b (tạm, nhãn chưa xác nhận); Bước 3 làm giàu xong 243/243 lá, cổng 2c tự động đạt, 30 mẫu chờ duyệt | — (tool offline, chạy trên PDF thật) | [STATE](flows/doc-ingest/STATE.md) |
+| doc-ingest | PDF → chunk nháp → `doc_chunks_v2` (draft): F54 296, F86 Installation 23, catalog 7 bộ điều khiển 37 chunk (nguồn biên soạn `curated/`, chờ verdict, chưa gắn hình); cổng 2c v4 không đạt (chờ prompt v5); còn soạn servo/board/phụ kiện/công ty | — (tool offline, chạy trên PDF thật) | [STATE](flows/doc-ingest/STATE.md) |
 
 ## Kiểm thử toàn repo gần nhất
 

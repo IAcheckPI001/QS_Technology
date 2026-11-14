@@ -1,11 +1,11 @@
 
 import json
 
-from app.modules.chatbot.extraction.registry import MAX_SUB_QUERIES, REGISTRY as R
+from app.modules.chatbot.extraction.registry import MAX_SUB_QUERIES, REGISTRY as R, intent_descriptions
 
 
-def _render_intents() -> str:
-    return "\n".join(f"- {name}: {spec['desc']}" for name, spec in R["intents"].items())
+def _render_intents(version: str | None = None) -> str:
+    return "\n".join(f"- {name}: {desc}" for name, desc in intent_descriptions(version).items())
  
  
 def _render_models() -> str:

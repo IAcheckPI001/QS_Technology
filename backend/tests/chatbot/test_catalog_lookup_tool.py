@@ -9,6 +9,7 @@ from app.modules.chatbot.schemas.system import AgentRun, ConversationState, Tool
 from app.modules.chatbot.stages.execution_stage import SourceAllocator
 from app.modules.chatbot.tools import ToolContext
 from app.modules.chatbot.tools.product_docs import ProductDocsTurnState
+from app.modules.chatbot.extraction.registry import REGISTRY
 from tests.chatbot.agent_fakes import (
     FakeChunks,
     ScriptedToolProvider,
@@ -19,7 +20,15 @@ from tests.chatbot.agent_fakes import (
     sub_query,
 )
 
-ETHERCAT = ["F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE"]
+ETHERCAT = ["F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE", "10S", "10i"]
+
+
+@pytest.fixture
+def three_ethercat_only(monkeypatch):
+    """Kịch bản ≤ MAX_AUTO_LOOKUP_MODELS model: "EtherCAT, không Mechatrolink" = F86, F86E, F10T, 10S (2026-11-14) →
+    tạm gán 10S có Mechatrolink để giữ đúng 3 model của kịch bản lookup_each."""
+    table = {**REGISTRY["capabilities"]["control_interface"], "10S": ["pulse_train", "ethercat", "mechatrolink"]}
+    monkeypatch.setitem(REGISTRY["capabilities"], "control_interface", table)
 
 
 def _find(question, *, ci=(), excluded=(), match="all", unmapped=()):
@@ -80,6 +89,7 @@ def test_many_matches_ask_selection_without_retrieval_or_evidence():
     assert (task.kind, task.status) == ("catalog", "completed")
 
 
+@pytest.mark.usefixtures("three_ethercat_only")
 @pytest.mark.parametrize(("conditions", "expected"), [
     ({"ci": ["pulse_train"], "excluded": ["ethercat"]}, ["F54"]),
     ({"ci": ["ethercat"], "excluded": ["mechatrolink"]}, ["F86", "F86E", "F10T"]),
@@ -135,7 +145,7 @@ def test_condition_outside_table_still_retrieves_without_model_filter():
     assert output.status == "answered"
     assert output.catalog_match.next_action == "verify_with_sources"
     assert output.catalog_match.unmapped_conditions == ["6 trục"]
-    assert len(output.catalog_match.models) == 10     # ứng viên, chưa phải kết quả
+    assert len(output.catalog_match.models) == len(REGISTRY["product_models"])   # ứng viên, chưa phải kết quả
     assert chunks.calls[0]["models"] is None           # giữ cả chunk catalog chung
     assert output.sources[0].product_models == []
 
@@ -199,6 +209,7 @@ def test_model_inherited_from_session_is_not_used_for_dependent_question():
     assert chunks.calls == []        # không tra lắp đặt cho F54
 
 
+@pytest.mark.usefixtures("three_ethercat_only")
 def test_comparison_with_discovered_models_awaits_models():
     question = "So sánh F54 với các model hỗ trợ EtherCAT nhưng không hỗ trợ Mechatrolink"
     output, chunks, _ = _ask(
@@ -317,9 +328,10 @@ def test_ambiguous_alias_in_cited_source_is_not_evidence():
     assert second.error_code == "model_not_evidenced"
 
 
+@pytest.mark.usefixtures("three_ethercat_only")
 @pytest.mark.parametrize(("conditions", "allowed"), [
     ({"ci": ["ethercat"], "excluded": ["mechatrolink"]}, True),   # 3 model: lookup_each
-    ({"ci": ["ethercat"]}, False),                   # 9 model: ask_selection, hỏi nhân viên trước
+    ({"ci": ["ethercat"]}, False),                   # 11 model: ask_selection, hỏi nhân viên trước
 ])
 def test_discovered_models_are_evidence_only_when_lookup_is_allowed(conditions, allowed):
     provider = ScriptedToolProvider(analysis_outputs=[

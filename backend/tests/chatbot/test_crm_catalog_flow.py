@@ -4,8 +4,10 @@ import asyncio
 import json
 from uuid import UUID
 
+from app.modules.chatbot.extraction.registry import REGISTRY
 from app.modules.chatbot.extraction.validate_registry import models_in_text
 from app.modules.chatbot.schemas.default import ChannelType
+from app.modules.chatbot.schemas.system.run_context import MAX_LAST_MODELS
 from app.modules.chatbot.services import ChatbotService
 from tests.chatbot.agent_fakes import (
     FakeChunks,
@@ -25,11 +27,11 @@ from tests.chatbot.test_clarification import StoringHistoryRepository
 
 SESSION_ID = UUID("00000000-0000-0000-0000-0000000000c2")
 QUESTION = "Model nào hỗ trợ EtherCAT? Hướng dẫn lắp đặt model đó."
-SELECTION = ("Có 9 model hỗ trợ EtherCAT: F86, F86E, F10T, Astro 6AH, 6AHE, Astro 6AV, 6AVE, "
-             "10iV và 10iVE. Anh/chị muốn xem hướng dẫn lắp đặt model nào?")
-ETHERCAT = ["F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE"]
+SELECTION = ("Có 11 model hỗ trợ EtherCAT: F86, F86E, F10T, Astro 6AH, 6AHE, Astro 6AV, 6AVE, "
+             "10iV, 10iVE, Astro 10S và Astro 10i. Anh/chị muốn xem hướng dẫn lắp đặt model nào?")
+ETHERCAT = ["F86", "F86E", "F10T", "6AH", "6AHE", "6AV", "6AVE", "10iV", "10iVE", "10S", "10i"]
 # Model EtherCAT có catalog (coverage.product_catalog); các model còn lại chưa có tài liệu.
-WITH_CATALOG = ["F10T", "6AH", "6AV", "10iV"]
+WITH_CATALOG = ["F10T", "6AH", "6AV", "10iV", "10S", "10i"]
 
 
 def _send(service, text):
@@ -118,22 +120,26 @@ def test_all_selected_models_are_looked_up_in_parallel_next_turn():
         answer(SELECTION),
         calls(*lookups),
         answer("F86: cấp nguồn 24V [S1]. Các model còn lại chỉ có tổng quan hoặc chưa có tài liệu."),
-    ], max_tool_calls=12)
+    ], max_tool_calls=len(ETHERCAT) + 1)
 
     _send(service, QUESTION)
     _send(service, "tất cả")
 
     # Model lấy từ câu hỏi chọn ở lượt trước (history), nên không bị chặn.
-    assert _tool_steps(repository.rows[-1]) == [("product_docs_ask", "ok")] * 9
+    assert _tool_steps(repository.rows[-1]) == [("product_docs_ask", "ok")] * len(ETHERCAT)
     statuses = [p["status"] for p in _tool_payloads(provider.calls[3])]
     assert statuses.count("answered") == 1 + len(WITH_CATALOG)
     assert statuses.count("no_docs") == len(ETHERCAT) - 1 - len(WITH_CATALOG)
     assert sorted(call["models"][0] for call in chunks.calls) == sorted(["F86", *WITH_CATALOG])
     # Ngữ cảnh model chỉ giữ MAX_LAST_MODELS model gần nhất có nguồn.
-    assert repository.rows[-1].conversation_state["last_models"] == WITH_CATALOG
+    assert repository.rows[-1].conversation_state["last_models"] == ["F86", *WITH_CATALOG][-MAX_LAST_MODELS:]
 
 
-def test_three_matches_are_looked_up_automatically_in_same_turn():
+def test_three_matches_are_looked_up_automatically_in_same_turn(monkeypatch):
+    # Kịch bản ≤ MAX_AUTO_LOOKUP_MODELS model: EtherCAT, không Mechatrolink = F86, F86E, F10T, 10S (2026-11-14) →
+    # tạm gán 10S có Mechatrolink để giữ đúng 3 model của kịch bản.
+    table = {**REGISTRY["capabilities"]["control_interface"], "10S": ["pulse_train", "ethercat", "mechatrolink"]}
+    monkeypatch.setitem(REGISTRY["capabilities"], "control_interface", table)
     found = ["F86", "F86E", "F10T"]
     service, provider, chunks, repository = _service([
         calls(ask("c1", "Các model hỗ trợ EtherCAT nhưng không hỗ trợ Mechatrolink")),
@@ -153,20 +159,20 @@ def test_three_matches_are_looked_up_automatically_in_same_turn():
 
 
 def test_agent_skipping_selection_is_blocked_by_backend():
-    # Agent bỏ qua ask_selection và tự tra cả 9 model trong cùng lượt.
+    # Agent bỏ qua ask_selection và tự tra cả 11 model trong cùng lượt.
     lookups = [ask(f"c{i}", f"Hướng dẫn lắp đặt {code}") for i, code in enumerate(ETHERCAT, start=2)]
     service, provider, chunks, repository = _service([
         calls(ask("c1", "Các model hỗ trợ EtherCAT")),
         calls(*lookups),
         answer(SELECTION),
-    ], max_tool_calls=12)
+    ], max_tool_calls=len(ETHERCAT) + 1)
 
     _send(service, QUESTION)
 
     assert chunks.calls == []
     assert {p["error"] for p in _tool_payloads(provider.calls[2])[1:]} == {"model_not_evidenced"}
     statuses = [status for _, status in _tool_steps(repository.rows[-1])]
-    assert statuses == ["ok"] + ["model_not_evidenced"] * 9
+    assert statuses == ["ok"] + ["model_not_evidenced"] * len(ETHERCAT)
 
 
 def test_condition_outside_table_is_verified_with_sources():

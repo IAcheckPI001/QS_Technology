@@ -8,6 +8,147 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-14 · Bàn giao phiên: tổng hợp trạng thái R-1 và vấn đề tồn đọng · loại: tài liệu
+
+- Toma chưa nạp được credit OpenAI → dừng ở đây. Viết lại [STATE.md](STATE.md) làm điểm vào cho phiên sau: bảng tiến
+  độ R-1 theo giai đoạn, quyết định đã chốt, kết quả đo, danh sách vấn đề mở (B-1 hết credit, R-1 a–d, R-1a/b/c, C-1,
+  C-2, T-1…), lệnh chạy tiếp khi có credit.
+- Chép kế hoạch R-1 đã duyệt vào repo: [p3_r1_routing_plan.md](../../reports/p3_r1_routing_plan.md) (trước đó chỉ nằm
+  ngoài repo). Cập nhật dòng website-qa, doc-ingest trong `current-state.md`; doc-ingest STATE (catalog chờ verdict,
+  `--vi-keywords`, test 376 passed).
+- Việc chờ Toma: nạp credit; duyệt `routing_intent.yaml`, `dual_source.yaml`; chọn RT-3 hay RT-3b (+ danh sách
+  `non_model_terms` nếu RT-3); quyết `--vi-keywords`; verdict 37 chunk catalog.
+- Chưa commit: toàn bộ thay đổi từ catalog `curated/` tới R-1 còn ở working tree (nhánh `feature/deploy_ai_service`).
+- Kiểm: `tests` 1120 passed, 14 skipped; `tests\doc_ingest` 376 passed; `check_ai_docs` đạt.
+
+## 2026-11-14 · R-1 giai đoạn B: luật định tuyến có phiên bản (code + test), chưa đo được vì hết credit OpenAI · loại: thay đổi
+
+- **Chặn:** tài khoản OpenAI hết credit (429 `credit_balance_exhausted`) lúc chạy mốc bộ 14 câu, catalog 20 câu, bộ
+  "hai nguồn" → ba lượt đó **chưa có số**; mọi phép đo `r1`/`r2` cũng chờ nạp credit. Dịch vụ chat dùng cùng key cũng
+  sẽ lỗi cho tới khi nạp. Các lượt đã ghi trước đó (40 câu, 120 câu) có 0 lỗi phân tích nên không bị ảnh hưởng. Eval
+  giờ **dừng hẳn** khi bước phân tích lỗi provider (không ghi thành "câu sai").
+- A3 (Toma duyệt kế hoạch 2026-11-14): D01 chỉ thêm chunk catalog C0000 vào `acceptable`, giữ `expected` + domain
+  `technical_docs` (là phép đo của RT-1); K09 chấp nhận cả hai intent tra catalog (cùng domain, cùng bộ lọc model →
+  kết quả tìm y hệt; kênh CRM cũng vậy vì `CatalogLookupStage` chỉ chạy khi không có model).
+- A5 nháp `evals/retrieval_cases/dual_source.yaml` (chờ Toma duyệt): 15 câu thông số/đặc điểm F54, F86 có câu trả lời ở
+  manual hoặc cả hai nguồn (H01–H15, có gán chunk) + 4 câu đối chứng chỉ-catalog (HC1–HC4).
+- Cơ chế: `registry.ROUTING_VERSION = "r0"` (production, không luật), `ROUTING_RULES` (`r1` = RT-1+RT-2+RT-3, `r2` =
+  r1+RT-4), `routing_rules()` nhận cả chuỗi thử nghiệm "RT-1+RT-3b". Tham số `routing_version` đi qua
+  `resolve_sub_query` → `resolve_with_raw` → `build_analysis` → `AnalysisStage`, `ClarificationResumeStage`. Luật chạy
+  ghi `routing_rule:<mã>` vào `warnings`. Eval: `--routing-version`, ghi `meta.routing`.
+- Luật (`validate_registry._also_technical` + bước chuẩn hóa model):
+  - RT-1: sub-query tra catalog (không phải so sánh) có model có tài liệu kỹ thuật → thêm target `technical_docs`;
+    catalog là target chính (`boost` 0,003). Theo điều kiện, không theo tên intent (bao cả `lookup.product_catalog` có
+    model: D39, K09).
+  - RT-2: câu có mã (`ROUTING_CODE_PATTERN`: `#số`, `CNn`, `Xn`/`Yn`, `ALn`, `Enn`, `Mn`/`Gn`; không khớp RS485, USB2,
+    24VDC, mã model) → `technical_docs` là target chính. RT-4 (chỉ `r2`): cụm cấu hình trên câu đã bỏ dấu.
+  - RT-3: `REGISTRY["non_model_terms"]` (nháp: 08_RLTR, RBT-01 — chờ Toma duyệt) không phải model lạ.
+  - **RT-3b (ngoài kế hoạch, đề xuất thay RT-3):** cụm lạ không có model nào gần giống (`suggest_models` rỗng) không
+    phải model lạ. Bằng chứng (thăm dò 12 câu × 3 lần): LLM ghi "08_RLTR", "RBT-01", "driver servo QS", "Yaskawa
+    Sigma-7", "Delta VFD-M" vào `unresolved_mentions`, tất cả không có gợi ý; "F84" có gợi ý (F86, F54) nên vẫn hỏi
+    lại. Danh sách RT-3 không thể liệt kê hết thiết bị hãng khác.
+- Gộp kết quả: `RetrievalTarget.boost`, `RetrievalRequest.boost` (mặc định 0), `handlers.build_retrieval_requests`
+  chuyển tiếp, `Retriever._merge` xếp theo `fused_score + boost` (nhánh so sánh giữ round-robin; boost 0 = y như cũ).
+  Eval thêm biến thể `sb0.003_tb0`, `sb0.003_tb0.005` (dò điểm cộng target chính).
+- R-2 áp vào code: `MatchV2Options` mặc định `scope_mode="boost"`, `scope_boost=0.003` (repository v2, chỉ eval dùng).
+  Trong báo cáo eval từ nay `base` = cộng điểm 0,003; hành vi cũ ở biến thể `scope_filter`.
+- **Ước tính không gọi LLM** (áp luật lên intent/model LLM đã chọn ở lượt mốc; không ước tính được thứ hạng): 40 câu
+  "domain đúng" 0,90 → **1,0**, "đúng cả ba" 0,867 → 0,925 (đổi: D01, D26, D39; còn lại là câu sai nhãn intent nhưng
+  đã tìm đúng nguồn: D21, D30, D06); 120 câu "đúng cả ba" 0,936 / 0,942 → 0,975 / 0,961. Ước tính coi mọi hàng "không
+  tìm" là được sửa, nên **cao hơn thực tế với `r1`** ("driver servo QS" chỉ RT-3b xử lý). Chưa phải số đo.
+- Production không đổi hành vi: `r0` cho kết quả y hệt trước thay đổi (test). Test mới
+  `tests/chatbot/test_routing_rules.py` (22); `tests` 1120 passed, 14 skipped.
+- Tiếp (khi có credit): mốc 3 bộ còn thiếu; đo `r0`/`r1`/`r2`/RT-3b × 3 lần trên 5 bộ; dò `target_boost`; cổng B.
+
+## 2026-11-14 · R-1 giai đoạn A: công cụ đo định tuyến, bộ câu 120 (nháp), mốc v1/r0 · loại: triển khai, phân tích
+
+- Kế hoạch R-1 (Toma duyệt 2026-11-14), 4 giai đoạn có cổng duyệt: A công cụ đo + bộ câu; B luật định tuyến bằng code
+  có phiên bản (`r0` = hiện tại; RT-1 `lookup.product_info` tìm thêm `technical_docs`, RT-2 câu có mã → tài liệu kỹ thuật
+  là target chính, RT-3 tên board/phụ kiện không phải model, RT-4 cụm cấu hình); C mô tả intent + khung prompt `v2`
+  (tiêu chí: intent chỉ tồn tại khi đổi hành vi; mô tả rút từ nội dung nguồn; câu ranh giới cho cặp dễ nhầm; registry
+  là nguồn định nghĩa duy nhất); D so model. Production giữ `v1`/`v1`/`r0` tới khi Toma chốt từng bản.
+- A1 `evals/run_retrieval_eval.py`: `--repeat N` (trung bình các lần, **ổn định**, biên "đúng cả ba" giữa các lần),
+  `--analysis-model`, `--mode routing` (retriever giả, không tìm), `--split dev|test|all`, bảng nhầm intent, định tuyến
+  theo tag, độ trễ p50/p95 + đếm lỗi bước phân tích (không làm dừng eval), `expected_domain` dạng danh sách (một trong
+  các domain). Sửa: coverage `technical_docs` chỉ thêm cho model có chunk domain đó (trước thêm nhầm 10S, 10i, 6AH, 6AV,
+  F10T). **Chấm chặt hơn:** route `retrieve` mà execution không phát lệnh tìm (sub-query bị
+  `planner.held_sub_query_ids` giữ lại) = route sai, ghi "không tìm" → số "route đúng" không so trực tiếp được với các
+  báo cáo trước mục này.
+- A2 nháp `evals/retrieval_cases/routing_intent.yaml`: 120 câu chỉ chấm định tuyến, 10 nhóm (9 cặp dễ nhầm `cap:…` +
+  đối chứng), 72 `dev` / 48 `test`. **Chờ Toma duyệt** (nên thêm câu `test` theo cách hỏi thật).
+- Mốc `v1`/`v1`/`r0`, gpt-4.1-mini, 3 lần:
+  - 40 câu (`20261114-154614-baseline-v1-r0-diverse40`): đúng cả ba web1 0,867 / web2 0,867; ổn định 0,925 / 0,95; biên
+    0,85–0,90 → **nhiễu 2,5–5 điểm %**. Nhầm: D21, D30 → `lookup.product_info` (11/12 lần), D06 → troubleshoot (6/6).
+    Không ổn định: D21, D26, D32, D12. Tìm kiếm web2 cộng điểm 0,003: recall@5 0,853 / MRR 0,798. Độ trễ p50 1,4 s,
+    p95 1,9 s, 0 lỗi.
+  - 120 câu nháp (`20261114-155459-draft-v1-r0-routing120`): đúng cả ba 0,936 / 0,942; ổn định 0,975 / 0,983. Nhóm yếu:
+    **`cap:phu_kien` 0,292 / 0,708** — tên board/phụ kiện ("08_RLTR", "RBT-01", cả "Driver servo QS") bị coi là model
+    lạ → `unknown_product_model` → không tra cứu (R107, R108, R110, R112–R114): lỗi D26 là **có hệ thống**, không hiếm.
+    Còn lại: R008 "công thức tính số xung/mm", R022 "chân X40 là tín hiệu gì", R004 "tham so #12100 la gi" →
+    `lookup.product_info`; R104 "phụ kiện" → `lookup.company_info` (2/3 lần). 6 cặp đạt 1,0 ở web1 (lắp đặt↔cấu hình,
+    vận hành↔sự cố, công ty↔chuyển người…) → lỗi tập trung ở câu có mã/"là gì" và tên phụ kiện.
+- A3 (chưa áp dụng, chờ Toma): D01 chấp nhận thêm chunk catalog C0000 + `expected_domain` cả hai; K09 chấp nhận cả
+  `lookup.product_info` và `lookup.product_catalog`; Q12, D39 giữ nguyên.
+- Test: `tests/chatbot/test_retrieval_v2.py` thêm 2 test (lặp, ổn định, nhầm intent, split, provider đo giờ, retriever
+  giả). `tests` 1097 passed, 14 skipped.
+
+## 2026-11-14 · Gắn phiên bản cho prompt phân tích và mô tả intent (bản hiện tại = v1) · loại: thay đổi
+
+- Lý do (Toma): cần so sánh bản prompt/mô tả intent nào chọn intent tốt hơn (R-1). Lịch sử git: khung prompt đã sửa 3
+  lần (pending 10-21; `language`/`model_dependency`/`active_model` 10-29; lọc catalog 11-02), **chưa lần nào nhắm vào
+  chọn intent**; mô tả intent (`desc`) vẫn là bản đầu 2026-10-17. Trước đây không có nhãn phiên bản.
+- `analysis/prompt/prompt_builder.py`: `PROMPT_VERSION = "v1"` (khung = các khối quy tắc gồm `<intent_rules>` + ví dụ
+  mẫu), `_FRAMES`, `build_analysis_prompt(n_examples, version=, intent_desc_version=)`, `analysis_prompt_info()` (phiên
+  bản + `n_examples` + sha256 12 ký tự của prompt gửi LLM). `extraction/registry.py`: `INTENT_DESC_VERSION = "v1"`,
+  `INTENT_DESC_VARIANTS` (bản thử nghiệm, chỉ ghi intent đổi), `intent_descriptions(version)`.
+  `QueryAnalyzer`/`AnalysisStage` nhận hai tham số phiên bản (None = production), `analyzer.prompt_info`, log lúc khởi tạo.
+- Không đổi hành vi: prompt sinh ra giống từng byte bản đã commit (so với `git show HEAD`, n_examples None/4/5).
+- `evals/run_retrieval_eval.py`: `--prompt-version`, `--intent-desc-version`; báo cáo + `results.json`
+  (`meta.analysis_prompt`) ghi nhãn. Kiểm: `data/retrieval_eval/20261114-151457-prompt-v1-check` (K01, K09) → "khung
+  `v1`, mô tả intent `v1`, n_examples=4, sha256 `8e431a735a4c`", analysis=gpt-4.1-mini.
+- Test mới `tests/chatbot/test_analysis_prompt_version.py` (5): ghim dấu nội dung từng phiên bản (sửa tại chỗ mà không
+  tăng phiên bản → đỏ), bản thử nghiệm chỉ đè intent liệt kê, phiên bản lạ bị từ chối. `tests` 1095 passed, 14 skipped.
+- Còn mở: (1) công cụ eval thêm coverage `technical_docs` cho mọi model có chunk trong `doc_chunks_v2` kể cả model chỉ
+  có chunk catalog (10S, 10i, 6AH, 6AV, F10T) — chưa ảnh hưởng bộ câu hiện tại, cần lọc theo domain trước khi thêm câu
+  hướng dẫn cho các model đó; (2) trace production chưa ghi phiên bản prompt (mới có log); (3) đề xuất tiêu chí xác
+  định intent + cách đo (chạy lặp, so model) đã gửi Toma, chờ quyết định trước khi soạn `v2`.
+
+## 2026-11-14 · Nạp catalog 7 bộ điều khiển + eval catalog 20 câu, hồi quy 14/40 câu · loại: triển khai, phân tích
+
+- Toma đồng ý nạp: `load_ingest_run --apply` 37 dòng `product_catalog` (`qs_product_catalogue` / `2026-11-14`, draft,
+  có embedding) vào `doc_chunks_v2`.
+- Bộ câu mới `evals/retrieval_cases/catalog_f54_astro.yaml` (K01–K20; thông số, so sánh, "model nào có RTCP /
+  Mechatrolink", giá trị đã chốt C-xx, model mới 10S/10i, không dấu, tiếng Anh). Kết quả
+  `data/retrieval_eval/20261114-142557-catalog`: định tuyến đúng cả ba 0,95 (K09 "trọn bộ hệ thống của F54" →
+  `lookup.product_catalog`, vẫn đúng domain); tìm kiếm web2 recall@5 **1,0** / MRR **0,839**, web1 0,95 / 0,804, core
+  0,9 / 0,747. Hạng thấp: K19 "Số hệ tọa độ chương trình tối đa" (4–9), K10 "quản lý tuổi thọ dao" (4–5) — câu tiếng
+  Việt, chunk bảng chọn chỉ có nhãn tiếng Anh như in ("Max.Number Of Program Coordinate", "Tool-life management") →
+  ứng viên đo `--vi-keywords` / làm giàu.
+- Hồi quy (cùng code, có catalog): bộ 40 câu `20261114-143132-diverse40-catalog` web2 cộng điểm 0,003: 0,853 → 0,824 do
+  D26 (hạng 1 → không tìm) — chạy lại D26 riêng (`…-d26-recheck`): hạng 1 → **dao động LLM**, không do catalog. Bộ 14
+  câu `…-sample14-catalog`: không đổi (Q13 3 → 2). D02, D13, D15 (tư vấn/so sánh) nay có dữ liệu catalog thật.
+- R-1 xác nhận trên dữ liệu thật: D21 (#12100), D30 (không dấu) vẫn bị xếp `lookup.product_info` → giờ **nhận chunk catalog
+  (sai)** thay vì rỗng → fallback "khi rỗng" không cứu; cần luật/fallback theo kế hoạch R-1.
+- Quan sát mới (chờ kiểm): lần D26 lỗi, bước phân tích đưa "08_RLTR" vào `unresolved_mentions` → hỏi lại
+  `unknown_product_model` và **không tra cứu** dù đã có F54 (clarification không chặn nhưng không có lệnh tìm) — ghi để
+  kiểm ở R-1.
+
+## 2026-11-14 · Registry: thêm model 10S, 10i (catalog QS) · loại: thay đổi
+
+- `extraction/registry.py`: `product_models` + `10S`, `10i` (ASTRO 10S, ASTRO 10i trong catalog QS; Toma 2026-11-14).
+  Tên chuẩn model đang được CRM chuẩn hóa → tạm: alias "Astro 10S" → 10S, "Astro 10i" → 10i; `display_names` "Astro
+  10S", "Astro 10i". `ambiguous_aliases`: bỏ "10i", "Astro 10i" (trước trỏ 10iV/10iVE); "Astro 10" và "Astro" thêm 10S,
+  10i. `capabilities`: 10S pulse_train+ethercat, 10i pulse_train+ethercat+mechatrolink (bảng chọn catalog trang 6–7).
+  `coverage.product_catalog` + 10S, 10i (giữ 10iV theo Toma).
+- Ảnh hưởng hành vi: khách gõ "10i"/"Astro 10i" → model 10i, không hỏi lại giữa 10iV/10iVE; tìm theo tiêu chí trả thêm
+  10S/10i ("EtherCAT" 9 → 11 model; "EtherCAT, không Mechatrolink" 3 → 4 model → `ask_selection` thay `lookup_each`);
+  báo cáo CRM (`reporting/datasets/tickets.py`) nhận product_name "10S"/"10i" là model hợp lệ. Prompt phân tích và schema
+  strict lấy danh sách model từ registry (tự cập nhật).
+- Đồng bộ `doc_ingest/profiles/registry_snapshot.json`. Test cập nhật: `test_product_catalog.py`,
+  `test_catalog_lookup_tool.py`, `test_crm_catalog_flow.py` (kịch bản 3 model dùng fixture tạm gán 10S có Mechatrolink),
+  `test_report_validate.py` (alias mơ hồ dùng "Astro 10"). `tests\chatbot` 597 passed.
+- Catalog: 37 chunk `product_catalog` (7 bộ điều khiển) đã sinh, chưa nạp (doc-ingest LOG cùng ngày).
+
 ## 2026-11-14 · Chốt scope cộng điểm 0,003 (R-2) · loại: quyết định
 
 - Toma chốt **scope cộng điểm, mức 0,003** (vùng tốt đã dò 0,003–0,005), thay lọc cứng. Căn cứ:

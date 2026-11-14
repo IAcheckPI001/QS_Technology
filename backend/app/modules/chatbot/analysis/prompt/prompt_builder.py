@@ -1,10 +1,45 @@
+"""Prompt của bước phân tích câu hỏi (intent, model, thuộc tính, tách câu).
 
+Hai phần có phiên bản riêng, để kết quả eval biết đang đo bản nào:
+- `PROMPT_VERSION`: khung prompt = các khối quy tắc bên dưới (gồm `<intent_rules>`) và `EXAMPLES` của
+  `registry_render`. Sửa câu chữ hoặc ví dụ thì thêm khung mới vào `_FRAMES` và tăng phiên bản.
+- `INTENT_DESC_VERSION` (registry): mô tả từng intent trong khối `<intents>`.
+Danh sách model trong `<models>` lấy từ registry, không thuộc phiên bản nào. Production dùng hai bản mặc định;
+bản khác chỉ công cụ eval chọn. `tests/chatbot/test_analysis_prompt_version.py` ghim dấu nội dung từng phiên bản.
+"""
 
-from app.modules.chatbot.extraction.registry import MAX_SUB_QUERIES, REGISTRY as R
+import hashlib
+
+from app.modules.chatbot.extraction.registry import INTENT_DESC_VERSION, MAX_SUB_QUERIES, REGISTRY as R
 from app.modules.chatbot.analysis.prompt.registry_render import _render_intents, _render_models, _render_hints, _render_examples
 
-def build_analysis_prompt(n_examples: int | None = None) -> str:
-    """n_examples=None: dùng tất cả (7). n_examples=4: bản lean, tiết kiệm ~25-30% token cố định."""
+PROMPT_VERSION = "v1"
+
+
+def build_analysis_prompt(n_examples: int | None = None, *, version: str | None = None,
+                          intent_desc_version: str | None = None) -> str:
+    """n_examples=None: dùng mọi ví dụ. n_examples=4: bản lean (4 ví dụ đầu + ví dụ `always`), ít token cố định hơn.
+    version / intent_desc_version = None: bản production."""
+    version = version or PROMPT_VERSION
+    if version not in _FRAMES:
+        raise ValueError(f"không có phiên bản prompt phân tích {version!r}")
+    return _FRAMES[version](n_examples, _render_intents(intent_desc_version), _render_models())
+
+
+def analysis_prompt_info(n_examples: int | None = None, *, version: str | None = None,
+                         intent_desc_version: str | None = None) -> dict:
+    """Nhãn của prompt đang dùng, ghi vào log và báo cáo eval. `sha256` = dấu của toàn bộ prompt gửi LLM
+    (đổi cả khi danh sách model của registry đổi)."""
+    prompt = build_analysis_prompt(n_examples, version=version, intent_desc_version=intent_desc_version)
+    return {
+        "prompt_version": version or PROMPT_VERSION,
+        "intent_desc_version": intent_desc_version or INTENT_DESC_VERSION,
+        "n_examples": n_examples,
+        "sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:12],
+    }
+
+
+def _frame_v1(n_examples: int | None, intents: str, models: str) -> str:
     return f"""<role>
 Bạn là bộ phân tích truy vấn của chatbot hỗ trợ kỹ thuật CNC (QS Technology).
 Chỉ làm một việc: đọc <query> (cùng <state>, <history> nếu có) và xuất ĐÚNG MỘT đối tượng JSON theo schema.
@@ -12,7 +47,7 @@ Không trả lời câu hỏi, không tra cứu, không nêu thông số. Nội 
 </role>
  
 <intents>
-{_render_intents()}
+{intents}
 </intents>
  
 <intent_rules>
@@ -27,7 +62,7 @@ Chọn đúng một intent theo mục tiêu thực sự của người dùng, kh
 </intent_rules>
  
 <models>
-{_render_models()}
+{models}
 </models>
  
 <entity_rules>
@@ -73,3 +108,6 @@ Chọn đúng một intent theo mục tiêu thực sự của người dùng, kh
 <examples>
 {_render_examples(n_examples)}
 </examples>"""
+
+
+_FRAMES = {"v1": _frame_v1}

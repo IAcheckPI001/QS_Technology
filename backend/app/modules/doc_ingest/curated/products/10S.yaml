@@ -1,0 +1,114 @@
+# Dữ liệu biên soạn: QS ASTRO 10S (bộ điều khiển). Quy ước: xem F54.yaml; page_value: xem F86.yaml.
+# Model mới trong registry (mã `10S`, Toma 2026-11-14).
+schema_version: 1
+model: 10S
+display_name: QS ASTRO 10S
+family: controller
+domain: product_catalog
+sources:
+  cat: {pdf: QS_Product_Catalogue.pdf, sha256: ffff897f68d8a64ac6adf63d55d1ec47d89cabe05056b32744f5b8ca072aabf1}
+
+heading:   # tiêu đề trang riêng model (in hoa trên trang; text layer có thể ghi chữ thường)
+  title: QS ASTRO 10S
+  subtitle: BỘ ĐIỀU KHIỂN 16 AXIS
+  interfaces: Pulse Train, EtherCAT
+  page: 11
+  origin: text
+  verified: true
+control_interface: [pulse_train, ethercat]
+
+specs:
+  # --- Đầu trang riêng model (catalog trang 11)
+  - {key: dimension, vi: Kích thước, en: Dimension, value: "254 x 210 x 40 (mm)", page: 11, origin: text, verified: true}
+  - {key: monitor_size, vi: Màn hình, en: Monitor size, value: "10.4 inches", page: 11, origin: text, verified: true,
+     note: "Bảng chọn ghi thêm 'Touch screen'"}
+  - {key: axis_control, vi: Số trục điều khiển, en: Axis control, value: "16 axis", page: 11, origin: text, verified: true,
+     note: "Khác 'Max. PLC Axis control' = 14 của bảng chọn (C-06)"}
+  - {key: io_link, vi: I/O tích hợp, en: I/O link, value: "16/16", page: 11, origin: text, verified: true}
+  # --- Kết nối (trang 11)
+  - {key: connection_type, vi: Kiểu đấu nối, en: Connection type, value: Terminal block/D-Sub, page: 11, origin: text, verified: true}
+  - {key: io_integrated, vi: I/O tích hợp, en: I/O integrated, value: "16/16 (Max.Optional 256/256)", page: 11, origin: text, verified: true}
+  - {key: usb_port, vi: Cổng USB, en: USB port, value: "1", page: 11, origin: text, verified: true}
+  - {key: mpg_port, vi: Cổng MPG, en: MPG port, value: "1", page: 11, origin: text, verified: true}
+  - {key: voltage_input, vi: Điện áp vào, en: Voltage input, value: 24VDC, page: 11, origin: text, verified: true}
+  # --- Phần mềm (trang 11)
+  - {key: control_system, vi: Hệ thống điều khiển, en: Control system, value: Open loop, page: 11, origin: text, verified: true}
+  - {key: plc_ladder, vi: Tích hợp PLC Ladder, en: PLC Ladder integrated, value: "Yes", page: 11, origin: recovered, verified: true}
+  - {key: macro, vi: Tích hợp Macro, en: Macro integrated, value: "Yes", page: 11, origin: recovered, verified: true}
+  - {key: backlash_compensation, vi: Bù rơ cơ khí, en: Backlash compensation, value: "Yes", page: 11, origin: recovered, verified: true,
+     note: "Trang ghi dòng gộp 'Backlash/Pitch error compensation: Yes'; tách theo C-01"}
+  - {key: pitch_error_compensation, vi: Bù sai số hành trình, en: Pitch error compensation, value: "No", page_value: "Yes",
+     page: 6, origin: image, verified: true, decision: C-01}
+  - {key: encoder_feedback, vi: Phản hồi encoder, en: Encoder feedback, value: {pulse_train: Index Z, ethercat: Full axis},
+     page: 11, origin: recovered, verified: true}
+  - {key: torque_feedback, vi: Phản hồi mô-men, en: Torque feedback (EtherCAT), value: "Yes", interface: ethercat, page: 11, origin: recovered, verified: true}
+  - {key: servo_parameter_management, vi: Quản lý tham số servo, en: Servo Parameters Management (EtherCAT), value: "Yes",
+     interface: ethercat, page: 11, origin: recovered, verified: true}
+  # --- Thông số trục (trang 11)
+  - {key: feedrate_override, vi: Điều chỉnh tốc độ chạy dao, en: Feedrate override, value: "0 - 150%", page: 11, origin: recovered, verified: true}
+  - {key: feedrate_interpolation, vi: Nội suy tốc độ chạy dao, en: Feedrate interpolation, value: "Yes", page: 11, origin: recovered, verified: true}
+  - {key: pulse_output_frequency, vi: Tần số phát xung, en: Pulse output frequency, value: "500 KHz", page: 11, origin: recovered, verified: true}
+  - {key: mpg_feed, vi: Chạy dao bằng tay quay MPG, en: MPG Feed, value: "Yes", page: 11, origin: recovered, verified: true}
+  - {key: rotary_axis_endless, vi: Trục xoay quay vô tận, en: "Rotary axis, turning endlessly", value: "Yes", page: 11, origin: recovered, verified: true}
+  - {key: max_spindle, vi: Số trục chính tối đa, en: Max. Spindle, value: "2", page: 11, origin: recovered, verified: true,
+     note: "Khác 'Max. Spindle Simultaneous Control' của bảng chọn (C-07)"}
+  - {key: look_ahead, vi: Look-ahead, en: Look-Ahead, value: "500 lines", page: 11, origin: recovered, verified: true}
+
+summary_page:   # khối "QS - ASTRO 10S CONTROLLER" của trang tóm tắt (catalog trang 4), nguyên văn
+  heading: QS - ASTRO 10S CONTROLLER
+  items:
+    - "Dimension: 254 x 210 x 40 (mm)"
+    - "Monitor size: 10.4 Inches"
+    - "Max 16 axis"
+    - "Control interface: Pulse Train, EtherCAT"
+    - "I/O integrated: 16/16 (Pulse Train) - Max optional 256/256"
+    - "I/O integrated: 16/16 (EtherCAT) - Max optional 256/256"
+    - "PLC, Macro integrated"
+    - "RTCP function (Option)"
+    - "Open loop control"
+  page: 4
+  origin: text
+  verified: true
+
+features:   # trang 11
+  vi:
+    - Hệ thống điều khiển Open loop
+    - Tích hợp module xử lý PLC Ladder
+    - Bù rơ cơ khí (Backlash)
+    - Thay dao tự động (ATC)
+    - Chạy lại chương trình khi gặp sự cố
+  en:
+    - Open loop control system
+    - Integrated PLC Ladder processing module
+    - Backlash compensation
+    - Automatic Tool Changer (ATC) support
+    - Program resume after interruption or fault recovery
+  page: 11
+  origin: text
+  verified: true
+
+operation_interface:   # trang 11
+  vi:
+    - Giao diện trực quan, hiển thị trạng thái vận hành
+    - Theo dõi tọa độ và thông số thời gian thực
+    - Hỗ trợ giám sát chương trình gia công dễ dàng
+    - Điều khiển thao tác nhanh, thân thiện người dùng
+  en:
+    - Intuitive operation status display
+    - Real-time coordinate and parameter monitoring
+    - Easy machining program supervision
+    - Fast operation and user-friendly control
+  page: 11
+  origin: text
+  verified: true
+
+system_package:   # khối "MODEL: ASTRO 10S" của trang CNC Solution Controller (trang 20), nguyên văn
+  label: "MODEL: ASTRO 10S"
+  specifications: ["16 axis (Openloop)"]
+  control_interface: ["Pulse Train / EtherCAT"]
+  items: [Astro 10s Controller, Servo drive, Servo motor, Power supply, 4 axis MPG, I/O Link board 1616]
+  page: 20
+  origin: text
+  verified: true
+
+spec_attributes: [dimension, monitor_size, max_axis, io, loop_type, look_ahead, spindle, rtcp, ports]

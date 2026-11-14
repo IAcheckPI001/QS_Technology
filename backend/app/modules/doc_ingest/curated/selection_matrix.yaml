@@ -1,0 +1,324 @@
+# Dữ liệu biên soạn: bảng chọn bộ điều khiển "Motion Controller – Selection table" (catalog trang 6–7).
+# Chép từ ảnh trang (Claude, 2026-11-14): pipeline gộp/lệch ô và mất toàn bộ icon ✓/✗ (I-49).
+# Quy ước giá trị:
+#   true / false = icon ✓ / ✗;  option = "(Option)";  chuỗi = chữ trong ô.
+#   Giá trị đơn  = mọi giao tiếp của model; map {pulse_train|ethercat|mechatrolink: …} = cột con theo giao tiếp.
+#   Cột "ASTRO 6AV/H" của trang 7 dùng chung cho 6AV và 6AH → ghi lặp ở hai model, chỉ kích thước khác.
+#   override: giá trị đã chốt khác ô trong bảng (mã quyết định C-xx); ô gốc giữ ở `table_value`.
+#   column: tên cột model in trên trang (6AV, 6AH chung cột "ASTRO 6AV/H").
+# verified: true = người duyệt đã xác nhận (Toma 2026-11-14), theo từng hàng.
+schema_version: 1
+source: {pdf: QS_Product_Catalogue.pdf, sha256: ffff897f68d8a64ac6adf63d55d1ec47d89cabe05056b32744f5b8ca072aabf1}
+
+models:   # model → (trang, giao tiếp theo thứ tự cột con, tên cột in trên trang)
+  F54:  {page: 6, interfaces: [pulse_train], column: F54}
+  F86:  {page: 6, interfaces: [pulse_train, ethercat], column: F86}
+  F10T: {page: 6, interfaces: [pulse_train, ethercat], column: F10T}
+  10S:  {page: 6, interfaces: [pulse_train, ethercat], column: ASTRO-10S}
+  6AV:  {page: 7, interfaces: [pulse_train, ethercat, mechatrolink], column: ASTRO 6AV/H}
+  6AH:  {page: 7, interfaces: [pulse_train, ethercat, mechatrolink], column: ASTRO 6AV/H}
+  10i:  {page: 7, interfaces: [pulse_train, ethercat, mechatrolink], column: ASTRO 10i}
+
+rows:
+  # ---------------------------------------------------------------- General
+  - key: control_interface
+    group: General
+    en: Control Interface
+    vi: Giao tiếp điều khiển
+    values:
+      F54: Pulse Train (Standard)
+      F86: {pulse_train: Pulse Train (Standard), ethercat: EtherCAT (Optional)}
+      F10T: {pulse_train: Pulse Train (Standard), ethercat: EtherCAT (Optional)}
+      10S: {pulse_train: Pulse Train (Standard), ethercat: EtherCAT (Optional)}
+      6AV: {pulse_train: Pulse Train (Standard), ethercat: EtherCAT (Optional), mechatrolink: Mechatrolink MII/MIII (Optional)}
+      6AH: {pulse_train: Pulse Train (Standard), ethercat: EtherCAT (Optional), mechatrolink: Mechatrolink MII/MIII (Optional)}
+      10i: {pulse_train: Pulse Train (Standard), ethercat: EtherCAT (Optional), mechatrolink: Mechatrolink MII/MIII (Optional)}
+    verified: true
+  - key: dimension
+    group: General
+    en: Dimension
+    vi: Kích thước
+    values: {F54: "220 x 140 x 30 (mm)", F86: "326 x 185 x 30 (mm)", F10T: "254 x 195 x 40 (mm)", 10S: "254 x 210 x 40 (mm)",
+             6AV: "220 x 460 x 42 (mm)", 6AH: "325 x 285 x 42 (mm)", 10i: "254 x 485 x 42 (mm)"}
+    verified: true
+  - key: materials
+    group: General
+    en: Materials
+    vi: Vật liệu
+    values: {F54: Aluminum, F86: Aluminum, F10T: Aluminum, 10S: Aluminum, 6AV: Aluminum, 6AH: Aluminum, 10i: Aluminum}
+    verified: true
+  - key: max_plc_axis
+    group: General
+    en: Max. PLC Axis control
+    vi: Số trục PLC tối đa
+    note: "Khác 'Axis control' (số trục điều khiển) của trang riêng model (C-06)"
+    values:
+      F54: "0"
+      F86: {pulse_train: "6", ethercat: "Standard: 6, Optional: 8"}
+      F10T: {pulse_train: "6", ethercat: "Standard: 6, Optional: 8"}
+      10S: "14"
+      6AV: {pulse_train: "6", ethercat: "8", mechatrolink: "8"}
+      6AH: {pulse_train: "6", ethercat: "8", mechatrolink: "8"}
+      10i: {pulse_train: "6", ethercat: "8", mechatrolink: "8"}
+    verified: true
+  - key: max_analog_spindle
+    group: General
+    en: Max. Analog Spindle (V/I)
+    vi: Số trục chính analog tối đa (V/I)
+    values: {F54: "1/1", F86: "1/1", F10T: "1/1", 10S: "1/1", 6AV: "1/1", 6AH: "1/1", 10i: "1/1"}
+    verified: true
+  - key: max_spindle_simultaneous
+    group: General
+    en: Max.Spindle Simultaneous Control
+    vi: Số trục chính điều khiển đồng thời tối đa
+    note: "Khác 'Max. Spindle' của trang riêng model (C-07)"
+    values:
+      F54: "2"
+      F86: "4"
+      F10T: "4"
+      10S: "4"
+      6AV: {pulse_train: "6", ethercat: "8", mechatrolink: "8"}
+      6AH: {pulse_train: "6", ethercat: "8", mechatrolink: "8"}
+      10i: {pulse_train: "6", ethercat: "8", mechatrolink: "8"}
+    verified: true
+  - key: min_control_unit
+    group: General
+    en: Min. Control Unit
+    vi: Đơn vị điều khiển nhỏ nhất
+    values: {F54: "0.0001", F86: "0.0001", F10T: "0.0001", 10S: "0.0001", 6AV: "0.0001", 6AH: "0.0001", 10i: "0.0001"}
+    verified: true
+  - key: max_program_coordinates
+    group: General
+    en: Max.Number Of Program Coordinate
+    vi: Số hệ tọa độ chương trình tối đa
+    values: {F54: "18", F86: "18", F10T: "18", 10S: "18", 6AV: "18", 6AH: "18", 10i: "18"}
+    verified: true
+  - key: max_table_tools
+    group: General
+    en: Max Number Of Table Tools
+    vi: Số dao tối đa trong bảng dao
+    values: {F54: "40", F86: "40", F10T: "40", 10S: "40", 6AV: "40", 6AH: "40", 10i: "40"}
+    verified: true
+  - key: look_ahead
+    group: General
+    en: Look-Ahead
+    vi: Look-ahead (số dòng đọc trước)
+    values: {F54: "250", F86: "500", F10T: "500", 10S: "500", 6AV: "1000", 6AH: "1000", 10i: "2000"}
+    note: "6AH: trang riêng ghi 500 lines, chốt 1000 theo bảng (C-03)"
+    verified: true
+  - key: block_processing_time
+    group: General
+    en: Block Processing Time
+    vi: Thời gian xử lý khối lệnh
+    values: {F54: "250", F86: "500", F10T: "500", 10S: "500", 6AV: "1000", 6AH: "1000", 10i: "2000"}
+    verified: true
+  # ---------------------------------------------------------------- Hardware Specification
+  - key: standard_io
+    group: Hardware Specification
+    en: Standard I/O
+    vi: I/O tiêu chuẩn
+    values:
+      F54: "16/6"
+      F86: {pulse_train: "24/16", ethercat: "16/16"}
+      F10T: {pulse_train: "24/16", ethercat: "16/16"}
+      10S: {pulse_train: "16/16", ethercat: "16/16"}
+      6AV: {pulse_train: "24/16", ethercat: "16/16", mechatrolink: "16/16"}
+      6AH: {pulse_train: "24/16", ethercat: "16/16", mechatrolink: "16/16"}
+      10i: {pulse_train: "24/16", ethercat: "16/16", mechatrolink: "16/16"}
+    note: "C-12: trang riêng F86/F10T chỉ ghi 24/16 (Pulse Train)"
+    verified: true
+  - key: max_option_io
+    group: Hardware Specification
+    en: Max. Option I/O
+    vi: I/O mở rộng tối đa
+    values: {F54: "256/256", F86: "256/256", F10T: "256/256", 10S: "256/256", 6AV: "256/256", 6AH: "256/256", 10i: "256/256"}
+    verified: true
+  - key: da
+    group: Hardware Specification
+    en: DA
+    vi: Ngõ ra DA
+    values: {F54: "1", F86: "1", F10T: "1", 10S: "1", 6AV: "1", 6AH: "1", 10i: "1"}
+    verified: true
+  - key: monitor
+    group: Hardware Specification
+    en: Monitor
+    vi: Màn hình
+    values: {F54: "5 inches", F86: "8 inches", F10T: "10.4 inches (Touch screen)", 10S: "10.4 inches (Touch screen)",
+             6AV: "8 inches", 6AH: "8 inches", 10i: "10.4 inches"}
+    verified: true
+  - key: rs485
+    group: Hardware Specification
+    en: RS485
+    vi: Cổng RS485
+    values:
+      F54: "1"
+      F86: "1"
+      F10T: "1"
+      10S: "1"
+      6AV: {pulse_train: "1", ethercat: "2", mechatrolink: "2"}
+      6AH: {pulse_train: "1", ethercat: "2", mechatrolink: "2"}
+      10i: {pulse_train: "1", ethercat: "2", mechatrolink: "2"}
+    verified: true
+  - key: usb_port
+    group: Hardware Specification
+    en: USB Port
+    vi: Cổng USB
+    values:
+      F54: "1"
+      F86: "1"
+      F10T: "1"
+      10S: "1"
+      6AV: {pulse_train: "1", ethercat: "2", mechatrolink: "2"}
+      6AH: {pulse_train: "1", ethercat: "2", mechatrolink: "2"}
+      10i: {pulse_train: "1", ethercat: "2", mechatrolink: "2"}
+    note: "C-08: trang riêng model ghi 'USB port: 1'"
+    verified: true
+  # ---------------------------------------------------------------- Compensation
+  - key: backlash_compensation
+    group: Compensation
+    en: Backlash Compensation
+    vi: Bù rơ cơ khí
+    values: {F54: true, F86: true, F10T: true, 10S: true, 6AV: true, 6AH: true, 10i: true}
+    verified: true
+  - key: pitch_error_compensation
+    group: Compensation
+    en: Pitch Error Compensation
+    vi: Bù sai số hành trình
+    values: {F54: false, F86: false, F10T: false, 10S: false, 6AV: true, 6AH: true, 10i: true}
+    note: "C-01: trang riêng F54/F86/F10T/10S ghi dòng gộp 'Backlash/Pitch error: Yes' — chốt theo bảng"
+    verified: true
+  # ---------------------------------------------------------------- Multi axis control mode (Optional)
+  - key: dwo
+    group: Multi axis control mode (Optional)
+    en: DWO
+    vi: DWO
+    values: {F54: false, F86: option, F10T: option, 10S: option, 6AV: option, 6AH: option, 10i: option}
+    override: {10S: {table_value: false, decision: C-09}}
+    verified: true
+  - key: twp
+    group: Multi axis control mode (Optional)
+    en: TWP
+    vi: TWP (mặt phẳng gia công nghiêng)
+    values: {F54: false, F86: option, F10T: option, 10S: option, 6AV: option, 6AH: option, 10i: option}
+    override: {10S: {table_value: false, decision: C-09}}
+    verified: true
+  - key: rtcp
+    group: Multi axis control mode (Optional)
+    en: RTCP
+    vi: RTCP (điều khiển điểm tâm dao)
+    values: {F54: false, F86: option, F10T: option, 10S: option, 6AV: option, 6AH: option, 10i: option}
+    override: {10S: {table_value: false, decision: C-09}}
+    verified: true
+  # ---------------------------------------------------------------- Operation
+  - key: mpg_simulation
+    group: Operation
+    en: MPG Simulation
+    vi: Mô phỏng bằng tay quay MPG
+    values: {F54: true, F86: true, F10T: true, 10S: true, 6AV: true, 6AH: true, 10i: true}
+    verified: true
+  - key: mpg_offsets
+    group: Operation
+    en: MPG Offsets
+    vi: Bù offset bằng tay quay MPG
+    values: {F54: true, F86: true, F10T: true, 10S: true, 6AV: true, 6AH: true, 10i: true}
+    verified: true
+  - key: restart_at_feedhold
+    group: Operation
+    en: Restart at feedhold
+    vi: Chạy lại từ điểm dừng (feedhold)
+    values: {F54: true, F86: true, F10T: true, 10S: true, 6AV: true, 6AH: true, 10i: true}
+    verified: true
+  - key: start_from_any_block
+    group: Operation
+    en: Start from any block
+    vi: Chạy từ dòng bất kỳ
+    values: {F54: true, F86: true, F10T: true, 10S: true, 6AV: true, 6AH: true, 10i: true}
+    verified: true
+  # ---------------------------------------------------------------- Tool Manager
+  - key: atc_support
+    group: Tool Manager
+    en: ATC support
+    vi: Hỗ trợ thay dao tự động (ATC)
+    values: {F54: true, F86: true, F10T: true, 10S: true, 6AV: true, 6AH: true, 10i: true}
+    verified: true
+  - key: tool_life_management
+    group: Tool Manager
+    en: Tool-life management
+    vi: Quản lý tuổi thọ dao
+    values: {F54: false, F86: true, F10T: true, 10S: true, 6AV: true, 6AH: true, 10i: true}
+    verified: true
+  - key: tool_radius_compensation
+    group: Tool Manager
+    en: Tool radius compensation in plane
+    vi: Bù bán kính dao trong mặt phẳng
+    values: {F54: true, F86: true, F10T: true, 10S: true, 6AV: true, 6AH: true, 10i: true}
+    verified: true
+  - key: look_ahead_contour_violation_detect
+    group: Tool Manager
+    en: Look-ahead contour violantions detect
+    vi: Phát hiện vi phạm biên dạng khi look-ahead
+    values: {F54: false, F86: false, F10T: false, 10S: false, 6AV: true, 6AH: true, 10i: true}
+    verified: true
+  - key: tool_life_monitoring
+    group: Tool Manager
+    en: Tool life monitoring
+    vi: Giám sát tuổi thọ dao
+    values: {F54: false, F86: true, F10T: true, 10S: true, 6AV: true, 6AH: true, 10i: true}
+    verified: true
+  # ---------------------------------------------------------------- Control
+  - key: system_control
+    group: Control
+    en: System control
+    vi: Hệ thống điều khiển
+    values: {F54: Open loop, F86: Open loop, F10T: Open loop, 10S: Open loop, 6AV: Closed loop, 6AH: Closed loop, 10i: Closed loop}
+    note: "C-02: trang riêng 6AH ghi 'Open loop' ở mục Phần mềm — chốt Closed loop"
+    verified: true
+  - key: encoder_feedback
+    group: Control
+    en: Encoder feedback
+    vi: Phản hồi encoder
+    values:
+      F54: Index
+      F86: {pulse_train: Index, ethercat: All axes}
+      F10T: {pulse_train: Index, ethercat: All axes}
+      10S: {pulse_train: Index, ethercat: All axes}
+      6AV: All axes
+      6AH: All axes
+      10i: All axes
+    note: "Trang riêng 6AV/10i chi tiết hơn: Pulse Train 'Full axis', EtherCAT/MII-MIII 'Absolute' (C-04 áp cho 6AH)"
+    verified: true
+  - key: torque_feedback
+    group: Control
+    en: Torque feedback
+    vi: Phản hồi mô-men
+    values:
+      F54: false
+      F86: {pulse_train: false, ethercat: true}
+      F10T: {pulse_train: false, ethercat: true}
+      10S: {pulse_train: false, ethercat: true}
+      6AV: {pulse_train: false, ethercat: true, mechatrolink: true}
+      6AH: {pulse_train: false, ethercat: true, mechatrolink: true}
+      10i: {pulse_train: false, ethercat: true, mechatrolink: true}
+    verified: true
+  - key: servo_parameter_management
+    group: Control
+    en: Servo Parameter management
+    vi: Quản lý tham số servo
+    values:
+      F54: false
+      F86: {pulse_train: false, ethercat: true}
+      F10T: {pulse_train: false, ethercat: true}
+      10S: {pulse_train: false, ethercat: true}
+      6AV: {pulse_train: false, ethercat: true, mechatrolink: true}
+      6AH: {pulse_train: false, ethercat: true, mechatrolink: true}
+      10i: {pulse_train: false, ethercat: true, mechatrolink: true}
+    verified: true
+  # ---------------------------------------------------------------- Builder Supp (mọi model: "Supported")
+  - {key: integrate_plc, group: Builder Supp, en: Intergrate PLC, vi: Tích hợp PLC, all: Supported, verified: true}
+  - {key: macro, group: Builder Supp, en: Macro, vi: Macro, all: Supported, verified: true}
+  - {key: mcode_macro, group: Builder Supp, en: Mcode Macro, vi: Macro lệnh M, all: Supported, verified: true}
+  - {key: gcode_macro, group: Builder Supp, en: Gcode Macro, vi: Macro lệnh G, all: Supported, verified: true}
+  - {key: machine_lock, group: Builder Supp, en: Machine Lock Function, vi: Khóa máy, all: Supported, verified: true}
+  - {key: software_permission, group: Builder Supp, en: Software Permission, vi: Phân quyền phần mềm, all: Supported, verified: true}
+  - {key: data_recovery, group: Builder Supp, en: Data Recovery, vi: Khôi phục dữ liệu, all: Supported, verified: true}
+  - {key: personalization_helper, group: Builder Supp, en: Personalization Helper, vi: Hỗ trợ cá nhân hóa, all: Supported, verified: true}
