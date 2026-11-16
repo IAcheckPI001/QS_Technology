@@ -45,6 +45,7 @@ from app.modules.chatbot.schemas.system import (
 )
 from app.modules.chatbot.stages.execution_stage import SourceAllocator
 from app.modules.chatbot.tools import ToolContext, ToolOutcome, ToolRegistry, ToolSpec
+from app.modules.chatbot.tools.base import TOOL_CALL_LIMIT
 from app.util.normalize import guess_reply_language
 from app.util.token_counter import count_tokens
 
@@ -57,7 +58,6 @@ logger = logging.getLogger(__name__)
 # đồng hồ có thể để lại vài ms sau một timeout; lời gọi đó chắc chắn hết giờ).
 MIN_CALL_BUDGET_S = 0.05
 DEDUPLICATED = "deduplicated"
-TOOL_CALL_LIMIT = "tool_call_limit"
 # Khoảng trắng ngay trước [S#] bị bỏ cùng citation không hợp lệ.
 _CITATION = re.compile(r"[ \t]*\[(S[0-9]+)\]")
 
@@ -72,7 +72,7 @@ class AgentError(RuntimeError):
 
 @dataclass(frozen=True)
 class AgentLimits:
-    max_steps: int = 5
+    max_steps: int = 6
     max_tool_calls: int = 8
     turn_timeout_s: float = 60.0
     llm_timeout_s: float = 20.0
@@ -238,12 +238,10 @@ class AgentRunner:
     def build_messages(
         self,
         state: RunState,
-        specs: Sequence[ToolSpec] | None = None,
+        specs: Sequence[ToolSpec],
     ) -> list[dict[str, Any]]:
         """specs: tool principal được dùng; chỉ guide của các tool này vào system prompt."""
         assert state.context is not None
-        if specs is None:
-            specs = self._registry.allowed(state.principal)
         conversation = state.context.conversation
         message = state.input.message.text
         history = [

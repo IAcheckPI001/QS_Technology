@@ -28,7 +28,6 @@ from app.modules.chatbot.schemas.system import (
     ExecutionPlan,
     Mode,
     RunState,
-    RetrievalScope,
     TaskKind,
     TaskStatus,
 )

@@ -15,12 +15,11 @@ from app.util.parse_json import parse_json_object
 from openai import AsyncOpenAI
 
 # OpenAI Chat Completions hỗ trợ đủ tool calling, nhiều tool call trong một
-# response, tool_choice none/required và Structured Outputs (strict).
+# response, tool_choice none và Structured Outputs (strict).
 OPENAI_CAPABILITIES = LLMCapabilities(
     tool_calling=True,
     parallel_tool_calls=True,
     tool_choice_none=True,
-    tool_choice_required=True,
     schema_dialect="openai_strict",
 )
 

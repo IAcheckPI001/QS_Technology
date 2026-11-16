@@ -21,7 +21,6 @@ class LLMCapabilities(SystemModel):
     tool_calling: bool = False
     parallel_tool_calls: bool = False
     tool_choice_none: bool = False
-    tool_choice_required: bool = False
     schema_dialect: SchemaDialect = "json_schema_basic"
     # Model suy luận: token suy nghĩ tính vào giới hạn đầu ra (cần AGENT_MAX_COMPLETION_TOKENS lớn hơn).
     reasoning: bool = False

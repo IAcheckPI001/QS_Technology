@@ -38,11 +38,11 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
     agent_runner = None
     agent_provider = None
     if provider is not None and settings.crm_chat_flow == "agent":
-        if settings.agent_model and settings.agent_model != settings.openai_model:
+        if settings.effective_agent_model != settings.openai_model:
             # Model riêng cho vòng lặp agent; luồng website và stage phân tích giữ OPENAI_MODEL.
             agent_provider = OpenAIProvider(
                 api_key=settings.openai_api_key,
-                model=settings.agent_model,
+                model=settings.effective_agent_model,
                 embedding_model=settings.embedding_model,
                 reasoning_effort=settings.agent_reasoning_effort or None,
             )

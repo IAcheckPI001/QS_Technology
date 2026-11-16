@@ -11,6 +11,10 @@ from app.modules.chatbot.schemas.default import SystemModel
 from app.modules.chatbot.schemas.system import AgentRun, RunState, ToolTurnState
 from app.modules.chatbot.stages.execution_stage import SourceAllocator
 
+# Mã lỗi khi call vượt trần riêng của tool trong lượt (runner áp `max_calls_per_turn`, tool có thể
+# áp trần riêng khác); call này không trừ trần chung của lượt.
+TOOL_CALL_LIMIT = "tool_call_limit"
+
 
 class ToolRejected(Exception):
     """Tool từ chối call vì lý do nghiệp vụ, trước khi làm việc chính.

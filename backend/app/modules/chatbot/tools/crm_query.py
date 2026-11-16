@@ -34,7 +34,7 @@ from app.modules.chatbot.schemas.default import SystemModel
 from app.modules.chatbot.schemas.system import RunState, ToolTurnState
 from app.modules.chatbot.schemas.system.raw_query import RawQuery
 
-from .base import ToolArgumentError, ToolContext, ToolOutput, ToolRejected, ToolSpec
+from .base import TOOL_CALL_LIMIT, ToolArgumentError, ToolContext, ToolOutput, ToolRejected, ToolSpec
 from .crm_common import crm_credential, query_all
 
 CRM_QUERY_TOOL_NAME = "crm_query"
@@ -46,7 +46,6 @@ _TRUNCATION_MARGIN_TOKENS = 32
 # chỉ chịu trần thử tổng (runner áp qua max_calls_per_turn).
 MAX_CRM_QUERIES_PER_TURN = 4
 MAX_QUERY_ATTEMPTS_PER_TURN = 6
-TOOL_CALL_LIMIT = "tool_call_limit"
 
 CRM_QUERY_DESCRIPTION = (
     "Đọc dữ liệu CRM/ERP (khách hàng, phiếu hỗ trợ, thiết bị, mua hàng, kho, sản xuất, dự án, nhân "

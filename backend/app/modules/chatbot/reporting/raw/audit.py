@@ -16,6 +16,7 @@ from typing import Any, Literal
 from pydantic import Field
 
 from app.core.tracing import current_trace
+from app.modules.chatbot.providers.crm_api import QUERY_INVALID
 from app.modules.chatbot.schemas.default import SystemModel
 
 AUDIT_LOGGER = "app.crm_query.audit"
@@ -24,8 +25,6 @@ MAX_RAW_ARGUMENTS_CHARS = 4000
 AuditPhase = Literal["invalid_args", "rejected", "sent"]
 # empty: CRM trả 0 dòng (query hợp lệ nhưng có thể lọc sai cột/dấu): tín hiệu chính cần xem lại.
 QueryOutcome = Literal["ok", "empty", "invalid_args", "rejected", "crm_invalid", "crm_error"]
-
-CRM_INVALID_CODE = "crm_query_invalid"
 
 
 class QueryAuditRecord(SystemModel):
@@ -53,9 +52,8 @@ class QueryAuditRecord(SystemModel):
 
 
 def outcome_of_error(code: str) -> QueryOutcome:
-    if code == "tool_invalid_args":
-        return "invalid_args"
-    return "crm_invalid" if code == CRM_INVALID_CODE else "crm_error"
+    """Outcome của lỗi CRM khi gửi query (lỗi argument đã ghi trước khi gửi)."""
+    return "crm_invalid" if code == QUERY_INVALID else "crm_error"
 
 
 class QueryAudit:
