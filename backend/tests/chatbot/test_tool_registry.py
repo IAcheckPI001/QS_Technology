@@ -173,13 +173,13 @@ def test_register_requires_input_model_that_forbids_extra_fields():
 
 def test_allowed_filters_tools_that_require_a_scope():
     open_tool = echo_tool(name="open")
-    scoped = ToolSpec(**{**echo_tool(name="crm_report").__dict__, "required_scope": "crm.reports"})
+    scoped = ToolSpec(**{**echo_tool(name="scoped").__dict__, "required_scope": "crm.reports"})
     registry = ToolRegistry([open_tool, scoped])
 
     principal = crm_state().principal
     assert [spec.name for spec in registry.allowed(principal)] == ["open"]
     granted = principal.model_copy(update={"scopes": frozenset({"crm.reports"})})
-    assert [spec.name for spec in registry.allowed(granted)] == ["open", "crm_report"]
+    assert [spec.name for spec in registry.allowed(granted)] == ["open", "scoped"]
 
 
 # --- cắt output theo cấu trúc ------------------------------------------------------

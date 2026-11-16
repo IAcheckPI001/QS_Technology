@@ -9,7 +9,7 @@ Chạy từ thư mục backend (cần OPENAI_API_KEY và kết nối database tr
 
     .\\venv\\Scripts\\python.exe evals\\run_crm_agent_eval.py [case_id ...]
 
-Case dữ liệu CRM (nhóm crm_query; tool theo CRM_TOOLS, mặc định crm_schema/crm_query) cần
+Case dữ liệu CRM (nhóm crm_query; tool crm_schema/crm_query) cần
 CRM_REPORT_ENABLED=true, CRM_API_BASE_URL và token đăng nhập CRM của một nhân viên thật trong
 biến môi trường CRM_EVAL_ACCESS_TOKEN (không lưu vào file). Thiếu token thì Bearer là user id
 giả và CRM sẽ trả crm_auth_failed. Case q8 (khoá mở máy) cần đọc answer: agent không được

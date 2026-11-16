@@ -85,11 +85,6 @@ Quy trình:
 - Chưa hỗ trợ OR/NOT, so sánh >/<, HAVING, join cha → con: tách nhiều query rồi tổng hợp (vd "khách chưa có máy": danh sách khách, rồi product_items dimensions=[customer_id], so hai danh sách khi cả hai không has_more), hoặc nói rõ chưa làm được.
 - Không in JSON query hay tên API trừ khi được hỏi."""
 
-CATALOG_PREFERENCE = (
-    "\n- Câu hỏi crm_report/crm_records trả lời được (phiếu hỗ trợ, khách hàng, lần giao phiếu, "
-    "thiết bị giao cho khách) ưu tiên hai tool đó; crm_query cho phần còn lại."
-)
-
 
 class AppliedDateRange(SystemModel):
     field: str
@@ -186,7 +181,6 @@ def build_crm_query_tool(
     cache: CrmSchemaCache,
     *,
     tz: tzinfo,
-    with_catalog: bool = False,
     timeout_s: float = 20.0,
     audit: QueryAudit | None = None,
 ) -> ToolSpec:
@@ -307,7 +301,7 @@ def build_crm_query_tool(
         input_model=RawQuery,
         output_model=QueryOutput,
         run=run,
-        guide=CRM_QUERY_GUIDE + (CATALOG_PREFERENCE if with_catalog else ""),
+        guide=CRM_QUERY_GUIDE,
         read_only=True,
         concurrency_safe=True,
         max_calls_per_turn=MAX_QUERY_ATTEMPTS_PER_TURN,

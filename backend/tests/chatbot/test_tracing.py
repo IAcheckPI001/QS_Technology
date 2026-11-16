@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import UUID, uuid4
 
-import httpx
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -20,14 +19,9 @@ from app.core.tracing import (
     span,
 )
 from app.modules.chatbot.providers.handoff import HandoffTicket
-from app.modules.chatbot.reporting.datasets import DATASETS
-from app.modules.chatbot.schemas.system.report import ReportQuery
-from app.modules.chatbot.tools import ToolRegistry, build_crm_report_tool
-from app.modules.chatbot.tools.crm_report import query_shape
 from tests.chatbot.test_chat_history import FakeHistoryRepository
 from tests.chatbot.test_chat_history import FakeProvider as HistoryFakeProvider
 from app.modules.chatbot.dependencies import get_trace_reader, get_trace_repository
-from app.modules.chatbot.providers.crm_api import CrmApiError, CrmListClient
 from app.modules.chatbot.providers.openai import OpenAIProvider
 from app.modules.chatbot.routers import router
 from app.modules.chatbot.services import ChatbotService
@@ -46,10 +40,6 @@ from tests.chatbot.agent_fakes import (
 from tests.chatbot.builders import make_inbound, make_request_context, make_service_principal
 from tests.chatbot.test_chat_routes import Harness, _events
 from tests.chatbot.test_clarification import StoringHistoryRepository
-from tests.chatbot.report_fakes import TZ
-from tests.chatbot.test_crm_report_tool import SEP_OCT_BY_MONTH, FakeCrm
-from tests.chatbot.test_crm_report_tool import _client as report_client
-from tests.chatbot.test_crm_report_tool import _state as report_state
 from app.modules.chatbot.schemas.default import ChannelType
 
 SESSION_ID = UUID("00000000-0000-0000-0000-0000000000d1")
@@ -314,31 +304,6 @@ def test_openai_provider_records_real_usage_on_spans():
     assert (summary["llm_calls"], summary["input_tokens"], summary["embedding_tokens"]) == (2, 70, 6)
 
 
-def test_crm_list_client_records_one_http_span_per_page():
-    def crm(request: httpx.Request) -> httpx.Response:
-        if request.url.params["offset"] == "0":
-            return httpx.Response(200, json={"items": [{"id": 1}, {"id": 2}], "total": 3})
-        return httpx.Response(503, json={"error": "down"})
-
-    client = CrmListClient(
-        "https://crm.test", timeout_s=5, max_items=10, page_size=2,
-        transport=httpx.MockTransport(crm),
-    )
-    trace = Trace("req-12345678")
-
-    async def main() -> None:
-        with activate(trace):
-            with pytest.raises(CrmApiError):
-                await client.fetch_all("/api/v1/support/cases", "token-secret")
-
-    asyncio.run(main())
-    pages = _by_name(trace)["http.crm_list"]
-    assert [(p.attributes["offset"], p.attributes["status_code"], p.status) for p in pages] == [
-        (0, 200, "ok"), (2, 503, "http_503"),
-    ]
-    assert "token-secret" not in json.dumps(trace.to_dict())
-
-
 class FakeTraceReader:
     def __init__(self, row=None, fail: bool = False) -> None:
         self.row = row
@@ -405,9 +370,9 @@ def test_redact_quoted_and_error_detail_items():
 def test_summary_counts_root_errors_once():
     trace = Trace("req-12345678")
     with activate(trace):
-        with span("tool.crm_report", "tool") as tool:
-            with pytest.raises(RuntimeError), span("report.fetch"):
-                with span("http.crm_list", "http") as http:
+        with span("tool.crm_query", "tool") as tool:
+            with pytest.raises(RuntimeError), span("query.fetch"):
+                with span("http.crm_report", "http") as http:
                     http.fail("http_401")
                 raise RuntimeError("401")
             tool.fail("crm_auth_failed")
@@ -416,69 +381,6 @@ def test_summary_counts_root_errors_once():
     summary = trace.summary()
     assert (summary["error_spans"], summary["root_error_spans"], summary["failed_tool_calls"]) == (
         3, 1, 1)
-
-
-def test_crm_report_trace_shows_invalid_query_auth_failure_and_credential():
-    """Case 1 của Toma: lần 1 LLM điền sai, lần 2 CRM trả 401 (token hết hạn)."""
-    invalid = {
-        **SEP_OCT_BY_MONTH,
-        "filters": [{"field": "status", "operator": "eq", "value": "Nguyễn Văn A"}],
-    }
-    crm = FakeCrm(status=401)
-    provider = ScriptedToolProvider(turns=[
-        calls(("r1", "crm_report", invalid)),
-        calls(("r2", "crm_report", SEP_OCT_BY_MONTH)),
-        answer("Không truy cập được CRM, vui lòng đăng nhập lại."),
-    ])
-    runner = agent_runner(
-        provider, ToolRegistry([build_crm_report_tool(report_client(crm), DATASETS, tz=TZ)]),
-    )
-    state = report_state(crm_token="expired-token-secret")
-    trace = Trace("req-12345678", root_name="chat.request")
-
-    async def collect() -> list[str]:
-        with activate(trace):
-            return [part async for part in runner.run(state)]
-
-    asyncio.run(collect())
-    trace.finish()
-    first, second = _by_name(trace)["tool.crm_report"]
-
-    assert first.status == "tool_invalid_args"
-    assert first.attributes["error_detail"][0] == "filters[0]: status: unknown value '…'"
-    assert first.attributes["filter_fields"] == ["status"]
-    assert second.status == "crm_auth_failed"
-    for item in (first, second):
-        assert item.attributes["credential_source"] == "token"
-        assert item.attributes["metrics"] == ["ticket_count"]
-        assert item.attributes["date_mode"] == "custom"
-        assert item.attributes["date_preset"] is None
-        assert item.attributes["time_grain"] == "month"
-    assert _by_name(trace)["http.crm_list"][0].attributes["status_code"] == 401
-
-    summary = trace.summary()
-    assert (summary["root_error_spans"], summary["failed_tool_calls"]) == (2, 2)
-    assert trace.root.attributes["tool_errors"] == [
-        "crm_report:tool_invalid_args", "crm_report:crm_auth_failed",
-    ]
-    assert trace.root.status == "ok"
-    serialized = json.dumps(trace.to_dict(), ensure_ascii=False)
-    assert "Nguyễn Văn A" not in serialized
-    assert "expired-token-secret" not in serialized
-    assert "2026-09-01" not in serialized
-
-
-def test_crm_report_date_mode_separates_preset_custom_and_both():
-    preset_only = {**SEP_OCT_BY_MONTH, "date_range": {"field": "created_at", "preset": "last_month"}}
-    both = {
-        **SEP_OCT_BY_MONTH,
-        "date_range": {**SEP_OCT_BY_MONTH["date_range"], "preset": "last_month"},
-    }
-    modes = {
-        name: query_shape(ReportQuery.model_validate(args))["date_mode"]
-        for name, args in (("preset", preset_only), ("custom", SEP_OCT_BY_MONTH), ("both", both))
-    }
-    assert modes == {"preset": "preset", "custom": "custom", "both": "preset+custom"}
 
 
 def _service_trace(service, message, channel=ChannelType.WEBSITE):

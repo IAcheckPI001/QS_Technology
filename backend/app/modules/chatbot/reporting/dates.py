@@ -7,9 +7,7 @@ cuối hôm nay (không kéo vào tương lai); "last_*" là kỳ trọn vẹn l
 import re
 from collections.abc import Sequence
 from datetime import date, datetime, time, timedelta, tzinfo
-from typing import Literal
 
-TimeGrainName = Literal["day", "week", "month"]
 # Preset ngày tương đối mà `preset_range` hiểu.
 DATE_PRESETS = (
     "today", "yesterday", "this_week", "last_week", "this_month", "last_month",
@@ -113,37 +111,3 @@ def latest_year_of(month: int, day: int, now: datetime, tz: tzinfo) -> int:
 
 def end_of_today(now: datetime, tz: tzinfo) -> datetime:
     return local_midnight(now.astimezone(tz).date() + timedelta(days=1), tz)
-
-
-def period_start(moment: datetime, grain: TimeGrainName, tz: tzinfo) -> date:
-    day = moment.astimezone(tz).date()
-    if grain == "month":
-        return _month_start(day)
-    if grain == "week":
-        return day - timedelta(days=day.weekday())
-    return day
-
-
-def period_key(start: date, grain: TimeGrainName) -> str:
-    if grain == "month":
-        return f"{start.year}-{start.month:02d}"
-    if grain == "week":
-        iso = start.isocalendar()
-        return f"{iso.year}-W{iso.week:02d}"
-    return start.isoformat()
-
-
-def _next_period(start: date, grain: TimeGrainName) -> date:
-    if grain == "month":
-        return _add_months(start, 1)
-    return start + timedelta(days=7 if grain == "week" else 1)
-
-
-def periods_between(start: datetime, end: datetime, grain: TimeGrainName, tz: tzinfo) -> list[str]:
-    """Khóa các kỳ giao với [start, end), theo thứ tự thời gian."""
-    keys: list[str] = []
-    current = period_start(start, grain, tz)
-    while local_midnight(current, tz) < end:
-        keys.append(period_key(current, grain))
-        current = _next_period(current, grain)
-    return keys

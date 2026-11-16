@@ -2,13 +2,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from app.modules.chatbot.reporting.dates import (
-    period_key,
-    period_start,
-    periods_between,
-    preset_range,
-)
-from tests.chatbot.report_fakes import NOW, TZ
+from app.modules.chatbot.reporting.dates import preset_range
+from tests.chatbot.crm_fakes import NOW, TZ
 
 
 def _local(day: str) -> datetime:
@@ -37,21 +32,3 @@ def test_last_month_crosses_year_boundary():
     january = datetime(2027, 1, 15, tzinfo=UTC)
     assert preset_range("last_month", january, TZ) == (_local("2026-12-01"), _local("2027-01-01"))
     assert preset_range("last_quarter", january, TZ) == (_local("2026-10-01"), _local("2027-01-01"))
-
-
-def test_period_uses_local_timezone():
-    # 20:00 UTC ngày 30/09 là 03:00 ngày 01/10 giờ Việt Nam.
-    moment = datetime(2026, 9, 30, 20, 0, tzinfo=UTC)
-    assert period_key(period_start(moment, "month", TZ), "month") == "2026-10"
-    assert period_key(period_start(moment, "day", TZ), "day") == "2026-10-01"
-    assert period_key(period_start(moment, "week", TZ), "week") == "2026-W40"
-
-
-def test_periods_between_cover_the_range_in_order():
-    assert periods_between(_local("2026-09-01"), _local("2026-11-01"), "month", TZ) == [
-        "2026-09", "2026-10",
-    ]
-    assert periods_between(_local("2026-10-26"), _local("2026-11-03"), "week", TZ) == [
-        "2026-W44", "2026-W45",
-    ]
-    assert len(periods_between(_local("2026-10-01"), _local("2026-11-01"), "day", TZ)) == 31

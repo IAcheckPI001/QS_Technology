@@ -45,4 +45,3 @@ def test_crm_report_requires_base_url_and_valid_timezone(monkeypatch):
     monkeypatch.setenv("CRM_REPORT_TIMEZONE", "Asia/Ho_Chi_Minh")
     settings = Settings(_env_file=None)
     assert settings.crm_api_base_url == "https://crm.test"
-    assert settings.crm_report_max_items == 2000

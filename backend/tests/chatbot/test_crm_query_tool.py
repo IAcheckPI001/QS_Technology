@@ -34,7 +34,7 @@ from app.modules.chatbot.tools import (
 from app.modules.chatbot.tools.crm_schema import describe_table
 from tests.chatbot.agent_fakes import crm_state
 from tests.chatbot.builders import make_service_principal
-from tests.chatbot.report_fakes import NOW, TZ
+from tests.chatbot.crm_fakes import NOW, TZ
 
 BASE_URL = "https://crm.test"
 TOKEN = "eyJ.QUERY-SECRET.sig"
@@ -795,6 +795,24 @@ def test_audit_records_every_attempt_with_values_but_no_rows(caplog):
     assert all("rows" not in item for item in records)
     # Audit không lọt vào trace.
     assert "Hohmeier" not in json.dumps(trace.to_dict(), ensure_ascii=False)
+
+
+def test_auth_failure_trace_has_credential_source_and_no_secret():
+    """Thay test trace của crm_report (phương án A, đã bỏ): CRM trả 401 khi token hết hạn."""
+    registry, _ = _tools(FakeCrmApi(status=401))
+    trace = Trace("req-q")
+    with activate(trace):
+        [outcome] = _invoke_many(
+            registry, [("crm_query", HOHMEIER)], token="expired-token-secret",
+        )
+    trace.finish()
+
+    assert outcome.error_code == "crm_auth_failed"
+    assert trace.root.attributes["credential_source"] == "token"
+    http = [item for item in trace.spans if item.name == "http.crm_report"]
+    assert http and http[0].attributes["status_code"] == 401
+    serialized = json.dumps(trace.to_dict(), ensure_ascii=False)
+    assert "expired-token-secret" not in serialized and "Hohmeier" not in serialized
 
 
 def test_audit_records_crm_error_and_ignored_fields(caplog):

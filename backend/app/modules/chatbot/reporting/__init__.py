@@ -1,5 +1,4 @@
-"""Báo cáo CRM: catalog dataset, kiểm tra ReportQuery, khoảng ngày và engine tổng hợp.
+"""Truy vấn CRM Reporting API cho tool `crm_schema` và `crm_query` (`raw/`), cộng khoảng ngày (`dates.py`).
 
-Không gọi LLM, không gọi API: tool `crm_report` lấy dữ liệu qua provider rồi đưa
-record vào engine.
+Không gọi LLM; gọi CRM chỉ qua `providers/crm_api.py`.
 """

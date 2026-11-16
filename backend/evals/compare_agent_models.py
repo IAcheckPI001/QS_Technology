@@ -329,7 +329,6 @@ def write_json(path: str, results: dict[str, ModelStats], args: argparse.Namespa
     payload = {
         "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "config": {
-            "crm_tools": settings.crm_tools,
             "openai_model": settings.openai_model,
             "agent_max_steps": settings.agent_max_steps,
             "agent_max_tool_calls": settings.agent_max_tool_calls,

@@ -1,13 +1,13 @@
-"""Client đọc dữ liệu CRM cho báo cáo: API danh sách bản ghi và Reporting Query API.
+"""Client đọc dữ liệu CRM qua Reporting API (tool `crm_schema`, `crm_query`).
 
 `Authorization: Bearer <token>`: CRM phân quyền và giới hạn phạm vi dữ liệu theo
 token; dịch vụ AI không lọc quyền thêm. Không log token, không log nội dung bản ghi.
 
 Mã lỗi gửi agent: 401 → `crm_auth_failed` (token sai/hết hạn), 403 → `crm_forbidden`
 (tài khoản không có quyền với dữ liệu này), 400 của Reporting API →
-`crm_report_contract_error` khi query do catalog sinh (lỗi phía dịch vụ AI, không do LLM)
-hoặc `crm_query_invalid` khi query do LLM dựng (tool `crm_query`: LLM đọc lỗi và sửa),
-còn lại → `crm_unavailable`.
+`crm_query_invalid` khi query do LLM dựng (tool `crm_query`: LLM đọc lỗi và sửa) hoặc
+`crm_report_contract_error` khi query do code dựng (vd `known_values` của `crm_schema`: lỗi
+phía dịch vụ AI, không do LLM), còn lại → `crm_unavailable`.
 """
 
 import logging
@@ -20,14 +20,12 @@ from app.core.tracing import span
 
 logger = logging.getLogger(__name__)
 
-PAGE_SIZE = 100
 REPORT_QUERY_PATH = "/api/v1/reports/query"
 REPORT_TABLES_PATH = "/api/v1/reports/tables"
 REPORT_DATASETS_PATH = "/api/v1/reports/datasets"
-REPORT_MAX_ROWS = 1000          # trần `limit` của POST /reports/query
 QUERY_INVALID = "crm_query_invalid"
 
-# 400 của POST /reports/query: query do catalog sinh (lỗi cấu hình) hay do LLM dựng (LLM tự sửa).
+# 400 của POST /reports/query: query do code dựng (lỗi phía dịch vụ AI) hay do LLM dựng (LLM tự sửa).
 InvalidQueryMode = Literal["contract", "invalid"]
 
 
@@ -38,92 +36,6 @@ class CrmApiError(Exception):
         super().__init__(detail)
         self.code = code
         self.detail = detail
-
-
-@dataclass(frozen=True)
-class ListPage:
-    items: list[dict[str, Any]]
-    total: int | None           # CRM báo tổng số bản ghi (None nếu không có)
-    truncated: bool             # dừng ở max_items trước khi lấy hết
-
-
-class CrmListClient:
-    def __init__(
-        self,
-        base_url: str,
-        *,
-        timeout_s: float,
-        max_items: int,
-        page_size: int = PAGE_SIZE,
-        transport: httpx.AsyncBaseTransport | None = None,
-    ) -> None:
-        self._base_url = base_url.rstrip("/")
-        self._timeout_s = timeout_s
-        self._max_items = max_items
-        self._page_size = page_size
-        self._transport = transport
-
-    async def fetch_all(self, path: str, token: str) -> ListPage:
-        """Lấy lần lượt các trang `?limit=&offset=` tới khi đủ `total`, gặp trang thiếu, hoặc max_items."""
-        headers = _headers(token)
-        items: list[dict[str, Any]] = []
-        total: int | None = None
-        async with httpx.AsyncClient(
-            base_url=self._base_url,
-            headers=headers,
-            timeout=self._timeout_s,
-            transport=self._transport,
-        ) as client:
-            while len(items) < self._max_items:
-                limit = min(self._page_size, self._max_items - len(items))
-                page, page_total = await self._page(client, path, limit, len(items))
-                total = page_total if page_total is not None else total
-                items.extend(page)
-                if len(page) < limit or (total is not None and len(items) >= total):
-                    break
-        truncated = len(items) >= self._max_items and (total is None or total > len(items))
-        logger.info(
-            "crm list fetched path=%s items=%d total=%s truncated=%s",
-            path, len(items), total, truncated,
-        )
-        return ListPage(items=items, total=total, truncated=truncated)
-
-    async def _page(
-        self,
-        client: httpx.AsyncClient,
-        path: str,
-        limit: int,
-        offset: int,
-    ) -> tuple[list[dict[str, Any]], int | None]:
-        try:
-            with span("http.crm_list", "http", path=path, limit=limit, offset=offset) as http_span:
-                response = await client.get(path, params={"limit": limit, "offset": offset})
-                http_span.set(status_code=response.status_code)
-                if response.status_code != 200:
-                    http_span.fail(f"http_{response.status_code}")
-        except httpx.TimeoutException:
-            logger.warning("crm list timed out path=%s offset=%d", path, offset)
-            raise CrmApiError("crm_unavailable", "CRM did not respond in time") from None
-        except httpx.HTTPError as error:
-            logger.warning("crm list request failed path=%s error=%s", path, type(error).__name__)
-            raise CrmApiError("crm_unavailable", "CRM is unreachable") from None
-        _raise_for_access(response, path)
-        if response.status_code != 200:
-            logger.warning(
-                "crm list failed path=%s status=%d error=%s",
-                path, response.status_code, _error_message(response),
-            )
-            raise CrmApiError("crm_unavailable", f"CRM returned HTTP {response.status_code}")
-        try:
-            payload = response.json()
-        except ValueError:
-            payload = None
-        items = payload.get("items") if isinstance(payload, dict) else None
-        if not isinstance(items, list):
-            logger.warning("crm list returned unexpected body path=%s", path)
-            raise CrmApiError("crm_unavailable", "CRM returned an unexpected response")
-        total = payload.get("total")
-        return items, total if isinstance(total, int) and not isinstance(total, bool) else None
 
 
 @dataclass(frozen=True)
@@ -167,8 +79,8 @@ class TableSchema:
 class CrmReportClient:
     """`POST /api/v1/reports/query`: CRM dựng SQL tham số hoá từ JSON và chạy theo quyền của token.
 
-    Mặc định request do `reporting/report_api.py` sinh từ catalog nên 400 là lỗi cấu hình
-    catalog (`crm_report_contract_error`), chi tiết chỉ vào log. Tool `crm_query` gửi query
+    Mặc định request do code dựng (vd `known_values` của `CrmSchemaCache`) nên 400 là lỗi phía
+    dịch vụ AI (`crm_report_contract_error`), chi tiết chỉ vào log. Tool `crm_query` gửi query
     do LLM dựng với `on_invalid="invalid"`: 400 thành `crm_query_invalid` kèm thông báo của
     CRM (chỉ nêu cột/quan hệ sai, không có dữ liệu) để LLM tự sửa.
     `GET /api/v1/reports/tables/{table}`: cột, quan hệ (hai chiều) của một bảng (`get_table`).

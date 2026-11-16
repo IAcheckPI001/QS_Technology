@@ -61,19 +61,16 @@ class Settings(BaseSettings):
     # Giới hạn token đầu ra mỗi bước LLM của agent; model suy luận tính cả token suy nghĩ
     # nên cần lớn hơn (khoảng 4000).
     agent_max_completion_tokens: int = Field(default=1200, alias="AGENT_MAX_COMPLETION_TOKENS")
-    # Tool CRM (thử nghiệm): gọi API danh sách và Reporting Query API của CRM bằng
-    # Bearer <crm_access_token | acting_user_id>, cùng CRM_API_BASE_URL.
-    # CRM_TOOLS: query = crm_schema + crm_query (LLM tự dựng query, mọi bảng; mặc định),
-    # catalog = crm_report + crm_records (catalog ngữ nghĩa 4 dataset), both = cả bốn.
+    # Tool CRM (thử nghiệm): crm_schema + crm_query gọi Reporting API của CRM bằng
+    # Bearer <crm_access_token | acting_user_id>. CRM_TOOLS và catalog crm_report/crm_records
+    # (phương án A) đã bỏ 2026-11-16 (D-010); biến CRM_TOOLS còn sót trong .env bị bỏ qua.
     crm_report_enabled: bool = Field(default=False, alias="CRM_REPORT_ENABLED")
-    crm_tools: Literal["query", "catalog", "both"] = Field(default="query", alias="CRM_TOOLS")
     crm_schema_cache_s: float = Field(default=600.0, alias="CRM_SCHEMA_CACHE_S")
     # Audit crm_query có cả giá trị filter và body gửi CRM (có thể là PII) vào logger
     # app.crm_query.audit. Chỉ bật có thời hạn để đánh giá chất lượng query.
     crm_query_audit_log: bool = Field(default=False, alias="CRM_QUERY_AUDIT_LOG")
     crm_api_base_url: str = Field(default="", alias="CRM_API_BASE_URL")
     crm_api_timeout_s: float = Field(default=10.0, alias="CRM_API_TIMEOUT_S")
-    crm_report_max_items: int = Field(default=2000, alias="CRM_REPORT_MAX_ITEMS")
     crm_report_timezone: str = Field(default="Asia/Ho_Chi_Minh", alias="CRM_REPORT_TIMEZONE")
     # Lease chống hai lượt chạy song song trên cùng phiên; hết hạn tự giải phóng nếu tiến trình chết.
     chat_turn_lease_s: int = Field(default=120, alias="CHAT_TURN_LEASE_S")
@@ -189,11 +186,11 @@ class Settings(BaseSettings):
     def _strip_crm(cls, value: str) -> str:
         return value.strip()
 
-    @field_validator("crm_api_timeout_s", "crm_report_max_items", "crm_schema_cache_s")
+    @field_validator("crm_api_timeout_s", "crm_schema_cache_s")
     @classmethod
     def _validate_crm_positive(cls, value: float) -> float:
         if value <= 0:
-            raise ValueError("CRM API timeout, max items and schema cache must be greater than zero")
+            raise ValueError("CRM API timeout and schema cache must be greater than zero")
         return value
 
     @model_validator(mode="after")
