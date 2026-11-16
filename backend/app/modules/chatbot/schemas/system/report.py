@@ -11,6 +11,7 @@ from typing import Literal
 
 from pydantic import Field
 
+from app.modules.chatbot.reporting.dates import DATE_PRESETS
 from app.modules.chatbot.reporting.datasets import DATASETS
 from app.modules.chatbot.schemas.default import SystemModel
 
@@ -20,10 +21,6 @@ MAX_FILTERS = 8
 MAX_SORT = 3
 MAX_LIMIT = 50
 
-DATE_PRESETS = (
-    "today", "yesterday", "this_week", "last_week", "this_month", "last_month",
-    "last_7_days", "last_30_days", "this_quarter", "last_quarter", "this_year", "last_year",
-)
 PERIOD = "period"
 
 

@@ -20,10 +20,9 @@ from typing import Annotated, Any, Literal
 
 from pydantic import AfterValidator, Field, StringConstraints, model_validator
 
+from app.modules.chatbot.reporting.dates import DATE_PRESETS
 from app.modules.chatbot.reporting.raw.policy import QUERYABLE_TABLES
 from app.modules.chatbot.schemas.default import SystemModel
-
-from .report import DATE_PRESETS
 
 CUSTOM_RANGE = "custom"
 MONTH_RANGE = "month"

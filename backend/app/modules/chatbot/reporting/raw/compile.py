@@ -43,8 +43,6 @@ from app.modules.chatbot.schemas.system.raw_query import (
 )
 
 from ..dates import calendar_range, end_of_today, latest_year_of, preset_range
-from ..records import render_value
-from ..report_api import api_column
 from .hints import DEFAULT_FILTERS, DROP_WITH_DATE_RANGE
 from .policy import (
     DATE_KINDS,
@@ -58,6 +56,7 @@ from .policy import (
     static_relation,
     static_values,
 )
+from .render import api_column, render_value
 from .values import ValueRuleError, check_filter
 
 DEFAULT_LIST_LIMIT = 20

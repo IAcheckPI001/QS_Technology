@@ -29,7 +29,7 @@ from app.modules.chatbot.schemas.default import SystemModel
 from app.modules.chatbot.schemas.system.raw_query import SchemaRequest
 
 from .base import ToolContext, ToolOutput, ToolRejected, ToolSpec
-from .crm_report import crm_credential
+from .crm_common import crm_credential
 
 CRM_SCHEMA_TOOL_NAME = "crm_schema"
 

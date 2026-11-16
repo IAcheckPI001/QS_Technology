@@ -10,6 +10,11 @@ from datetime import date, datetime, time, timedelta, tzinfo
 from typing import Literal
 
 TimeGrainName = Literal["day", "week", "month"]
+# Preset ngày tương đối mà `preset_range` hiểu.
+DATE_PRESETS = (
+    "today", "yesterday", "this_week", "last_week", "this_month", "last_month",
+    "last_7_days", "last_30_days", "this_quarter", "last_quarter", "this_year", "last_year",
+)
 
 
 def local_midnight(day: date, tz: tzinfo) -> datetime:

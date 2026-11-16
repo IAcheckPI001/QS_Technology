@@ -35,7 +35,7 @@ from app.modules.chatbot.schemas.system import RunState, ToolTurnState
 from app.modules.chatbot.schemas.system.raw_query import RawQuery
 
 from .base import ToolArgumentError, ToolContext, ToolOutput, ToolRejected, ToolSpec
-from .crm_report import crm_credential, query_all
+from .crm_common import crm_credential, query_all
 
 CRM_QUERY_TOOL_NAME = "crm_query"
 
