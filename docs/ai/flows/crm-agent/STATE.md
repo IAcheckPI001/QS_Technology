@@ -40,7 +40,7 @@ Cập nhật: 2026-11-16
 | "Bản ghi đầu/cuối của từng người" phải mỗi người một query; guide chưa hướng dẫn | Nhiều người dễ chạm trần |
 | Chưa có case eval câu hỏi nhiều sale hai lượt; chưa eval lại sau đổi giới hạn và sau đợt dọn | Chưa đo được các lỗi trên |
 | "Khách được hỗ trợ" của phiếu (r1): `customer_organization_id` hay `product_item_id.customer_id` | Cần Toma/CRM chốt |
-| `backend/.env.example` lệch `config.py` (thiếu `AGENT_MODEL`, `CRM_SCHEMA_CACHE_S`, `CRM_QUERY_AUDIT_LOG`; `AGENT_MAX_STEPS=5`; còn `CRM_TOOLS`, `CRM_REPORT_MAX_ITEMS`; URL ngrok) | Chưa sửa: file nằm ngoài quyền đọc của agent, Toma sửa tay |
+| `backend/.env.example` lệch `config.py` (thiếu `AGENT_MODEL`, `CRM_SCHEMA_CACHE_S`, `CRM_QUERY_AUDIT_LOG`; `AGENT_MAX_STEPS=5`; còn `CRM_REPORT_MAX_ITEMS`; URL ngrok) | Chưa sửa: file nằm ngoài quyền đọc của agent, Toma sửa tay |
 | `update_agent_conversation_state` không ghi `language`, mang theo `pending` cũ; `Prune` đếm token theo model chung; `ChatbotService` dựng stage pipeline cả trên đường agent | Lệch nhỏ; làm ở Đợt 0/1 |
 | `CRM_REPORT_ENABLED` đặt tên theo phương án A nhưng bật `crm_schema`/`crm_query` | Dễ hiểu nhầm; đổi tên cần quyết định (đổi biến môi trường) |
 | Mô tả cột `is_current` của CRM mâu thuẫn luật có kỳ | Code đã ép; đề nghị CRM sửa |

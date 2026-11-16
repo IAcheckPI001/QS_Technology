@@ -156,7 +156,7 @@ Phát hiện khi truy vết code, chưa có trong STATE:
 - Token CRM không được làm mới.
 - Chưa phân quyền tool theo role/scope.
 - Chưa có SSE tiến trình hay stream token.
-- `.env.example` thiếu `AGENT_MODEL` (và còn biến đã bỏ `CRM_TOOLS`, `CRM_REPORT_MAX_ITEMS`).
+- `.env.example` thiếu `AGENT_MODEL` (và còn biến đã bỏ `CRM_REPORT_MAX_ITEMS`).
 
 ## 7. Gợi ý cho bảo trì và mở rộng
 
