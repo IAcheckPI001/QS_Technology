@@ -9,8 +9,8 @@ Cập nhật: 2026-11-16
 - **Thử nghiệm.** Mặc định `CRM_REPORT_ENABLED=false`, agent chỉ có `product_docs_ask`.
 - Bật tool CRM thì agent có `crm_schema` + `crm_query` (phương án C, D-005). Phương án A
   (`crm_report`, `crm_records`, `CRM_TOOLS`) **đã xoá 2026-11-16** (D-010).
-- Đã dọn luồng 2026-11-16 trên nhánh `claude/agent-crm-development-29f518` (từ `671fe22`, chưa
-  merge về `feature/deploy_ai_service`): gỡ `print()` in dữ liệu CRM, xoá A, gom code trùng.
+- Đã dọn luồng 2026-11-16 và merge vào `feature/deploy_ai_service` (chưa push): gỡ `print()` in
+  dữ liệu CRM, xoá A, gom code trùng.
 - Model của agent: **gpt-4.1-mini** (quyết định 2026-11-12); guide `crm_query` tinh chỉnh cho
   model này. `AGENT_MODEL` chưa có trong `.env.example` và chưa đặt ở môi trường chạy.
 - Luật nghiệp vụ và ngày nằm trong code, áp cho mọi model: năm câu hỏi không nêu bị bỏ; kỳ trong
@@ -53,10 +53,9 @@ Code chết dùng chung với website-qa/chat-platform (ngoài phạm vi đợt 
 
 ## Kết quả kiểm gần nhất
 
-- 2026-11-16, sau đợt dọn, từ `backend/` của worktree: `pytest tests` → 1015 passed, 14 skipped,
-  1 failed (`test_f86_baseline`: CSV bị checkout thành CRLF trong worktree; bản LF ở checkout chính
-  đạt, không do đợt dọn). Trước dọn 1120: bớt test của phương án A, thêm `test_crm_render.py` và
-  test trace 401 của `crm_query`. `check_ai_docs.py` đạt.
+- 2026-11-16, sau đợt dọn, trên `feature/deploy_ai_service`, từ `backend/`: `pytest tests` →
+  1016 passed, 14 skipped (trước dọn 1120: bớt test của phương án A, thêm `test_crm_render.py`
+  và test trace 401 của `crm_query`). `check_ai_docs.py` đạt.
 - 2026-11-12, eval gpt-4.1-mini 27 case × 3 ([báo cáo](../../reports/crm_agent_eval_C_gpt41_2026-11-12.md)):
   mốc sáng 50/81 → **78/81**; token vào mỗi câu ~29,9k → 21,0k.
 - 2026-11-12, kiểm `POST /reports/query` câu hỏi nhiều sale: đếm gộp một query đúng (259/76/8);
