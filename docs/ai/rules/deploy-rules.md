@@ -1,6 +1,6 @@
 # Quy tắc deploy (deploy-rules)
 
-Cập nhật: 2026-11-11
+Cập nhật: 2026-11-16
 
 **Hạ tầng deploy chưa chốt** (quyết định của Toma, 2026-11-11). File này chỉ gồm quy tắc
 không phụ thuộc hạ tầng, rút từ code hiện có. Runbook theo hạ tầng (lệnh build, nơi chạy,
@@ -42,8 +42,7 @@ phải quy trình đang chạy.
 | `OPENAI_API_KEY` | có, cho chat | rỗng | Rỗng thì không tạo provider; chat trả `provider_not_configured` |
 | `CORS_ORIGINS` | có, trên production | localhost:5173 | Danh sách cách nhau bằng dấu phẩy |
 | `CRM_CHAT_FLOW` | không | `agent` | `pipeline` để rollback (DR-11). Mặc định `agent` là ngoại lệ tạm thời trong lúc kiểm thử (D-006); xem lại trước production |
-| `CRM_REPORT_ENABLED` | không | `false` | Bật thì bắt buộc `CRM_API_BASE_URL` và múi giờ IANA hợp lệ; thử nghiệm |
-| `CRM_TOOLS` | không | `query` | `query` (LLM tự dựng query mọi bảng CRM), `catalog` hoặc `both` (D-005). Khi bật tool CRM, dữ liệu nghiệp vụ kể cả liên hệ khách hàng đi tới nhà cung cấp LLM |
+| `CRM_REPORT_ENABLED` | không | `false` | Bật `crm_schema` + `crm_query` (LLM tự dựng query mọi bảng CRM, D-005); bắt buộc `CRM_API_BASE_URL` và múi giờ IANA hợp lệ; thử nghiệm. Khi bật, dữ liệu nghiệp vụ kể cả liên hệ khách hàng đi tới nhà cung cấp LLM. `CRM_TOOLS`, `CRM_REPORT_MAX_ITEMS` đã bỏ (D-010): còn trong `.env` thì bị bỏ qua, nên xoá khỏi cấu hình môi trường |
 | `AGENT_MODEL` | không | rỗng (= `OPENAI_MODEL`) | Model riêng cho vòng lặp agent kênh CRM; luồng website và stage phân tích giữ `OPENAI_MODEL`. Chọn theo `evals/compare_agent_models.py`. Khi bật tool CRM, đặt `gpt-4.1-mini` (quyết định 2026-11-12: guide `crm_query` được tinh chỉnh cho model này; gpt-4o-mini sai nhiều hơn ở hiểu tham số và ngữ cảnh qua lượt) |
 | `AGENT_REASONING_EFFORT` | không | rỗng | Chỉ cho model suy luận (`gpt-5…`, `o3…`): `none`/`minimal`/`low`/`medium`/`high` tuỳ model |
 | `AGENT_MAX_COMPLETION_TOKENS` | không | 1200 | Token đầu ra mỗi bước LLM của agent; model suy luận tính cả token suy nghĩ, đặt khoảng 4000 |
@@ -82,3 +81,8 @@ Bảng gốc `public.chat_history` đã có sẵn trên Supabase; repo *(chưa c
 - *(chưa có)* quy trình rollback image, sao lưu trước khi áp SQL, retention cho `chat_traces`.
 - *(chưa có)* rate limit theo khách ở widget-backend; Idempotency-Key mới được nhận và
   lưu, chưa chống xử lý trùng.
+- `backend/.env.example` lệch `config.py` (2026-11-16, chưa sửa vì file nằm ngoài quyền đọc của
+  agent): thiếu `AGENT_MODEL`, `CRM_SCHEMA_CACHE_S`, `CRM_QUERY_AUDIT_LOG`; `AGENT_MAX_STEPS=5`
+  (code: 6); còn `CRM_TOOLS`, `CRM_REPORT_MAX_ITEMS` đã bỏ; `CRM_REPORT_ENABLED=true` kèm URL
+  ngrok. Header `ngrok-skip-browser-warning` (`providers/crm_api.py`) xoá khi CRM có domain thật.
+- Các `print()` in dữ liệu CRM ra stdout đã gỡ 2026-11-16.

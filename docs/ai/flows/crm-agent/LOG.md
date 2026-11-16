@@ -7,6 +7,40 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-16 · Dọn luồng trước Đợt 0/1: gỡ debug, xoá phương án A, gom code trùng (D-010) · loại: thay đổi, quyết định
+
+- Vấn đề: trước Đợt 0/1 cần luồng sạch. Ba lượt rà (code agent/tools/reporting; wiring, config,
+  test; tài liệu) trên `671fe22` tìm ra `print()` in dữ liệu CRM, phương án A không còn dùng nhưng C
+  vẫn import từ module của A, code chết/trùng và tài liệu lỗi thời.
+- Quyết định (Toma): xoá hẳn A (D-010, thay một phần D-005); chỉ dọn trên đường agent; tài liệu cũ
+  chuyển vào `docs/ai/archive/`; giữ rollback `CRM_CHAT_FLOW=pipeline` (D-006).
+- Thay đổi (nhánh `claude/agent-crm-development-29f518`, mỗi bước một commit):
+  - K1: gỡ `print()` ở `agent/runner.py`, `providers/crm_api.py`; bỏ code comment, TODO cũ.
+  - K2a: `crm_credential`, `query_all` → `tools/crm_common.py`; `api_column`, `render_value` →
+    `reporting/raw/render.py`; `DATE_PRESETS` → `reporting/dates.py`.
+  - K2b: xoá `tools/crm_report.py`, `crm_records.py`, `reporting/{catalog,engine,validate,report_api,records}.py`,
+    `reporting/datasets/`, `schemas/system/{report,records}.py`, `CrmListClient`, setting `crm_tools`,
+    `crm_report_max_items`, `CATALOG_PREFERENCE`, 5 file test và `evals/check_crm_report_contract.py`.
+    Thêm `tests/chatbot/crm_fakes.py`, `test_crm_render.py`, test trace 401 cho `crm_query`.
+  - K3: một nguồn `TOOL_CALL_LIMIT` (`tools/base.py`) và `crm_query_invalid`; `AgentLimits.max_steps`
+    6; `build_messages` bắt buộc `specs`; bỏ nhánh không thể xảy ra của `outcome_of_error`,
+    `LLMCapabilities.tool_choice_required`, re-export `Deadline`, import `RetrievalScope`;
+    `main.py` dùng `effective_agent_model`.
+  - Tài liệu: archive 5 file (có `archive/README.md`); `check_ai_docs.py` bỏ qua `docs/ai/archive`;
+    sửa README, api_guidelines, architecture, AGENTS.md, decisions (D-010), deploy-rules,
+    current-state, `crm-reporting-api-requests.md` (cột trạng thái), hai báo cáo.
+- Chưa làm: K4 `backend/.env.example` (file nằm ngoài quyền đọc của agent; việc cần sửa ghi ở
+  STATE và deploy-rules).
+- Ngoài phạm vi, để đợt riêng (code chết dùng chung): `Branch`/`branch` luôn `None`,
+  `ContextLoader.resolve_retrieval_scope` và `RetrievalScope.collections`, `schemas/outbound.py`,
+  `InboundRequest.resources`, `orchestration.summarize_statuses`, import thừa ngoài đường agent,
+  fake test trùng, `config.embedding_input_usd_per_million`.
+- Kiểm chứng: từ `backend/`, `pytest tests` → 1015 passed, 14 skipped, 1 failed (`test_f86_baseline`,
+  CSV CRLF trong worktree, có sẵn); `check_ai_docs.py` đạt. Chưa chạy eval thật (cần OpenAI, CRM):
+  Toma chạy lại `run_crm_agent_eval.py`.
+- Ảnh hưởng contract/API/schema: không đổi HTTP/SSE. Tool `crm_report`/`crm_records` và mã
+  `http.crm_list` không còn; `CRM_TOOLS`, `CRM_REPORT_MAX_ITEMS` bị bỏ qua nếu còn trong `.env`.
+
 ## 2026-11-16 · Thảo luận kiến trúc, đối chiếu GoClaw/OpenClaw và các hệ thống khác · loại: đánh giá
 
 - Báo cáo: [crm_agent_architecture_discussion_2026-11-16.md](../../reports/crm_agent_architecture_discussion_2026-11-16.md).

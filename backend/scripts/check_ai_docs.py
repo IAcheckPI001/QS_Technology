@@ -26,8 +26,9 @@ README_MAX_LINES = 200
 STATE_MAX_LINES = 80
 FLOW_FILES = ("README.md", "STATE.md", "LOG.md")
 
-# Thư mục không phải tài liệu chuẩn: bản sao repo, output sinh tự động.
-SKIP_PARTS = frozenset({".claude/worktrees", "docs/ai/doc_ingest_spike", "node_modules"})
+# Thư mục không phải tài liệu chuẩn: bản sao repo, output sinh tự động, tài liệu lưu trữ (đóng băng,
+# có thể trỏ tới code đã xoá).
+SKIP_PARTS = frozenset({".claude/worktrees", "docs/ai/archive", "docs/ai/doc_ingest_spike", "node_modules"})
 
 _LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 _FENCE = re.compile(r"^\s*(```|~~~)")

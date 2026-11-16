@@ -1,3 +1,6 @@
+> **Lỗi thời từ 2026-11-16.** Phương án A (`crm_report`, `crm_records`) đã bị xoá khỏi code (D-010).
+> Code mô tả ở đây không còn tồn tại. Luồng hiện tại: `docs/ai/flows/crm-agent/README.md`.
+
 # Chỉ mục xử lý `crm_report` và `crm_records`
 
 Tài liệu này là bản đồ đọc code cho phương án A (catalog) của luồng

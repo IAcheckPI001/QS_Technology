@@ -1,3 +1,6 @@
+> **Lưu trữ từ 2026-11-16.** Bản đồ API GET danh sách của CRM; chỉ phương án A (`CrmListClient`, đã
+> xoá theo D-010) dùng. Luồng hiện tại dùng Reporting API: `docs/ai/tool_instruction/ai-reporting-query.md`.
+
 # Hướng dẫn cho AI: đọc dữ liệu QS-CRM (chỉ đọc)
 
 Tài liệu này dùng làm **ngữ cảnh / system prompt** cho AI agent. Nó giúp AI biết: dữ liệu nằm ở bảng nào, các bảng nối với nhau ra sao, và với một câu hỏi thì gọi **API GET nào, truyền tham số gì, theo thứ tự nào**.

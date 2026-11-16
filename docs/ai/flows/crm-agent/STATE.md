@@ -7,73 +7,64 @@ Cập nhật: 2026-11-16
 ## Tóm tắt
 
 - **Thử nghiệm.** Mặc định `CRM_REPORT_ENABLED=false`, agent chỉ có `product_docs_ask`.
-- Khi bật tool CRM, mặc định là phương án C (`crm_schema` + `crm_query`, D-005). Phương án A
-  (`crm_report` + `crm_records`) vẫn chạy qua `CRM_TOOLS=catalog`.
-- Code phương án C **đã commit** trên `feature/deploy_ai_service` (commit `4a4b5b5`,
-  2026-11-14), gồm thay đổi giới hạn gọi tool ngày 2026-11-12 (đối chiếu code 2026-11-16).
+- Bật tool CRM thì agent có `crm_schema` + `crm_query` (phương án C, D-005). Phương án A
+  (`crm_report`, `crm_records`, `CRM_TOOLS`) **đã xoá 2026-11-16** (D-010).
+- Đã dọn luồng 2026-11-16 trên nhánh `claude/agent-crm-development-29f518` (từ `671fe22`, chưa
+  merge về `feature/deploy_ai_service`): gỡ `print()` in dữ liệu CRM, xoá A, gom code trùng.
 - Model của agent: **gpt-4.1-mini** (quyết định 2026-11-12); guide `crm_query` tinh chỉnh cho
   model này. `AGENT_MODEL` chưa có trong `.env.example` và chưa đặt ở môi trường chạy.
-- Luật nghiệp vụ và ngày nằm trong code, áp cho mọi model:
-  - năm câu hỏi không nêu bị bỏ;
-  - kỳ trong filters được chuyển thành `date_range`;
-  - "khách hàng" không tính spam;
-  - "nhân viên sales" theo vai trò, chỉ tài khoản còn dùng;
-  - có kỳ thì bỏ `is_current`.
+- Luật nghiệp vụ và ngày nằm trong code, áp cho mọi model: năm câu hỏi không nêu bị bỏ; kỳ trong
+  filters thành `date_range`; "khách hàng" không tính spam; "nhân viên sales" theo vai trò, chỉ
+  tài khoản còn dùng; có kỳ thì bỏ `is_current`.
 - Dữ liệu CRM (kể cả liên hệ khách hàng) đi tới nhà cung cấp LLM khi bật tool CRM.
 
 ## Độ chín từng phần
 
 | Phần | Trạng thái | Ghi chú |
 |---|---|---|
-| `AgentRunner`: vòng lặp, deadline, cancel, giới hạn | có, test bằng fake | Trần chung chỉ đếm call không bị `tool_call_limit` (2026-11-12); `plan()` để trống |
-| `product_docs_ask` + chọn model theo capabilities | có, test bằng fake | Capabilities nằm trong code; registry có thêm 10S, 10i (2026-11-14) |
-| `crm_schema`, `crm_query` (C) | có, đã commit; eval gpt-4.1-mini 78/81 | Trần `crm_query`: 6 lần thử, 4 lần gửi CRM |
+| `AgentRunner`: vòng lặp, deadline, cancel, giới hạn | có, test bằng fake | Trần chung chỉ đếm call không bị `tool_call_limit`; `plan()` để trống (điểm gắn) |
+| `product_docs_ask` + chọn model theo capabilities | có, test bằng fake | Registry có thêm 10S, 10i (2026-11-14) |
+| `crm_schema`, `crm_query` | có; eval gpt-4.1-mini 78/81 | Trần `crm_query`: 6 lần thử, 4 lần gửi CRM |
 | Giám sát query (trace, audit sau `CRM_QUERY_AUDIT_LOG`) | có, test bằng fake | Chưa xem trên log server thật |
-| `crm_report`, `crm_records` (A) | có | Catalog kiểm bằng HTTP thật 2026-11-10 |
-| Phân quyền tool theo role/scope | chưa có | Mọi nhân viên dùng mọi tool |
+| Phân quyền tool theo role/scope | chưa có | `required_scope`, `scopes` là điểm gắn, chưa dùng |
 | SSE tiến trình, stream token câu trả lời cuối | chưa có | Câu trả lời cuối là một `delta` |
-| Tool ghi dữ liệu, chi tiết phiếu, web search, MCP, provider khác OpenAI | chưa có | |
+| Tool ghi dữ liệu, web search, MCP, provider khác OpenAI | chưa có | |
 
 ## Vấn đề mở
 
 | Vấn đề | Ảnh hưởng |
 |---|---|
-| `print()` debug in `AssistantTurn`, body gửi CRM và toàn bộ response CRM ra stdout (`agent/runner.py:289`, `providers/crm_api.py:199,239,255`) | PII khách hàng nằm trong log tiến trình; vi phạm luật "log chỉ metadata"; gỡ trước deploy |
-| `chat_history.model` và chi phí ước tính lấy theo `OPENAI_MODEL` và đơn giá gpt-4o-mini, không theo `AGENT_MODEL` (`services/chat_service.py`) | Đặt `AGENT_MODEL` thì history ghi sai model, chi phí thấp hơn thực tế |
-| LLM tự suy username từ tên/câu trả lời trước (thiếu `@qstcnc.com`); guide `crm_query` chưa có luật "username chỉ lấy nguyên văn từ kết quả tool" (kiểm code 2026-11-16) | Query rỗng, gọi lại tới hết lượt |
-| Câu trả lời khi chạm giới hạn vẫn có thể nói "thử lại sau". Luật "trả lời phần đã có" có trong `agent/prompts.py` từ 2026-11-02 nhưng chưa đủ hiệu lực | Gây hiểu nhầm |
-| "Bản ghi đầu/cuối của từng người": CRM không có top-1 theo nhóm, `min/max` chỉ cho cột số; guide chưa hướng dẫn tách query | Cần mỗi người một query; nhiều người dễ chạm trần |
-| Chưa có case eval câu hỏi nhiều sale hai lượt (`crm_agent_cases.json` 46 case); chưa eval lại sau thay đổi cách đếm giới hạn | Chưa đo được hai lỗi trên |
-| "Khách được hỗ trợ" của phiếu: `customer_organization_id` (trống ở dữ liệu hiện có) hay `product_item_id.customer_id` (chủ hiện tại của máy) chưa được chốt | r1: LLM chọn sai hoặc hỏi lại; cần Toma/CRM chốt |
-| Còn tra `auth_users.id` trước khi lọc thay vì lọc thẳng `…username` (q7, q12 1/3) | Thêm 1–2 lần gọi |
-| `backend/.env.example`: thiếu `AGENT_MODEL`, `CRM_TOOLS`; `AGENT_MAX_STEPS=5` lệch mặc định code (6); `CRM_REPORT_ENABLED=true` kèm URL ngrok cụ thể | Cấu hình mẫu dễ gây nhầm khi triển khai |
-| Mô tả cột `is_current` của CRM ("Count current workload…") mâu thuẫn với luật có kỳ | Code đã ép; đề nghị CRM sửa mô tả |
-| Timestamp CRM là UTC; `date_range` và nhóm `_day/_month/_year` cắt theo ngày UTC (ranh giới 07:00 giờ VN) | Bản ghi 00:00–07:00 giờ VN ở hai đầu kỳ rơi sang kỳ khác; chờ CRM thêm `timezone` |
-| Index tĩnh lệch cột so với CRM ở 13 bảng (chủ yếu module kho) | Thiếu giá trị hợp lệ của cột mới; cần dump mới rồi chạy `build_crm_schema_index.py` |
-| `contains` phân biệt dấu tiếng Việt | Tên gõ không dấu trả 0 |
-| Chi phí LLM gpt-4.1-mini khoảng 2,5 lần gpt-4o-mini mỗi câu | Token giảm 30% bù một phần |
-| `product_user_access`, `product_agents` chưa khớp mô tả CRM (giữ nguyên, Toma 2026-11-12) | Số liệu có thể lệch màn hình CRM |
+| `chat_history.model` và chi phí ước tính theo `OPENAI_MODEL`, đơn giá gpt-4o-mini, không theo `AGENT_MODEL`; bước agent không ghi `cached_tokens` | History sai model, chi phí thấp hơn thực tế; chưa đo được cache (E1) |
+| LLM tự suy username (thiếu `@qstcnc.com`); guide chưa có luật "username chỉ lấy nguyên văn từ kết quả tool" | Query rỗng, gọi lại tới hết lượt |
+| Chạm giới hạn vẫn có thể trả lời "thử lại sau" (luật "trả lời phần đã có" ở `prompts.py` chưa đủ) | Gây hiểu nhầm |
+| "Bản ghi đầu/cuối của từng người" phải mỗi người một query; guide chưa hướng dẫn | Nhiều người dễ chạm trần |
+| Chưa có case eval câu hỏi nhiều sale hai lượt; chưa eval lại sau đổi giới hạn và sau đợt dọn | Chưa đo được các lỗi trên |
+| "Khách được hỗ trợ" của phiếu (r1): `customer_organization_id` hay `product_item_id.customer_id` | Cần Toma/CRM chốt |
+| `backend/.env.example` lệch `config.py` (thiếu `AGENT_MODEL`, `CRM_SCHEMA_CACHE_S`, `CRM_QUERY_AUDIT_LOG`; `AGENT_MAX_STEPS=5`; còn `CRM_TOOLS`, `CRM_REPORT_MAX_ITEMS`; URL ngrok) | Chưa sửa: file nằm ngoài quyền đọc của agent, Toma sửa tay |
+| `update_agent_conversation_state` không ghi `language`, mang theo `pending` cũ; `Prune` đếm token theo model chung; `ChatbotService` dựng stage pipeline cả trên đường agent | Lệch nhỏ; làm ở Đợt 0/1 |
+| `CRM_REPORT_ENABLED` đặt tên theo phương án A nhưng bật `crm_schema`/`crm_query` | Dễ hiểu nhầm; đổi tên cần quyết định (đổi biến môi trường) |
+| Mô tả cột `is_current` của CRM mâu thuẫn luật có kỳ | Code đã ép; đề nghị CRM sửa |
+| CRM cắt `date_range` và `_day/_month/_year` theo ngày UTC (ranh giới 07:00 giờ VN) | Lệch biên kỳ; chờ CRM thêm `timezone` |
+| Index tĩnh lệch 13 bảng (chủ yếu kho); `contains` phân biệt dấu tiếng Việt | Cần dump mới; tên gõ không dấu trả 0 |
 | Token CRM không được làm mới; bảng ngoài `customers` cần `auth.manage_roles` | `crm_auth_failed` ở phiên dài; sale thường nhận `crm_forbidden` |
 | `CRM_CHAT_FLOW` mặc định `agent` dù thử nghiệm (D-006) | Xem lại trước production |
 
+Code chết dùng chung với website-qa/chat-platform (ngoài phạm vi đợt dọn): xem LOG 2026-11-16.
+
 ## Kết quả kiểm gần nhất
 
-- 2026-11-16, commit `671fe22`, từ `backend/`: `.\venv\Scripts\python.exe -m pytest tests` →
-  1120 passed, 14 skipped.
+- 2026-11-16, sau đợt dọn, từ `backend/` của worktree: `pytest tests` → 1015 passed, 14 skipped,
+  1 failed (`test_f86_baseline`: CSV bị checkout thành CRLF trong worktree; bản LF ở checkout chính
+  đạt, không do đợt dọn). Trước dọn 1120: bớt test của phương án A, thêm `test_crm_render.py` và
+  test trace 401 của `crm_query`. `check_ai_docs.py` đạt.
 - 2026-11-12, eval gpt-4.1-mini 27 case × 3 ([báo cáo](../../reports/crm_agent_eval_C_gpt41_2026-11-12.md)):
-  - mốc sáng 50/81 → (a) 64 → (b) 69 → (c) **78/81**; 21 case cũ 38/63 → 60/63;
-  - token vào mỗi câu ~29,9k → 21,0k; phần cố định mỗi bước 5.868 → 4.251 token.
-- 2026-11-12, kiểm `POST /reports/query` cho câu hỏi nhiều sale: đếm gộp một query đúng (259/76/8);
+  mốc sáng 50/81 → **78/81**; token vào mỗi câu ~29,9k → 21,0k.
+- 2026-11-12, kiểm `POST /reports/query` câu hỏi nhiều sale: đếm gộp một query đúng (259/76/8);
   "khách đầu tiên của từng sale" phải tách query.
-- Đợt cũ (đo nền 2026-11-11, đo lại sáng 2026-11-12 hai model): xem LOG.
 
 ## Bước tiếp theo
 
-1. Guide `crm_query`: username chỉ lấy nguyên văn từ kết quả tool; nhiều người thì đếm gộp, bản
-   ghi đầu/cuối tách query; khi chạm giới hạn thì trả lời phần đã có.
-2. Thêm case câu hỏi nhiều sale (hai lượt) vào eval; Toma eval lại sau thay đổi giới hạn gọi.
-3. Chốt nghĩa "khách được hỗ trợ" của phiếu (r1).
-4. Sửa `backend/.env.example` (`AGENT_MODEL`, `CRM_TOOLS`, `AGENT_MAX_STEPS`); đặt
-   `AGENT_MODEL=gpt-4.1-mini` ở môi trường chạy.
-5. Gửi CRM: tham số `timezone`, sửa mô tả `is_current`, dump schema mới.
-6. P1 semantic layer; phân quyền tool theo role/scope; backlog SSE tiến trình, stream token, MCP.
+1. Toma sửa `backend/.env.example`; chạy lại eval sau đợt dọn.
+2. Đợt 0: E1 (model, chi phí, `cached_tokens`), luật username trong guide.
+3. Đợt 1: E2–E5 ([báo cáo thảo luận](../../reports/crm_agent_architecture_discussion_2026-11-16.md)).
+4. Chốt r1; gửi CRM: `timezone`, mô tả `is_current`, dump schema mới.

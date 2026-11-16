@@ -4,6 +4,10 @@ Phạm vi: code trên `feature/deploy_ai_service`, commit `671fe22`. Báo cáo c
 đang chạy, không dựa vào kiến trúc dự kiến. Mọi đường dẫn tính từ `backend/app/modules/chatbot/`
 trừ khi ghi khác. Trạng thái và tồn đọng chi tiết: [STATE.md](../flows/crm-agent/STATE.md).
 
+> **Cập nhật sau đợt dọn cùng ngày (D-010):** phương án A (`crm_report`, `crm_records`, `CRM_TOOLS`)
+> đã xoá; `crm_credential`/`query_all` chuyển sang `tools/crm_common.py`; T1 và T4 ở mục 6 đã xử lý.
+> Số dòng trong báo cáo vẫn theo commit `671fe22`.
+
 ## 1. Kiến trúc tổng thể
 
 Luồng **thử nghiệm**. CRM backend gọi `POST /chat/crm` bằng service key. Dịch vụ AI chạy một
@@ -21,16 +25,16 @@ CRM backend ──service key──▶ FastAPI route (routers/chat.py)          
                                │ provider.chat_complete_tools ◀──▶ ToolRegistry.invoke
                                ▼
               ┌────────────────┼──────────────────┬───────────────────┐
-     product_docs_ask     crm_schema          crm_query         crm_report / crm_records
-     (RetrievalPipeline   (CrmSchemaCache)    (compile_raw +    (phương án A, chỉ khi
-      của website-qa)                          policy)           CRM_TOOLS=catalog|both)
+     product_docs_ask     crm_schema          crm_query         (crm_report / crm_records:
+     (RetrievalPipeline   (CrmSchemaCache)    (compile_raw +     phương án A, đã xoá
+      của website-qa)                          policy)           2026-11-16, D-010)
               │                 └───────── providers/crm_api.py ─────────┘
            Supabase                             CRM Reporting API (Bearer token nhân viên)
 ```
 
 | Tầng | File | Trách nhiệm |
 |---|---|---|
-| Wiring lúc khởi động | `app/main.py:38-57`, `agent/setup.py` | Chỉ dựng agent khi `CRM_CHAT_FLOW=agent` và có OpenAI. `AGENT_MODEL` khác `OPENAI_MODEL` thì tạo provider riêng cho vòng lặp. Đăng ký tool theo `CRM_REPORT_ENABLED` và `CRM_TOOLS`. Thiếu capability hoặc schema sai thì `ToolConfigurationError` dừng khởi động |
+| Wiring lúc khởi động | `app/main.py:38-57`, `agent/setup.py` | Chỉ dựng agent khi `CRM_CHAT_FLOW=agent` và có OpenAI. `AGENT_MODEL` khác `OPENAI_MODEL` thì tạo provider riêng cho vòng lặp. Đăng ký `crm_schema` + `crm_query` khi `CRM_REPORT_ENABLED` (`CRM_TOOLS` đã bỏ, D-010). Thiếu capability hoặc schema sai thì `ToolConfigurationError` dừng khởi động |
 | Transport | `routers/chat.py`, `routers/sse.py`, `dependencies.py` | Xác thực, phiên, lease, trace, SSE, ánh xạ lỗi |
 | Lượt chat | `services/chat_service.py` | Security, nạp context, prune, rẽ nhánh agent/pipeline, ghi `chat_history` |
 | Agent | `agent/runner.py`, `prompts.py`, `deadline.py` | Vòng lặp, giới hạn, deadline, gộp call trùng, lọc citation |
@@ -85,7 +89,7 @@ CRM backend ──service key──▶ FastAPI route (routers/chat.py)          
 | `product_docs_ask` | Chạy `RetrievalPipeline` (clarification → analysis → `CatalogLookupStage` → execution) trên một RunState con và không compose câu trả lời. Model trong câu hỏi phải có bằng chứng; không có thì trả `model_not_evidenced`. |
 | `crm_schema` | Mô tả 1–4 bảng: cột, quan hệ, `known_values`, `person_filter`. Schema sống được cache `CRM_SCHEMA_CACHE_S`; index tĩnh dùng làm dự phòng. |
 | `crm_query` | Validate `RawQuery`, rồi `compile_raw`: kiểm đường dẫn qua `policy.check_path`, kiểm kiểu giá trị, áp luật năm/kỳ, filter mặc định, `DROP_WITH_DATE_RANGE`. Sau đó gửi `POST /reports/query`, kèm một query `count` song song khi ở mode list. Trần mỗi lượt: 6 lần thử, trong đó 4 lần gửi CRM (`tools/crm_query.py:47-48, 267`). |
-| **CRM client** | Header `Authorization: Bearer <crm_access_token>`; thiếu token thì dùng `acting_user_id` (`tools/crm_report.py:315`). Ánh xạ: 401 → `crm_auth_failed`, 403 → `crm_forbidden`, 400 của query do LLM dựng → `crm_query_invalid` (LLM tự sửa), còn lại → `crm_unavailable`. |
+| **CRM client** | Header `Authorization: Bearer <crm_access_token>`; thiếu token thì dùng `acting_user_id` (`tools/crm_common.py` `crm_credential`). Ánh xạ: 401 → `crm_auth_failed`, 403 → `crm_forbidden`, 400 của query do LLM dựng → `crm_query_invalid` (LLM tự sửa), còn lại → `crm_unavailable`. |
 | **Observability** | Span `agent.run`, `llm.chat_tools`, `tool.<name>`, `query.fetch`, `http.crm_report`. Log chỉ chứa metadata. Audit `crm_query` có giá trị filter nằm sau `CRM_QUERY_AUDIT_LOG`, mặc định tắt. |
 
 ## 4. Điều phối, phân quyền, xác thực, lỗi, handoff
@@ -135,10 +139,10 @@ Phát hiện khi truy vết code, chưa có trong STATE:
 
 | # | Vấn đề | Vị trí | Ảnh hưởng |
 |---|---|---|---|
-| T1 | `print()` debug in toàn bộ `AssistantTurn` (argument query), body gửi CRM và **toàn bộ response CRM (rows)** ra stdout | `agent/runner.py:289`; `providers/crm_api.py:199, 239, 255` | Vi phạm bất biến "log chỉ chứa metadata": PII khách hàng nằm trong log tiến trình ở mọi môi trường. Cần gỡ trước khi deploy |
+| T1 | `print()` debug in toàn bộ `AssistantTurn` (argument query), body gửi CRM và **toàn bộ response CRM (rows)** ra stdout | `agent/runner.py:289`; `providers/crm_api.py:199, 239, 255` | Vi phạm bất biến "log chỉ chứa metadata": PII khách hàng nằm trong log tiến trình ở mọi môi trường. **Đã gỡ 2026-11-16** |
 | T2 | `chat_history.model` và chi phí ước tính lấy theo provider chung (`OPENAI_MODEL`) và đơn giá gpt-4o-mini, không theo `AGENT_MODEL` | `services/chat_service.py:232, 251, 384-399` | Khi đặt `AGENT_MODEL=gpt-4.1-mini`, history ghi sai model và chi phí thấp hơn thực tế khoảng 2,5 lần |
 | T3 | `Prune` đếm token theo model của provider chung | `chat_service.py:137` | Lệch nhỏ khi model agent khác tokenizer |
-| T4 | Mặc định trong dataclass `AgentLimits.max_steps = 5` khác `config.py` (6); `.env.example` đặt 5 | `agent/runner.py:75` | Chỉ gây nhầm khi dựng runner không qua settings (test, eval) |
+| T4 | Mặc định trong dataclass `AgentLimits.max_steps = 5` khác `config.py` (6); `.env.example` đặt 5 | `agent/runner.py:75` | Chỉ gây nhầm khi dựng runner không qua settings (test, eval). **Code đã sửa 2026-11-16**; `.env.example` còn chờ |
 
 Đã có trong [STATE.md](../flows/crm-agent/STATE.md) (tóm tắt):
 - Guide chưa có luật "username chỉ lấy nguyên văn từ kết quả tool".
@@ -152,7 +156,7 @@ Phát hiện khi truy vết code, chưa có trong STATE:
 - Token CRM không được làm mới.
 - Chưa phân quyền tool theo role/scope.
 - Chưa có SSE tiến trình hay stream token.
-- `.env.example` thiếu `AGENT_MODEL` và `CRM_TOOLS`.
+- `.env.example` thiếu `AGENT_MODEL` (và còn biến đã bỏ `CRM_TOOLS`, `CRM_REPORT_MAX_ITEMS`).
 
 ## 7. Gợi ý cho bảo trì và mở rộng
 

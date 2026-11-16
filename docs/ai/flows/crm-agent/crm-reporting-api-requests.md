@@ -4,6 +4,23 @@
 - Ngày đo: 2026-11-11, trên môi trường CRM đang chạy, bằng tài khoản nhân viên thật
 - API liên quan: `GET /api/v1/reports/datasets`, `GET /api/v1/reports/tables/{table}`, `POST /api/v1/reports/query`
 
+## Trạng thái các đề nghị (cập nhật 2026-11-16)
+
+Số liệu bên dưới đo ngày 2026-11-11; CRM hiện có 126 bảng. Nguồn trạng thái: `LOG.md` của luồng.
+
+| Mục | Trạng thái |
+|---|---|
+| Q1 (`deleted_at`) | Đã xong: CRM tự loại dòng xoá mềm, báo qua `deleted_at_meaning` (LOG 2026-11-12) |
+| Q2 (múi giờ) | Đã trả lời: CRM lưu UTC. Còn mở: tham số `timezone` cho `date_range` và nhóm `_day/_month/_year` |
+| §3.1 (giá trị hợp lệ), §3.4 (mô tả), §3.5 (nullable, quan hệ ngược) | Đã có trong `/reports/tables` và `/reports/datasets` |
+| Q3 (khách của phiếu hỗ trợ, r1) | Còn mở |
+| Q6 (`contains` phân biệt dấu) | Còn mở |
+| Q7 (phân quyền theo nhóm bảng) | Còn mở |
+| Q9 (làm mới token) | Còn mở |
+| Mô tả cột `is_current` mâu thuẫn luật có kỳ | Còn mở (mới, 2026-11-12) |
+| Dump schema mới (13 bảng lệch index tĩnh) | Còn mở |
+| Q4, Q5, Q8, §3.2, §3.3 | Chưa xác minh lại sau 2026-11-11 |
+
 ## 1. Bối cảnh
 
 Chatbot AI trả lời câu hỏi của nhân viên bằng cách để mô hình ngôn ngữ (LLM) tự dựng query cho `POST /reports/query`. Thông tin duy nhất LLM có về một bảng là kết quả của `GET /reports/tables/{table}`: tên cột, kiểu cột và quan hệ khoá ngoại.

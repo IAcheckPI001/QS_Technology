@@ -10,17 +10,17 @@ STATE của luồng đổi trạng thái tổng.
 |---|---|---|---|
 | chat-platform | Service key, session, lease, history, trace có code và test; GET Support Workspace chưa xác thực; `Idempotency-Key` chưa chống trùng | Supabase (`/health/db`, insert `chat_history`, lease trên khóa dòng) | [STATE](flows/chat-platform/STATE.md) |
 | website-qa | Chạy trọn luồng; chat vẫn dùng bảng cũ `doc_chunks`. Đang làm R-1 (tối ưu bước phân tích + định tuyến, [kế hoạch](reports/p3_r1_routing_plan.md)): công cụ đo và luật định tuyến `r1`/`r2` đã có code (chỉ eval dùng, production giữ `r0`), **chưa đo được vì OpenAI hết credit (2026-11-14)**; handoff là scaffold; chưa có SSE nguồn/ảnh | Chat trên bảng mới `doc_chunks_v2`; số đo luật định tuyến | [STATE](flows/website-qa/STATE.md) |
-| crm-agent | Thử nghiệm; tool CRM sau `CRM_REPORT_ENABLED` (mặc định tắt), mặc định phương án C (`crm_schema`/`crm_query`, đã commit 2026-11-14; eval gpt-4.1-mini 78/81); còn mở: luật username/trả lời khi chạm giới hạn trong guide, nghĩa "khách" của phiếu (r1); chưa phân quyền tool | Eval lại sau thay đổi giới hạn gọi tool; `AGENT_MODEL` ở môi trường chạy; audit log trên server thật | [STATE](flows/crm-agent/STATE.md) |
+| crm-agent | Thử nghiệm; tool CRM (`crm_schema`/`crm_query`) sau `CRM_REPORT_ENABLED` (mặc định tắt); eval gpt-4.1-mini 78/81. Đã dọn 2026-11-16 (xoá phương án A, D-010; gỡ `print()` in dữ liệu CRM), chưa merge về `feature/deploy_ai_service`; còn mở: `.env.example` lệch, luật username/trả lời khi chạm giới hạn, nghĩa "khách" của phiếu (r1); chưa phân quyền tool | Eval lại sau đợt dọn và sau thay đổi giới hạn gọi tool; `AGENT_MODEL` ở môi trường chạy; audit log trên server thật | [STATE](flows/crm-agent/STATE.md) |
 | learning | Tới hết bước privacy sau `LEARNING_API_ENABLED`, chưa xác thực; segment/extract, job, index chưa nối | Supabase, Ollama | [STATE](flows/learning/STATE.md) |
 | doc-ingest | PDF → chunk nháp → `doc_chunks_v2` (draft): F54 296, F86 Installation 23, catalog 7 bộ điều khiển 37 chunk (nguồn biên soạn `curated/`, chờ verdict, chưa gắn hình); cổng 2c v4 không đạt (chờ prompt v5); còn soạn servo/board/phụ kiện/công ty | — (tool offline, chạy trên PDF thật) | [STATE](flows/doc-ingest/STATE.md) |
 
 ## Kiểm thử toàn repo gần nhất
 
-2026-11-16 (commit `671fe22`):
-- Từ `backend/`: `.\venv\Scripts\python.exe -m pytest tests` → 1120 passed, 14 skipped.
+2026-11-16, sau đợt dọn crm-agent (nhánh `claude/agent-crm-development-29f518`):
+- Từ `backend/`: `pytest tests` → 1015 passed, 14 skipped, 1 failed (`test_f86_baseline`: CSV bị
+  checkout thành CRLF trong worktree; có sẵn, không do đợt dọn). Trước dọn, `671fe22`: 1120 passed.
 
-2026-11-11:
-- Từ `backend/`: `.\venv\Scripts\python.exe -m pytest tests` → 951 passed, 14 skipped (sau thay đổi giám sát `crm_query`).
+Đợt trước, 2026-11-11:
 - Từ `backend/`: `..\.venv-ingest\Scripts\python.exe -m pytest tests\doc_ingest` → 318 passed.
 - `widget-backend` `npm test` → 22 pass.
 - Từ root: `npm run build` đạt; `npm run lint` lỗi sẵn có (139 lỗi ở `src/`, 290 ở

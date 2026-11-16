@@ -15,7 +15,7 @@ CRM backend ─────────────▶ POST /chat/crm     ┤  c
                        ├─ website (hoặc CRM khi CRM_CHAT_FLOW=pipeline): RetrievalPipeline
                        │    → AnswerComposer                                   (website-qa)
                        └─ CRM: AgentRunner ⇄ tool: product_docs_ask, crm_schema/crm_query
-                            hoặc crm_report/crm_records                          (crm-agent)
+                            (tool CRM khi CRM_REPORT_ENABLED=true)               (crm-agent)
                      → chat_history, chat_traces → SSE                         (chat-platform)
 
 support-chat (Supabase) ─▶ POST /ai/learning: ingestion → privacy → (chưa nối) tri thức  (learning)
@@ -47,7 +47,7 @@ Nội dung chi tiết của file này trước 2026-11-11 được chép nguyên
 | `ChatbotService` | Điều phối session và stages, lifecycle history | Chứa provider implementation |
 | Stage | Một bước domain có typed state/decision | Tạo HTTP response |
 | `AgentRunner` | Vòng lặp tool-calling, giới hạn, deadline, trace | Chứa logic của từng tool, render tool vào prompt |
-| `ToolRegistry` / tool | Contract tool, chuẩn hóa schema, kiểm quyền, invoke an toàn | Ghi state cha ngoài `ToolContext`, tạo task chạy ngầm |
+| `ToolRegistry` / tool | Contract tool, chuẩn hóa schema, invoke an toàn; điểm gắn phân quyền theo scope (chưa dùng) | Ghi state cha ngoài `ToolContext`, tạo task chạy ngầm |
 | Provider | Adapter cho OpenAI/LLM, khai báo capability | Policy/security/routing |
 | Repository | Query/write Supabase | Trả SSE hoặc biết UI |
 | Frontend service | POST và parse SSE | Tự quyết định trạng thái backend |

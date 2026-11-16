@@ -1,5 +1,8 @@
 # Báo cáo đo lại phương án C (`crm_schema` + `crm_query`), 2026-11-12
 
+> Đã có báo cáo mới hơn cùng ngày: [crm_agent_eval_C_gpt41_2026-11-12.md](crm_agent_eval_C_gpt41_2026-11-12.md)
+> (chỉ gpt-4.1-mini, 78/81). Số liệu ở đây dùng trần 4 lần gọi và `AGENT_MAX_STEPS=5` cũ.
+
 So với đợt đo nền ngày 2026-11-11 (gpt-4o-mini 37/63, gpt-4.1-mini 40/63).
 Luồng: [crm-agent](../flows/crm-agent/README.md). Log thô có dữ liệu CRM nên không đưa vào repo.
 

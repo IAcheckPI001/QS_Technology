@@ -2,7 +2,8 @@
 
 Thiết kế của luồng. Trạng thái hiện tại ở [STATE.md](STATE.md), lịch sử ở [LOG.md](LOG.md).
 Bản mô tả đầy đủ trước 2026-11-11 (bảng `catalog_match`, chi tiết `crm_report`):
-[LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
+[LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Phương án A (`crm_report`, `crm_records`)
+đã xoá 2026-11-16 (D-010); tài liệu cũ của nó ở `docs/ai/archive/`.
 
 ## Phạm vi
 
@@ -17,7 +18,7 @@ nghiệm**. Phần chung của lượt chat (service key, session, lease, ghi hi
 |---|---|---|
 | Route | `POST /chat/crm` (`chatbot/routers/chat.py`) | Rẽ sang agent trong `ChatbotService` khi kênh CRM và có `agent_runner` |
 | Startup | `agent/setup.py` `build_agent_runner` (gọi từ `main.py`) | Chỉ khi `CRM_CHAT_FLOW=agent` và có OpenAI; thiếu capability/schema sai → dừng khởi động (`ToolConfigurationError`) |
-| Eval tay | `backend/evals/run_crm_agent_eval.py`, `check_crm_query_tool.py`, `check_crm_report_contract.py` | Cần OpenAI, CRM thật, `CRM_EVAL_ACCESS_TOKEN`; không chạy trong CI |
+| Eval tay | `backend/evals/run_crm_agent_eval.py`, `check_crm_query_tool.py`, `compare_agent_models.py` | Cần OpenAI, CRM thật, `CRM_EVAL_ACCESS_TOKEN`; không chạy trong CI |
 | Script | `backend/scripts/build_crm_schema_index.py` | Sinh `reporting/raw/schema_index.py` từ `docs/ai/tool_instruction/database-structure.sql` |
 
 ## Pipeline
@@ -37,9 +38,8 @@ ChatbotService (security → session/lease → context → prune: chat-platform)
 | Runner | `agent/runner.py`, `deadline.py`, `prompts.py`, `setup.py` | Vòng lặp tool-calling, giới hạn, deadline, prompt chung; `plan()` để trống |
 | Tool contract | `tools/base.py`, `registry.py`, `schema.py` | `ToolSpec`, `ToolOutcome`, `ToolRejected`; chuẩn hóa JSON Schema duy nhất ở `to_provider_schema` |
 | Tool tài liệu | `tools/product_docs.py`, `stages/catalog_lookup_stage.py`, `extraction/product_catalog.py` | Chạy `RetrievalPipeline` của website-qa trên RunState con + tìm model theo bảng capabilities |
-| Truy vấn thô (C) | `tools/crm_schema.py`, `crm_query.py`, `reporting/raw/` (`compile`, `policy`, `values`, `schema`, `schema_index`, `hints`), `schemas/system/raw_query.py` | LLM tự dựng query trên mọi bảng Reporting API |
-| Catalog (A) | `tools/crm_report.py`, `crm_records.py`, `reporting/` (`catalog`, `datasets/`, `validate`, `engine`, `report_api`, `records`, `dates`), `schemas/system/report.py`, `records.py` | 4 dataset định nghĩa sẵn |
-| CRM client | `providers/crm_api.py` | `CrmListClient` (API danh sách), `CrmReportClient` (`POST /api/v1/reports/query`, `GET /api/v1/reports/tables/{t}`) |
+| Truy vấn CRM | `tools/crm_schema.py`, `crm_query.py`, `crm_common.py` (credential, query song song), `reporting/raw/` (`compile`, `policy`, `values`, `render`, `schema`, `schema_index`, `hints`, `audit`), `reporting/dates.py`, `schemas/system/raw_query.py` | LLM tự dựng query trên mọi bảng Reporting API |
+| CRM client | `providers/crm_api.py` | `CrmReportClient` (`POST /api/v1/reports/query`, `GET /api/v1/reports/tables/{t}`, `GET /api/v1/reports/datasets`) |
 | Provider | `providers/base.py`, `openai.py` | `ToolCallingProvider` + `LLMCapabilities` |
 
 ## Tool
@@ -47,17 +47,15 @@ ChatbotService (security → session/lease → context → prune: chat-platform)
 | Tool | Bật khi | Việc | Trần mỗi lượt |
 |---|---|---|---|
 | `product_docs_ask` | luôn | Tra tài liệu: clarification → analysis → `CatalogLookupStage` → execution, không compose. Status `answered`, `matched`, `no_match`, `needs_clarification`, `no_docs`, `handoff`, `out_of_scope`, `failed` | theo spec |
-| `crm_schema` | `CRM_REPORT_ENABLED` và `CRM_TOOLS` ∈ {`query`, `both`} | Mô tả bảng và cột của CRM, quan hệ (kèm 1-1, tuỳ chọn), bảng con, nghĩa của `deleted_at`, giá trị hợp lệ, `known_values` (giá trị thật của bảng tra cứu) của 1–4 bảng; cột bị chặn không trả về | 2 |
+| `crm_schema` | `CRM_REPORT_ENABLED` | Mô tả bảng và cột của CRM, quan hệ (kèm 1-1, tuỳ chọn), bảng con, nghĩa của `deleted_at`, giá trị hợp lệ, `known_values` (giá trị thật của bảng tra cứu) của 1–4 bảng; cột bị chặn không trả về | 2 |
 | `crm_query` | như trên | `RawQuery`: `mode=list` (`select`) hoặc `aggregate` (`dimensions`/`metrics`), `filters` ≤ 20 (AND), `date_range` (preset tương đối, `month`/`year` do code tính, `custom`; giờ Việt Nam), `order_by`, `limit` ≤ 100, `offset` ≤ 1000, `include_inactive` (bỏ filter mặc định). Giá trị filter được kiểm theo kiểu cột (`reporting/raw/values.py`). Filter mặc định theo dataset (`hints.DEFAULT_FILTERS`: `user_roles` chỉ tài khoản còn dùng, `customers` không tính khách spam) được thêm khi LLM không tự lọc cột đó, ghi "(mặc định: …)" trong `applied.filters`. Danh sách chạy thêm query `count` song song để có `total` | 6 lần thử, trong đó 4 lần tới CRM |
 
 Tên bảng (`crm_schema.tables`, `crm_query.dataset`) kiểm trong code theo `QUERYABLE_TABLES`, không
 là enum trong JSON schema; tên lạ trả `tool_invalid_args` kèm gợi ý. Trần `crm_query` (2026-11-12):
 runner áp 6 lần thử; `run()` từ chối lần gửi CRM thứ 5 bằng `tool_call_limit`; lần bị compile chặn
 không tốn lượt CRM. Call bị `tool_call_limit` không trừ trần chung `AGENT_MAX_TOOL_CALLS`.
-| `crm_report` | `CRM_REPORT_ENABLED` và `CRM_TOOLS` ∈ {`catalog`, `both`} | Số liệu tổng hợp theo catalog (`ReportQuery`) | theo spec |
-| `crm_records` | như trên | Danh sách ≤ 20 dòng theo whitelist cột (`RecordQuery`) | 3 |
 
-Mặc định `CRM_TOOLS=query` (phương án C, D-005). Mô tả `crm_query` cho LLM nằm ở
+Phương án C (D-005) là bộ tool CRM duy nhất từ 2026-11-16 (D-010). Mô tả `crm_query` cho LLM nằm ở
 `CRM_QUERY_DESCRIPTION`; nhóm bảng theo nghiệp vụ ở `reporting/raw/hints.py`.
 
 ## Contract
@@ -73,7 +71,7 @@ Mặc định `CRM_TOOLS=query` (phương án C, D-005). Mô tả `crm_query` ch
 | Registry, runner | `tool_not_found`, `tool_not_allowed`, `tool_invalid_args`, `tool_timeout`, `tool_failed`, `tool_invalid_output`, `tool_output_too_large`, `tool_budget_exhausted`, `tool_call_limit` |
 | Agent (→ SSE `agent_error`) | `agent_context_missing`, `agent_timeout`, `agent_empty_answer` |
 | Nghiệp vụ tool | `model_not_evidenced`, `crm_user_missing` |
-| CRM (`providers/crm_api.py`) | `crm_auth_failed` (401), `crm_forbidden` (403), `crm_query_invalid` (400 của query do LLM dựng, LLM sửa và gọi lại), `crm_report_contract_error` (400 của catalog: lỗi cấu hình), `crm_unavailable` |
+| CRM (`providers/crm_api.py`) | `crm_auth_failed` (401), `crm_forbidden` (403), `crm_query_invalid` (400 của query do LLM dựng, LLM sửa và gọi lại), `crm_report_contract_error` (400 của query do code dựng, vd `known_values`: lỗi phía dịch vụ AI), `crm_unavailable` |
 
 ## Bất biến của luồng
 
@@ -108,11 +106,10 @@ Mặc định `CRM_TOOLS=query` (phương án C, D-005). Mô tả `crm_query` ch
 | Biến | Mặc định | Tác dụng |
 |---|---|---|
 | `CRM_CHAT_FLOW` | `agent` | `pipeline`: CRM chạy luồng website-qa (rollback) |
-| `CRM_REPORT_ENABLED` | `false` | Bật tool CRM; bắt buộc `CRM_API_BASE_URL`, múi giờ IANA |
-| `CRM_TOOLS` | `query` | `query` (C), `catalog` (A), `both` |
+| `CRM_REPORT_ENABLED` | `false` | Bật `crm_schema` + `crm_query`; bắt buộc `CRM_API_BASE_URL`, múi giờ IANA. `CRM_TOOLS`, `CRM_REPORT_MAX_ITEMS` đã bỏ (D-010), còn sót thì bị bỏ qua |
 | `CRM_SCHEMA_CACHE_S` | 600 | Cache schema sống của bảng CRM (dùng chung giữa người dùng) |
 | `CRM_QUERY_AUDIT_LOG` | `false` | Audit `crm_query` có giá trị filter và body gửi CRM (có thể là PII) vào logger `app.crm_query.audit`; chỉ bật có thời hạn |
-| `CRM_API_TIMEOUT_S`, `CRM_REPORT_MAX_ITEMS`, `CRM_REPORT_TIMEZONE` | 10, 2000, `Asia/Ho_Chi_Minh` | |
+| `CRM_API_TIMEOUT_S`, `CRM_REPORT_TIMEZONE` | 10, `Asia/Ho_Chi_Minh` | |
 | `AGENT_MAX_STEPS`, `AGENT_MAX_TOOL_CALLS` | 6, 8 | |
 | `AGENT_MODEL`, `AGENT_REASONING_EFFORT`, `AGENT_MAX_COMPLETION_TOKENS` | rỗng (= `OPENAI_MODEL`), rỗng, 1200 | Model riêng cho vòng lặp agent; model suy luận (`gpt-5…`, `o3…`) gửi `max_completion_tokens` và không gửi `temperature` |
 | `AGENT_TURN_TIMEOUT_S`, `AGENT_LLM_TIMEOUT_S`, `AGENT_TOOL_TIMEOUT_S`, `AGENT_FINAL_RESERVE_S` | 60, 20, 20, 10 | Mọi timeout lấy từ deadline chung |
@@ -126,15 +123,14 @@ Từ thư mục `backend`:
 .\venv\Scripts\python.exe -m pytest tests\chatbot
 ```
 
-Test riêng của luồng: `test_agent_*`, `test_crm_*` (gồm `test_crm_query_tool.py`),
-`test_report_*`, `test_tool_*`, `test_product_docs_tool.py`, `test_catalog_lookup_tool.py`;
-fake ở `agent_fakes.py`, `report_fakes.py`. Eval tay (cần `$env:CRM_EVAL_ACCESS_TOKEN`):
+Test riêng của luồng: `test_agent_*`, `test_crm_*` (gồm `test_crm_query_tool.py`, `test_crm_render.py`),
+`test_report_dates.py`, `test_tool_*`, `test_product_docs_tool.py`, `test_catalog_lookup_tool.py`;
+fake ở `agent_fakes.py`, `crm_fakes.py`. Eval tay (cần `$env:CRM_EVAL_ACCESS_TOKEN`):
 
 ```powershell
 .\venv\Scripts\python.exe evals\run_crm_agent_eval.py [case_id ...]
 .\venv\Scripts\python.exe evals\check_crm_query_tool.py
 .\venv\Scripts\python.exe evals\compare_agent_models.py --models gpt-4.1-mini --runs 3 [--effort low] [--log file] [--json file]
-.\venv\Scripts\python.exe evals\check_crm_report_contract.py
 ```
 
 Chạy lại `check_crm_query_tool.py` mỗi khi cập nhật dump schema CRM; lệch thì chạy lại

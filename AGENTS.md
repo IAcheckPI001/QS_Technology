@@ -22,7 +22,7 @@ Với mọi luồng, đọc `README.md` và `STATE.md`; đọc `LOG.md` khi cầ
 
 | Luồng | Code | Tài liệu | Test nhanh (từ `backend/`) |
 |---|---|---|---|
-| **crm-agent**: agent gọi tool trên kênh CRM (`crm_schema`/`crm_query`, `crm_report`/`crm_records`, `product_docs_ask`) | `app/modules/chatbot/{agent,tools,reporting}/`, `schemas/system/`, `providers/crm_api.py`, `evals/` | [flows/crm-agent/](docs/ai/flows/crm-agent/README.md) | `.\venv\Scripts\python.exe -m pytest tests\chatbot` |
+| **crm-agent**: agent gọi tool trên kênh CRM (`product_docs_ask`, `crm_schema`/`crm_query`) | `app/modules/chatbot/{agent,tools,reporting}/`, `schemas/system/`, `providers/crm_api.py`, `evals/` | [flows/crm-agent/](docs/ai/flows/crm-agent/README.md) | `.\venv\Scripts\python.exe -m pytest tests\chatbot` |
 | **website-qa**: tra cứu, hỏi đáp trên website | `app/modules/chatbot/{adapters,stages,analysis,orchestration,retrieval,clarification,prompts}/`, `src/chatbot/`, `widget-backend/` | [flows/website-qa/](docs/ai/flows/website-qa/README.md) | `.\venv\Scripts\python.exe -m pytest tests\chatbot tests\api`; trong `widget-backend/`: `npm test` |
 | **chat-platform**: phần dùng chung của chat (service key, session, lease, history, trace, health) | `app/{main.py,core,db,api}/`, `app/modules/chatbot/{routers,services,repositories,dependencies.py}`, `sql/` | [flows/chat-platform/](docs/ai/flows/chat-platform/README.md) | `.\venv\Scripts\python.exe -m pytest tests\chatbot tests\api` |
 | **doc-ingest**: chunking tài liệu được nạp vào | `app/modules/doc_ingest/` | [flows/doc-ingest/](docs/ai/flows/doc-ingest/README.md) | `..\.venv-ingest\Scripts\python.exe -m pytest tests\doc_ingest` |
@@ -112,5 +112,5 @@ Các đường dẫn sau lớn hoặc là bản sao; chỉ grep phần cần:
 
 - `.claude/worktrees/`: bản sao cũ của repo, không phải nguồn chuẩn.
 - `docs/ai/doc_ingest_spike/output/`, `data/ingest_runs/`: output sinh tự động.
-- `docs/ai/tool_instruction/database-structure.sql` (8.587 dòng) và `ai-data-map.md`
-  (2.801 dòng): tài liệu của repo CRM bên ngoài.
+- `docs/ai/tool_instruction/database-structure.sql` (8.587 dòng): dump schema của repo CRM.
+- `docs/ai/archive/`: tài liệu lỗi thời, chỉ để tra lịch sử.

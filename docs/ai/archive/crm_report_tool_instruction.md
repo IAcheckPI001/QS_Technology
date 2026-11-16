@@ -1,3 +1,6 @@
+> **Lưu trữ từ 2026-11-16.** Tài liệu của repo CRM về `/api/v1/ai/tools`; dịch vụ AI không gọi API
+> này. Luồng hiện tại dùng Reporting API: `docs/ai/tool_instruction/ai-reporting-query.md`.
+
 # AI Tools API — hướng dẫn cho AI agent bên ngoài
 
 Backend **không chạy AI**. Nó chỉ cung cấp các *tool* chỉ-đọc để một AI agent bên ngoài (ví dụ LLM chạy local bằng Ollama / LM Studio / vLLM) gọi lấy dữ liệu CRM.

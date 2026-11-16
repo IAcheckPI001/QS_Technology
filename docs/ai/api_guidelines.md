@@ -173,7 +173,7 @@ Không có snapshot trả `404 retrieval_not_found`; database lỗi trả
 
 Query tùy chọn `history_id` (UUID, = `chat_history.id` của lượt). Không có thì trả
 trace mới nhất của phiên. Đọc `public.chat_traces`; chỉ có dữ liệu khi server đặt
-`CHAT_TRACE_PERSIST=true` (xem architecture.md "Tracing").
+`CHAT_TRACE_PERSIST=true` (xem [chat-platform README](flows/chat-platform/README.md)).
 
 ```json
 {
@@ -206,22 +206,21 @@ trace mới nhất của phiên. Đọc `public.chat_traces`; chỉ có dữ li�
   `client_disconnected`. `status` của span: `ok`, `error`, `cancelled`,
   `unfinished` hoặc mã nghiệp vụ (`tool_timeout`, `http_503`, `deduplicated`, …).
 - `summary.error_spans` đếm mọi span lỗi, kể cả span cha nhận lỗi lan lên (một lỗi
-  401 làm `http.crm_list`, `report.fetch`, `tool.crm_report` cùng lỗi);
+  401 làm `http.crm_report`, `query.fetch`, `tool.crm_query` cùng lỗi);
   `root_error_spans` chỉ đếm nơi lỗi phát sinh (span lỗi không có span con lỗi);
   `failed_tool_calls` đếm tool call lỗi.
 - Lượt agent trả lời được nhưng có tool lỗi vẫn `outcome="ok"`; root span có thêm
-  `tool_errors: ["crm_report:crm_auth_failed", …]` (`{tool}:{mã}`).
+  `tool_errors: ["crm_query:crm_auth_failed", …]` (`{tool}:{mã}`).
 - Span tool lỗi có `error_detail`: lý do tool trả cho LLM, tách theo `; `, tối đa 5
   mục × 120 ký tự, **giá trị trong nháy bị thay bằng `'…'`** (thông báo validate có thể
   lặp lại giá trị LLM điền, vd. tên người).
-- `tool.crm_report` có cấu trúc truy vấn LLM yêu cầu (ghi trước khi validate):
-  `dataset`, `metrics`, `dimensions`, `filter_fields` (tên trường, không giá trị),
-  `date_field`, `date_preset` (`custom` khi dùng start/end; không ghi ngày), `time_grain`,
-  `sort_fields`, `limit`, và `credential_source` (`token` | `user_id`, không giá trị).
-  Dataset report_api có thêm span `report.fetch` (`queries`) → `http.crm_report`×N
-  (`dataset`, `status_code`) → `report.merge`. `tool.crm_records` ghi `dataset`, `fields`
-  (tên cột), `filter_fields`, `limit`, `offset`, `credential_source`, rồi `returned`,
-  `total`; span `records.fetch`.
+- `tool.crm_query` có `attempt`, `credential_source` (`token` | `user_id`, không giá trị),
+  hình dạng query (`dataset`, `mode`, `select`/`dimensions`/`metrics`, `filters` dạng
+  `cột op`, `filter_value_counts`, `date_field`, `date_preset`, `limit`, `offset`),
+  `ignored`, `date_from`/`date_to` (ngày đã đổi ra), rồi `returned`, `total`, `has_more`;
+  span con `query.fetch` (`queries`) → `http.crm_report`×N (`dataset`, `status_code`).
+  Root span có `crm_query_attempts`, `crm_query_outcomes`. `tool.crm_schema` có `tables`,
+  `cache_hits`. Chi tiết: [crm-agent README](flows/crm-agent/README.md) mục "Giám sát query".
 - Token trong `summary` là usage **thật** do OpenAI trả về (agent, analysis, compose,
   embedding), khác ước tính trong `chat_history`.
 - Trace chỉ chứa metadata: không có nội dung tin nhắn, câu hỏi agent gửi tool,
@@ -379,14 +378,13 @@ Body của `/chat/crm` khác website (field lạ, kể cả `client_context` và
 
 - `user_id`: bắt buộc, 1–128 ký tự sau khi strip.
 - `crm_access_token`: tùy chọn, 1–4096 ký tự. Token CRM của chính nhân viên đó;
-  tool CRM (`crm_schema`, `crm_query`, `crm_report`, `crm_records`) dùng làm `Authorization: Bearer` khi gọi
-  API CRM (API danh sách và Reporting Query API `POST /api/v1/reports/query`), nên
+  tool CRM (`crm_schema`, `crm_query`) dùng làm `Authorization: Bearer` khi gọi
+  Reporting API của CRM (`POST /api/v1/reports/query`, `GET /api/v1/reports/tables/{t}`), nên
   CRM phân quyền/phạm vi dữ liệu theo token. **Không** log, không lưu
   (`chat_sessions`, history, snapshot), không dùng để khớp session. Bỏ trống thì
   tool dùng `user_id` làm Bearer (hành vi cũ).
-- Từ 2026-11-10 tool `crm_records` đọc được mọi cột nghiệp vụ của khách hàng, kể cả
-  liên hệ (phone, email, address) và ghi chú, và `crm_query` (mặc định khi bật tool CRM,
-  D-005) đọc được mọi bảng nghiệp vụ trừ bảng/cột bị chặn, trong phạm vi token. Vì vậy câu
+- Từ 2026-11-10 (D-005) `crm_query` đọc được mọi bảng nghiệp vụ trừ bảng/cột bị chặn, kể
+  cả liên hệ khách hàng (phone, email, address) và ghi chú, trong phạm vi token. Vì vậy câu
   trả lời của `/chat/crm` có thể chứa dữ liệu cá nhân của khách: dữ liệu này đi qua
   provider LLM và được lưu trong `chat_history` như mọi câu trả lời khác.
 - `session_id`: `null`/bỏ trống = hội thoại mới (nút "Cuộc trò chuyện mới");
@@ -394,7 +392,8 @@ Body của `/chat/crm` khác website (field lạ, kể cả `client_context` và
   khi session cùng integration **và** cùng `user_id`.
 - Câu trả lời của `/chat/crm` do **luồng agent** tạo khi server đặt
   `CRM_CHAT_FLOW=agent` (mặc định; thử nghiệm): agent gọi tool tra cứu tài liệu
-  và trả câu trả lời cuối trong **một** event `delta`. Request/response contract
+  (và `crm_schema`/`crm_query` khi `CRM_REPORT_ENABLED=true`) rồi trả câu trả lời cuối
+  trong **một** event `delta`. Request/response contract
   không đổi; không có trường mode trong body. `CRM_CHAT_FLOW=pipeline` đưa về
   luồng tra cứu như website (stream nhiều `delta`).
 - Kiểm thử từ chatbot widget: widget-backend có route `POST /api/chat/crm`
@@ -479,9 +478,9 @@ công khi nhận `done`, và xử lý `error` theo `code`. Các mã lỗi chính
   `crm_user_missing` (không có nhân viên gắn với lượt),
   `crm_auth_failed` (CRM trả 401), `crm_forbidden` (CRM trả 403: tài khoản không có
   quyền với dataset, vd thiếu `auth.manage_roles`), `crm_report_contract_error`
-  (Reporting API trả 400: catalog lệch schema CRM, chi tiết chỉ ghi log ERROR),
-  `crm_unavailable` (timeout, 5xx, body lạ), `tool_invalid_args` (query sai catalog,
-  kèm giá trị hợp lệ).
+  (Reporting API trả 400 cho query do code dựng, vd lấy `known_values`; chi tiết chỉ ghi
+  log ERROR), `crm_unavailable` (timeout, 5xx, body lạ), `tool_invalid_args` (argument
+  sai kiểu, tên bảng lạ kèm gợi ý, đường dẫn bị policy/compile chặn kèm lý do).
 - SSE `provider_error`: lỗi trong phần xử lý provider/stream câu trả lời, hoặc
   lỗi không phân loại.
 
