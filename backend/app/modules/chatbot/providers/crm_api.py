@@ -196,7 +196,6 @@ class CrmReportClient:
         on_invalid: InvalidQueryMode = "contract",
     ) -> ReportPage:
         dataset = str(request.get("dataset"))
-        print(f"\n\n--- \nquery llm gửi tới CRM: {request} \n---\n\n")
         try:
             async with httpx.AsyncClient(
                 base_url=self._base_url,
@@ -236,7 +235,6 @@ class CrmReportClient:
             raise CrmApiError("crm_unavailable", f"CRM returned HTTP {response.status_code}")
         try:
             payload = response.json()
-            print(f"\n\n--- \n/api/v1/reports/query response: {payload} \n---\n\n")
         except ValueError:
             payload = None
         rows = payload.get("rows") if isinstance(payload, dict) else None
@@ -252,7 +250,6 @@ class CrmReportClient:
     async def get_table(self, table: str, token: str) -> TableSchema:
         """Cột và quan hệ của một bảng; bảng CRM không cho dùng (404) → `crm_query_invalid`."""
         path = f"{REPORT_TABLES_PATH}/{table}"
-        print(f"\n\n--- Bảng sử dụng: {table}----\n\n")
         try:
             async with httpx.AsyncClient(
                 base_url=self._base_url,

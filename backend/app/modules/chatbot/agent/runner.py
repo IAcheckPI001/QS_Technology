@@ -286,7 +286,6 @@ class AgentRunner:
                         parallel_tool_calls=self._provider.capabilities.parallel_tool_calls,
                         max_tokens=self._limits.max_answer_tokens,
                     )
-                    print(f"\n\n--- \nquery llm sinh ra: {turn} \n---\n\n")
                 llm_span.set(
                     finish_reason=turn.finish_reason,
                     tool_calls=[call.name for call in turn.tool_calls],

@@ -22,7 +22,6 @@ MAX_LAST_MODELS = 4
 
 
 class _Model(SystemModel):
-    # TODO: thay bằng SystemModel của dự án
     model_config = ConfigDict(extra="forbid")
 
 
