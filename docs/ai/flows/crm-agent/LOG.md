@@ -7,6 +7,17 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-16 · Sửa `backend/.env.example` cho khớp `config.py` (K4 của đợt dọn) · loại: thay đổi
+
+- Vấn đề: `.env.example` lệch code sau đợt dọn (mục dưới): thiếu `AGENT_MODEL`, `CRM_SCHEMA_CACHE_S`,
+  `CRM_QUERY_AUDIT_LOG`; `AGENT_MAX_STEPS=5` (code 6); còn `CRM_REPORT_MAX_ITEMS` đã bỏ;
+  `CRM_REPORT_ENABLED=true` kèm URL ngrok.
+- Thay đổi: Toma sửa tay `backend/.env.example` (+9/−3 dòng). Agent không đọc nội dung file
+  (TR-07, quyền đọc `.env*` bị chặn) nên ghi nhận theo xác nhận của Toma, chưa đối chiếu từng biến.
+- Kiểm chứng: không có (file mẫu, không có test).
+- Ảnh hưởng contract/API/schema: không.
+- Mở tiếp: đặt `AGENT_MODEL=gpt-4.1-mini` ở môi trường chạy; header `ngrok-skip-browser-warning`.
+
 ## 2026-11-16 · Dọn luồng trước Đợt 0/1: gỡ debug, xoá phương án A, gom code trùng (D-010) · loại: thay đổi, quyết định
 
 - Vấn đề: trước Đợt 0/1 cần luồng sạch. Ba lượt rà (code agent/tools/reporting; wiring, config,

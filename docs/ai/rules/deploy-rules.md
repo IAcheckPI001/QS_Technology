@@ -81,8 +81,6 @@ Bảng gốc `public.chat_history` đã có sẵn trên Supabase; repo *(chưa c
 - *(chưa có)* quy trình rollback image, sao lưu trước khi áp SQL, retention cho `chat_traces`.
 - *(chưa có)* rate limit theo khách ở widget-backend; Idempotency-Key mới được nhận và
   lưu, chưa chống xử lý trùng.
-- `backend/.env.example` lệch `config.py` (2026-11-16, chưa sửa vì file nằm ngoài quyền đọc của
-  agent): thiếu `AGENT_MODEL`, `CRM_SCHEMA_CACHE_S`, `CRM_QUERY_AUDIT_LOG`; `AGENT_MAX_STEPS=5`
-  (code: 6); còn `CRM_REPORT_MAX_ITEMS` đã bỏ; `CRM_REPORT_ENABLED=true` kèm URL
-  ngrok. Header `ngrok-skip-browser-warning` (`providers/crm_api.py`) xoá khi CRM có domain thật.
+- Header `ngrok-skip-browser-warning` (`providers/crm_api.py`) xoá khi CRM có domain thật.
+  (`backend/.env.example` lệch `config.py` đã được Toma sửa 2026-11-16.)
 - Các `print()` in dữ liệu CRM ra stdout đã gỡ 2026-11-16.
