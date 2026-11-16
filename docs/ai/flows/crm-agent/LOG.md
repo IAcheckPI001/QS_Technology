@@ -7,6 +7,55 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-16 · Thảo luận kiến trúc, đối chiếu GoClaw/OpenClaw và các hệ thống khác · loại: đánh giá
+
+- Báo cáo: [crm_agent_architecture_discussion_2026-11-16.md](../../reports/crm_agent_architecture_discussion_2026-11-16.md).
+  Gồm 10 vấn đề (V1–V10) và 13 đề xuất (E1–E13). **Chưa duyệt**, chờ Toma trả lời mục 6 của báo cáo.
+- Phát hiện thêm: bước agent không ghi `cached_tokens` (`providers/openai.py` `chat_complete_tools`),
+  nên chưa đo được prompt caching.
+- File: báo cáo mới. Không đổi code.
+- Ảnh hưởng contract/API/schema: không.
+
+## 2026-11-16 · Truy vết luồng thực thi; phát hiện log debug chứa PII · loại: đánh giá
+
+- Báo cáo truy vết request → response, LLM/context/memory/tool, phân quyền, lỗi, handoff:
+  [crm_agent_execution_trace_2026-11-16.md](../../reports/crm_agent_execution_trace_2026-11-16.md).
+- Phát hiện mới:
+  - `print()` debug ở `agent/runner.py:289` và `providers/crm_api.py:199,239,255` in argument
+    query, body và toàn bộ rows CRM ra stdout;
+  - `chat_history.model` và chi phí theo `OPENAI_MODEL`/đơn giá gpt-4o-mini, không theo
+    `AGENT_MODEL`;
+  - `AgentLimits.max_steps` mặc định 5 trong dataclass, `config.py` 6.
+- File: báo cáo mới, STATE. Không đổi code.
+- Ảnh hưởng contract/API/schema: không.
+- Mở tiếp: gỡ `print()`; ghi model/chi phí theo provider của agent.
+
+## 2026-11-16 · Đối chiếu nhật ký với code: phương án C đã commit, tồn đọng còn lại · loại: đánh giá
+
+- Vấn đề: STATE (2026-11-12) và `current-state.md` còn ghi phương án C "staged/chưa commit",
+  "eval tay chưa chạy", 951 passed; STATE chưa phản ánh mục 2026-11-14.
+- Đính chính (kiểm code trên `feature/deploy_ai_service`, `671fe22`):
+  - `crm_schema`, `crm_query`, `reporting/raw/*`, `schemas/system/raw_query.py` đã commit ở
+    `4a4b5b5` (2026-11-14), gồm thay đổi giới hạn gọi tool mục 2026-11-12
+    (`MAX_CRM_QUERIES_PER_TURN = 4`, `MAX_QUERY_ATTEMPTS_PER_TURN = 6`, runner không trừ trần chung
+    với call `tool_call_limit`).
+  - Eval tay đã chạy (78/81, mục 2026-11-12).
+- Tồn đọng xác nhận trong code:
+  - guide `crm_query` chưa có luật "username chỉ lấy nguyên văn từ kết quả tool", chưa hướng dẫn
+    tách query bản ghi đầu/cuối của từng người;
+  - luật "trả lời phần đã có" khi chạm giới hạn có trong `agent/prompts.py` từ 2026-11-02 nhưng
+    vẫn ra câu "thử lại sau" (mục 2026-11-12);
+  - `evals/crm_agent_cases.json` (46 case) chưa có case nhiều sale hai lượt;
+  - `backend/.env.example` thiếu `AGENT_MODEL`, `CRM_TOOLS`, đặt `AGENT_MAX_STEPS=5` (code mặc
+    định 6), `CRM_REPORT_ENABLED=true` kèm URL ngrok;
+  - `AgentRunner.plan()` vẫn để trống; chưa có phân quyền tool, SSE tiến trình, stream token.
+- File: `docs/ai/flows/crm-agent/STATE.md`, `docs/ai/current-state.md`. Không đổi code.
+- Kiểm chứng: từ `backend/`, `.\venv\Scripts\python.exe -m pytest tests` → 1120 passed,
+  14 skipped (commit `671fe22`).
+- Ảnh hưởng contract/API/schema: không.
+- Mở tiếp: luật username và trả lời khi chạm giới hạn trong guide; case eval nhiều sale; sửa
+  `.env.example`; chốt r1.
+
 ## 2026-11-14 · Registry thêm model 10S, 10i: ảnh hưởng tìm model theo tiêu chí và báo cáo · loại: thay đổi
 
 - Registry chung (chi tiết: website-qa LOG cùng ngày) thêm `10S`, `10i` (tên tạm, chờ CRM chuẩn hóa). Với crm-agent:
