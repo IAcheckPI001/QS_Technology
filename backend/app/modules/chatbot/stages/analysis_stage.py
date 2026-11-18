@@ -17,13 +17,15 @@ class AnalysisStage:
         self,
         provider: OpenAIProvider,
         n_examples: int = 4,
+        timeout_s: float = 8.0,
         prompt_version: str | None = None,
         intent_desc_version: str | None = None,
         routing_version: str | None = None,
     ) -> None:
         # prompt_version / intent_desc_version / routing_version = None: bản production; bản khác chỉ công cụ
         # eval truyền vào.
-        self.analyzer = QueryAnalyzer(provider=provider, n_examples=n_examples, prompt_version=prompt_version,
+        self.analyzer = QueryAnalyzer(provider=provider, n_examples=n_examples, timeout_s=timeout_s,
+                                      prompt_version=prompt_version,
                                       intent_desc_version=intent_desc_version)
         self._routing_version = routing_version
 

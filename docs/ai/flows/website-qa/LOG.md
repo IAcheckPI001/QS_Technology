@@ -8,6 +8,13 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-16 · Dùng 100milionseek cho eval routing · loại: thay đổi, kiểm thử
+
+- Thêm lựa chọn `--analysis-provider 100milionseek` vào `evals/run_retrieval_eval.py`; provider chỉ được phép
+  với `--mode routing`, đọc `HMS_API_KEY` từ môi trường/.env và không thay đổi provider production.
+- Chạy R002 với `deepseek-v4.1-flash-free`: bước phân tích thành công, 0 lỗi, độ trễ 12,4–25,6 giây; intent
+  `guide.configuration` đúng. Route `no_docs` vẫn sai do đang đo luật `r0`, không phải lỗi API.
+
 ## 2026-11-14 · Bàn giao phiên: tổng hợp trạng thái R-1 và vấn đề tồn đọng · loại: tài liệu
 
 - Toma chưa nạp được credit OpenAI → dừng ở đây. Viết lại [STATE.md](STATE.md) làm điểm vào cho phiên sau: bảng tiến

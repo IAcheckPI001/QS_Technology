@@ -115,3 +115,10 @@ data/retrieval_eval/
 # Checkpoint cục bộ (bản sao file + hướng dẫn khôi phục) trước các thay đổi thử nghiệm
 data/checkpoints/
 .venv-ingest/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

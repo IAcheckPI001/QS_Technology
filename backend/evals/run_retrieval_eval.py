@@ -37,6 +37,7 @@ import argparse
 import asyncio
 import json
 import math
+import os
 import sys
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -46,9 +47,11 @@ from typing import Any
 from uuid import uuid4
 
 import yaml
+from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+load_dotenv(ROOT / ".env")
 
 DEFAULT_CASES = Path(__file__).with_name("retrieval_cases") / "sample_f54_f86.yaml"
 OUTPUT = ROOT.parent / "data" / "retrieval_eval"
@@ -660,6 +663,43 @@ class TimedProvider:
                 "max_ms": round(max(v, default=0.0))}
 
 
+class HundredMillionSeekProvider:
+    """OpenAI-compatible provider reserved for routing evals."""
+
+    def __init__(self, api_key: str, model: str, timeout_s: float = 120.0) -> None:
+        from openai import AsyncOpenAI
+
+        self._client = AsyncOpenAI(
+            api_key=api_key,
+            base_url="https://100milionseek.top/v1",
+            timeout=timeout_s,
+        )
+        self._model = model
+
+    @property
+    def model(self) -> str:
+        return self._model
+
+    async def chat_complete_json(self, messages: list[dict[str, str]], **_: Any) -> dict[str, Any] | str:
+        response = await self._client.chat.completions.create(
+            model=self._model,
+            messages=messages,
+            temperature=0,
+            max_tokens=600,
+            response_format={"type": "json_object"},
+            stream=False,
+        )
+        if not response.choices:
+            raise RuntimeError("100milionseek returned no completion choices.")
+        content = response.choices[0].message.content
+        if not isinstance(content, str):
+            raise RuntimeError("100milionseek returned no text content.")
+        return content
+
+    async def close(self) -> None:
+        await self._client.close()
+
+
 class RecordingRetriever:
     """Bọc Retriever: ghi lại (targets, fallback_targets) mỗi lần execution gọi tìm để phát lại theo biến thể."""
 
@@ -845,15 +885,26 @@ async def main_async(args: argparse.Namespace) -> Path:
     from app.db.engine import engine
     from app.modules.chatbot.providers.openai import OpenAIProvider
 
-    if not settings.openai_api_key:
-        raise SystemExit("thiếu OPENAI_API_KEY")
+    if args.analysis_provider == "100milionseek":
+        if args.mode != "routing":
+            raise SystemExit("100milionseek chỉ hỗ trợ --mode routing")
+        api_key = os.getenv("HMS_API_KEY")
+        if not api_key:
+            raise SystemExit("thiếu HMS_API_KEY")
+        provider = HundredMillionSeekProvider(api_key, args.analysis_model or "deepseek-v4.1-flash-free",
+                                              args.analysis_timeout_s)
+        embedder = None
+    else:
+        if not settings.openai_api_key:
+            raise SystemExit("thiếu OPENAI_API_KEY")
+        provider = OpenAIProvider(api_key=settings.openai_api_key, model=settings.openai_model,
+                                  embedding_model=settings.embedding_model)
+        embedder = CachedEmbedder(provider)
     cases = load_cases(args.cases, args.ids, args.split)
     if not cases:
         raise SystemExit("không có câu hỏi nào khớp (kiểm --split và danh sách id)")
-    provider = OpenAIProvider(api_key=settings.openai_api_key, model=settings.openai_model,
-                              embedding_model=settings.embedding_model)
-    embedder = CachedEmbedder(provider)
-    analysis_model = args.analysis_model or settings.openai_model
+    analysis_model = args.analysis_model or (
+        "deepseek-v4.1-flash-free" if args.analysis_provider == "100milionseek" else settings.openai_model)
     meta: dict[str, Any] = {
         "at": datetime.now().strftime("%Y-%m-%d %H:%M"), "cases": str(args.cases.relative_to(ROOT)),
         "label": args.label, "mode": args.mode, "split": args.split, "repeat": args.repeat,
@@ -863,7 +914,7 @@ async def main_async(args: argparse.Namespace) -> Path:
                       f"min_similarity={settings.retrieval_min_similarity}, embedding={settings.embedding_model}, "
                       f"analysis={analysis_model}")}
     try:
-        index, models = await load_index()
+        index, models = ({}, []) if args.mode == "routing" and args.analysis_provider == "100milionseek" else await load_index()
         results: list[CaseResult] = []
         routing: list[RoutingResult] = []
         if args.mode in ("core", "all"):
@@ -872,11 +923,12 @@ async def main_async(args: argparse.Namespace) -> Path:
             from app.modules.chatbot.stages.analysis_stage import AnalysisStage
 
             meta["coverage_patch"] = ", ".join(f"technical_docs+{m}" for m in _patch_coverage(models))
-            timed = TimedProvider(provider if analysis_model == settings.openai_model else OpenAIProvider(
+            timed = TimedProvider(provider if args.analysis_provider == "100milionseek" or analysis_model == settings.openai_model
+                                  else OpenAIProvider(
                 api_key=settings.openai_api_key, model=analysis_model, embedding_model=settings.embedding_model))
             from app.modules.chatbot.extraction.registry import ROUTING_VERSION, routing_rules
 
-            analysis_stage = AnalysisStage(timed, prompt_version=args.prompt_version,
+            analysis_stage = AnalysisStage(timed, timeout_s=args.analysis_timeout_s, prompt_version=args.prompt_version,
                                            intent_desc_version=args.intent_desc_version,
                                            routing_version=args.routing_version)
             meta["analysis_prompt"] = analysis_stage.analyzer.prompt_info
@@ -890,6 +942,7 @@ async def main_async(args: argparse.Namespace) -> Path:
                 routing += routed
             meta["analysis_latency"] = timed.summary()
     finally:
+        await provider.close()
         await engine.dispose()
     out = OUTPUT / (datetime.now().strftime("%Y%m%d-%H%M%S") + (f"-{args.label}" if args.label else ""))
     out.mkdir(parents=True, exist_ok=True)
@@ -912,6 +965,10 @@ def main(argv: list[str] | None = None) -> int:
                         help="routing = chỉ chấm định tuyến của bước phân tích (không tìm kiếm)")
     parser.add_argument("--repeat", type=int, default=1, help="số lần chạy bước phân tích mỗi câu mỗi lượt")
     parser.add_argument("--analysis-model", default=None, help="model LLM của bước phân tích (mặc định OPENAI_MODEL)")
+    parser.add_argument("--analysis-provider", choices=("openai", "100milionseek"), default="openai",
+                        help="provider cho bước phân tích; 100milionseek chỉ dùng với --mode routing")
+    parser.add_argument("--analysis-timeout-s", type=float, default=120.0,
+                        help="timeout HTTP và phân tích cho provider eval (mặc định 120s)")
     parser.add_argument("--split", choices=(*SPLITS, "all"), default="all",
                         help="phần câu hỏi theo trường `split` của câu (mặc định all)")
     parser.add_argument("--label", default="", help="hậu tố tên thư mục kết quả (vd scope_test cho bản thử nghiệm)")

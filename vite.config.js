@@ -12,7 +12,7 @@ export default defineConfig({
     watch: {
       // Thư mục Python/backend và tài liệu không phải mã frontend: không theo dõi
       // (venv có hàng chục nghìn file làm dev server khởi động và tải rất chậm).
-      ignored: ['**/.venv-ingest/**', '**/backend/**', '**/widget-backend/**', '**/docs/**'],
+      ignored: ['**/.venv-ingest/**', '**/data/**', '**/.claude/**', '**/backend/**', '**/widget-backend/**', '**/docs/**'],
     },
     proxy: {
       // Widget chat gọi widget-backend cùng origin để cookie HttpOnly hoạt động.

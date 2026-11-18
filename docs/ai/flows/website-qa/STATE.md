@@ -1,6 +1,6 @@
 # Trạng thái luồng website-qa
 
-Cập nhật: 2026-11-14
+Cập nhật: 2026-11-16
 
 Ảnh chụp trạng thái hiện tại. Viết lại khi có thay đổi; lịch sử ở [LOG.md](LOG.md).
 
@@ -8,7 +8,7 @@ Cập nhật: 2026-11-14
 
 - Chạy trọn luồng: security → context → làm rõ → analysis → retrieve → stream câu trả lời.
 - **Chat production vẫn dùng bảng cũ `doc_chunks`.** Bảng mới `doc_chunks_v2` (F54 296 chunk, F86 Installation 23, catalog 37; đều `draft`) mới chỉ công cụ eval dùng; tích hợp vào chat ("bước 6") chưa làm.
-- Đang làm **R-1**: tối ưu bước phân tích (intent, mô tả, model LLM) và định tuyến tra cứu. Kế hoạch 4 giai đoạn A–D đã duyệt; A và phần code của B đã xong. **Đang chặn: tài khoản OpenAI hết credit (2026-11-14)** → không đo được.
+- Đang làm **R-1**: tối ưu bước phân tích (intent, mô tả, model LLM) và định tuyến tra cứu. Kế hoạch 4 giai đoạn A–D đã duyệt; A và phần code của B đã xong. OpenAI hết credit nên eval routing hiện có thể dùng tạm `100milionseek.top` với `HMS_API_KEY`; chỉ là provider eval, không dùng production.
 - Production không đổi hành vi trong R-1: mặc định prompt `v1`, mô tả intent `v1`, luật định tuyến `r0`.
 - Handoff là scaffold; chưa gửi nguồn/ảnh qua SSE; số `[S#]` đánh lại mỗi lượt. Thay đổi từ catalog tới R-1 **chưa commit**.
 
@@ -21,7 +21,7 @@ Cập nhật: 2026-11-14
 | Analysis đa ngôn ngữ | có | Prompt và mô tả intent có phiên bản (`v1`); câu cố định chỉ có `vi`, `en` |
 | Luật định tuyến bằng code | có, chỉ eval | `r0` (production) = không luật; `r1`, `r2`, RT-3b chờ đo và duyệt |
 | Retrieve hybrid | có, mức test | Production: bảng cũ, không rerank. Repository v2 (eval): FTS sạch, scope cộng điểm 0,003 |
-| Eval tra cứu + định tuyến | có | `evals/run_retrieval_eval.py`; 5 bộ câu (2 bộ nháp chờ duyệt) |
+| Eval tra cứu + định tuyến | có | `evals/run_retrieval_eval.py`; hỗ trợ OpenAI và `100milionseek` cho routing; 5 bộ câu (2 bộ nháp chờ duyệt) |
 | Handoff; SSE nguồn/ảnh; `retrieved_chunk_ids` | scaffold; chưa có; chưa điền | Cột là `UUID[]`, `doc_chunks.id` là `bigint` |
 
 ## R-1: tiến độ, quyết định, kết quả

@@ -101,6 +101,19 @@ widget → widget-backend → POST /chat/website
 npm test
 ```
 
+Routing eval có thể dùng tạm provider OpenAI-compatible `100milionseek.top` mà không
+đụng provider production hoặc embedding:
+
+```powershell
+.\venv\Scripts\python.exe evals\run_retrieval_eval.py `
+  --cases evals\retrieval_cases\routing_intent.yaml --mode routing `
+  --analysis-provider 100milionseek `
+  --analysis-model deepseek-v4.1-flash-free `
+  --analysis-timeout-s 120 --repeat 1 --split test
+```
+
+Yêu cầu `HMS_API_KEY`; provider này chỉ được phép trong `--mode routing`.
+
 Test riêng của luồng trong `tests/chatbot/`: `test_security_*`, `test_context_pipeline`,
 `test_retrieval*`, `test_analysis_contract`, `test_orchestration_*`, `test_answer_composer`,
 `test_clarification`, `test_normalize_input`, `test_product_catalog`, `test_registry_snapshot`.
