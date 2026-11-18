@@ -8,7 +8,9 @@ from uuid import UUID
 import anyio
 
 from app.core.config import settings
-from app.core.tracing import set_root, span
+from app.core.tracing import current_trace, set_root, span
+from app.modules.chatbot.services.turn_sources import turn_flags
+from app.modules.chatbot.services.turn_usage import USAGE_SOURCE_ESTIMATE, TurnUsage, usage_from_trace
 from app.util.token_counter import count_tokens
 from app.modules.chatbot.schemas.security.principal import PrincipalContext, RequestContext
 from app.modules.chatbot.providers.openai import OpenAIProvider
@@ -152,6 +154,7 @@ class ChatbotService:
                 set_root(flow="human_agent_mode", history_status="completed")
                 yield answer
                 with span("history.write", "db", history_status="completed"):
+                    state_json = conversation_state.model_dump(mode="json")
                     await self._history_repository.create(
                         session_id=session_id,
                         query_origin=message,
@@ -159,9 +162,10 @@ class ChatbotService:
                         status="completed",
                         model=None,
                         latency_ms=round((perf_counter() - started_at) * 1000),
-                        conversation_state=conversation_state.model_dump(mode="json"),
+                        conversation_state=state_json,
                         channel=channel,
                         **turn_ids,
+                        **turn_flags(None, state_json),
                     )
                 finalized = True
                 return
@@ -233,8 +237,7 @@ class ChatbotService:
                         channel=channel,
                         **turn_ids,
                         normalized_query=_normalized_query(state),
-                        retrieval_snapshot=self._retrieval_snapshot(state),
-                        **self._usage(message, answer),
+                        **self._turn_record(state, message, answer),
                     )
                 finalized = True
                 raise
@@ -249,12 +252,10 @@ class ChatbotService:
                     status="completed",
                     model=self._provider.model,
                     latency_ms=round((perf_counter() - started_at) * 1000),
-                    conversation_state=next_state.model_dump(mode="json"),
                     channel=channel,
                     **turn_ids,
                     normalized_query=_normalized_query(state),
-                    retrieval_snapshot=self._retrieval_snapshot(state),
-                    **self._usage(message, answer),
+                    **self._turn_record(state, message, answer, next_state.model_dump(mode="json")),
                 )
             finalized = True
         except (asyncio.CancelledError, GeneratorExit):
@@ -284,6 +285,7 @@ class ChatbotService:
             for hit in result.hits
         ]
         hits.sort(key=lambda hit: hit.score, reverse=True)
+        hits = _unique_hits(hits)
         status, retrieval_tasks = retrieval_status(tasks)
         # Root trace: lọc được lượt trả lời không có tài liệu (no_hits) hay tra cứu lỗi.
         set_root(retrieval_status=status)
@@ -328,6 +330,13 @@ class ChatbotService:
                     "page_start": hit.page_start,
                     "page_end": hit.page_end,
                     "page_label": _page_label(hit.page_start, hit.page_end),
+                    # Nguồn của đoạn cho màn "Nguồn câu trả lời" (FRONTEND_REQUIREMENTS 19.15, W1).
+                    # source_id (S1…) khớp trích dẫn trong câu trả lời.
+                    "chunk_id": _as_text(getattr(hit, "chunk_id", None)),
+                    "doc_id": getattr(hit, "doc_id", None),
+                    "section_title": getattr(hit, "section_title", None),
+                    "section_path": list(getattr(hit, "section_path", None) or []),
+                    "source_id": getattr(hit, "source_id", None),
                 }
                 for rank, hit in enumerate(hits, start=1)
             ],
@@ -374,28 +383,44 @@ class ChatbotService:
                     channel=channel,
                     **turn_ids,
                     normalized_query=_normalized_query(state) if state else None,
-                    retrieval_snapshot=self._retrieval_snapshot(state) if state else None,
-                    **self._usage(message, answer),
+                    **self._turn_record(state, message, answer),
                 )
         except Exception:
             logger.exception("failed to record cancelled chat turn session_id=%s", session_id)
 
-    def _usage(self, message: str, answer: str) -> dict:
+    def _usage(self, message: str, answer: str) -> TurnUsage:
+        """Usage thật của lượt từ trace đang chạy (B3); không có trace thì ước tính như cũ."""
+        trace = current_trace()
+        if trace is not None:
+            return usage_from_trace(trace, settings.llm_price_overrides)
         # Ước tính từ câu hỏi và câu trả lời; chưa gồm prompt/context gửi LLM và embedding.
         input_tokens = count_tokens(message, self._provider.model)
         output_tokens = count_tokens(answer, self._provider.model)
-        return {
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
-            "cost_usd": round(
-                (
-                    input_tokens * settings.gpt4o_mini_input_usd_per_million
-                    + output_tokens * settings.gpt4o_mini_output_usd_per_million
-                )
-                / 1_000_000,
-                8,
-            ),
-        }
+        cost = (
+            input_tokens * settings.gpt4o_mini_input_usd_per_million
+            + output_tokens * settings.gpt4o_mini_output_usd_per_million
+        ) / 1_000_000
+        return TurnUsage(
+            source=USAGE_SOURCE_ESTIMATE, input_tokens=input_tokens, output_tokens=output_tokens, cost_usd=cost,
+        )
+
+    def _turn_record(
+        self,
+        state: RunState | None,
+        message: str,
+        answer: str,
+        conversation_state: dict | None = None,
+    ) -> dict:
+        """Snapshot tra cứu (kèm chi tiết usage), các cột token/chi phí và cờ B2 cho một dòng
+        chat_history. `conversation_state` chỉ có ở lượt completed và cũng được ghi vào dòng."""
+        usage = self._usage(message, answer)
+        snapshot = self._retrieval_snapshot(state) if state is not None else None
+        if snapshot is not None:
+            snapshot["usage"] = usage.detail()
+        record = {"retrieval_snapshot": snapshot, **usage.columns(), **turn_flags(snapshot, conversation_state)}
+        if conversation_state is not None:
+            record["conversation_state"] = conversation_state
+        return record
 
     async def _transfer_handoff(
         self,
@@ -511,6 +536,29 @@ def _normalized_query(state: RunState) -> str | None:
     if state.analysis is None:
         return None
     return "\n".join(sub_query.standalone_query for sub_query in state.analysis.sub_queries)
+
+
+def _as_text(value: object) -> str | None:
+    return None if value is None else str(value)
+
+
+def _unique_hits(hits: list) -> list:
+    """Bỏ đoạn trùng giữa các lần tra cứu của cùng lượt (agent gọi tra cứu nhiều lần).
+
+    `hits` đã xếp theo điểm giảm dần nên giữ lần xuất hiện đầu là giữ điểm cao nhất. Hit không có
+    `chunk_id` thì giữ nguyên (Toma duyệt 2026-11-18, FRONTEND_REQUIREMENTS 19.15).
+    """
+    seen: set[str] = set()
+    unique = []
+    for hit in hits:
+        chunk_id = getattr(hit, "chunk_id", None)
+        if chunk_id is not None:
+            key = str(chunk_id)
+            if key in seen:
+                continue
+            seen.add(key)
+        unique.append(hit)
+    return unique
 
 
 def _page_label(page_start: int | None, page_end: int | None) -> str | None:

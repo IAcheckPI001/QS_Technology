@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend-worktree",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--config", ".claude/vite.worktree.config.js"],
+      "port": 5174
+    },
+    {
+      "name": "frontend-worktree-live",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "set VITE_WORKSPACE_FIXTURES=auth&& npm run dev -- --config .claude/vite.worktree.config.js"],
+      "port": 5174
+    },
+    {
+      "name": "mock-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "mock-preview", "--port", "5175", "--strictPort"],
+      "port": 5175
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đăng nhập (điện thoại)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9EBEF}
+a{color:#5C3810}a:hover{color:#482B09}
+.phone{width:390px;height:844px;position:relative;overflow:hidden;display:flex;flex-direction:column;background:#F5F6F8;font-family:Inter,system-ui,sans-serif;color:#161A22}
+.body{flex:1;min-height:0;overflow-y:auto;padding:32px 20px 24px;display:flex;flex-direction:column;gap:24px;box-sizing:border-box}
+.body>*{flex-shrink:0}
+.field{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:500;color:#3B4250}
+.field input{height:48px;border:1px solid #C9CED6;border-radius:10px;padding:0 12px;font:inherit;font-size:16px;color:#161A22;background:#FFFFFF;width:100%;box-sizing:border-box}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:0 16px;border:1px solid #C9CED6;border-radius:10px;background:#FFFFFF;font:inherit;font-size:15px;font-weight:600;color:#161A22;cursor:pointer;text-decoration:none;box-sizing:border-box}
+.btn.primary{background:#5C3810;border-color:#5C3810;color:#FFFFFF}
+.link{all:unset;cursor:pointer;color:#5C3810;font-size:14px;font-weight:500;min-height:44px;display:inline-flex;align-items:center}
+.link:focus-visible{outline:2px solid #5C3810;outline-offset:2px;border-radius:4px}
+.note{display:flex;gap:10px;padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.45}
+</style>
+</helmet>
+<div class="phone">
+  <div class="body">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <img src="/_blob/86830720c49af76fcd030978bdac7833" alt="QS Technology" width="80" height="44" style="display: block; height: 44px; width: auto; flex: none">
+      <div style="display: flex; flex-direction: column">
+        <strong style="font-size: 17px">QS AI Workspace</strong>
+        <span style="font-size: 14px; color: #5B6372">QS Technology</span>
+      </div>
+    </div>
+
+    <form style="display: flex; flex-direction: column; gap: 18px" onSubmit="{{submit}}" novalidate="novalidate">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h1 style="margin: 0; font-size: 26px; font-weight: 600">Đăng nhập</h1>
+        <p style="margin: 0; font-size: 15px; color: #5B6372; line-height: 1.45">Dành cho admin, kỹ thuật viên và reviewer.</p>
+      </div>
+
+      <sc-if value="{{error}}" hint-placeholder-val="{{ false }}">
+        <div role="alert" class="note" style="background: #FDECEA; color: #8A1C12">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex: none; margin-top: 1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg>
+          <span>{{error}}</span>
+        </div>
+      </sc-if>
+
+      <label class="field">Email
+        <input type="email" inputmode="email" autocomplete="username" value="{{email}}" onInput="{{onEmail}}" placeholder="ten@qstcnc.com">
+      </label>
+      <div class="field">
+        <label for="m-password">Mật khẩu</label>
+        <div style="position: relative">
+          <input id="m-password" type="{{pwType}}" autocomplete="current-password" value="{{password}}" onInput="{{onPassword}}" style="padding-right: 64px">
+          <button type="button" class="link" onClick="{{togglePw}}" aria-pressed="{{pwShown}}" style="position: absolute; right: 12px; top: 2px; font-size: 13px">{{pwLabel}}</button>
+        </div>
+      </div>
+      <button type="submit" class="btn primary" disabled="{{busy}}">{{submitLabel}}</button>
+    </form>
+    <!-- Đăng nhập đúng → chuyển sang Lịch sử hội thoại. -->
+    <a id="m-go-home" href="MobileConversations.dc.html" tabindex="-1" aria-hidden="true" style="display: none">Lịch sử hội thoại</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const email = st.email === undefined ? 'admin@qstcnc.com' : st.email;
+    const password = st.password || '';
+    const shown = !!st.pwShown;
+    return {
+      email, password,
+      onEmail: (e) => this.setState({ email: e.target.value, error: '' }),
+      onPassword: (e) => this.setState({ password: e.target.value, error: '' }),
+      pwType: shown ? 'text' : 'password',
+      pwShown: shown,
+      pwLabel: shown ? 'Ẩn' : 'Hiện',
+      togglePw: () => this.setState({ pwShown: !shown }),
+      error: st.error || '',
+      busy: !!st.busy,
+      submitLabel: st.busy ? 'Đang đăng nhập…' : 'Đăng nhập',
+      // Mock: thiếu email/mật khẩu → lỗi; mật khẩu dưới 12 ký tự → lỗi chung "không đúng" (không lộ lý do).
+      submit: (e) => {
+        e.preventDefault();
+        if (st.busy) return;
+        if (!email.trim() || !password) { this.setState({ error: 'Nhập email và mật khẩu.' }); return; }
+        if (password.length < 12) { this.setState({ error: 'Email hoặc mật khẩu không đúng.' }); return; }
+        this.setState({ error: '', busy: true });
+        setTimeout(() => { const a = document.getElementById('m-go-home'); if (a) a.click(); }, 400);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -26,7 +26,7 @@ phải quy trình đang chạy.
 | DR-02 | Không đưa secret vào image, bundle frontend, log hay tài liệu. Token trong biến `VITE_*` chỉ dùng cho môi trường kiểm thử. | `widget-backend/README.md` |
 | DR-03 | Cờ thử nghiệm giữ giá trị mặc định (tắt) trên production cho tới khi có quyết định bật ghi trong [decisions.md](../decisions.md). | TR-16, bảng cờ bên dưới |
 | DR-04 | Áp SQL trong `backend/sql/` lên Supabase **trước** khi deploy code cần nó. Mọi file phải idempotent. Ghi ngày áp vào `LOG.md` của luồng liên quan. | Chú thích đầu mỗi file SQL |
-| DR-05 | Không mở công khai route chưa có xác thực: `/chatbot/conversations`, `/chatbot/sessions/{id}/history`, `/chatbot/sessions/{id}/retrieval`, `/chatbot/sessions/{id}/trace` luôn được mount; phải chặn ở tầng mạng hoặc reverse proxy. | `chatbot/routers/workspace.py:1`, `routers/__init__.py` |
+| DR-05 | Không mở công khai route chưa có xác thực: `/chatbot/conversations` (kể cả `/metrics`, `/{id}` khi bật `WORKSPACE_CONVERSATION_API_ENABLED`), `/chatbot/sessions/{id}/history`, `/chatbot/sessions/{id}/retrieval`, `/chatbot/sessions/{id}/trace` luôn được mount; phải chặn ở tầng mạng hoặc reverse proxy. | `chatbot/routers/workspace.py:1`, `routers/__init__.py` |
 | DR-06 | Route kiểm thử `POST /api/chat/crm` của widget-backend không bật trên production (không đặt `CHATBOT_CRM_API_KEY`): `user_id` không được xác thực. | `widget-backend/README.md` |
 | DR-07 | `CORS_ORIGINS` phải liệt kê đúng origin production; giá trị mặc định chỉ có localhost. Header request mới của frontend phải thêm vào `allow_headers`. | `config.py`, `main.py`, `backend/tests/api/test_cors.py` |
 | DR-08 | Chỉ đặt `TRUST_PROXY_REQUEST_ID=true` khi reverse proxy luôn ghi đè `X-Request-ID`. | `main.py` |
@@ -48,7 +48,9 @@ phải quy trình đang chạy.
 | `AGENT_MAX_COMPLETION_TOKENS` | không | 1200 | Token đầu ra mỗi bước LLM của agent; model suy luận tính cả token suy nghĩ, đặt khoảng 4000 |
 | `CRM_QUERY_AUDIT_LOG` | không | `false` | Khi bật, log server (logger `app.crm_query.audit`) chứa giá trị filter và query gửi CRM, có thể là PII. Chỉ bật có thời hạn để đánh giá query, và giới hạn người được xem log |
 | `LEARNING_API_ENABLED` | không | `false` | Route chưa có xác thực; bật cần `OLLAMA_BASE_URL`, `OLLAMA_MODEL` |
+| `WORKSPACE_CONVERSATION_API_ENABLED` | không | `false` | Mount `GET /chatbot/conversations/metrics` và `/chatbot/conversations/{id}` (B2, chưa có xác thực). Bật cần áp `chat_conversations.sql` (bảng SQL mục 7); tham số B2 của `/chatbot/conversations` không phụ thuộc cờ này nhưng cũng cần bảng đó |
 | `CHAT_TRACE_PERSIST` | không | `false` | Bật cần áp `backend/sql/chat_traces.sql` trước; không có retention tự động |
+| `LLM_PRICES_JSON` | không | rỗng (dùng bảng giá trong `core/pricing.py`) | Ghi đè giá model (USD / 1 triệu token) để tính chi phí thật của lượt, JSON `{"gpt-4.1-mini": {"input": 0.4, "cached_input": 0.1, "output": 1.6}}`. Sai dạng thì ứng dụng không khởi động. Bảng giá mặc định cần đối chiếu định kỳ với giá OpenAI |
 | `DATABASE_POOL_MODE`, `DATABASE_POOL_SIZE`, `DATABASE_MAX_OVERFLOW` | không | `session`, 5, 5 | Chọn theo kiểu kết nối Supabase |
 | `LOG_LEVEL` | không | `INFO` | Log ra stdout, mỗi dòng có `request_id` |
 
@@ -67,6 +69,7 @@ Repo chưa có migration tool. Thứ tự cho môi trường mới:
 | 4 | `doc_chunks.sql` | Dùng retrieval (`match_doc_chunks`) |
 | 5 | `chat_traces.sql` | Đặt `CHAT_TRACE_PERSIST=true` |
 | 6 | `doc_chunks_v2.sql` | Nạp chunk từ luồng chunking và retrieval v2 (D-009); tạo song song `doc_chunks`, cài `unaccent` vào schema `extensions`. Đã áp 2026-11-13 (Toma, SQL editor); áp lại cùng ngày cho tham số R-2/R-4 của `match_doc_chunks_v2` |
+| 7 | `chat_conversations.sql` | Chạy code B2 (danh sách/tìm kiếm/số liệu hội thoại của QS AI Workspace). Sau khi áp: `scripts/backfill_history_flags.py` → `select public.rebuild_chat_conversations();` → chạy code → `scripts/check_conversation_summary.py`. Cần `pg_trgm`, `unaccent` trong schema `extensions`. **Sửa hoặc xoá `chat_history` bằng tay thì chạy lại `rebuild_chat_conversations()`** (bảng tóm tắt chỉ tự cập nhật khi INSERT). Rủi ro và cách giảm: FRONTEND_REQUIREMENTS 19.11 |
 | riêng | `migrate_product_models_crm.sql` | Chuyển dữ liệu một lần; chạy từng bước, có bước xem trước |
 
 Bảng gốc `public.chat_history` đã có sẵn trên Supabase; repo *(chưa có)* file tạo bảng này.
@@ -81,8 +84,6 @@ Bảng gốc `public.chat_history` đã có sẵn trên Supabase; repo *(chưa c
 - *(chưa có)* quy trình rollback image, sao lưu trước khi áp SQL, retention cho `chat_traces`.
 - *(chưa có)* rate limit theo khách ở widget-backend; Idempotency-Key mới được nhận và
   lưu, chưa chống xử lý trùng.
-- `backend/.env.example` lệch `config.py` (2026-11-16, chưa sửa vì file nằm ngoài quyền đọc của
-  agent): thiếu `AGENT_MODEL`, `CRM_SCHEMA_CACHE_S`, `CRM_QUERY_AUDIT_LOG`; `AGENT_MAX_STEPS=5`
-  (code: 6); còn `CRM_REPORT_MAX_ITEMS` đã bỏ; `CRM_REPORT_ENABLED=true` kèm URL
-  ngrok. Header `ngrok-skip-browser-warning` (`providers/crm_api.py`) xoá khi CRM có domain thật.
+- Header `ngrok-skip-browser-warning` (`providers/crm_api.py`) xoá khi CRM có domain thật.
+  (`backend/.env.example` lệch `config.py` đã được Toma sửa 2026-11-16.)
 - Các `print()` in dữ liệu CRM ra stdout đã gỡ 2026-11-16.

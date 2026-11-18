@@ -9,10 +9,10 @@ Cập nhật: 2026-11-16
 - **Thử nghiệm.** Mặc định `CRM_REPORT_ENABLED=false`, agent chỉ có `product_docs_ask`.
 - Bật tool CRM thì agent có `crm_schema` + `crm_query` (phương án C, D-005). Phương án A
   (`crm_report`, `crm_records`, `CRM_TOOLS`) **đã xoá 2026-11-16** (D-010).
-- Đã dọn luồng 2026-11-16 và merge vào `feature/deploy_ai_service` (chưa push): gỡ `print()` in
-  dữ liệu CRM, xoá A, gom code trùng.
+- Đã dọn luồng 2026-11-16, merge và push lên `feature/deploy_ai_service`: gỡ `print()` in dữ
+  liệu CRM, xoá A, gom code trùng. `backend/.env.example` Toma đã sửa tay cùng ngày.
 - Model của agent: **gpt-4.1-mini** (quyết định 2026-11-12); guide `crm_query` tinh chỉnh cho
-  model này. `AGENT_MODEL` chưa có trong `.env.example` và chưa đặt ở môi trường chạy.
+  model này. `AGENT_MODEL` chưa đặt ở môi trường chạy.
 - Luật nghiệp vụ và ngày nằm trong code, áp cho mọi model: năm câu hỏi không nêu bị bỏ; kỳ trong
   filters thành `date_range`; "khách hàng" không tính spam; "nhân viên sales" theo vai trò, chỉ
   tài khoản còn dùng; có kỳ thì bỏ `is_current`.
@@ -40,7 +40,6 @@ Cập nhật: 2026-11-16
 | "Bản ghi đầu/cuối của từng người" phải mỗi người một query; guide chưa hướng dẫn | Nhiều người dễ chạm trần |
 | Chưa có case eval câu hỏi nhiều sale hai lượt; chưa eval lại sau đổi giới hạn và sau đợt dọn | Chưa đo được các lỗi trên |
 | "Khách được hỗ trợ" của phiếu (r1): `customer_organization_id` hay `product_item_id.customer_id` | Cần Toma/CRM chốt |
-| `backend/.env.example` lệch `config.py` (thiếu `AGENT_MODEL`, `CRM_SCHEMA_CACHE_S`, `CRM_QUERY_AUDIT_LOG`; `AGENT_MAX_STEPS=5`; còn `CRM_REPORT_MAX_ITEMS`; URL ngrok) | Chưa sửa: file nằm ngoài quyền đọc của agent, Toma sửa tay |
 | `update_agent_conversation_state` không ghi `language`, mang theo `pending` cũ; `Prune` đếm token theo model chung; `ChatbotService` dựng stage pipeline cả trên đường agent | Lệch nhỏ; làm ở Đợt 0/1 |
 | `CRM_REPORT_ENABLED` đặt tên theo phương án A nhưng bật `crm_schema`/`crm_query` | Dễ hiểu nhầm; đổi tên cần quyết định (đổi biến môi trường) |
 | Mô tả cột `is_current` của CRM mâu thuẫn luật có kỳ | Code đã ép; đề nghị CRM sửa |
@@ -63,7 +62,7 @@ Code chết dùng chung với website-qa/chat-platform (ngoài phạm vi đợt 
 
 ## Bước tiếp theo
 
-1. Toma sửa `backend/.env.example`; chạy lại eval sau đợt dọn.
+1. Chạy lại eval sau đợt dọn; đặt `AGENT_MODEL=gpt-4.1-mini` ở môi trường chạy.
 2. Đợt 0: E1 (model, chi phí, `cached_tokens`), luật username trong guide.
 3. Đợt 1: E2–E5 ([báo cáo thảo luận](../../reports/crm_agent_architecture_discussion_2026-11-16.md)).
 4. Chốt r1; gửi CRM: `timezone`, mô tả `is_current`, dump schema mới.

@@ -2,11 +2,21 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.db.models.history import ChatHistory
+from app.db.models.trace import ChatTrace
+
+
+@dataclass(frozen=True)
+class HistoryPage:
+    rows: list[ChatHistory]
+    # Còn lượt cũ hơn trang này.
+    has_more: bool
+    # Số thứ tự (từ 1) của lượt đầu trang trong cả phiên.
+    first_turn_number: int
 
 
 @dataclass(frozen=True)
@@ -58,6 +68,60 @@ class HistoryRepository:
         )
         return list(result.scalars().all())
 
+    async def history_page(
+        self,
+        *,
+        session_id: UUID,
+        limit: int,
+        before: tuple[datetime, UUID] | None = None,
+    ) -> HistoryPage:
+        """19.7: `limit` lượt ngay trước `before` (trang đầu: mới nhất), xếp tăng dần trong trang."""
+        key = tuple_(ChatHistory.created_at, ChatHistory.id)
+        query = select(ChatHistory).where(ChatHistory.session_id == session_id)
+        if before is not None:
+            query = query.where(key < tuple_(*before))
+        result = await self.db.execute(
+            query.order_by(ChatHistory.created_at.desc(), ChatHistory.id.desc()).limit(limit + 1)
+        )
+        newest_first = list(result.scalars().all())
+        rows = list(reversed(newest_first[:limit]))
+        if not rows:
+            return HistoryPage(rows=[], has_more=False, first_turn_number=1)
+        earlier = await self.db.execute(
+            select(func.count()).where(
+                ChatHistory.session_id == session_id,
+                key < tuple_(rows[0].created_at, rows[0].id),
+            )
+        )
+        return HistoryPage(rows=rows, has_more=len(newest_first) > limit, first_turn_number=int(earlier.scalar_one()) + 1)
+
+    async def traced_history_ids(self, history_ids: list[UUID]) -> set[UUID]:
+        """Lượt có dòng chat_traces (index chat_traces_history_idx)."""
+        if not history_ids:
+            return set()
+        result = await self.db.execute(
+            select(ChatTrace.history_id).where(ChatTrace.history_id.in_(history_ids)).distinct()
+        )
+        return {history_id for history_id in result.scalars().all() if history_id is not None}
+
+    async def get_turn(self, *, session_id: UUID, history_id: UUID) -> ChatHistory | None:
+        """Một lượt của đúng phiên (lọc cả session_id để không đọc lượt của phiên khác)."""
+        result = await self.db.execute(
+            select(ChatHistory).where(
+                ChatHistory.id == history_id,
+                ChatHistory.session_id == session_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def latest_retrieval_turn(self, *, session_id: UUID) -> ChatHistory | None:
+        """Lượt mới nhất của phiên có chunk trong retrieval_snapshot (hành vi cũ của /retrieval)."""
+        rows = await self.list_for_history(session_id=session_id)
+        return next(
+            (row for row in reversed(rows) if (row.retrieval_snapshot or {}).get("chunks")),
+            None,
+        )
+
     async def list_for_context(
         self,
         *,
@@ -93,6 +157,10 @@ class HistoryRepository:
         retrieval_snapshot: dict | None = None,
         history_id: UUID | None = None,
         idempotency_key: UUID | None = None,
+        has_tool_errors: bool = False,
+        is_handoff: bool = False,
+        product_models: list[str] | None = None,
+        ticket_id: str | None = None,
     ) -> ChatHistory:
         history = ChatHistory(
             **_id_kwargs(history_id),
@@ -111,6 +179,10 @@ class HistoryRepository:
             channel=channel,
             retrieval_snapshot=retrieval_snapshot,
             idempotency_key=idempotency_key,
+            has_tool_errors=has_tool_errors,
+            is_handoff=is_handoff,
+            product_models=list(product_models or []),
+            ticket_id=ticket_id,
         )
         self.db.add(history)
         await self.db.flush()
@@ -157,6 +229,10 @@ class HistoryRepository:
         input_tokens: int = 0,
         output_tokens: int = 0,
         cost_usd: float | None = None,
+        has_tool_errors: bool = False,
+        is_handoff: bool = False,
+        product_models: list[str] | None = None,
+        ticket_id: str | None = None,
     ) -> ChatHistory:
         """Ghi và commit ngay bằng session riêng: dùng khi transaction của request
         sẽ không commit (lượt bị chặn, client ngắt kết nối)."""
@@ -178,6 +254,10 @@ class HistoryRepository:
                 channel=channel,
                 retrieval_snapshot=retrieval_snapshot,
                 idempotency_key=idempotency_key,
+                has_tool_errors=has_tool_errors,
+                is_handoff=is_handoff,
+                product_models=list(product_models or []),
+                ticket_id=ticket_id,
             )
             audit_session.add(history)
             await audit_session.commit()

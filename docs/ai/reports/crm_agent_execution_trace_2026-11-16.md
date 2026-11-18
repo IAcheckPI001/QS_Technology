@@ -142,7 +142,7 @@ Phát hiện khi truy vết code, chưa có trong STATE:
 | T1 | `print()` debug in toàn bộ `AssistantTurn` (argument query), body gửi CRM và **toàn bộ response CRM (rows)** ra stdout | `agent/runner.py:289`; `providers/crm_api.py:199, 239, 255` | Vi phạm bất biến "log chỉ chứa metadata": PII khách hàng nằm trong log tiến trình ở mọi môi trường. **Đã gỡ 2026-11-16** |
 | T2 | `chat_history.model` và chi phí ước tính lấy theo provider chung (`OPENAI_MODEL`) và đơn giá gpt-4o-mini, không theo `AGENT_MODEL` | `services/chat_service.py:232, 251, 384-399` | Khi đặt `AGENT_MODEL=gpt-4.1-mini`, history ghi sai model và chi phí thấp hơn thực tế khoảng 2,5 lần |
 | T3 | `Prune` đếm token theo model của provider chung | `chat_service.py:137` | Lệch nhỏ khi model agent khác tokenizer |
-| T4 | Mặc định trong dataclass `AgentLimits.max_steps = 5` khác `config.py` (6); `.env.example` đặt 5 | `agent/runner.py:75` | Chỉ gây nhầm khi dựng runner không qua settings (test, eval). **Code đã sửa 2026-11-16**; `.env.example` còn chờ |
+| T4 | Mặc định trong dataclass `AgentLimits.max_steps = 5` khác `config.py` (6); `.env.example` đặt 5 | `agent/runner.py:75` | Chỉ gây nhầm khi dựng runner không qua settings (test, eval). **Code và `.env.example` đã sửa 2026-11-16** |
 
 Đã có trong [STATE.md](../flows/crm-agent/STATE.md) (tóm tắt):
 - Guide chưa có luật "username chỉ lấy nguyên văn từ kết quả tool".
@@ -156,7 +156,7 @@ Phát hiện khi truy vết code, chưa có trong STATE:
 - Token CRM không được làm mới.
 - Chưa phân quyền tool theo role/scope.
 - Chưa có SSE tiến trình hay stream token.
-- `.env.example` thiếu `AGENT_MODEL` (và còn biến đã bỏ `CRM_REPORT_MAX_ITEMS`).
+- `.env.example` thiếu `AGENT_MODEL` (và còn biến đã bỏ `CRM_REPORT_MAX_ITEMS`); Toma đã sửa 2026-11-16.
 
 ## 7. Gợi ý cho bảo trì và mở rộng
 

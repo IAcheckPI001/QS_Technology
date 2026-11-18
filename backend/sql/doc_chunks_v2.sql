@@ -14,8 +14,9 @@
 --   drop function if exists public.match_doc_chunks_v2(vector, text, text, text[], text[], text[], text[], text[],
 --     text[], int, int, int, int, float8, float8, boolean, boolean, boolean, float8, float8, float8, text, float8);
 --   drop table if exists public.doc_chunks_v2;
---   drop function if exists public.immutable_unaccent(text);   -- sau khi bỏ bảng (cột fts_unaccent dùng hàm này)
---   drop extension if exists unaccent;                          -- nếu không còn dùng
+--   drop function if exists public.immutable_unaccent(text);   -- sau khi bỏ bảng (cột fts_unaccent dùng hàm này);
+--                                                               -- KHÔNG gỡ khi đã áp chat_conversations.sql (index tìm kiếm hội thoại dùng hàm này)
+--   drop extension if exists unaccent;                          -- nếu không còn dùng (chat_conversations.sql cũng dùng)
 
 -- 1. Extension ----------------------------------------------------------------
 -- vector đã có ở schema public; Supabase để các extension khác ở schema extensions.

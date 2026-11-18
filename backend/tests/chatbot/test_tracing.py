@@ -447,3 +447,41 @@ def test_pipeline_handoff_records_transfer_span(handoff_provider, result, mode):
     assert trace.root.attributes["handoff"] == result
     assert trace.root.attributes["retrieval_status"] == "not_applicable"
     assert "ticket_id" not in json.dumps(trace.to_dict())
+
+
+class _ProviderError(Exception):
+    """Giống lỗi của SDK OpenAI: có status_code và code."""
+
+    def __init__(self, status_code, code):
+        super().__init__("Error code: 429 - {'message': 'You exceeded your current quota'}")
+        self.status_code = status_code
+        self.code = code
+
+
+def test_llm_span_error_records_provider_code_and_http_status():
+    trace = Trace("req-12345678", root_name="chat.request")
+    with activate(trace):
+        with pytest.raises(_ProviderError), span("stage.analysis", "stage"):
+            with span("llm.chat_json", "llm"):
+                raise _ProviderError(429, "insufficient_quota")
+    trace.finish()
+
+    spans = _by_name(trace)
+    llm = spans["llm.chat_json"][0]
+    assert llm.attributes["provider_error_code"] == "insufficient_quota"
+    assert llm.attributes["http_status"] == 429
+    # Span stage cha không gán mã nhà cung cấp; nội dung thông báo lỗi không vào trace.
+    assert "provider_error_code" not in spans["stage.analysis"][0].attributes
+    assert all("quota" not in str(value) for value in llm.attributes.values() if value != "insufficient_quota")
+
+
+def test_provider_code_ignores_non_identifier_codes():
+    trace = Trace("req-12345678", root_name="chat.request")
+    with activate(trace):
+        with pytest.raises(_ProviderError), span("llm.chat_json", "llm"):
+            raise _ProviderError("429", "Bad Code With Spaces")
+    trace.finish()
+
+    attributes = _by_name(trace)["llm.chat_json"][0].attributes
+    assert "provider_error_code" not in attributes
+    assert "http_status" not in attributes

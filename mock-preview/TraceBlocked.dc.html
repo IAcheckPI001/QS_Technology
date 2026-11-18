@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trace lượt bị chặn</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F8}
+a{color:#5C3810}a:hover{color:#482B09}
+.side{position:sticky;top:0;height:100vh;flex:none;width:248px;box-sizing:border-box;background:#FFFFFF;border-right:1px solid #E3E6EB;padding:16px 12px;display:flex;flex-direction:column;gap:16px;transition:width .15s ease;z-index:20}
+.side.collapsed{width:72px;padding:16px 10px}
+.side-head{display:flex;align-items:center;gap:8px;min-height:44px}
+.side-logo{display:block;height:28px;width:auto;flex:none}
+.side-name{flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-toggle{all:unset;box-sizing:border-box;width:36px;height:36px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;color:#5B6372;cursor:pointer}
+.side-toggle:hover{background:#EEF0F4;color:#161A22}
+.side-toggle:focus-visible,.side-nav a:focus-visible,.logout:focus-visible{outline:2px solid #5C3810;outline-offset:2px}
+.side.collapsed .side-head{flex-direction:column;gap:6px}
+.side.collapsed .side-logo{height:24px}
+.side.collapsed .side-name{display:none}
+.side-nav{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.side-nav a{position:relative;display:flex;align-items:center;gap:10px;min-height:40px;padding:0 12px;border-radius:8px;color:#3B4250;text-decoration:none;font-size:14px;white-space:nowrap}
+.side-nav a svg{flex:none}
+.side-nav a:hover{background:#EEF0F4;color:#161A22}
+.side-nav a.on{background:#F5EDE3;color:#482B09;font-weight:600;box-shadow:inset 3px 0 0 #E69D07}
+.side-nav .tag{margin-left:auto}
+.side-nav .dot{display:none;position:absolute;top:8px;right:10px;width:7px;height:7px;border-radius:50%;background:#E69D07}
+.side.collapsed .side-nav a{justify-content:center;padding:0;min-height:44px}
+.side.collapsed .side-nav .dot{display:block}
+.side.collapsed .tag{display:none}
+.side.collapsed .lbl{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.acct{border-top:1px solid #E3E6EB;padding-top:12px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.avatar{width:36px;height:36px;flex:none;border-radius:50%;background:#F5EDE3;color:#482B09;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+.acct-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.acct-info strong{font-size:13px}
+.acct-info span{font-size:12px;color:#5B6372;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.logout{flex:1 1 100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;border:1px solid #C9CED6;border-radius:8px;background:#FFFFFF;color:#161A22;font-size:13px;font-weight:500;text-decoration:none;box-sizing:border-box}
+.logout:hover{background:#F5F6F8;color:#161A22}
+.side.collapsed .acct{flex-direction:column;flex-wrap:nowrap;gap:8px}
+.side.collapsed .logout{flex:none;width:44px;height:44px;padding:0}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px}
+.badge{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.tech summary{cursor:pointer;font-size:13px;font-weight:500;color:#5C3810}
+@media (max-width: 720px){
+.layout{flex-wrap:wrap}
+.side,.side.collapsed{position:static;height:auto;width:100%;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 12px;border-right:0;border-bottom:1px solid #E3E6EB}
+.side .side-head,.side.collapsed .side-head{flex:1;min-width:0;flex-direction:row}
+.side-toggle{display:none}
+.side.collapsed .side-name{display:block}
+.side.collapsed .side-logo{height:28px}
+.side-nav{order:3;flex:1 1 100%;flex-direction:row;overflow-x:auto;overflow-y:visible;gap:4px}
+.side .side-nav a,.side.collapsed .side-nav a{padding:0 12px;justify-content:flex-start;min-height:36px}
+.side .lbl,.side.collapsed .lbl{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto}
+.side .tag,.side.collapsed .tag{display:inline-flex}
+.side .dot,.side.collapsed .dot{display:none}
+.side .acct,.side.collapsed .acct{border-top:0;padding-top:0;flex-direction:row;flex-wrap:nowrap;gap:8px}
+.side .acct-info{display:none}
+.side .logout,.side.collapsed .logout{flex:none;width:44px;height:44px;padding:0}
+.side .logout .lbl{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0)}
+main{flex:1 1 100%!important;padding:20px 16px 88px!important}
+}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #161A22; background: #F5F6F8; min-height: 900px; display: flex" class="layout">
+  <aside class="{{sideCls}}" aria-label="Thanh bên">
+    <div class="side-head">
+      <img src="/_blob/86830720c49af76fcd030978bdac7833" alt="QS Technology" width="51" height="28" class="side-logo">
+      <strong class="side-name">QS AI Workspace</strong>
+      <button type="button" class="side-toggle" onClick="{{toggleSide}}" aria-expanded="{{sideExpanded}}" aria-label="{{toggleLabel}}" title="{{toggleLabel}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="{{toggleD}}"></path></svg></button>
+    </div>
+    <nav class="side-nav" aria-label="Điều hướng chính">
+      <a class="{{navCls.conversations}}" href="Conversations.dc.html" aria-current="{{navCur.conversations}}" title="{{navTitle.conversations}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg><span class="lbl">Lịch sử hội thoại</span></a>
+      <a class="{{navCls.documents}}" href="Documents.dc.html" aria-current="{{navCur.documents}}" title="{{navTitle.documents}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg><span class="lbl">Tài liệu &amp; chunk</span></a>
+      <a class="{{navCls.keys}}" href="ServiceKeys.dc.html" aria-current="{{navCur.keys}}" title="{{navTitle.keys}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="m11 12 9-9M17 6l3 3"></path></svg><span class="lbl">Khóa dịch vụ AI</span></a>
+      <a class="{{navCls.users}}" href="Users.dc.html" aria-current="{{navCur.users}}" title="{{navTitle.users}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-4-5.7"></path></svg><span class="lbl">Tài khoản</span></a>
+      <a class="{{navCls.learning}}" href="#learning" aria-current="{{navCur.learning}}" title="{{navTitle.learning}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"></path><path d="M8 7h6"></path></svg><span class="lbl">Học tri thức</span><span class="badge tag" style="background: #EEF0F4; color: #3B4250">Thử nghiệm</span><span class="dot" aria-hidden="true"></span></a>
+    </nav>
+    <div class="acct">
+      <span class="avatar" title="{{acctTitle}}" aria-hidden="true">QT</span>
+      <span class="acct-info lbl"><strong>Quản trị viên</strong><span>admin@qstcnc.com · admin</span></span>
+      <a class="logout" href="Main.dc.html" title="Đăng xuất"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"></path><path d="M10 17l-5-5 5-5M5 12h11"></path></svg><span class="lbl">Đăng xuất</span></a>
+    </div>
+  </aside>
+
+  <main style="flex: 1 1 0; min-width: 0; padding: 24px 32px 64px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px">
+    <a href="ConversationDetail.dc.html" style="font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg>Quay lại hội thoại</a>
+    <header style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: flex-end">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 600">Diễn biến xử lý · lượt bị chặn</h1>
+        <span style="font-size: 13px; color: #5B6372">Website · phiên đã có</span>
+      </div>
+      <span class="badge" style="background: #FFF4E5; color: #7A4300">Dựng theo code · số đo minh hoạ</span>
+    </header>
+
+    <section role="status" style="display: flex; gap: 12px; padding: 16px; border-radius: 12px; background: #FFF4E5; color: #7A4300; border: 1px solid #F2D3A6">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex: none"><path d="M12 3 4 6v6c0 5 3.4 8 8 9 4.6-1 8-4 8-9V6l-8-3z"></path><path d="m9 9 6 6M15 9l-6 6"></path></svg>
+      <div style="display: flex; flex-direction: column; gap: 4px; font-size: 14px; line-height: 1.5">
+        <strong>Tin nhắn bị chặn ở bước “Kiểm tra an toàn nội dung”.</strong>
+        <span>Lý do: cố ý yêu cầu chatbot bỏ qua chỉ dẫn (mức độ cao). Tin nhắn không được gửi tới AI và không đọc lịch sử; người dùng nhận câu trả lời cố định “nằm ngoài phạm vi hỗ trợ”.</span>
+      </div>
+    </section>
+
+    <section aria-label="Tóm tắt" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); gap: 12px">
+      <sc-for list="{{summary}}" as="s" hint-placeholder-count="5">
+        <div class="card" style="padding: 14px; display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 12px; color: #5B6372">{{s.label}}</span>
+          <strong style="font-size: 20px; font-weight: 600; {{s.tone}}">{{s.value}}</strong>
+        </div>
+      </sc-for>
+    </section>
+
+    <section class="card" aria-label="Các bước xử lý" style="padding: 8px 0; overflow-x: auto">
+      <div style="min-width: 860px">
+        <div style="display: grid; grid-template-columns: 320px 1fr 80px 120px; gap: 12px; padding: 8px 16px; font-size: 12px; font-weight: 600; color: #5B6372; border-bottom: 1px solid #E3E6EB">
+          <span>Bước</span><span>Thời gian</span><span style="text-align: right">Mất</span><span>Kết quả</span>
+        </div>
+        <sc-for list="{{spans}}" as="sp" hint-placeholder-count="6">
+          <div style="display: grid; grid-template-columns: 320px 1fr 80px 120px; gap: 12px; padding: 8px 16px; align-items: center; border-bottom: 1px solid #F0F2F5; {{sp.rowTone}}">
+            <div style="display: flex; flex-direction: column; gap: 2px; {{sp.indent}}">
+              <span style="font-size: 13px; font-weight: 500">{{sp.label}}</span>
+              <span class="mono" style="font-size: 11px; color: #5B6372">{{sp.name}}</span>
+            </div>
+            <div style="position: relative; height: 14px; background: #F5F6F8; border-radius: 3px">
+              <div style="position: absolute; top: 0; height: 14px; border-radius: 3px; {{sp.bar}}"></div>
+            </div>
+            <span class="mono" style="font-size: 12px; text-align: right">{{sp.dur}}</span>
+            <span class="badge" style="{{sp.statusStyle}}">{{sp.status}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Chi tiết bước chặn" style="padding: 16px; display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 600">Kiểm tra an toàn nội dung · chặn</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #3B4250">Luật khớp: “Yêu cầu bỏ qua chỉ dẫn”. Trace chỉ ghi mã luật và nhóm luật, không ghi nội dung tin nhắn; muốn xem câu đã gửi, mở lượt này trong màn hội thoại.</p>
+      <details class="tech" open>
+        <summary>Thông tin kỹ thuật</summary>
+        <div class="mono" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 6px 24px; font-size: 12px; color: #3B4250; margin-top: 10px">
+          <span>span = stage.security</span><span>action = block</span><span>policy_version = v1</span><span>highest_severity = high</span>
+          <span>rule_ids = [ignore-instructions]</span><span>categories = [ignore_instructions]</span><span>root.outcome = request_blocked</span><span>root.flow = blocked</span>
+        </div>
+      </details>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return { ...this.pageVals(), ...this.sidebarVals() }; }
+  // Sidebar dùng chung: thu gọn còn icon (state riêng mỗi màn; app thật nhớ bằng localStorage).
+  sidebarVals() {
+    const collapsed = !!(this.state && this.state.sideCollapsed);
+    const ACTIVE = 'conversations';
+    const TITLES = { conversations: 'Lịch sử hội thoại', documents: 'Tài liệu & chunk', keys: 'Khóa dịch vụ AI', users: 'Tài khoản', learning: 'Học tri thức (thử nghiệm)' };
+    const navCls = {}; const navCur = {}; const navTitle = {};
+    Object.keys(TITLES).forEach((k) => {
+      navCls[k] = k === ACTIVE ? 'on' : '';
+      navCur[k] = k === ACTIVE ? 'page' : 'false';
+      navTitle[k] = collapsed ? TITLES[k] : '';
+    });
+    return {
+      sideCls: collapsed ? 'side collapsed' : 'side',
+      sideExpanded: collapsed ? 'false' : 'true',
+      toggleLabel: collapsed ? 'Mở rộng menu' : 'Thu gọn menu',
+      toggleD: collapsed ? 'm9 6 6 6-6 6' : 'm15 6-6 6 6 6',
+      toggleSide: () => this.setState({ sideCollapsed: !collapsed }),
+      navCls, navCur, navTitle,
+      acctTitle: collapsed ? 'Quản trị viên · admin@qstcnc.com' : ''
+    };
+  }
+  pageVals() {
+    const total = 420;
+    const ok = 'background:#E6F4EC;color:#1D5E3A';
+    const block = 'background:#FFF4E5;color:#7A4300';
+    const color = { server: '#5B6372', db: '#8C6D1F', stage: '#5C3810' };
+    const sp = (label, name, depth, kind, start, dur, status) => ({
+      label, name,
+      dur: Math.round(dur) + ' ms',
+      status: status === 'ok' ? 'Xong' : 'Đã chặn',
+      statusStyle: status === 'ok' ? ok : block,
+      rowTone: status === 'ok' ? '' : 'background:#FFFAF2',
+      indent: 'padding-left:' + depth * 18 + 'px',
+      bar: 'left:' + (start / total * 100).toFixed(2) + '%;width:' + Math.max(dur / total * 100, 0.8).toFixed(2) + '%;background:' + (status === 'ok' ? color[kind] : '#A35C00')
+    });
+    return {
+      summary: [
+        { label: 'Kết quả', value: 'Bị chặn', tone: 'color:#7A4300' },
+        { label: 'Bước chặn', value: 'An toàn nội dung', tone: '' },
+        { label: 'Mức độ', value: 'Cao', tone: '' },
+        { label: 'Số lần gọi AI', value: '0', tone: '' },
+        { label: 'Chi phí AI', value: '0 đ', tone: '' }
+      ],
+      spans: [
+        sp('Toàn bộ lượt trả lời', 'chat.request', 0, 'server', 0, 420, 'request_blocked'),
+        sp('Mở phiên hội thoại', 'session.resolve', 1, 'db', 100, 45, 'ok'),
+        sp('Giữ phiên (chặn gửi trùng)', 'session.lease_acquire', 1, 'db', 145, 60, 'ok'),
+        sp('Kiểm tra an toàn nội dung', 'stage.security', 1, 'stage', 205, 2, 'block'),
+        sp('Lưu lịch sử (bị chặn)', 'history.write', 1, 'db', 207, 70, 'ok'),
+        sp('Nhả phiên', 'session.lease_release', 1, 'db', 300, 110, 'ok')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

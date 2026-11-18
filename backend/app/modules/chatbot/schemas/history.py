@@ -6,6 +6,47 @@ from pydantic import BaseModel, ConfigDict, Field
 
 ChatChannel = Literal["website", "crm"]
 ChatStatus = Literal["completed", "blocked", "error", "cancelled"]
+# Nguồn câu trả lời của một lượt (FRONTEND_REQUIREMENTS 19.14):
+# documents: có tra cứu tài liệu (xem retrieval_status để biết có kết quả không) · crm_data: gọi công
+# cụ CRM, không tra tài liệu · documents_and_crm: cả hai · direct: không tra cứu, không gọi công cụ ·
+# none: lượt không có snapshot (bị chặn, nhân viên đang xử lý, bản ghi cũ).
+AnswerSource = Literal["documents", "crm_data", "documents_and_crm", "direct", "none"]
+
+
+class ToolUsage(BaseModel):
+    """Số lần gọi một công cụ của trợ lý trong lượt (từ agent_steps, không chứa nội dung)."""
+
+    name: str
+    calls: int = 0
+    # Lần gọi có status khác ok/deduplicated.
+    failed: int = 0
+    # Mã lỗi → số lần (vd. {"crm_query_invalid": 1}).
+    errors: dict[str, int] = Field(default_factory=dict)
+
+
+class TurnSources(BaseModel):
+    """Tóm tắt nguồn câu trả lời của một lượt, đủ để hiện nhãn dưới lượt ở màn Chi tiết hội thoại."""
+
+    answer_source: AnswerSource
+    # ok · no_hits · partial_error · error · incomplete · not_applicable; None khi không có snapshot.
+    retrieval_status: str | None = None
+    chunk_count: int = 0
+    # Công cụ trợ lý đã gọi, trừ công cụ tra tài liệu (product_docs_ask: thể hiện qua chunk).
+    tools: list[ToolUsage] = Field(default_factory=list)
+    has_tool_errors: bool = False
+
+
+class TurnUsageInfo(BaseModel):
+    """Nguồn của số token/chi phí của lượt (B3)."""
+
+    # trace: usage thật OpenAI trả về của mọi lần gọi AI + embedding, giá theo model ·
+    # estimate: bản ghi cũ, đếm từ chữ câu hỏi/câu trả lời theo giá gpt-4o-mini.
+    source: Literal["trace", "estimate"]
+    llm_calls: int | None = None
+    cached_input_tokens: int | None = None
+    embedding_tokens: int | None = None
+    # Model chưa có giá: chi phí của chúng không được cộng (thiếu).
+    unpriced_models: list[str] = Field(default_factory=list)
 
 
 class ChatHistoryItem(BaseModel):
@@ -25,12 +66,38 @@ class ChatHistoryItem(BaseModel):
     total_tokens: int = 0
     cost_usd: float | None = None
     latency_ms: int | None = None
+    # Nguồn câu trả lời của lượt (B5); None khi client đọc schema cũ.
+    sources: TurnSources | None = None
+    # B3: nguồn số liệu token/chi phí; None khi lượt không gọi AI (bị chặn, nhân viên xử lý).
+    usage: TurnUsageInfo | None = None
+    # cost_usd × USD_TO_VND_RATE.
+    cost_vnd: float | None = None
+    # B2 (19.7, W3): giờ hỏi = created_at − latency_ms (null khi thiếu latency); giờ trả lời = created_at.
+    asked_at: datetime | None = None
+    answered_at: datetime | None = None
+    # Số thứ tự (từ 1) của lượt trong cả phiên, đúng cả khi phân trang.
+    turn_number: int | None = None
+    # Có dòng chat_traces cho lượt này (mở được "Xem diễn biến xử lý").
+    has_trace: bool | None = None
+
+
+# Bộ lọc trạng thái hội thoại: trạng thái lượt mới nhất, hoặc `handoff` = phiên có chuyển nhân viên.
+ConversationStatusFilter = Literal["completed", "handoff", "blocked", "error", "cancelled"]
+
+
+class ConversationMatch(BaseModel):
+    """Lượt khớp từ khoá `q` (lượt khớp mới nhất của phiên)."""
+
+    history_id: UUID
+    turn_number: int
+    query: str
 
 
 class ConversationSummary(BaseModel):
     session_id: UUID
     model: str | None = None
-    # Model sản phẩm và ticket lấy từ conversation_state của lượt mới nhất.
+    # Model sản phẩm và ticket: legacy lấy từ conversation_state của lượt mới nhất; B2 lấy từ bảng
+    # tóm tắt (model của lượt gần nhất có model, ticket gần nhất).
     product_models: list[str] = Field(default_factory=list)
     ticket_id: str | None = None
     last_query: str
@@ -42,16 +109,43 @@ class ConversationSummary(BaseModel):
     status: str
     total_tokens: int = 0
     cost_usd: float = 0
+    # B2 (19.4); null ở đường legacy (không gửi tham số mới).
+    question_count: int | None = None
+    has_handoff: bool | None = None
+    has_tool_errors: bool | None = None
+    cost_vnd: float | None = None
+    match: ConversationMatch | None = None
+
+
+class ConversationDetail(ConversationSummary):
+    """19.6: đầu màn Chi tiết hội thoại khi mở bằng link."""
+
+    # Nhân viên CRM của phiên (chat_sessions); null với khách website hoặc phiên chưa có dòng.
+    acting_user_id: str | None = None
 
 
 class ConversationListResponse(BaseModel):
     conversations: list[ConversationSummary]
-    total: int
+    # Đường legacy (không gửi tham số B2): tổng và số liệu như cũ. Đường B2: null, lấy ở /metrics.
+    total: int | None = None
+    conversation_count: int | None = None
+    handoff_count: int | None = None
+    total_tokens: int | None = None
+    # Ước tính từ token câu hỏi/câu trả lời, chưa gồm prompt context và embedding.
+    total_cost_vnd: float | None = None
+    # Đường B2 có `limit`: cursor của trang sau, null khi hết.
+    next_cursor: str | None = None
+
+
+class ConversationMetricsResponse(BaseModel):
+    """19.5: số liệu của đúng tập hội thoại khớp bộ lọc (không trả token, Q12)."""
+
     conversation_count: int
     handoff_count: int
-    total_tokens: int
-    # Ước tính từ token câu hỏi/câu trả lời, chưa gồm prompt context và embedding.
-    total_cost_vnd: float
+    # Có from/to: chỉ tính lượt trong khoảng; không có: mọi lượt của các hội thoại khớp.
+    question_count: int
+    cost_usd: float
+    cost_vnd: float
 
 
 class ChunkResult(BaseModel):
@@ -65,6 +159,33 @@ class ChunkResult(BaseModel):
     page_start: int | None = None
     page_end: int | None = None
     page_label: str | None = None
+    # Nguồn của đoạn (W1, lượt ghi từ 2026-11-18); None với bản ghi cũ.
+    chunk_id: str | None = None
+    doc_id: str | None = None
+    section_title: str | None = None
+    section_path: list[str] = Field(default_factory=list)
+    # S1, S2…: khớp trích dẫn [S1] trong câu trả lời.
+    source_id: str | None = None
+
+
+class RetrievalTask(BaseModel):
+    task_id: str
+    status: str
+    error_code: str | None = None
+    no_hits: bool = False
+    fallback: bool = False
+
+
+class AgentStepItem(BaseModel):
+    """Một bước của trợ lý CRM (lần gọi LLM hoặc tool), chỉ metadata."""
+
+    step: int
+    kind: str
+    name: str | None = None
+    tool_call_id: str | None = None
+    status: str
+    latency_ms: int = 0
+    finish_reason: str | None = None
 
 
 class RetrievalSnapshotResponse(BaseModel):
@@ -79,11 +200,20 @@ class RetrievalSnapshotResponse(BaseModel):
     # ok · no_hits · partial_error · error · incomplete · not_applicable; None với bản ghi cũ.
     retrieval_status: str | None = None
     chunks: list[ChunkResult]
+    # B5: trạng thái lượt (completed, error, blocked, cancelled) và tóm tắt nguồn.
+    turn_status: str | None = None
+    sources: TurnSources | None = None
+    retrieval_tasks: list[RetrievalTask] = Field(default_factory=list)
+    agent_steps: list[AgentStepItem] = Field(default_factory=list)
+    answered_without_tools: bool | None = None
+    invalid_citations: list[str] = Field(default_factory=list)
 
 
 class ChatHistoryResponse(BaseModel):
     session_id: UUID
     messages: list[ChatHistoryItem]
+    # Có `limit`: cursor tới các lượt cũ hơn (null khi đã tới lượt đầu). Không có `limit`: luôn null.
+    next_cursor: str | None = None
 
 
 class TraceSpan(BaseModel):

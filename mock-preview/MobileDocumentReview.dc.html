@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xem và duyệt tài liệu (điện thoại)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9EBEF}
+a{color:#5C3810}a:hover{color:#482B09}
+.phone{width:390px;height:844px;position:relative;overflow:hidden;display:flex;flex-direction:column;background:#F5F6F8;font-family:Inter,system-ui,sans-serif;color:#161A22}
+.appbar{flex:none;height:56px;display:flex;align-items:center;gap:4px;padding:0 4px;background:#FFFFFF}
+.appbar h1{flex:1;min-width:0;margin:0;font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.icon-btn{all:unset;box-sizing:border-box;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;color:#3B4250;cursor:pointer;flex:none}
+.icon-btn:focus-visible{outline:2px solid #5C3810}
+.subbar{flex:none;background:#FFFFFF;border-bottom:1px solid #E3E6EB;padding:0 16px 10px;display:flex;flex-direction:column;gap:10px}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;background:#EEF0F4;padding:3px;border-radius:10px}
+.seg button{height:38px;border:1px solid transparent;border-radius:8px;background:transparent;font:inherit;font-size:14px;color:#3B4250;cursor:pointer}
+.seg button.on{background:#FFFFFF;border-color:#C9CED6;color:#161A22;font-weight:600}
+.body{flex:1;min-height:0;overflow-y:auto;padding:12px 16px 24px;display:flex;flex-direction:column;gap:12px}
+.body>*{flex-shrink:0}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px}
+.badge{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 14px;border:1px solid #C9CED6;border-radius:10px;background:#FFFFFF;font:inherit;font-size:14px;font-weight:500;color:#161A22;cursor:pointer;text-decoration:none;box-sizing:border-box}
+.btn.primary{background:#1D7A4D;border-color:#1D7A4D;color:#FFFFFF;font-weight:600}
+.btn.blue{background:#5C3810;border-color:#5C3810;color:#FFFFFF;font-weight:600}
+.btn.danger{background:#B42318;border-color:#B42318;color:#FFFFFF;font-weight:600}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.link{all:unset;cursor:pointer;color:#5C3810;font-size:14px;font-weight:500;min-height:40px;display:inline-flex;align-items:center}
+.link:focus-visible{outline:2px solid #5C3810;outline-offset:2px;border-radius:4px}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:0 16px 2px}
+.chip{display:inline-flex;align-items:center;gap:6px;flex:none;height:36px;padding:0 12px;border-radius:999px;border:1px solid #C9CED6;background:#FFFFFF;font:inherit;font-size:13px;color:#161A22;white-space:nowrap;cursor:pointer}
+.chip.on{background:#F5EDE3;border-color:#D9C3A5;color:#482B09;font-weight:600}
+.label{font-size:12px;font-weight:600;color:#5B6372;letter-spacing:.01em}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.scrim{position:absolute;inset:0;z-index:40;background:rgba(15,18,24,0.45);display:flex;flex-direction:column;justify-content:flex-end}
+.sheet{background:#FFFFFF;border-radius:16px 16px 0 0;max-height:92%;display:flex;flex-direction:column}
+.sheet.full{height:92%}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 4px 6px 16px;border-bottom:1px solid #EEF0F4}
+.sheet-head h2{margin:0;font-size:17px;font-weight:600;min-width:0}
+.sheet-body{flex:1;min-height:0;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.sheet-foot{display:flex;gap:8px;padding:12px 16px 16px;border-top:1px solid #EEF0F4}
+.sheet-foot .btn{flex:1}
+.field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#3B4250}
+.field input,.field textarea{border:1px solid #C9CED6;border-radius:10px;padding:10px 12px;font:inherit;font-size:16px;color:#161A22;background:#FFFFFF;width:100%;box-sizing:border-box}
+.tools{flex:none;background:#FFFFFF;border-bottom:1px solid #E3E6EB;padding:10px 16px 6px;display:flex;flex-direction:column;gap:6px}
+.icon-btn:disabled{opacity:.45;cursor:not-allowed}
+mark{background:#FFE39A;color:inherit;border-radius:2px;padding:0 1px}
+.tree{flex:1;min-height:0;overflow-y:auto;padding:8px 8px 12px;margin:0;list-style:none}
+.tree-row{display:flex;align-items:flex-start;gap:2px;border-radius:8px}
+.tree-row.on{background:#F5EDE3;box-shadow:inset 3px 0 0 #E69D07}
+.tree-row.warn .node-title{color:#7A4300}
+.caret{all:unset;cursor:pointer;width:32px;height:44px;flex:none;display:inline-flex;align-items:center;justify-content:center;color:#5B6372}
+.caret-space{width:32px;flex:none}
+.node{all:unset;cursor:pointer;flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding:9px 4px;min-height:44px;box-sizing:border-box}
+.node-title{font-size:14px;line-height:1.35;color:#161A22;overflow-wrap:anywhere}
+.tree-row.on .node-title{font-weight:600;color:#482B09}
+.node-meta{font-size:12px;color:#5B6372}
+.node-meta b{color:#7A4300;font-weight:600}
+.node-filter{all:unset;cursor:pointer;width:40px;height:44px;flex:none;display:inline-flex;align-items:center;justify-content:center;color:#8A919C}
+.caret:focus-visible,.node:focus-visible,.node-filter:focus-visible{outline:2px solid #5C3810;outline-offset:-2px;border-radius:6px}
+.toast{position:absolute;left:12px;right:12px;bottom:16px;z-index:60;display:flex;align-items:center;gap:10px;padding:10px 8px 10px 14px;border-radius:12px;background:#161A22;color:#FFFFFF;font-size:13px;line-height:1.45;box-shadow:0 8px 24px rgba(22,26,34,0.25)}
+.toast button{all:unset;cursor:pointer;color:#F5C25A;font-weight:600;min-height:36px;padding:0 6px;display:inline-flex;align-items:center}
+.line{height:6px;border-radius:3px;background:#E3E6EB}
+</style>
+</helmet>
+<div class="phone">
+  <header class="appbar">
+    <a class="icon-btn" href="MobileDocuments.dc.html" aria-label="Quay lại Kho tài liệu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+    <h1>F54 Operation Manual</h1>
+    <span class="badge" style="background: #EEF0F4; color: #3B4250; margin-right: 8px">V.02</span>
+  </header>
+  <div class="subbar">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: #5B6372">Đã duyệt</span><strong>{{approvedCount}} / 243 đoạn</strong></div>
+      <div style="height: 6px; border-radius: 3px; background: #EEF0F4; overflow: hidden" role="img" aria-label="Đã duyệt {{approvedCount}} trên 243 đoạn"><div style="height: 6px; background: #1D7A4D; {{progressStyle}}"></div></div>
+    </div>
+    <div class="seg" role="tablist" aria-label="Chọn vùng xem">
+      <sc-for list="{{paneTabs}}" as="pt" hint-placeholder-count="2">
+        <button type="button" role="tab" aria-selected="{{pt.on}}" class="{{pt.cls}}" onClick="{{pt.pick}}">{{pt.label}}</button>
+      </sc-for>
+    </div>
+  </div>
+
+  <sc-if value="{{showChunks}}" hint-placeholder-val="{{ true }}">
+    <div class="tools">
+      <div style="display: flex; gap: 8px; align-items: center">
+        <button type="button" class="icon-btn" onClick="{{toc.open}}" aria-label="Mục lục" title="Mục lục" style="border: 1px solid #C9CED6"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg></button>
+        <label style="position: relative; flex: 1; min-width: 0">
+          <span aria-hidden="true" style="position: absolute; left: 10px; top: 11px; color: #5B6372"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></span>
+          <input type="search" value="{{q}}" onInput="{{onQ}}" onKeyDown="{{qKey}}" aria-label="Tìm trong tài liệu" placeholder="Tìm nội dung, từ khoá, mã" style="height: 42px; width: 100%; box-sizing: border-box; border: 1px solid #C9CED6; border-radius: 10px; padding: 0 10px 0 34px; font: inherit; font-size: 16px; background: #FFFFFF">
+        </label>
+      </div>
+      <sc-if value="{{hasQ}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span aria-live="polite" style="flex: 1; font-size: 13px; color: #3B4250">{{hitCounter}}</span>
+          <button type="button" class="icon-btn" onClick="{{prevHit}}" disabled="{{noHits}}" aria-label="Kết quả trước" style="border: 1px solid #C9CED6"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 15 6-6 6 6"></path></svg></button>
+          <button type="button" class="icon-btn" onClick="{{nextHit}}" disabled="{{noHits}}" aria-label="Kết quả sau" style="border: 1px solid #C9CED6"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+        </div>
+      </sc-if>
+      <sc-if value="{{secFilter}}" hint-placeholder-val="{{ false }}">
+        <span style="display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; max-width: 100%; height: 30px; padding: 0 4px 0 10px; border-radius: 999px; background: #F5EDE3; color: #482B09; font-size: 13px; font-weight: 500"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Chỉ mục: {{secFilterLabel}}</span><button type="button" onClick="{{clearSecFilter}}" aria-label="Bỏ lọc mục" style="all: unset; cursor: pointer; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center">×</button></span>
+      </sc-if>
+    </div>
+    <div class="body" id="m-chunk-scroll" onScroll="{{onChunkScroll}}">
+      <div class="chips" role="tablist" aria-label="Lọc đoạn">
+        <sc-for list="{{tabs}}" as="tb" hint-placeholder-count="4">
+          <button type="button" role="tab" aria-selected="{{tb.on}}" class="{{tb.cls}}" onClick="{{tb.pick}}">{{tb.label}}</button>
+        </sc-for>
+      </div>
+      <span style="font-size: 12px; color: #5B6372; line-height: 1.45">Ảnh chưa tải lên kho nên hiện khung thay thế.</span>
+
+      <sc-if value="{{noGroups}}" hint-placeholder-val="{{ false }}">
+        <div class="card" role="status" style="padding: 28px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; border-style: dashed">
+          <strong style="font-size: 15px">{{emptyTitle}}</strong>
+          <span style="font-size: 14px; color: #5B6372; line-height: 1.5">{{emptyBody}}</span>
+          <button type="button" class="btn" onClick="{{showAll}}">Xem tất cả đoạn</button>
+        </div>
+      </sc-if>
+
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+        <div style="{{g.wrap}}">
+          <sc-if value="{{g.isSection}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 8px; padding: 2px 2px 10px">
+              <div style="display: flex; flex-direction: column; gap: 2px">
+                <span style="font-size: 12px; color: #5B6372">Mục · {{g.meta}}</span>
+                <strong style="font-size: 15px; line-height: 1.35">{{g.title}}</strong>
+              </div>
+              <button type="button" class="btn" onClick="{{g.approveAll}}" disabled="{{g.noPending}}">{{g.approveLabel}}</button>
+            </div>
+          </sc-if>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <sc-for list="{{g.items}}" as="c" hint-placeholder-count="2">
+              <article id="m-chunk-{{c.key}}" data-key="{{c.key}}" style="{{c.card}}">
+                <sc-if value="{{c.hitWhere}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: #7A4300; font-weight: 500">Khớp ở: {{c.hitWhere}}</span></sc-if>
+                <button type="button" onClick="{{c.pick}}" aria-pressed="{{c.selected}}" style="all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 6px">
+                  <span style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center">
+                    <span class="badge" style="background: #EEF0F4; color: #3B4250">{{c.type}}</span>
+                    <span style="font-size: 12px; color: #5B6372">{{c.pages}}</span>
+                    <span class="badge" style="{{c.statusStyle}}">{{c.statusLabel}}</span>
+                    <sc-if value="{{c.hasRevs}}" hint-placeholder-val="{{ false }}"><span class="badge" style="background: #F1EAFB; color: #4B2A8C">Bản {{c.revNo}}</span></sc-if>
+                  </span>
+                  <sc-if value="{{c.parentTitle}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: #5B6372">{{c.parentTitle}} ›</span></sc-if>
+                  <strong style="font-size: 15px; line-height: 1.4">{{c.title}}</strong>
+                </button>
+
+                <div style="display: flex; flex-direction: column; gap: 4px">
+                  <span class="label">{{c.bodyLabel}}</span>
+                  <div style="{{c.bodyStyle}}"><sc-for list="{{c.bodyParts}}" as="bp" hint-placeholder-count="1"><sc-if value="{{bp.hit}}" hint-placeholder-val="{{ false }}"><mark>{{bp.t}}</mark></sc-if><sc-if value="{{bp.plain}}" hint-placeholder-val="{{ true }}"><span>{{bp.t}}</span></sc-if></sc-for></div>
+                  <div style="display: flex; gap: 16px; flex-wrap: wrap">
+                    <sc-if value="{{c.long}}" hint-placeholder-val="{{ false }}"><button type="button" class="link" onClick="{{c.toggle}}">{{c.toggleLabel}}</button></sc-if>
+                    <button type="button" class="link" onClick="{{c.startEdit}}">Sửa</button>
+                    <button type="button" class="link" onClick="{{c.openHistory}}">Lịch sử ({{c.revNo}} bản)</button>
+                  </div>
+                </div>
+
+                <sc-if value="{{c.hasImages}}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; flex-direction: column; gap: 6px">
+                    <span class="label">HÌNH · {{c.imageCount}}</span>
+                    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+                      <sc-for list="{{c.thumbs}}" as="im" hint-placeholder-count="1">
+                        <button type="button" onClick="{{im.open}}" aria-label="{{im.aria}}" style="position: relative; aspect-ratio: 1 / 1; border: 1px solid #D6DAE1; border-radius: 8px; background: #F2F4F7; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font: inherit; font-size: 11px; color: #5B6372; cursor: zoom-in; padding: 4px">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="m3 16 5-5 5 5 3-3 5 5"></path></svg>
+                          <span>{{im.label}}</span>
+                          <sc-if value="{{im.more}}" hint-placeholder-val="{{ false }}"><span style="position: absolute; inset: 0; border-radius: 8px; background: rgba(22,26,34,0.62); color: #FFFFFF; font-size: 17px; font-weight: 600; display: flex; align-items: center; justify-content: center">{{im.more}}</span></sc-if>
+                        </button>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <div style="display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 10px; background: #F6F3FC; border: 1px solid #E4DCF5">
+                  <button type="button" onClick="{{c.toggleAi}}" aria-expanded="{{c.aiOpen}}" style="all: unset; cursor: pointer; display: flex; justify-content: space-between; align-items: center; min-height: 32px">
+                    <span class="label" style="color: #4B2A8C">BỔ SUNG BỞI AI · TIẾNG VIỆT</span>
+                    <span style="font-size: 13px; color: #4B2A8C">{{c.aiToggle}}</span>
+                  </button>
+                  <sc-if value="{{c.edited}}" hint-placeholder-val="{{ false }}">
+                    <div style="display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-radius: 8px; background: #FFF4E5; color: #7A4300; font-size: 13px; line-height: 1.45">
+                      <span>Tạo từ nội dung bản 1; nội dung đang dùng là bản {{c.revNo}}.</span>
+                      <button type="button" class="btn" onClick="{{c.regenAi}}" style="min-height: 40px">Tạo lại bằng AI</button>
+                    </div>
+                  </sc-if>
+                  <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #2A303B">{{c.summary}}</p>
+                  <sc-if value="{{c.aiOpen}}" hint-placeholder-val="{{ false }}">
+                    <div style="display: flex; flex-direction: column; gap: 3px">
+                      <span style="font-size: 12px; color: #5B6372">Câu hỏi chatbot trả lời được</span>
+                      <sc-for list="{{c.faq}}" as="qq" hint-placeholder-count="2"><span style="font-size: 13px; color: #3B4250; line-height: 1.45">• {{qq}}</span></sc-for>
+                      <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px">
+                        <sc-for list="{{c.keywords}}" as="kw" hint-placeholder-count="4"><span class="badge" style="background: #FFFFFF; color: #3B4250; border: 1px solid #E4DCF5">{{kw}}</span></sc-for>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+
+                <sc-if value="{{c.isPending}}" hint-placeholder-val="{{ true }}">
+                  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+                    <button type="button" class="btn" onClick="{{c.disable}}">Tắt khỏi chatbot</button>
+                    <button type="button" class="btn primary" onClick="{{c.approve}}">Duyệt</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{c.isApproved}}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between">
+                    <span style="font-size: 13px; color: #1D5E3A">Chatbot dùng đoạn này.</span>
+                    <button type="button" class="btn" onClick="{{c.unapprove}}">Bỏ duyệt</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{c.isDisabled}}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; flex-direction: column; gap: 8px">
+                    <span style="font-size: 13px; color: #5B6372; line-height: 1.45">Chatbot không dùng đoạn này · Lý do: {{c.disabledReason}}</span>
+                    <button type="button" class="btn" onClick="{{c.enable}}">Bật lại</button>
+                  </div>
+                </sc-if>
+              </article>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{showPdf}}" hint-placeholder-val="{{ false }}">
+    <div class="body">
+      <div class="card" style="padding: 12px; display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 14px">Đoạn đang chọn: <strong>{{currentTitle}}</strong></span>
+        <span style="font-size: 13px; color: #5B6372">Trang PDF {{currentPage}} · trang in {{currentPrinted}}</span>
+        <a class="btn blue" href="#open-pdf">Mở PDF ở trang {{currentPage}}</a>
+      </div>
+      <div style="position: relative; width: 100%; aspect-ratio: 210 / 297; background: #FFFFFF; box-shadow: 0 1px 3px rgba(22,26,34,0.15); box-sizing: border-box; padding: 9% 8%; display: flex; flex-direction: column; gap: 10px">
+        <span style="position: absolute; top: 8px; right: 10px; font-size: 11px; color: #5B6372">PDF {{currentPage}} · in {{currentPrinted}}</span>
+        <sc-for list="{{pageBlocks}}" as="b" hint-placeholder-count="4">
+          <sc-if value="{{b.isText}}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span style="font-size: 11px; font-weight: 600; color: #3B4250">{{b.heading}}</span>
+              <div class="line" style="width: 96%"></div><div class="line" style="width: 84%"></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{b.isFigure}}" hint-placeholder-val="{{ false }}">
+            <div style="height: 90px; border-radius: 4px; background: #F2F4F7; border: 1px dashed #C9CED6; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #5B6372">{{b.caption}}</div>
+          </sc-if>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{toc.show}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim" onClick="{{toc.close}}" onKeyDown="{{toc.onKey}}">
+      <div class="sheet full" role="dialog" aria-modal="true" aria-labelledby="toc-title" onClick="{{stop}}">
+        <div class="sheet-head">
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+            <h2 id="toc-title">Mục lục</h2>
+            <span style="font-size: 12px; color: #5B6372">F54 V.02 · {{toc.total}} đoạn</span>
+          </div>
+          <button type="button" class="icon-btn" data-autofocus onClick="{{toc.close}}" aria-label="Đóng mục lục"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+        </div>
+        <div style="padding: 10px 16px 0">
+          <input type="search" value="{{toc.q}}" onInput="{{toc.onQ}}" aria-label="Lọc tên mục" placeholder="Lọc tên mục" style="height: 42px; width: 100%; box-sizing: border-box; border: 1px solid #C9CED6; border-radius: 10px; padding: 0 12px; font: inherit; font-size: 16px">
+        </div>
+        <sc-if value="{{toc.note}}" hint-placeholder-val="{{ false }}"><p role="status" style="margin: 8px 16px 0; padding: 8px 10px; border-radius: 8px; background: #FFF4E5; color: #7A4300; font-size: 13px; line-height: 1.45">{{toc.note}}</p></sc-if>
+        <ul class="tree" aria-label="Các mục">
+          <sc-for list="{{toc.rows}}" as="r" hint-placeholder-count="8">
+            <li class="{{r.rowCls}}" style="{{r.pad}}">
+              <sc-if value="{{r.hasKids}}" hint-placeholder-val="{{ true }}">
+                <button type="button" class="caret" onClick="{{r.toggle}}" aria-expanded="{{r.open}}" aria-label="{{r.toggleLabel}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="{{r.caret}}"></path></svg></button>
+              </sc-if>
+              <sc-if value="{{r.noKids}}" hint-placeholder-val="{{ false }}"><span class="caret-space"></span></sc-if>
+              <button type="button" class="node" onClick="{{r.jump}}" aria-current="{{r.ariaCurrent}}">
+                <span class="node-title">{{r.title}}</span>
+                <span class="node-meta">{{r.meta}}<sc-if value="{{r.hasHits}}" hint-placeholder-val="{{ false }}"> · <b>{{r.hitLabel}}</b></sc-if></span>
+              </button>
+              <button type="button" class="node-filter" onClick="{{r.filter}}" aria-label="Chỉ hiện mục {{r.title}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4 2v-8L3 5z"></path></svg></button>
+            </li>
+          </sc-for>
+        </ul>
+        <p style="margin: 0; padding: 10px 16px 14px; border-top: 1px solid #EEF0F4; font-size: 12px; line-height: 1.45; color: #5B6372">Số đoạn là dữ liệu thật; mock chỉ dựng 5 đoạn mẫu. “Chưa xác định mục”: đoạn mất cấp PART do PDF in sai số mục (chờ sửa T-07).</p>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{viewer.open}}" hint-placeholder-val="{{ false }}">
+    <div role="dialog" aria-modal="true" aria-label="Xem hình" onKeyDown="{{viewer.onKey}}" style="position: absolute; inset: 0; z-index: 50; background: #0F1218; color: #FFFFFF; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; gap: 4px; padding: 6px 4px 6px 16px">
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+          <strong style="font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{viewer.caption}}</strong>
+          <span style="font-size: 12px; color: #C9CED6">{{viewer.position}} · trang in {{viewer.printed}}</span>
+        </div>
+        <button type="button" class="icon-btn" data-autofocus onClick="{{viewer.close}}" aria-label="Đóng" style="color: #FFFFFF"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+      </div>
+      <div style="flex: 1; min-height: 0; margin: 0 12px; border-radius: 10px; background: #FFFFFF; color: #5B6372; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: 13px; text-align: center; padding: 16px">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="m3 16 5-5 5 5 3-3 5 5"></path></svg>
+        <span class="mono" style="overflow-wrap: anywhere">{{viewer.file}}</span>
+        <span>Ảnh hiện ở đây khi đã tải lên Storage · chụm hai ngón để phóng to, vuốt ngang để chuyển hình</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 12px 12px 16px">
+        <button type="button" class="btn" onClick="{{viewer.prev}}" aria-label="Hình trước">‹ Trước</button>
+        <button type="button" class="btn" onClick="{{viewer.goPdf}}">Xem trang PDF</button>
+        <button type="button" class="btn" onClick="{{viewer.next}}" aria-label="Hình sau">Sau ›</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{editor.open}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim" onKeyDown="{{editor.onKey}}">
+      <div class="sheet full" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+        <div class="sheet-head">
+          <h2 id="edit-title">Sửa nội dung</h2>
+          <button type="button" class="icon-btn" onClick="{{editor.cancel}}" aria-label="Huỷ sửa"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+        </div>
+        <div class="sheet-body">
+          <span style="font-size: 13px; color: #5B6372; line-height: 1.45">{{editor.title}} · sửa từ bản {{editor.curRev}} đang dùng, lưu sẽ thành bản {{editor.nextRev}}</span>
+          <label class="field" style="flex: 1">Nội dung mới
+            <textarea class="mono" data-autofocus value="{{editor.draft}}" onInput="{{editor.onDraft}}" style="flex: 1; min-height: 260px; font-size: 14px; line-height: 1.5; resize: none"></textarea>
+          </label>
+          <label class="field">Lý do sửa (không bắt buộc)
+            <input type="text" value="{{editor.reason}}" onInput="{{editor.onReason}}" placeholder="Vd. sửa lỗi in thiếu dấu ngoặc" style="height: 44px; padding: 0 12px">
+          </label>
+          <sc-if value="{{editor.error}}" hint-placeholder-val="{{ false }}">
+            <p role="alert" style="margin: 0; font-size: 13px; color: #8A1C12">{{editor.error}}</p>
+          </sc-if>
+          <span style="font-size: 12px; color: #5B6372; line-height: 1.5">Lưu tạo bản mới, giữ bản hiện tại trong lịch sử. Đoạn đã duyệt vẫn giữ “Đã duyệt”.</span>
+        </div>
+        <div class="sheet-foot">
+          <button type="button" class="btn" onClick="{{editor.cancel}}">Huỷ</button>
+          <button type="button" class="btn primary" onClick="{{editor.save}}">Lưu bản mới</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{hist.open}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim" onClick="{{hist.close}}" onKeyDown="{{hist.onKey}}">
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hist-title" onClick="{{stop}}">
+        <div class="sheet-head">
+          <h2 id="hist-title">Lịch sử nội dung</h2>
+          <button type="button" class="icon-btn" data-autofocus onClick="{{hist.close}}" aria-label="Đóng"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+        </div>
+        <div class="sheet-body">
+          <span style="font-size: 13px; color: #5B6372">{{hist.title}} · mới nhất ở trên</span>
+          <span style="font-size: 12px; color: #5B6372; line-height: 1.45">“Đang dùng” là bản nội dung hiện tại của đoạn. Trạng thái duyệt gắn với đoạn, không gắn với từng bản.</span>
+          <sc-for list="{{hist.revisions}}" as="rv" hint-placeholder-count="2">
+            <sc-if value="{{rv.isMore}}" hint-placeholder-val="{{ false }}">
+              <button type="button" class="btn" onClick="{{rv.more}}" aria-expanded="{{rv.expanded}}" style="min-height: 40px; color: #5C3810">{{rv.moreLabel}}</button>
+            </sc-if>
+            <sc-if value="{{rv.isRow}}" hint-placeholder-val="{{ true }}">
+            <div class="card" style="padding: 12px; display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; justify-content: space-between; gap: 8px; align-items: center">
+                <strong style="font-size: 14px">Bản {{rv.no}} · {{rv.source}}</strong>
+                <sc-if value="{{rv.current}}" hint-placeholder-val="{{ false }}"><span class="badge" style="background: #E6F4EC; color: #1D5E3A">Đang dùng</span></sc-if>
+              </div>
+              <span style="font-size: 12px; color: #5B6372; line-height: 1.45">{{rv.meta}}</span>
+              <sc-if value="{{rv.diffNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: #7A4300">{{rv.diffNote}}</span></sc-if>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                <button type="button" class="btn" onClick="{{rv.toggle}}" aria-expanded="{{rv.open}}" style="min-height: 40px">{{rv.toggleLabel}}</button>
+                <sc-if value="{{rv.canRestore}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn" onClick="{{rv.restore}}" style="min-height: 40px">Khôi phục</button></sc-if>
+              </div>
+              <sc-if value="{{rv.open}}" hint-placeholder-val="{{ false }}">
+                <div class="mono" style="font-size: 12px; line-height: 1.6; border: 1px solid #EEF0F4; border-radius: 8px; background: #FAFBFC; padding: 6px 0; max-height: 220px; overflow: auto">
+                  <sc-for list="{{rv.lines}}" as="ln" hint-placeholder-count="5">
+                    <div style="display: flex; gap: 8px; padding: 0 8px; white-space: pre-wrap; {{ln.style}}"><span style="width: 18px; flex: none; text-align: right; color: #8A919C">{{ln.no}}</span><span style="min-width: 0; overflow-wrap: anywhere">{{ln.text}}</span></div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+            </sc-if>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{dlg.open}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim" style="z-index: 55" onClick="{{dlg.cancel}}" onKeyDown="{{dlg.onKey}}">
+      <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="dlg-title" aria-describedby="dlg-body" onClick="{{stop}}">
+        <div class="sheet-body">
+          <h2 id="dlg-title" style="margin: 0; font-size: 17px; font-weight: 600">{{dlg.title}}</h2>
+          <p id="dlg-body" style="margin: 0; font-size: 15px; line-height: 1.55; color: #3B4250">{{dlg.body}}</p>
+          <sc-if value="{{dlg.needReason}}" hint-placeholder-val="{{ false }}">
+            <label class="field">Lý do (bắt buộc)
+              <input type="text" data-autofocus value="{{dlg.reason}}" onInput="{{dlg.onReason}}" placeholder="Vd. nội dung trùng với đoạn khác" style="height: 44px; padding: 0 12px; border-color: {{dlg.reasonBorder}}">
+            </label>
+          </sc-if>
+          <sc-if value="{{dlg.error}}" hint-placeholder-val="{{ false }}"><p role="alert" style="margin: 0; font-size: 13px; color: #8A1C12">{{dlg.error}}</p></sc-if>
+        </div>
+        <div class="sheet-foot">
+          <button type="button" class="btn" data-autofocus onClick="{{dlg.cancel}}">{{dlg.cancelLabel}}</button>
+          <button type="button" class="{{dlg.confirmCls}}" onClick="{{dlg.confirm}}">{{dlg.confirmLabel}}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{toast.show}}" hint-placeholder-val="{{ false }}">
+    <div class="toast" role="status" aria-live="polite">
+      <span style="flex: 1; min-width: 0">{{toast.text}}</span>
+      <sc-if value="{{toast.hasUndo}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{toast.undo}}">Hoàn tác</button></sc-if>
+      <button type="button" onClick="{{toast.close}}" aria-label="Đóng thông báo" style="color: #C9CED6">×</button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const sel = st.sel || 'B0022';
+    const tab = st.tab || 'all';
+    const pane = st.pane || 'chunks';
+    const open = st.open || {};
+    const aiOpen = st.ai || {};
+    const approved = st.approved || {};
+    const disabled = st.disabled || {};
+    const extra = st.extra || {};
+    // Dữ liệu thật: doc_chunks_v2, f54_operation_v02 (rút gọn còn 5 đoạn cho bản điện thoại).
+    const raw = [
+      { key: 'B0016', group: 'g1', type: 'wiring', pages: [17], printed: 10,
+        section_title: '2.3.2.3 [2-wire] homing sensor wiring diagram (PNP signal)',
+        content: '2.3.2.3 [2-wire] homing sensor wiring diagram (PNP signal)\nFigure 12. 2-wire homing sensor wiring diagram for axes (X,Y,Z,A) - PNP signal',
+        assets: [{ file: 'f54_p017_e003.png', printed: 10 }],
+        summary_vi: 'Sơ đồ đấu dây cho cảm biến về home 2 dây (PNP signal) cho các trục X, Y, Z, A.',
+        faq_vi: ['Cảm biến về home 2 dây đấu như thế nào?', 'Sơ đồ đấu dây cảm biến PNP cho trục nào?'],
+        keywords: ['cảm biến về home', 'đấu dây cảm biến', 'PNP signal', '24V', 'X40', 'X42'] },
+      { key: 'B0019', group: 'g2', type: 'wiring', pages: [18], printed: 11,
+        section_title: '2.3.2.4 Homing switch wiring diagram › Homing switch wiring diagram for NPN, PNP signal',
+        content: 'Homing switch wiring diagram for NPN, PNP signal\nFigure 14. Homing switch wiring diagram for (NPN,PNP signal)',
+        assets: [{ file: 'f54_p018_e003.png', printed: 11 }],
+        summary_vi: 'Sơ đồ đấu dây công tắc hành trình cho tín hiệu NPN, PNP.',
+        faq_vi: ['Công tắc hành trình đấu dây như thế nào?', 'Tín hiệu NPN, PNP có ý nghĩa gì?'],
+        keywords: ['công tắc hành trình', 'tín hiệu NPN', 'tín hiệu PNP', 'X40', 'X41'] },
+      { key: 'B0021', group: 'g2', type: 'procedure', pages: [19], printed: 12,
+        section_title: '2.3.2.4 Homing switch wiring diagram › How to configure the parameter from 0 to 1:',
+        content: 'How to configure the parameter from 0 to 1:\n- From the PARAMETER screen, use the arrows keys to select the parameter to configure.\n- Then enter number 1 and press OK. A prompt will appear on the screen asking for the user password.\n- Enter "1415" and press OK\n- Next, enter number 1 again and press OK.\n- Press RESET button to save the configured parameters.',
+        assets: [],
+        summary_vi: 'Hướng dẫn cấu hình tham số từ 0 đến 1 trên màn hình PARAMETER bằng cách nhập số và mật khẩu.',
+        faq_vi: ['Làm thế nào để cấu hình tham số từ 0 đến 1?', 'Mật khẩu để cấu hình tham số là gì?'],
+        keywords: ['cấu hình tham số', 'mật khẩu', 'màn hình PARAMETER', 'lưu tham số'] },
+      { key: 'B0022', group: 'g2', type: 'parameter', pages: [19], printed: 12,
+        section_title: '2.3.2.4 Homing switch wiring diagram › Parameter stauts description:',
+        content: 'Parameter stauts description:\n- M1920: Homing sensor status configuration parameter for X axis\n    o M1920 = 0 : Normally closed sensor (NC)\n    o M1920 = 1 : Normally open sensor (NO)\n- M1921: Homing sensor status configuration parameter for Y axis\n    o M1921 = 0 : Normally closed sensor (NC\n    o M1921 = 1 : Normally open sensor (NO)\n- M1922: Homing sensor status configuration parameter for Z axis\n    o M1922 = 0 : Normally closed sensor (NC\n    o M1922 = 1 : Normally open sensor (NO)\n- M1923: Homing sensor status configuration parameter for A axis\n    o M1923 = 0 : Normally closed sensor (NC\n    o M1923 = 1 : Normally open sensor (NO)',
+        edited_content: 'Parameter stauts description:\n- M1920: Homing sensor status configuration parameter for X axis\n    o M1920 = 0 : Normally closed sensor (NC)\n    o M1920 = 1 : Normally open sensor (NO)\n- M1921: Homing sensor status configuration parameter for Y axis\n    o M1921 = 0 : Normally closed sensor (NC)\n    o M1921 = 1 : Normally open sensor (NO)\n- M1922: Homing sensor status configuration parameter for Z axis\n    o M1922 = 0 : Normally closed sensor (NC)\n    o M1922 = 1 : Normally open sensor (NO)\n- M1923: Homing sensor status configuration parameter for A axis\n    o M1923 = 0 : Normally closed sensor (NC)\n    o M1923 = 1 : Normally open sensor (NO)',
+        edited_meta: 'admin@qstcnc.com · [thời điểm] · Lý do: sửa lỗi in thiếu “)” ở “(NC” của M1921–M1923',
+        assets: [],
+        summary_vi: 'Bảng tham số mô tả cấu hình trạng thái cảm biến về home cho các trục X, Y, Z, A.',
+        faq_vi: ['M1920 có giá trị nào cho cảm biến thường đóng?', 'M1923 có thể được cấu hình như thế nào?'],
+        keywords: ['cảm biến về home', 'cảm biến thường đóng', 'M1920', 'M1921', 'M1922', 'M1923'] },
+      { key: 'B0285', group: 'g4', type: 'procedure', pages: [162, 163, 164], printed: '155–157',
+        section_title: '4.11.3 Transfer data via wi-fi network › Step 2:',
+        content: 'Step 2:\nEnter the name and IP address of the controller you want to connect to. Then, press the ADD NEW button to save the device.\nStep 3:\nSelect the DEVICE LIST box and choose the device you want to connect to.\nStep 4:\nOnce the controller has successfully connected to the software, the software will display "Connection Successful".\nStep 5:\nSelect the program from the computer\'s memory, then click and hold the left mouse button and drag it to the controller\'s memory below.',
+        assets: [{ file: 'f54_p162_e004.png', printed: 155 }, { file: 'f54_p162_e008.png', printed: 155 }, { file: 'f54_p163_e004.png', printed: 156 }, { file: 'f54_p163_e007.png', printed: 156 }, { file: 'f54_p164_e002.png', printed: 157 }],
+        summary_vi: 'Hướng dẫn kết nối và truyền dữ liệu qua mạng Wi-Fi giữa máy tính và bộ điều khiển.',
+        faq_vi: ['Làm thế nào để thêm thiết bị mới vào danh sách kết nối?', 'Cách nào để truyền chương trình từ máy tính vào bộ điều khiển?'],
+        keywords: ['truyền dữ liệu', 'mạng Wi-Fi', 'địa chỉ IP', 'DEVICE LIST', 'ADD NEW'] }
+    ];
+    const TYPE = { wiring: 'Sơ đồ đấu dây', procedure: 'Hướng dẫn thao tác', parameter: 'Tham số' };
+    const omit = (o, key) => { const n = { ...(o || {}) }; delete n[key]; return n; };
+    const fresh = () => this.state || {};
+    const titleOf = (c) => c.section_title.split(' › ').pop().replace(/:$/, '');
+    const chainOf = (c) => {
+      const base = [{ no: 1, text: c.content, source: 'trích từ PDF (V.02)', meta: 'doc-ingest · lần nạp f54/eval-l' }];
+      if (c.edited_content) base.push({ no: 2, text: c.edited_content, source: 'sửa trên web', meta: c.edited_meta });
+      return base.concat((extra[c.key] || []).map((r, i) => ({ ...r, no: base.length + i + 1 })));
+    };
+    const diffCount = (a, b) => { const x = a.split('\n'); const y = b.split('\n'); let n = 0; for (let i = 0; i < Math.max(x.length, y.length); i++) if (x[i] !== y[i]) n++; return n; };
+    // Thông báo: một toast, tự ẩn sau 6 giây.
+    const showToast = (patch, text, undo) => {
+      const id = Date.now();
+      this.setState({ ...patch, toast: { id, text, undo } });
+      setTimeout(() => { if ((fresh().toast || {}).id === id) this.setState({ toast: null }); }, 6000);
+    };
+    const undoApprove = (keys) => () => { const a = { ...(fresh().approved || {}) }; keys.forEach((k) => delete a[k]); this.setState({ approved: a, toast: null }); };
+    const plainCard = 'background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px';
+    const pickedCard = 'background:#FFFFFF;border:2px solid #5C3810;border-radius:12px;padding:13px;display:flex;flex-direction:column;gap:12px';
+    const bodyBase = 'font-size:14px;line-height:1.55;color:#161A22;white-space:pre-wrap;overflow-wrap:anywhere;background:#FAFBFC;border:1px solid #EEF0F4;border-radius:8px;padding:10px 12px';
+    const toItem = (c) => {
+      const parts = c.section_title.split(' › ');
+      const title = parts[parts.length - 1].replace(/:$/, '');
+      const chain = chainOf(c);
+      const revNo = chain.length;
+      const content = chain[revNo - 1].text;
+      const lines = content.split('\n');
+      const body = lines[0].replace(/:$/, '') === title ? lines.slice(1).join('\n') : content;
+      const long = body.length > 180;
+      const expanded = !!open[c.key] || (!!hitInfo[c.key] && hitInfo[c.key].includes('nội dung'));
+      const isApproved = !!approved[c.key];
+      const isDisabled = disabled[c.key] !== undefined;
+      const n = c.assets.length;
+      const shown = c.assets.slice(0, 3);
+      return {
+        type: TYPE[c.type], pages: 'tr. in ' + c.printed, title, parentTitle: parts.length > 1 ? parts[0] : '',
+        body, long, revNo, hasRevs: revNo > 1, edited: content !== c.content,
+        bodyLabel: revNo === 1 ? 'NỘI DUNG GỐC · TRÍCH TỪ PDF' : 'NỘI DUNG · BẢN ' + revNo + ' · ' + chain[revNo - 1].source.toUpperCase(),
+        bodyStyle: long && !expanded ? bodyBase + ';max-height:7.8em;overflow:hidden;mask-image:linear-gradient(#000 65%,transparent)' : bodyBase,
+        toggleLabel: expanded ? 'Thu gọn' : 'Xem đầy đủ',
+        toggle: () => this.setState({ open: { ...open, [c.key]: !expanded } }),
+        startEdit: () => this.setState({ editing: c.key, draft: content, reason: '', editErr: '', sel: c.key }),
+        openHistory: () => this.setState({ histFor: c.key, revOpen: {} }),
+        hasImages: n > 0, imageCount: n,
+        thumbs: shown.map((a, i) => ({
+          label: 'Hình ' + (i + 1), aria: 'Xem hình ' + (i + 1) + ' trên ' + n,
+          more: i === 2 && n > 3 ? '+' + (n - 3) : '',
+          open: () => this.setState({ zoom: { key: c.key, index: i } })
+        })),
+        aiOpen: !!aiOpen[c.key], aiToggle: aiOpen[c.key] ? 'Thu gọn' : 'Câu hỏi, từ khoá',
+        toggleAi: () => this.setState({ ai: { ...aiOpen, [c.key]: !aiOpen[c.key] } }),
+        summary: c.summary_vi, faq: c.faq_vi, keywords: c.keywords,
+        regenAi: () => showToast({}, 'Đã gửi yêu cầu tạo lại phần AI bổ sung từ bản ' + revNo + ' (minh hoạ).'),
+        statusLabel: isDisabled ? 'Đã tắt' : isApproved ? 'Đã duyệt' : 'Chờ duyệt',
+        statusStyle: isDisabled ? 'background:#EEF0F4;color:#3B4250' : isApproved ? 'background:#E6F4EC;color:#1D5E3A' : 'background:#FFF4E5;color:#7A4300',
+        isPending: !isApproved && !isDisabled, isApproved: isApproved && !isDisabled, isDisabled,
+        disabledReason: disabled[c.key] || '',
+        approve: () => showToast({ approved: { ...approved, [c.key]: true } }, 'Đã duyệt “' + title + '”.', undoApprove([c.key])),
+        unapprove: () => showToast({ approved: omit(approved, c.key) }, 'Đã bỏ duyệt; đoạn về Chờ duyệt.'),
+        disable: () => this.setState({ confirm: { kind: 'disable', key: c.key }, dlgReason: '', dlgErr: '' }),
+        enable: () => showToast({ disabled: omit(disabled, c.key) }, 'Đã bật lại; đoạn về Chờ duyệt.'),
+        key: c.key, bodyParts: markParts(body), hitWhere: hitInfo[c.key] ? hitInfo[c.key].join(', ') : '',
+        selected: c.key === sel,
+        card: (c.key === sel ? pickedCard : plainCard) + (c.key === curHit ? ';outline:3px solid #E69D07;outline-offset:2px' : ''),
+        pick: () => this.setState({ sel: c.key })
+      };
+    };
+    const okOf = (c) => !!approved[c.key] && disabled[c.key] === undefined;
+    const offOf = (c) => disabled[c.key] !== undefined;
+    const visibleTab = (c) => tab === 'all' || (tab === 'pending' && !okOf(c) && !offOf(c)) || (tab === 'approved' && okOf(c)) || (tab === 'images' && c.assets.length > 0);
+    // ---- Mục lục (sheet) kiểu Google Docs + tìm kiếm; cây thật của F54 V.02 (đoạn lá) ----
+    const TOC = [["PART 1:CONTROLLER OVERVIEW",4,[["1.1 Overview",2,[]],["1.2 Dimension",1,[]],["1.3 Software structure",1,[]]]],["PART 2: WIRING - CONNECTION - SETTING",151,[["2.1 Controller I/O ports",2,[]],["2.2 Controller power supply",2,[["2.2.1 Powering instructions",1,[]]]],["2.3 Input devices connection",45,[["2.3.1 Sensor Input wiring",3,[["2.3.1.1 High-level input signal wiring",1,[]],["2.3.1.2 Low-level input signal wiring",1,[]]]],["2.3.2 Connecting X,Y,Z,A homing sensor",9,[["2.3.2.1 [3-wire] homing sensor wiring diagram",1,[]],["2.3.2.2 [2-wire] homing sensor wiring diagram (NPN signal)",1,[]],["2.3.2.3 [2-wire] homing sensor wiring diagram (PNP signal)",1,[]],["2.3.2.4 Homing switch wiring diagram",5,[]]]],["2.3.3 Automatic tool setter connection",9,[["2.3.3.1 [3-wire] Automatic tool setter wiring diagram",1,[]],["2.3.3.2 [4-wire] Automatic tool setter wiring diagram (NPN signal)",1,[]],["2.3.3.3 [4-wire] Automatic tool setter wiring diagarm (PNP signal)",1,[]],["2.3.3.4 [6-wire] Automatic tool setter wiring diagram (NPN signal)",1,[]],["2.3.3.5 [6-wire] Automatic tool setter wiring diagram (PNP signal)",4,[]]]],["2.3.4 Alarm signal for axes (X,Y,Z,A), spindle",8,[["2.3.4.1 Servo alarm wiring diagram (NPN type)",1,[]],["2.3.4.2 Servo alarm wiring diagram (PNP type)",1,[]],["2.3.4.3 Spindle alarm wiring diagram (NPN, PNP)",1,[]]]],["2.3.5 MPG Handle",10,[["2.3.5.1 MPG wiring diagram (4-wire type - differential output signal)",1,[]],["2.3.5.2 MPG wiring diagram (6-wire type - differential output signal)",1,[]],["2.3.5.3 MPG wiring diagram(4-wire type - NPN output signal)",1,[]],["2.3.5.4 MPG wiring diagram (4-wire type - PNP output signal)",1,[]],["2.3.5.5 MPG wiring diagram (6-wire - NPN output)",1,[]],["2.3.5.6 MPG wiring diagram (6-wire - PNP output)",1,[]],["2.3.5.7 MPG pendant with EMG button",3,[]]]],["2.3.6 STARTbutton wiring diagram with NPN - PNP signal",1,[]],["2.3.7 STOP button wiring diagram with NPN - NPN signal",1,[]],["2.3.8 EMG button wiring diagram (NPN - PNP signal) 2.3.8.1 EMG button wiring diagram (NPN type)",2,[["2.3.8.2 EMG button wiring diagram (PNP type)",1,[]]]]]],["2.4 Output signal wiring diagram",14,[["2.4.1 Y40 output signal (S-ON)",1,[]],["2.4.2 Y41 output signal (SP-FW)",2,[]],["2.4.3 Y42 output signal (M8)",2,[]],["2.4.4 Y43 output signal (Air-Pro)",1,[]],["2.4.5 Y44 output signal (Start light)",1,[]],["2.4.6 Y45 output signal (Alarm light)",1,[]],["2.4.7 Analog signal wiring diagram for the inverter",3,[["2.4.7.1 Analog signal connection diagram to the inverter using 0-10V voltage",1,[]],["2.4.7.2 Analog signal connection diagram to the inverter using 0-20mA current",1,[]]]]]],["2.5 I/O link board connection",6,[["2.5.1 I/O link 32_V1.1_0722 board wiring diagram",1,[]],["2.5.2 I/O Link 08_RLTR board wiring diagram",4,[["2.5.2.1 I/O link 08_RLTR board wiring diagram (LOW INPUT)",1,[]],["2.5.2.2 I/O link 08_RLTR board wiring diagram (HIGH INPUT)",1,[]],["2.5.2.3 I/O link 08_RLTR board output signal",1,[]]]]]],["2.6 Axis connection (X,Y,Z,A)",82,[["2.6.1 X-Y axis wiring diagram (Pul/Dir)",1,[]],["2.6.2 Z-A axis wiring diagram (Pul/Dir)",1,[]],["2.6.3 Encoder feedback signal for phase Z from the servo drive of axes (X, Y, Z, A)",1,[]],["2.6.4 Axis configuration",65,[["2.6.4.1 Enable/Disabe axis (X,Y,Z,A)",3,[]],["2.6.4.2 Motor rotation direction for axes (X,Y,Z,A)",3,[]],["2.6.4.3 Software limit for axes (X,Y,Z,A)",3,[]],["2.6.4.4 Axes direction when moving to home position",3,[]],["2.6.4.5 Axis movement type (X,Y,Z,A)",3,[]],["2.6.4.6 Pulse generation type for axes (X,Y,Z,A)",4,[]],["2.6.4.7 Electronic gear box setting",3,[]],["2.6.4.8 Axis acceleration in JOG RAPID (G00)",3,[]],["2.6.4.9 Axis acceleraion for machining (G01)",3,[]],["2.6.4.10 Axis acceleration in JOG mode",3,[]],["2.6.4.11 Machine speed in JOG RAPID mode",3,[]],["2.6.4.12 Axis max speed in JOG mode",3,[]],["2.6.4.13 Axis max speed in G00 program",3,[]],["2.6.4.14 Axis max speed in G01 program",3,[]],["2.6.4.15 Axis homing type",5,[]],["2.6.4.16 Homing Feedrate 1st",3,[]],["2.6.4.17 Homing Feedrate 2nd",3,[]],["2.6.4.18 Homing Feedrate 3rd",3,[]],["2.6.4.19 Machine travel limit setting (Soft Limit)",8,[["2.6.4.19.1 Travel limit in negative direction",3,[]],["2.6.4.19.2 Travel limit in positive direction",3,[]]]]]],["2.6.5 Automatic tool setter",6,[]],["2.6.6 Backlash compensation - Without load (G00)",3,[]],["2.6.7 Backlash compensation - With load (G01)",3,[]]]]]],["PART 3 SPECIAL FUNCTIONS",15,[["3.1 Auto home",4,[]],["3.2 Workpiece homing",5,[]],["3.3 Resume the program when sudden power failure occurs",2,[]],["3.4 Start program from any line",1,[]],["3.5 Resume the program from the line where it was previously stopped",3,[]]]],["PART 4 OPERATION INTERFACE",17,[["4.1 Main screen",3,[]],["4.2 Coordinate sreen",8,[["4.2.1 Switching coordinate system screen",2,[]],["4.2.2 Divide the specified axis coordinates in the relative coordinates (REL) by 2",1,[]],["4.2.3 Set the specified axis coordinates in the relative coordinates (REL) to position 0",2,[]]]],["4.3 Program screen",6,[["4.3.1 Copy data from USB to the controller",1,[]],["4.3.2 Execute program",1,[]],["4.3.3 Go to any command line",1,[]]]]]],["PART 5 PARAMETERS TABLE",9,[["5.1 Axis parameters",5,[]],["5.2 Spindle parameters",2,[]],["5.3 General parameters",2,[]]]],["Chưa xác định mục (thiếu cấp PART)",47,[["3.3.4 Search and replace object in the program",2,[]],["3.3.5 Delete command line",1,[]],["4.3.6 Copy and Paste",1,[]],["4.4 Offset screen",8,[["4.4.1 Manual data input",1,[]],["4.4.2 Assign the coordinates and auxiliary coordinates to the specified coordinate system",2,[]],["4.4.3 Quickly determine the center coordinates for a 3-point or 4-point workpiece",2,[]]]],["4.5 Monitor screen",6,[["4.5.1 Toolpath simulation",1,[]],["4.5.2 MDI mode",1,[]],["4.5.3 Working history",1,[]]]],["4.6 Maintenance screen",2,[]],["4.7 Diagnostic screen",2,[]],["4.8 Paramters setting",1,[]],["4.9 PLC screen",3,[]],["3.9.1 Searching for an object in the program",1,[]],["3.9.2 PLC data loading",3,[]],["4.10 System data",7,[["4.10.1 Firmware update",2,[]],["4.10.2 Date & Time setting",1,[]]]],["4.11 Transfer data via Wi-Fi network",10,[["4.11.1 Software installation",1,[]],["4.11.2 Connect device to wi-fi network",2,[]],["4.11.3 Transfer data via wi-fi network",4,[]],["4.11.4 Monitor the operational status of the controller",1,[]]]]]]];
+    const TOC_TOTAL = 243;
+    const PATHS = {"B0016":["PART 2: WIRING - CONNECTION - SETTING","2.3 Input devices connection","2.3.2 Connecting X,Y,Z,A homing sensor","2.3.2.3 [2-wire] homing sensor wiring diagram (PNP signal)"],"B0018":["PART 2: WIRING - CONNECTION - SETTING","2.3 Input devices connection","2.3.2 Connecting X,Y,Z,A homing sensor","2.3.2.4 Homing switch wiring diagram"],"B0019":["PART 2: WIRING - CONNECTION - SETTING","2.3 Input devices connection","2.3.2 Connecting X,Y,Z,A homing sensor","2.3.2.4 Homing switch wiring diagram"],"B0020":["PART 2: WIRING - CONNECTION - SETTING","2.3 Input devices connection","2.3.2 Connecting X,Y,Z,A homing sensor","2.3.2.4 Homing switch wiring diagram"],"B0021":["PART 2: WIRING - CONNECTION - SETTING","2.3 Input devices connection","2.3.2 Connecting X,Y,Z,A homing sensor","2.3.2.4 Homing switch wiring diagram"],"B0022":["PART 2: WIRING - CONNECTION - SETTING","2.3 Input devices connection","2.3.2 Connecting X,Y,Z,A homing sensor","2.3.2.4 Homing switch wiring diagram"],"B0023":["PART 2: WIRING - CONNECTION - SETTING","2.3 Input devices connection","2.3.3 Automatic tool setter connection"],"B0285":["Chưa xác định mục (thiếu cấp PART)","4.11 Transfer data via Wi-Fi network","4.11.3 Transfer data via wi-fi network"]};
+    const SEP = ' › ';
+    const pathOf = (c) => PATHS[c.key] || [];
+    const idOf = (p) => p.join(SEP);
+    const under = (c, id) => { const p = idOf(pathOf(c)); return p === id || p.startsWith(id + SEP); };
+    const fold = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/[-_]/g, '');
+    const q = st.q || '';
+    const fq = fold(q.trim());
+    const FIELDS = [['content', 'nội dung'], ['section_title', 'tiêu đề'], ['summary_vi', 'tóm tắt tiếng Việt'], ['faq_vi', 'câu hỏi tiếng Việt'], ['keywords', 'từ khoá']];
+    const hitInfo = {};
+    if (fq) raw.forEach((c) => {
+      const where = FIELDS.filter(([f]) => fold(Array.isArray(c[f]) ? c[f].join(' ') : c[f]).includes(fq)).map(([, l]) => l);
+      if (where.length) hitInfo[c.key] = where;
+    });
+    const markParts = (text) => {
+      const needle = q.trim().toLowerCase();
+      if (!needle) return [{ t: text, plain: true, hit: false }];
+      const low = text.toLowerCase(); const out = []; let i = 0;
+      for (let j = low.indexOf(needle); j >= 0; j = low.indexOf(needle, i)) {
+        if (j > i) out.push({ t: text.slice(i, j), plain: true, hit: false });
+        out.push({ t: text.slice(j, j + needle.length), plain: false, hit: true });
+        i = j + needle.length;
+      }
+      if (i < text.length) out.push({ t: text.slice(i), plain: true, hit: false });
+      return out;
+    };
+    const secFilter = st.secFilter || '';
+    const visible = (c) => visibleTab(c) && (!secFilter || under(c, secFilter));
+    const scrollToChunk = (key) => setTimeout(() => { const el = document.getElementById('m-chunk-' + key); if (el) el.scrollIntoView({ block: 'start' }); }, 30);
+    const hitList = fq ? raw.filter((c) => hitInfo[c.key] && visible(c)).map((c) => c.key) : [];
+    const qIdx = hitList.length ? Math.min(st.qIdx || 0, hitList.length - 1) : 0;
+    const curHit = hitList[qIdx] || '';
+    const goHit = (d) => {
+      if (!hitList.length) return;
+      const i = (qIdx + d + hitList.length) % hitList.length;
+      this.setState({ qIdx: i, spy: hitList[i] });
+      scrollToChunk(hitList[i]);
+    };
+    const spyChunk = raw.find((c) => c.key === st.spy) || raw.find((c) => c.key === sel) || raw[0];
+    const curPath = pathOf(spyChunk);
+    const curId = idOf(curPath);
+    const jumpTo = (id, title, realCount) => {
+      const target = raw.find((c) => under(c, id));
+      if (!target) { this.setState({ tocNote: '“' + title + '” có ' + realCount + ' đoạn trong dữ liệu thật; mock chỉ dựng 5 đoạn mẫu.' }); return; }
+      const patch = { spy: target.key, tocShow: false, tocNote: '' };
+      if (!visible(target)) Object.assign(patch, { tab: 'all', secFilter: '' });
+      this.setState(patch);
+      scrollToChunk(target.key);
+    };
+    const expandedMap = st.tocOpen || {};
+    const tq = fold((st.tocQ || '').trim());
+    const matchDeep = (n) => !tq || fold(n[0]).includes(tq) || n[2].some(matchDeep);
+    const tocRows = [];
+    const walk = (nodes, parent, depth) => nodes.forEach((n) => {
+      if (!matchDeep(n)) return;
+      const path = [...parent, n[0]]; const id = idOf(path); const kids = n[2].length > 0;
+      const isOpen = kids && (tq ? true : expandedMap[id] !== undefined ? expandedMap[id] : (curId === id || curId.startsWith(id + SEP)));
+      const mock = raw.filter((c) => under(c, id));
+      const done = mock.filter((c) => okOf(c)).length;
+      const hits = fq ? mock.filter((c) => hitInfo[c.key]).length : 0;
+      const on = curId === id;
+      tocRows.push({
+        title: n[0], meta: n[1] + ' đoạn · ' + (n[1] - done) + ' chờ duyệt',
+        pad: 'padding-left:' + (depth * 14) + 'px',
+        rowCls: 'tree-row' + (on ? ' on' : '') + (path[0].startsWith('Chưa xác định') ? ' warn' : ''),
+        ariaCurrent: on ? 'location' : 'false',
+        hasKids: kids, noKids: !kids, open: isOpen ? 'true' : 'false',
+        caret: isOpen ? 'm6 9 6 6 6-6' : 'm9 6 6 6-6 6',
+        toggleLabel: (isOpen ? 'Thu gọn ' : 'Mở ') + n[0],
+        toggle: () => this.setState({ tocOpen: { ...expandedMap, [id]: !isOpen } }),
+        jump: () => jumpTo(id, n[0], n[1]),
+        filter: () => { const first = mock[0]; this.setState({ secFilter: id, tocShow: false, spy: first ? first.key : spyChunk.key }); if (first) scrollToChunk(first.key); },
+        hasHits: hits > 0, hitLabel: hits + ' kết quả'
+      });
+      if (isOpen) walk(n[2], path, depth + 1);
+    });
+    walk(TOC, [], 0);
+    const closeToc = () => this.setState({ tocShow: false });
+    const subTitle = (spyChunk.section_title.split(SEP)[1] || '').replace(/:$/, '');
+    const groupDefs = [
+      { id: 'g1', isSection: false },
+      { id: 'g2', isSection: true, title: '2.3.2.4 Homing switch wiring diagram', meta: '3 đoạn mẫu · tr. in 11–12' },
+      { id: 'g4', isSection: true, title: '4.11.3 Transfer data via wi-fi network', meta: 'đoạn có 5 hình · tr. in 155–157' }
+    ];
+    const pendingIn = (gid) => raw.filter((c) => c.group === gid && !approved[c.key] && disabled[c.key] === undefined).map((c) => c.key);
+    const groups = groupDefs.map((g) => {
+      const pend = pendingIn(g.id);
+      return {
+        ...g,
+        wrap: g.isSection ? 'background:#EEF0F4;border-radius:14px;padding:10px' : '',
+        items: raw.filter((c) => c.group === g.id && visible(c)).map(toItem),
+        noPending: pend.length === 0,
+        approveLabel: pend.length ? 'Duyệt cả mục (' + pend.length + ' đoạn)' : 'Đã duyệt cả mục',
+        approveAll: () => this.setState({ confirm: { kind: 'section', group: g.id } })
+      };
+    }).filter((g) => g.items.length > 0);
+    const count = (fn) => raw.filter(fn).length;
+    const tabs = [
+      ['all', 'Tất cả', raw.length], ['pending', 'Chờ duyệt', count((c) => !okOf(c) && !offOf(c))],
+      ['approved', 'Đã duyệt', count(okOf)], ['images', 'Có hình', count((c) => c.assets.length > 0)]
+    ].map(([id, label, n]) => ({ label: label + ' · ' + n, on: tab === id, cls: tab === id ? 'chip on' : 'chip', pick: () => this.setState({ tab: id }) }));
+    const EMPTY = {
+      approved: ['Chưa có đoạn nào được duyệt', 'Bấm Duyệt trên từng đoạn hoặc Duyệt cả mục.'],
+      pending: ['Không còn đoạn chờ duyệt', 'Mọi đoạn đang xem đã được duyệt hoặc đã tắt.'],
+      images: ['Không có đoạn có hình', ''], all: ['Không có đoạn nào', '']
+    }[tab];
+    // Xem hình toàn màn.
+    const zs = st.zoom;
+    const zc = zs && raw.find((c) => c.key === zs.key);
+    const viewer = { open: false };
+    if (zc) {
+      const n = zc.assets.length; const i = zs.index; const a = zc.assets[i];
+      const caps = zc.content.split('\n').filter((l) => /^Figure \d+\./.test(l));
+      const go = (k) => this.setState({ zoom: { key: zc.key, index: (k + n) % n } });
+      const close = () => this.setState({ zoom: null });
+      Object.assign(viewer, {
+        open: true, file: a.file, printed: a.printed, caption: caps[i] || ('Hình ' + (i + 1) + ' · ' + titleOf(zc)),
+        position: (i + 1) + ' / ' + n, prev: () => go(i - 1), next: () => go(i + 1), close,
+        goPdf: () => this.setState({ zoom: null, sel: zc.key, pane: 'pdf' }),
+        onKey: (e) => {
+          if (e.key === 'Escape') { e.preventDefault(); close(); }
+          else if (e.key === 'ArrowLeft') { e.preventDefault(); go(i - 1); }
+          else if (e.key === 'ArrowRight') { e.preventDefault(); go(i + 1); }
+        }
+      });
+    }
+    // Sửa nội dung (sheet toàn màn).
+    const ec = st.editing && raw.find((c) => c.key === st.editing);
+    const editor = { open: false };
+    if (ec) {
+      const chain = chainOf(ec);
+      const content = chain[chain.length - 1].text;
+      const draft = st.draft === undefined ? content : st.draft;
+      const reason = st.reason || '';
+      const dirty = draft !== content || !!reason.trim();
+      const close = () => this.setState({ editing: null, draft: undefined, reason: '', editErr: '' });
+      const cancel = () => (dirty ? this.setState({ confirm: { kind: 'discard', key: ec.key } }) : close());
+      Object.assign(editor, {
+        open: true, title: titleOf(ec), curRev: chain.length, nextRev: chain.length + 1, draft, reason,
+        error: st.editErr || '',
+        onDraft: (e) => this.setState({ draft: e.target.value, editErr: '' }),
+        onReason: (e) => this.setState({ reason: e.target.value, editErr: '' }),
+        cancel,
+        onKey: (e) => { if (e.key === 'Escape') { e.preventDefault(); cancel(); } },
+        save: () => {
+          const err = !draft.trim() ? 'Nội dung không được để trống.'
+            : draft === content ? 'Nội dung chưa thay đổi so với bản ' + chain.length + '.' : '';
+          if (err) { this.setState({ editErr: err }); return; }
+          // Lý do sửa không bắt buộc (Toma 2026-11-18).
+          showToast({
+            editing: null, draft: undefined, reason: '', editErr: '',
+            extra: { ...extra, [ec.key]: [...(extra[ec.key] || []), { text: draft, source: 'sửa trên web', meta: 'admin@qstcnc.com · vừa xong' + (reason.trim() ? ' · Lý do: ' + reason.trim() : ' · không ghi lý do') }] }
+          }, 'Đã lưu bản ' + (chain.length + 1) + '. Phần AI bổ sung cần tạo lại.');
+        }
+      });
+    }
+    // Lịch sử nội dung. Dài thì hiện 3 bản mới nhất + bản 1 (gốc PDF), các bản giữa gom vào một nút.
+    const shortHistory = (rows) => {
+      const all = rows.map((r) => ({ ...r, isRow: true, isMore: false }));
+      if (all.length <= 4) return all;
+      const toggle = () => this.setState({ revAll: !st.revAll });
+      if (st.revAll) return [...all, { isRow: false, isMore: true, expanded: 'true', moreLabel: 'Thu gọn lịch sử', more: toggle }];
+      return [...all.slice(0, 3), { isRow: false, isMore: true, expanded: 'false', moreLabel: 'Xem thêm ' + (all.length - 4) + ' bản cũ hơn', more: toggle }, all[all.length - 1]];
+    };
+    const hc = st.histFor && raw.find((c) => c.key === st.histFor);
+    const hist = { open: false };
+    if (hc) {
+      const chain = chainOf(hc);
+      const cur = chain[chain.length - 1].text;
+      const revOpen = st.revOpen || {};
+      const close = () => this.setState({ histFor: null });
+      Object.assign(hist, {
+        open: true, title: titleOf(hc), close,
+        onKey: (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } },
+        revisions: shortHistory(chain.slice().reverse().map((r) => {
+          const isCur = r.no === chain.length;
+          const curLines = cur.split('\n');
+          const n = diffCount(r.text, cur);
+          return {
+            ...r, current: isCur, canRestore: !isCur, open: !!revOpen[r.no],
+            toggleLabel: revOpen[r.no] ? 'Ẩn nội dung' : 'Xem nội dung',
+            toggle: () => this.setState({ revOpen: { ...revOpen, [r.no]: !revOpen[r.no] } }),
+            diffNote: isCur ? '' : (n ? n + ' dòng khác bản đang dùng (tô vàng)' : 'Giống bản đang dùng'),
+            restore: () => this.setState({ confirm: { kind: 'restore', key: hc.key, no: r.no } }),
+            lines: r.text.split('\n').map((t, i) => ({ no: i + 1, text: t || ' ', style: !isCur && t !== curLines[i] ? 'background:#FFF3D6;box-shadow:inset 3px 0 0 #E8A93B' : '' }))
+          };
+        }))
+      });
+    }
+    // Hộp xác nhận (dạng sheet).
+    const cf = st.confirm || null;
+    const dlgReason = st.dlgReason || '';
+    const dlgErr = st.dlgErr || '';
+    const closeDlg = () => this.setState({ confirm: null, dlgReason: '', dlgErr: '' });
+    const dlg = { open: false };
+    if (cf) {
+      const c = raw.find((x) => x.key === cf.key);
+      const t = c ? titleOf(c) : '';
+      Object.assign(dlg, { open: true, needReason: false, error: '', reason: '', reasonBorder: '#C9CED6', cancel: closeDlg, cancelLabel: 'Huỷ', onReason: () => {},
+        onKey: (e) => { if (e.key === 'Escape') { e.preventDefault(); closeDlg(); } } });
+      if (cf.kind === 'discard') {
+        Object.assign(dlg, { title: 'Bỏ nội dung đang sửa?', body: 'Nội dung và lý do vừa nhập cho “' + t + '” sẽ mất. Bản đang dùng không đổi.',
+          cancelLabel: 'Tiếp tục sửa', confirmLabel: 'Bỏ thay đổi', confirmCls: 'btn danger',
+          confirm: () => this.setState({ confirm: null, editing: null, draft: undefined, reason: '', editErr: '' }) });
+      } else if (cf.kind === 'disable') {
+        Object.assign(dlg, { title: 'Tắt đoạn khỏi chatbot?', body: '“' + t + '” sẽ không được dùng khi trả lời. Đoạn vẫn nằm trong kho và có thể bật lại.',
+          needReason: true, reason: dlgReason, error: dlgErr, reasonBorder: dlgErr ? '#B42318' : '#C9CED6',
+          onReason: (e) => this.setState({ dlgReason: e.target.value, dlgErr: '' }),
+          confirmLabel: 'Tắt khỏi chatbot', confirmCls: 'btn danger',
+          confirm: () => {
+            if (!dlgReason.trim()) { this.setState({ dlgErr: 'Nhập lý do để tắt đoạn này.' }); return; }
+            showToast({ disabled: { ...disabled, [cf.key]: dlgReason.trim() }, approved: omit(approved, cf.key), confirm: null, dlgReason: '', dlgErr: '' },
+              'Đã tắt “' + t + '” khỏi chatbot.', () => this.setState({ disabled: omit(fresh().disabled, cf.key), toast: null }));
+          } });
+      } else if (cf.kind === 'section') {
+        const g = groupDefs.find((x) => x.id === cf.group);
+        const keys = pendingIn(cf.group);
+        Object.assign(dlg, { title: 'Duyệt cả mục?', body: 'Duyệt ' + keys.length + ' đoạn đang chờ trong “' + g.title + '”. Đoạn đã tắt giữ nguyên. Nên xem các đoạn có hình hoặc bảng trước.',
+          confirmLabel: 'Duyệt ' + keys.length + ' đoạn', confirmCls: 'btn primary',
+          confirm: () => { const a = { ...approved }; keys.forEach((k) => { a[k] = true; }); showToast({ approved: a, confirm: null }, 'Đã duyệt ' + keys.length + ' đoạn.', undoApprove(keys)); } });
+      } else if (cf.kind === 'restore') {
+        const chain = chainOf(c);
+        const r = chain[cf.no - 1];
+        const cur = chain[chain.length - 1];
+        Object.assign(dlg, { title: 'Khôi phục bản ' + cf.no + '?', body: 'Tạo bản ' + (chain.length + 1) + ' với nội dung bản ' + cf.no + ' (' + diffCount(r.text, cur.text) + ' dòng khác bản đang dùng). Bản ' + cur.no + ' vẫn giữ trong lịch sử.',
+          confirmLabel: 'Khôi phục', confirmCls: 'btn blue',
+          confirm: () => showToast({ confirm: null, histFor: null,
+            extra: { ...extra, [cf.key]: [...(extra[cf.key] || []), { text: r.text, source: 'khôi phục từ bản ' + cf.no, meta: 'admin@qstcnc.com · vừa xong' }] } },
+            'Đã khôi phục: bản ' + (chain.length + 1) + ' dùng nội dung bản ' + cf.no + '.') });
+      }
+    }
+    const current = raw.find((c) => c.key === sel) || raw[0];
+    const PAGES = {
+      10: [{ heading: '2.3.2.3 [2-wire] homing sensor wiring (PNP)' }, { fig: 'Figure 12' }, { heading: '2.3.2.4 Homing switch wiring diagram' }],
+      11: [{ heading: 'Homing switch wiring for NPN, PNP signal' }, { fig: 'Figure 14' }, { heading: 'Note:' }],
+      12: [{ heading: 'How to configure the parameter from 0 to 1' }, { heading: 'Parameter stauts description' }, { heading: '2.3.3 Automatic tool setter connection' }, { fig: 'Figure 16' }],
+      '155–157': [{ heading: '4.11.3 Transfer data via wi-fi network · Step 2' }, { fig: 'e004' }, { fig: 'e008' }]
+    };
+    const ts = st.toast;
+    const approvedCount = count(okOf);
+    return {
+      toc: {
+        show: !!st.tocShow, total: TOC_TOTAL, rows: tocRows, q: st.tocQ || '', note: st.tocNote || '',
+        open: () => this.setState({ tocShow: true, tocNote: '' }), close: closeToc,
+        onQ: (e) => this.setState({ tocQ: e.target.value }),
+        onKey: (e) => { if (e.key === 'Escape') { e.preventDefault(); closeToc(); } }
+      },
+      location: curPath[curPath.length - 1] + (subTitle ? SEP + subTitle : ''),
+      q,
+      onQ: (e) => this.setState({ q: e.target.value, qIdx: 0 }),
+      qKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); goHit(e.shiftKey ? -1 : 1); } },
+      hasQ: !!fq,
+      hitCounter: hitList.length ? 'Kết quả ' + (qIdx + 1) + ' / ' + hitList.length + ' đoạn' : 'Không có kết quả',
+      noHits: hitList.length === 0,
+      prevHit: () => goHit(-1), nextHit: () => goHit(1),
+      secFilter: !!secFilter, secFilterLabel: secFilter.split(SEP).pop(),
+      clearSecFilter: () => this.setState({ secFilter: '' }),
+      onChunkScroll: (e) => {
+        const box = e.currentTarget; const top = box.getBoundingClientRect().top; let key = null;
+        for (const a of box.querySelectorAll('article[data-key]')) { if (a.getBoundingClientRect().bottom > top + 24) { key = a.getAttribute('data-key'); break; } }
+        if (key && key !== (this.state || {}).spy) this.setState({ spy: key });
+      },
+      approvedCount,
+      progressStyle: 'width:' + (approvedCount / 243 * 100).toFixed(2) + '%',
+      paneTabs: [['chunks', 'Đoạn kiến thức'], ['pdf', 'PDF']].map(([id, label]) => ({ label, on: pane === id, cls: pane === id ? 'on' : '', pick: () => this.setState({ pane: id }) })),
+      showChunks: pane === 'chunks', showPdf: pane === 'pdf',
+      tabs, groups, noGroups: groups.length === 0, emptyTitle: EMPTY[0], emptyBody: EMPTY[1],
+      showAll: () => this.setState({ tab: 'all' }),
+      currentTitle: titleOf(current), currentPage: current.pages[0], currentPrinted: current.printed,
+      pageBlocks: (PAGES[current.printed] || []).map((b) => (b.fig ? { isFigure: true, isText: false, caption: b.fig } : { isText: true, isFigure: false, heading: b.heading })),
+      viewer, editor, hist, dlg,
+      stop: (e) => e.stopPropagation(),
+      toast: ts ? { show: true, text: ts.text, hasUndo: !!ts.undo, undo: () => ts.undo(), close: () => this.setState({ toast: null }) } : { show: false }
+    };
+  }
+}
+</script>
+</body>
+</html>

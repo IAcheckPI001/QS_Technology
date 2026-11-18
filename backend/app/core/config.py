@@ -5,6 +5,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.core.pricing import ModelPrice, parse_price_overrides
+
 
 def _parse_origins(value: str | list[str]) -> list[str]:
     origins = value.split(",") if isinstance(value, str) else value
@@ -36,6 +38,9 @@ class Settings(BaseSettings):
     gpt4o_mini_output_usd_per_million: float = Field(default=0.60, alias="GPT4O_MINI_OUTPUT_USD_PER_MILLION")
     embedding_input_usd_per_million: float = Field(default=0.02, alias="EMBEDDING_INPUT_USD_PER_MILLION")
     usd_to_vnd_rate: float = Field(default=26000, alias="USD_TO_VND_RATE")
+    # Ghi đè bảng giá model (USD / 1 triệu token) dùng để tính chi phí thật của lượt (B3,
+    # core/pricing.py), dạng JSON {"model": {"input": .., "cached_input": .., "output": ..}}.
+    llm_prices_json: str = Field(default="", alias="LLM_PRICES_JSON")
     
     context_token_budget: int = Field(default=2048, alias="CONTEXT_TOKEN_BUDGET",)
     # Kênh CRM chạy luồng agent (tool-calling); "pipeline" để rollback về luồng tra cứu cũ.
@@ -85,6 +90,8 @@ class Settings(BaseSettings):
     ollama_window_tokens: int = Field(default=2500, alias="OLLAMA_WINDOW_TOKENS")
     # Endpoint học tri thức chưa có xác thực: chỉ bật khi kiểm thử nội bộ.
     learning_api_enabled: bool = Field(default=False, alias="LEARNING_API_ENABLED")
+    # B2: GET /chatbot/conversations/metrics và /chatbot/conversations/{id} (chưa có xác thực, TR-16).
+    workspace_conversation_api_enabled: bool = Field(default=False, alias="WORKSPACE_CONVERSATION_API_ENABLED")
     cors_origins: list[str] = Field(
         default_factory=lambda: [
             "http://localhost:5173",
@@ -213,6 +220,20 @@ class Settings(BaseSettings):
         if self.chat_turn_lease_s <= self.agent_turn_timeout_s:
             raise ValueError("CHAT_TURN_LEASE_S must exceed AGENT_TURN_TIMEOUT_S")
         return self
+
+    @field_validator("llm_prices_json")
+    @classmethod
+    def _validate_llm_prices(cls, value: str) -> str:
+        # Sai dạng thì dừng khi khởi động thay vì tính chi phí sai âm thầm.
+        try:
+            parse_price_overrides(value)
+        except (ValueError, TypeError) as error:
+            raise ValueError(f"LLM_PRICES_JSON is invalid: {error}") from error
+        return value
+
+    @property
+    def llm_price_overrides(self) -> dict[str, ModelPrice]:
+        return parse_price_overrides(self.llm_prices_json)
 
     @field_validator("log_level", mode="before")
     @classmethod
