@@ -27,6 +27,7 @@ Với mọi luồng, đọc `README.md` và `STATE.md`; đọc `LOG.md` khi cầ
 | **chat-platform**: phần dùng chung của chat (service key, session, lease, history, trace, health) | `app/{main.py,core,db,api}/`, `app/modules/chatbot/{routers,services,repositories,dependencies.py}`, `sql/` | [flows/chat-platform/](docs/ai/flows/chat-platform/README.md) | `.\venv\Scripts\python.exe -m pytest tests\chatbot tests\api` |
 | **doc-ingest**: chunking tài liệu được nạp vào | `app/modules/doc_ingest/` | [flows/doc-ingest/](docs/ai/flows/doc-ingest/README.md) | `..\.venv-ingest\Scripts\python.exe -m pytest tests\doc_ingest` |
 | **learning**: học từ hội thoại | `app/modules/learning_ai/` | [flows/learning/](docs/ai/flows/learning/README.md) | `.\venv\Scripts\python.exe -m pytest tests\learning_ai` |
+| **workspace-ui**: giao diện QS AI Workspace (hội thoại, tài liệu, khóa, tài khoản) | `src/workspace/`, `src/App.jsx` | [flows/workspace-ui/](docs/ai/flows/workspace-ui/README.md) | từ gốc repo: `npm test` |
 
 crm-agent, website-qa và chat-platform dùng chung `tests\chatbot`; tool `product_docs_ask`
 của crm-agent chạy lại các stage của website-qa. Test nhanh dùng trong lúc làm; trước khi
@@ -42,6 +43,7 @@ Task chạm nhiều luồng hoặc phần dùng chung thì đọc thêm:
 | Cấu hình, SQL, cờ tính năng, triển khai | [rules/deploy-rules.md](docs/ai/rules/deploy-rules.md) |
 | Quyết định liên luồng | [decisions.md](docs/ai/decisions.md) |
 | Trạng thái toàn dự án, backlog | [current-state.md](docs/ai/current-state.md) |
+| Giao diện frontend, Support Workspace | [FRONTEND_REQUIREMENTS.md](docs/ai/FRONTEND_REQUIREMENTS.md) |
 
 ## Quy tắc cốt lõi
 
@@ -75,6 +77,7 @@ Tóm tắt; nguồn chuẩn kèm lý do và cách kiểm: [rules/team-rules.md](
 Từ repository root:
 
 ```powershell
+npm test
 npm run lint
 npm run build
 ```

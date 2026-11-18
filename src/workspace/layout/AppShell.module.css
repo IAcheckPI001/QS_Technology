@@ -1,0 +1,130 @@
+/* Khung app (Q22): sidebar đứng yên khi cuộn, thu gọn còn icon; ≤ 720px thanh trên + thanh dưới 4 mục. */
+
+.shell { display: flex; min-height: 100vh; }
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  flex: none;
+  width: var(--ws-sidebar);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 12px;
+  background: var(--ws-surface);
+  border-right: 1px solid var(--ws-border);
+  transition: width 0.15s ease;
+  z-index: 20;
+}
+.collapsed { width: var(--ws-sidebar-collapsed); padding: 16px 10px; }
+
+.brand { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.collapsed .brand { flex-direction: column; gap: 6px; }
+.logo { display: block; height: 28px; width: auto; flex: none; }
+.collapsed .logo { height: 24px; }
+.brandName { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.collapsed .brandName { display: none; }
+
+.nav { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.navLink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: var(--ws-radius);
+  color: var(--ws-text-2);
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.navLink:hover { background: var(--ws-hover); color: var(--ws-text); }
+.navLink:focus-visible { outline: none; box-shadow: var(--ws-focus); }
+.navLink svg { flex: none; }
+.active,
+.active:hover { background: var(--ws-selected); color: var(--ws-brand-strong); font-weight: 600; box-shadow: inset 3px 0 0 var(--ws-accent); }
+.collapsed .navLink { justify-content: center; padding: 0; min-height: 44px; }
+.collapsed .label { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.account { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid var(--ws-border); }
+.collapsed .account { flex-direction: column; flex-wrap: nowrap; gap: 8px; }
+.avatar {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--ws-selected);
+  color: var(--ws-brand-strong);
+  font-size: 13px;
+  font-weight: 600;
+}
+.accountInfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.accountInfo strong { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.accountInfo span { font-size: 12px; color: var(--ws-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.collapsed .accountInfo { display: none; }
+.logout { flex: 1 1 100%; }
+.collapsed .logout { flex: none; width: 44px; padding: 0; }
+.collapsed .logoutText { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+
+.topbar, .tabbar { display: none; }
+
+@media (max-width: 720px) {
+  .shell { flex-direction: column; }
+  .sidebar { display: none; }
+  .main { padding-bottom: var(--ws-tabbar); }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 52px;
+    padding: 0 6px 0 12px;
+    background: var(--ws-surface);
+    border-bottom: 1px solid var(--ws-border);
+  }
+  .topbar .logo { height: 24px; }
+  .topbarName { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(var(--ws-tabs, 4), minmax(0, 1fr));
+    height: var(--ws-tabbar);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: var(--ws-surface);
+    border-top: 1px solid var(--ws-border);
+  }
+  .tabLink {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 100%;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ws-text-muted);
+    text-decoration: none;
+  }
+  .tabLink:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--ws-brand); }
+  .tabActive { color: var(--ws-brand); font-weight: 600; box-shadow: inset 0 3px 0 var(--ws-accent); }
+
+  /* Nút chat thử (widget cũ, cố định góc dưới) nằm trên thanh dưới, không đè lên nó. */
+  .chatSlot > div:first-child { bottom: calc(var(--ws-tabbar) + 12px); }
+}

@@ -1,0 +1,60 @@
+/* Màn đăng nhập, đổi và đặt lại mật khẩu (mock M1; desktop Main.dc.html, điện thoại MobileLogin.dc.html). */
+
+.screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  background: var(--ws-bg);
+}
+.column { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 24px; }
+
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand img { display: block; height: 40px; width: auto; flex: none; }
+.brandText { display: flex; flex-direction: column; }
+.brandText strong { font-size: 16px; font-weight: 600; }
+.brandText span { font-size: 13px; color: var(--ws-text-muted); }
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 32px;
+  border: 1px solid var(--ws-border);
+  border-radius: var(--ws-radius-lg);
+  background: var(--ws-surface);
+}
+.heading { display: flex; flex-direction: column; gap: 6px; }
+.heading h1 { font-size: 22px; font-weight: 600; line-height: 1.3; }
+.heading p { font-size: 14px; color: var(--ws-text-muted); line-height: 1.5; }
+
+.form { display: flex; flex-direction: column; gap: 20px; }
+.form input { height: 44px; }
+.form .submit { min-height: 44px; font-weight: 600; }
+.actions { display: flex; flex-direction: column; gap: 10px; }
+.meta { font-size: 13px; color: var(--ws-text-muted); overflow-wrap: anywhere; }
+
+.devHints {
+  padding: 10px 12px;
+  border: 1px dashed var(--ws-border-strong);
+  border-radius: var(--ws-radius);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ws-text-muted);
+}
+.devHints ul { margin: 4px 0 0; padding-left: 18px; }
+
+@media (max-width: 720px) {
+  .screen { align-items: flex-start; padding: 32px 20px 24px; }
+  .brand img { height: 44px; }
+  .brandText strong { font-size: 17px; }
+  .brandText span { font-size: 14px; }
+  .card { gap: 18px; padding: 0; border: 0; background: transparent; }
+  .heading h1 { font-size: 26px; }
+  .heading p { font-size: 15px; }
+  .form { gap: 18px; }
+  .form input { height: 48px; }
+  .form .submit { min-height: 48px; font-size: 15px; }
+}

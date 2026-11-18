@@ -1,25 +1,22 @@
 
 
 import "./i18n";
-import Header from "./components/Header.jsx"
-import Footer from "./components/Footer.jsx"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-
-import Home from './pages/Home';
 import SupportWorkspace from './pages/SupportWorkspace.jsx';
+import WorkspaceApp from './workspace/WorkspaceApp.jsx';
 import ScrollToTop from "./hooks/scrollToTop.jsx";
-import.meta.env.VITE_API_URL;
 
+// QS AI Workspace mới ở `/` (FRONTEND_REQUIREMENTS.md mục 18); bản Workspace cũ tạm ở `/legacy`,
+// xoá ở giai đoạn 6.
 function App(){
   return (
     <Router>
       <ScrollToTop />
-      {/* <Header/> */}
       <Routes>
-        <Route path="/" element={<SupportWorkspace />} />
+        <Route path="/legacy/*" element={<SupportWorkspace />} />
+        <Route path="/*" element={<WorkspaceApp />} />
       </Routes>
-      {/* <Footer/> */}
     </Router>
   )
 
