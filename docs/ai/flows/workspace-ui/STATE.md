@@ -40,6 +40,7 @@ Không có việc dở. Bước kế: GĐ 2 (phần đọc hội thoại trên A
 | WU-4 | Trung bình | Contract B1 (đường dẫn `/workspace/auth/*`, mã lỗi, cookie `ws_csrf`, `must_change_password`) là giả định của frontend, ghi ở README mục Contract; chốt khi làm B1 |
 | WU-5 | Thấp | 14.2 nói thông báo đăng nhập sai giống nhau cho mọi lý do, 14.3 lại muốn báo khoá/vô hiệu. Giao diện hiện đủ cả ba; B1 cần chốt khi nào được trả `account_locked`/`account_disabled` (vd. chỉ khi mật khẩu đúng) |
 | WU-6 | Thấp | Chưa có lối vào đổi mật khẩu tự nguyện (màn Hồ sơ không có trong mock v1); route `/change-password` đã hỗ trợ |
+| WU-7 | Trung bình | Đặc tả API hội thoại B2/B5 đã viết (FRONTEND_REQUIREMENTS mục 19), backend chưa làm. Giờ hỏi đã chốt: `created_at − latency_ms` (19.2 W3) |
 
 ## Kết quả kiểm gần nhất
 
@@ -54,4 +55,5 @@ Không có việc dở. Bước kế: GĐ 2 (phần đọc hội thoại trên A
 
 1. GĐ 2: Lịch sử hội thoại, Chi tiết (2 khung tự cuộn), Diễn biến trên API sẵn có; ẩn bộ lọc chưa có API.
 2. Backend B1 theo mục 14, dùng contract ở README luồng này; xong thì tắt dữ liệu giả cho đăng nhập và kiểm lại.
+   Sau đó B2 → B5 theo FRONTEND_REQUIREMENTS mục 19.
 3. Dọn lỗi lint có sẵn (WU-1) và nâng axios (WU-2), nếu Toma đồng ý.

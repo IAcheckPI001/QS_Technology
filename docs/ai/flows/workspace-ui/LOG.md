@@ -6,6 +6,28 @@ sang `LOG-archive-<ngày của mục mới nhất bị cắt>.md` và để lạ
 
 Sau khi thêm mục, viết lại [STATE.md](STATE.md).
 
+## 2026-11-18 · Chốt cách lấy giờ hỏi (W3) · loại: quyết định
+
+- Vấn đề: `chat_history` ghi một dòng lúc lượt kết thúc nên không có giờ hỏi (FRONTEND_REQUIREMENTS 19.2 W3).
+- Quyết định/luật (Toma): `asked_at = created_at − latency_ms`, tính khi đọc; không thêm cột `asked_at`. Thiếu `latency_ms` thì `asked_at = null`.
+- File: `docs/ai/FRONTEND_REQUIREMENTS.md` (19.2, 19.7, Trạng thái), STATE luồng này.
+- Kiểm chứng: `check_ai_docs.py` → đạt.
+- Ảnh hưởng contract/API/schema: không đổi schema; trường `asked_at` của `/history` theo cách tính này.
+- Mở tiếp: WU-7 (làm backend B2/B5).
+
+## 2026-11-18 · Đặc tả API hội thoại cho GĐ 2 (B2, B5, registry model) · loại: quyết định
+
+- Vấn đề: màn hội thoại v1 cần lọc/tìm trên toàn bộ dữ liệu, phân trang, chỉ số theo bộ lọc, tài liệu đã dùng theo từng lượt; API hiện trả hết, chỉ xét lượt cuối, chỉ số tính toàn bảng (F8).
+- Quyết định/luật (đề xuất, Toma yêu cầu ghi đặc tả): FRONTEND_REQUIREMENTS mục 19.
+  - 6 API đọc: sửa `/chatbot/conversations`, `/history`, `/retrieval`; mới `/conversations/metrics`, `/conversations/{id}`, `/product-models`.
+  - 3 sửa luồng ghi: lưu nguồn của chunk vào snapshot (W1), mã lỗi nhà cung cấp trong span LLM (W2), giờ hỏi (W3, cần chốt).
+  - Chỉ thêm, không gửi `limit` thì trả như cũ để `/legacy` chạy tới GĐ 6.
+- Căn cứ: đối chiếu `backend/sql/*.sql`, `db/models/*.py`, `services/chat_service.py` (ghi một dòng `chat_history` lúc lượt kết thúc; `_retrieval_snapshot` bỏ `doc_id`/`section_title`), `repositories/history_repository.py` (`list_conversations`, `aggregate_metrics`).
+- File: `docs/ai/FRONTEND_REQUIREMENTS.md` (mục 19, bảng B2/B5, Trạng thái, 18.4), `docs/ai/api_guidelines.md` (trỏ tới mục 19), README và STATE luồng này.
+- Kiểm chứng: `check_ai_docs.py` → đạt.
+- Ảnh hưởng contract/API/schema: chưa đổi code; khi làm, route thuộc chat-platform phải cập nhật api_guidelines và test (TR-06).
+- Mở tiếp: WU-7 (chốt W3, làm backend).
+
 ## 2026-11-18 · GĐ 1: đăng nhập, đổi mật khẩu bắt buộc, đặt lại mật khẩu (giao diện) · loại: thay đổi
 
 - Vấn đề: GĐ 0 chỉ có trang đăng nhập tạm; 14.3 cần đăng nhập, đổi mật khẩu bắt buộc, đặt lại từ link admin.

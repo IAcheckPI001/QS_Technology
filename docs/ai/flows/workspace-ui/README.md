@@ -61,7 +61,7 @@ API backend: [api_guidelines.md](../../api_guidelines.md).
   nằm trong `detail` cạnh `code`, `message`. Cookie phiên HttpOnly; CSRF đọc từ cookie `ws_csrf`, gửi lại
   qua header `X-CSRF-Token`. Token đặt lại đi trong body POST, không đi trong đường dẫn API.
 - **Hội thoại (có sẵn):** `GET /chatbot/conversations`, `/chatbot/sessions/{id}/history`, `/retrieval`, `/trace`.
-- **Phân trang (B2):** con trỏ `{ items, next_cursor, total? }` (Q26).
+- **Hội thoại sau B2/B5 (chưa có backend):** đặc tả ở [FRONTEND_REQUIREMENTS.md mục 19](../../FRONTEND_REQUIREMENTS.md): lọc và tìm trên toàn bộ dữ liệu, phân trang con trỏ `limit` + `cursor` → `next_cursor` (Q26), endpoint chỉ số cùng bộ lọc, retrieval theo `history_id`. Không gửi `limit` thì API trả như cũ cho `/legacy`.
 
 ## Bất biến của luồng
 

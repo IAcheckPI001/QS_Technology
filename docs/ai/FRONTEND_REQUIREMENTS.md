@@ -23,6 +23,8 @@
 - Tải thêm 25 hội thoại / 20 lượt; tìm và lọc chạy trên toàn bộ dữ liệu ở server (Q26).
 - Màn Service keys đổi thành "Khóa dịch vụ AI", chữ dễ hiểu, tên trùng tự thêm -1/-2 (Q27, version 45).
 - Quyết định đã chốt: Q1–Q27 (mục 13). Kế hoạch backend cho màn tài liệu: mục 15.
+- Đặc tả API hội thoại (B2, B5, registry model) cho GĐ 2: mục 19 (2026-11-18); giờ hỏi tính từ
+  `created_at − latency_ms` (19.2 W3, đã chốt).
 - **Còn mở**:
   1. Lưu `conversation_state.last_models` theo từng lượt (cột `product_models` mỗi lượt) hay chỉ
      sửa tạm đọc lượt `completed` gần nhất (mục M2/Q16).
@@ -495,10 +497,10 @@ Review tri thức: Domain, chưa có API.
 | # | Khoảng trống | Chặn | Mức |
 |---|---|---|---|
 | B1 | Đăng nhập bằng bảng tài khoản riêng + permission theo vai trò (đợt đầu `admin`), bảo vệ mọi route Workspace kể cả GET `/chatbot/*` (mục 14) | Mọi màn quản trị | Cao, làm trước |
-| B2 | Phân trang cursor cho `/chatbot/conversations` và `/history`, lọc kênh/thời gian phía server, endpoint chỉ số theo cùng bộ lọc (mục 13); thêm số câu hỏi mỗi hội thoại và tổng số câu hỏi (Q12); bộ lọc `handoff` cho kênh website (Q14); tìm kiếm theo Q15 và bộ lọc model sản phẩm (Q16) | M1, M2 | Cao |
+| B2 | Phân trang cursor cho `/chatbot/conversations` và `/history`, lọc kênh/thời gian phía server, endpoint chỉ số theo cùng bộ lọc (mục 13); thêm số câu hỏi mỗi hội thoại và tổng số câu hỏi (Q12); bộ lọc `handoff` cho kênh website (Q14); tìm kiếm theo Q15 và bộ lọc model sản phẩm (Q16). **Đặc tả: mục 19** | M1, M2 | Cao |
 | B3 | Ghi usage thật (từ trace) và đơn giá theo model vào `chat_history` | M2 | Trung bình |
 | B4 | API thống kê theo thời gian/kênh/model; lưu `credential_id` vào history | M2, M6 | Trung bình |
-| B5 | `/retrieval?history_id`; trả `retrieval_tasks`, `agent_steps`; ghi mã lỗi nhà cung cấp (vd `credit_balance_exhausted`) vào thuộc tính span LLM; cờ "có lỗi công cụ" cho lượt hoàn tất trong history/danh sách | M1, M3 | Trung bình |
+| B5 | `/retrieval?history_id`; trả `retrieval_tasks`, `agent_steps`; ghi mã lỗi nhà cung cấp (vd `credit_balance_exhausted`) vào thuộc tính span LLM; cờ "có lỗi công cụ" cho lượt hoàn tất trong history/danh sách; lưu nguồn của chunk vào snapshot. **Đặc tả: mục 19** | M1, M3 | Trung bình |
 | B6 | API chunk/phiên bản trên `doc_chunks_v2` (phiên bản đang kích hoạt mỗi `doc_id`, rollback, chunk phân trang offset theo `chunk_index`); bảng tài liệu (doc_id, phiên bản, link PDF trên CRM, hash, số trang) và kiểm file CRM khớp file đã xử lý (Q17); tải ảnh của chunk lên Supabase Storage + link có thời hạn; bảng revision của đoạn + API sửa/khôi phục + tạo lại embedding (Q18); bảng duyệt (người duyệt, thời điểm, ghi chú); tích hợp v2 vào chat | M5 | Cao |
 | B7 | API quản trị service key, `last_used_at`, rate limit | M6 | Theo nhu cầu |
 | B8 | Endpoint capability (cờ learning, trace persist, kênh CRM test) và endpoint registry model sản phẩm (Q16) | M1, M3, M4, M7 | Trung bình |
@@ -871,7 +873,7 @@ mặc định tắt). Không mô tả màn chạy fixture là đã xong (TR-10).
 |---|---|---|---|---|
 | 0 | Nền: thư mục, router, `AppShell`/sidebar/thanh dưới, tokens, component 18.3, lớp API, fixture, trang lỗi 404/403 | — | Có | **Xong 2026-11-18.** 27 test đạt, build đạt, code mới 0 lỗi lint (toàn repo còn 141 lỗi có sẵn ở trang cũ); `/` → Workspace mới, bản cũ ở `/legacy` |
 | 1 | Đăng nhập, đặt lại, đổi mật khẩu bắt buộc, `AuthProvider`, chặn route, 401/403, đăng xuất | **B1** (bảng tài khoản, phiên cookie, CSRF, `/workspace/auth/*`; contract giả định ở README luồng workspace-ui) | Không. Dựng với fixture | **Giao diện xong 2026-11-18** (fixture). Còn: đăng nhập thật được trên dev; mọi route Workspace yêu cầu đăng nhập (đóng DR-05) |
-| 2 | Lịch sử hội thoại, Chi tiết (2 khung tự cuộn), Diễn biến xử lý (4 trạng thái) | Đọc: **có sẵn**. Bổ sung: **B2** (phân trang, lọc kênh/thời gian/model, chỉ số cùng bộ lọc), **B5** (`/retrieval?history_id`, tài liệu nguồn), **B4** (chi phí) | Một phần: danh sách, lịch sử, trace đọc được ngay; bộ lọc chạy trên server chỉ có `search`, `status` | Đủ Q12–Q16, Q19, Q23, Q26 khi B2/B5 xong; trước đó ẩn các bộ lọc chưa có API thay vì lọc ở trình duyệt |
+| 2 | Lịch sử hội thoại, Chi tiết (2 khung tự cuộn), Diễn biến xử lý (4 trạng thái) | Đọc: **có sẵn**. Bổ sung: **B2** (phân trang, lọc kênh/thời gian/model, chỉ số cùng bộ lọc), **B5** (`/retrieval?history_id`, tài liệu nguồn). Không cần B4: chi phí ở v1 là ước tính từ `chat_history.cost_usd` (nhãn "Ước tính", Q4), ô Chi phí AI lấy từ endpoint chỉ số của B2; B3 chỉ để bỏ nhãn ước tính, B4 phục vụ thống kê/biểu đồ chưa có trong mock v1 | Một phần: danh sách, lịch sử, trace đọc được ngay; bộ lọc chạy trên server chỉ có `search`, `status` | Đủ Q12–Q16, Q19, Q23, Q26 khi B2/B5 xong; trước đó ẩn các bộ lọc chưa có API thay vì lọc ở trình duyệt |
 | 3 | Khóa dịch vụ AI | **B7** (API tạo/thu hồi khóa, tạm dừng kênh, tự thêm hậu tố tên, `last_used_at`) | Không (hiện chỉ có CLI) | Đủ Q27 |
 | 4 | Tài khoản (danh sách, tạo, khoá/mở, vô hiệu, cấp link đặt lại) | **B1** | Không | Đủ 14.3; không tự khoá chính mình hay admin cuối cùng |
 | 5 | Kho tài liệu, Xem và duyệt (PDF, Mục lục, tìm kiếm, sửa/lịch sử/khôi phục, duyệt/tắt, ảnh) | **B6** (mục 15), ảnh trên Storage, sửa T-07 để cây mục đúng | Không | Đủ Q17, Q18, Q20, Q24, Q25 trên dữ liệu thật `doc_chunks_v2` |
@@ -911,3 +913,171 @@ mỗi màn nối API thật ngay khi endpoint tương ứng xong.
 | Cây mục sai do lỗi T-07 (60 đoạn F54) và 2 lỗi F86 | Sửa T-07 trước GĐ 5; cây có nhóm "Chưa xác định mục" |
 | Danh sách hội thoại trả hết một lần (chưa phân trang) | Ưu tiên B2 trước khi dữ liệu lớn; tạm giới hạn hiển thị phía client |
 | Ảnh đoạn tài liệu chưa có trên Storage | GĐ 5 phụ thuộc việc tải ảnh lên; trước đó hiện khung thay thế |
+
+## 19. Đặc tả API hội thoại cho Workspace (B2, B5, registry của B8; chưa có code)
+
+Viết 2026-11-18 sau khi đối chiếu bảng thật (`chat_history`, `chat_traces`, `chat_sessions`)
+và luồng ghi của `services/chat_service.py`. Phục vụ màn Lịch sử hội thoại, Chi tiết, Diễn
+biến (GĐ 2). Route thuộc luồng chat-platform; khi làm thì chuyển phần đã chốt sang
+[api_guidelines.md](api_guidelines.md) cùng test (TR-06).
+
+### 19.1 Dữ liệu hiện có và chỗ thiếu
+
+Một request ghi **một dòng `chat_history` lúc lượt kết thúc** (`completed`, `error`, `blocked`,
+`cancelled`), cùng một dòng `chat_traces` nếu bật `CHAT_TRACE_PERSIST` (nối qua `history_id`).
+
+| Giao diện cần | Nguồn | Có sẵn? |
+|---|---|---|
+| Số câu hỏi | Đếm dòng `chat_history` của phiên | Có, tính được |
+| Model sản phẩm, mã ticket | `conversation_state.last_models`, `.ticket_id` | Có, nhưng **chỉ ghi ở lượt `completed`** |
+| Chuyển nhân viên | `conversation_state.mode != 'bot'` hoặc `last_intent` bắt đầu `handoff.` | Một phần: `DisabledHandoffProvider` nên `mode` luôn `bot`, `ticket_id` luôn rỗng (Q14) |
+| Bước của trợ lý CRM, lỗi công cụ | `retrieval_snapshot.agent_steps` (status từng bước), root trace `tool_errors` | Có trong DB, API chưa trả |
+| Tài liệu nguồn của đoạn | `ChunkHit` có `chunk_id`, `doc_id`, `section_title`, `section_path` | **Không lưu**: `_retrieval_snapshot` bỏ các trường này (W1) |
+| Giờ hỏi | — | **Không có**: `created_at` ≈ `updated_date` = lúc ghi, tức giờ trả lời (W3) |
+| Mã lỗi nhà cung cấp AI | Span LLM chỉ có `error_type` | **Không có**: 429 hết credit và 429 gọi quá nhanh giống nhau (W2) |
+| Chi phí | `cost_usd` ước tính trên câu hỏi + câu trả lời, giá gpt-4o-mini, tính cả lượt lỗi | Có, giữ nhãn "Ước tính" (Q4); chi phí thật là B3 |
+| `retrieved_chunk_ids` | Cột có trong bảng | Chưa bao giờ được ghi |
+
+### 19.2 Sửa luồng ghi
+
+| # | Thay đổi | Ghi chú |
+|---|---|---|
+| W1 | `_retrieval_snapshot` lưu thêm `chunk_id`, `doc_id`, `section_title`, `section_path` cho mỗi chunk | Lượt cũ không có: API trả `null`, giao diện hiện "Không rõ nguồn" |
+| W2 | Span `llm.*` lỗi ghi thêm `provider_error_code` (vd `credit_balance_exhausted`, `rate_limit_exceeded`) và `http_status` | Chỉ metadata, không có nội dung (luật trace của chat-platform) |
+| W3 | Giờ hỏi = `created_at − latency_ms`, tính khi đọc; **không** thêm cột `asked_at` | **Đã chốt (Toma 2026-11-18).** Không đổi schema, áp dụng cả lượt cũ; lệch vài ms do thời gian ghi DB. `latency_ms` rỗng thì `asked_at = null`, giao diện chỉ hiện giờ trả lời |
+
+### 19.3 Tương thích ngược
+
+`/legacy` (bản Workspace cũ) đang gọi `/chatbot/conversations`, `/history`, `/retrieval`. Mọi
+thay đổi dưới đây **chỉ thêm**: không gửi `limit` thì trả như cũ (toàn bộ), các trường cũ
+giữ nguyên. Bỏ hành vi cũ khi xoá `/legacy` ở GĐ 6. Mọi route yêu cầu đăng nhập Workspace và
+quyền `conversations:read` (B1, đóng DR-05).
+
+### 19.4 `GET /chatbot/conversations` (sửa, B2)
+
+| Tham số | Kiểu | Nghĩa |
+|---|---|---|
+| `q` | chuỗi ≤ 200 | Q15: khớp `query_origin` của **mọi lượt**; mã ticket (`TK-1048` hoặc `#TK-1048`); model sản phẩm; mã hội thoại (UUID, khớp chính xác). Không phân biệt hoa thường và dấu (`unaccent`), escape `%` `_`. Không tìm trong câu trả lời. `search` cũ vẫn nhận, coi như `q` |
+| `status` | `completed` \| `handoff` \| `blocked` \| `error` \| `cancelled` | Trạng thái hội thoại = trạng thái lượt mới nhất; `handoff` = phiên có lượt thoả dòng "Chuyển nhân viên" ở 19.1. Giao diện không đưa `cancelled` vào bộ lọc (Q14) |
+| `channel` | `website` \| `crm` | |
+| `product_model` | mã registry, lặp được | Q16: so với `last_models` của **lượt `completed` mới nhất** (còn mở: thêm cột theo lượt, mục Trạng thái, ý 1) |
+| `from`, `to` | `YYYY-MM-DD` | Q19: giờ `Asia/Ho_Chi_Minh`, tính cả hai đầu → UTC `[from 00:00, to+1 00:00)`. Hội thoại khớp khi có **ít nhất một lượt** trong khoảng. Thiếu một đầu, `from > to`, `to` sau hôm nay, quá 366 ngày → `422 invalid_date_range` |
+| `limit` | 1–100 | Có thì phân trang; Workspace gửi 25 (Q26). Không có thì trả hết như cũ |
+| `cursor` | chuỗi mờ | `next_cursor` của trang trước. Sai hoặc không khớp bộ lọc → `422 invalid_cursor` |
+
+Thứ tự: lọc trên toàn bộ dữ liệu → sắp `(last_message_at desc, session_id)` → cắt trang theo
+keyset. Response giữ khoá cũ, thêm trường mới:
+
+```json
+{
+  "conversations": [
+    {
+      "session_id": "…", "channel": "crm", "status": "completed",
+      "last_query": "…", "created_at": "lượt đầu", "updated_date": "lượt cuối",
+      "product_models": ["F86"], "ticket_id": null, "model": "gpt-4o-mini",
+      "question_count": 7, "has_handoff": false, "has_tool_errors": true,
+      "total_tokens": 120, "cost_usd": 0.0001
+    }
+  ],
+  "next_cursor": "eyJ0IjoiMjAyNi0xMS0xOFQwODox…"
+}
+```
+
+- `question_count`: mọi lượt của phiên (không giới hạn theo `from`/`to`).
+- `has_tool_errors`: phiên có lượt mà `agent_steps` có status khác `ok`/`deduplicated` (như 19.7).
+- `next_cursor = null`: hết dữ liệu. Có `limit` thì **không** trả `total`, `conversation_count`… (lấy ở 19.5).
+- Hội thoại có lượt mới trong lúc đang tải thêm sẽ nhảy lên đầu: frontend bỏ dòng trùng theo `session_id`.
+
+### 19.5 `GET /chatbot/conversations/metrics` (mới, B2)
+
+Cùng tham số lọc với 19.4 (trừ `limit`, `cursor`). Sửa F8.
+
+```json
+{
+  "conversation_count": 312,
+  "handoff_count": 4,
+  "question_count": 1280,
+  "cost_usd": 0.41,
+  "cost_vnd": 10660,
+  "cost_source": "estimate"
+}
+```
+
+`conversation_count` = số hội thoại khớp (giá trị "y" trong "Đang hiển thị x / y").
+`question_count` và chi phí: các lượt của những hội thoại khớp, **chỉ tính lượt trong
+khoảng thời gian** khi có `from`/`to` (ô số liệu ghi "trong 7 ngày qua"). `cost_vnd` =
+`cost_usd × USD_TO_VND_RATE`. Không trả token (Q12).
+
+### 19.6 `GET /chatbot/conversations/{session_id}` (mới, B2)
+
+Phần đầu màn Chi tiết khi mở thẳng bằng link: cùng trường của một dòng 19.4, thêm
+`acting_user_id` (nhân viên CRM, từ `chat_sessions`; `null` với khách website). Không có
+phiên → `404 session_not_found`.
+
+### 19.7 `GET /chatbot/sessions/{session_id}/history` (sửa, B2 + B5)
+
+| Tham số | Nghĩa |
+|---|---|
+| `limit` | 1–100; Workspace gửi 20 (Q26). Không có thì trả hết như cũ |
+| `cursor` | Trỏ về các lượt **cũ hơn**; trang đầu là `limit` lượt mới nhất |
+
+`messages` luôn xếp theo thời gian tăng dần trong trang; thêm `next_cursor` (`null` khi đã tới
+lượt đầu). Mỗi lượt thêm:
+
+| Trường | Cách tính |
+|---|---|
+| `asked_at`, `answered_at` | W3: `asked_at` = `created_at − latency_ms` (`null` khi thiếu `latency_ms`); `answered_at` = `created_at` |
+| `retrieval_status` | `retrieval_snapshot.retrieval_status` (`null` với lượt cũ) |
+| `retrieval_chunk_count` | Số phần tử `retrieval_snapshot.chunks`; để hiện "Tài liệu đã dùng (n)" mà không gọi 19.8 cho từng lượt |
+| `has_tool_errors` | `agent_steps` có status khác `ok`/`deduplicated`; lượt không phải agent luôn `false` |
+| `has_trace` | Có dòng `chat_traces` cùng `history_id` (index `chat_traces_history_idx` đã có) |
+
+### 19.8 `GET /chatbot/sessions/{session_id}/retrieval?history_id=` (sửa, B5)
+
+Có `history_id` thì trả snapshot của đúng lượt đó; không có thì như cũ (lượt mới nhất có
+chunk). `history_id` không thuộc phiên → `404 history_not_found`. Lượt không tra cứu trả `200`
+với `chunks: []` và `retrieval_status` (`not_applicable` hoặc `null`), không phải 404. Thêm
+vào response:
+
+- mỗi chunk: `chunk_id`, `doc_id`, `section_title`, `section_path` (W1; `null` với lượt cũ). Tên
+  tài liệu hiển thị lấy theo `doc_id` từ bảng tài liệu của B6; trước đó hiện `doc_id`;
+- `retrieval_tasks`, `agent_steps`, `answered_without_tools`, `invalid_citations` (đã có trong DB,
+  chỉ metadata) cho phần "Chi tiết kỹ thuật".
+
+### 19.9 `GET /chatbot/sessions/{session_id}/trace` (giữ, thêm W2)
+
+Không đổi route. Span LLM lỗi có thêm `provider_error_code`, `http_status` để màn Diễn biến nói
+rõ "Hết credit OpenAI" hay "Gọi AI quá nhanh".
+
+### 19.10 `GET /chatbot/product-models` (mới, phần registry của B8)
+
+```json
+{ "models": [ { "code": "6AH", "name": "Astro 6AH" } ] }
+```
+
+Query `for=conversation_filter` trả đúng 7 mục của Q16 (F54, F86, F10T, 10S, 6AH, 6AV, 10i)
+theo thứ tự đó; không có thì trả cả registry (`extraction/registry.py`). Frontend không ghi
+cứng danh sách.
+
+### 19.11 SQL, index, hiệu năng
+
+- File mới trong `sql/` (idempotent, áp tay, DR-04): `CREATE EXTENSION IF NOT EXISTS unaccent`;
+  index `chat_history (session_id, created_at, id)` cho 19.7 và `chat_history (created_at)` cho
+  lọc thời gian.
+- Truy vấn danh sách hiện chạy window function trên toàn `chat_history` mỗi request. Với dữ liệu
+  hiện tại chấp nhận được; khi chậm (vd > 100.000 lượt) thêm bảng tóm tắt mỗi hội thoại cập nhật
+  lúc ghi lượt, và index phục vụ tìm kiếm.
+
+### 19.12 Test cần có
+
+Lọc theo từng tham số và kết hợp; tìm thấy hội thoại qua lượt **không phải** lượt cuối; tìm
+không dấu và escape `%`; phân trang không trùng, không sót khi dữ liệu đứng yên; `cursor` sai →
+422; metrics khớp đúng tập của danh sách cùng bộ lọc; ranh giới ngày theo giờ Việt Nam; gọi
+không `limit` trả như cũ (`/legacy`); `history_id` của phiên khác → 404; chưa đăng nhập → 401,
+thiếu quyền → 403.
+
+### 19.13 Giao diện làm gì trong lúc chờ
+
+Trước B2: chỉ ô tìm (`search` cũ, lượt cuối) và lọc trạng thái; ẩn Kênh, Thời gian, Model sản
+phẩm và 4 ô số liệu; không có "Tải thêm". Trước B5: khung tài liệu chỉ có cho lượt mới nhất,
+thẻ đoạn không có nguồn. Bật từng phần khi endpoint tương ứng xong.

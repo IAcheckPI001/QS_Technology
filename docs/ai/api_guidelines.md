@@ -82,6 +82,10 @@ database lỗi trả `503 database_unavailable`.
 
 ### `GET /chatbot/conversations`
 
+Thay đổi dự kiến cho QS AI Workspace (phân trang, lọc, chỉ số theo bộ lọc, retrieval theo
+lượt; chưa có code): [FRONTEND_REQUIREMENTS.md mục 19](FRONTEND_REQUIREMENTS.md). Mục này
+vẫn mô tả hành vi hiện tại.
+
 Query: `search` (tối đa 200 ký tự, khớp `query_origin` hoặc `model` của lượt
 mới nhất) và `status` (`completed` | `blocked` | `error` | `cancelled`; giá trị khác trả
 `422`). Mỗi session một dòng, mới nhất trước:
