@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tài khoản (điện thoại)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9EBEF}
+a{color:#5C3810}a:hover{color:#482B09}
+.phone{width:390px;height:844px;position:relative;overflow:hidden;display:flex;flex-direction:column;background:#F5F6F8;font-family:Inter,system-ui,sans-serif;color:#161A22}
+.appbar{flex:none;height:56px;display:flex;align-items:center;gap:4px;padding:0 4px 0 16px;background:#FFFFFF;border-bottom:1px solid #E3E6EB}
+.appbar h1{flex:1;min-width:0;margin:0;font-size:18px;font-weight:600}
+.icon-btn{all:unset;box-sizing:border-box;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;color:#3B4250;cursor:pointer}
+.icon-btn:focus-visible{outline:2px solid #5C3810}
+.body{flex:1;min-height:0;overflow-y:auto;padding:12px 16px 24px;display:flex;flex-direction:column;gap:12px}
+.body>*{flex-shrink:0}
+.tabbar{flex:none;height:64px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:#FFFFFF;border-top:1px solid #E3E6EB}
+.tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:500;color:#5B6372;text-decoration:none}
+.tabbar a.on{color:#5C3810;font-weight:600;box-shadow:inset 0 3px 0 #E69D07}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px}
+.badge{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 12px;border:1px solid #C9CED6;border-radius:10px;background:#FFFFFF;font:inherit;font-size:14px;font-weight:500;color:#161A22;cursor:pointer;text-decoration:none;box-sizing:border-box}
+.btn.primary{background:#5C3810;border-color:#5C3810;color:#FFFFFF;font-weight:600}
+.btn.danger{background:#B42318;border-color:#B42318;color:#FFFFFF;font-weight:600}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.scrim{position:absolute;inset:0;z-index:40;background:rgba(15,18,24,0.45);display:flex;flex-direction:column;justify-content:flex-end}
+.sheet{background:#FFFFFF;border-radius:16px 16px 0 0;max-height:90%;display:flex;flex-direction:column}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:6px 4px 6px 16px;border-bottom:1px solid #EEF0F4}
+.sheet-head h2{margin:0;font-size:17px;font-weight:600}
+.sheet-body{overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.sheet-foot{display:flex;gap:8px;padding:12px 16px 16px;border-top:1px solid #EEF0F4}
+.sheet-foot .btn{flex:1}
+.toast{position:absolute;left:12px;right:12px;bottom:76px;z-index:60;display:flex;align-items:center;gap:10px;padding:10px 8px 10px 14px;border-radius:12px;background:#161A22;color:#FFFFFF;font-size:13px;line-height:1.45;box-shadow:0 8px 24px rgba(22,26,34,0.25)}
+.toast button{all:unset;cursor:pointer;color:#C9CED6;min-width:32px;min-height:32px;display:inline-flex;align-items:center;justify-content:center}
+</style>
+</helmet>
+<div class="phone">
+  <header class="appbar">
+    <h1>Tài khoản</h1>
+    <button type="button" class="icon-btn" aria-label="Thêm tài khoản"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+  </header>
+
+  <div class="body">
+    <section class="card" aria-label="Tài khoản đang đăng nhập" style="padding: 14px; display: flex; align-items: center; gap: 12px">
+      <div style="width: 44px; height: 44px; flex: none; border-radius: 50%; background: #F5EDE3; color: #482B09; display: flex; align-items: center; justify-content: center; font-weight: 600">QT</div>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+        <strong style="font-size: 15px">Quản trị viên (bạn)</strong>
+        <span style="font-size: 13px; color: #5B6372; overflow-wrap: anywhere">admin@qstcnc.com · admin</span>
+      </div>
+      <a class="btn" href="MobileLogin.dc.html">Đăng xuất</a>
+    </section>
+
+    <p style="margin: 0; font-size: 13px; color: #5B6372; line-height: 1.5">Đợt đầu chỉ có vai trò admin. Không thể khoá, vô hiệu hoặc hạ quyền admin cuối cùng đang hoạt động.</p>
+
+    <sc-for list="{{users}}" as="u" hint-placeholder-count="4">
+      <article class="card" style="padding: 14px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; gap: 8px; align-items: flex-start">
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+            <strong style="font-size: 15px">{{u.name}}</strong>
+            <span style="font-size: 13px; color: #5B6372; overflow-wrap: anywhere">{{u.email}}</span>
+          </div>
+          <span class="badge" style="{{u.stateStyle}}">{{u.state}}</span>
+        </div>
+        <span style="font-size: 13px; color: #3B4250">admin · đăng nhập gần nhất {{u.last}}</span>
+        <sc-if value="{{u.isSelf}}" hint-placeholder-val="{{ false }}">
+          <span style="font-size: 12px; color: #5B6372">Không tự khoá được tài khoản đang dùng.</span>
+        </sc-if>
+        <sc-if value="{{u.notSelf}}" hint-placeholder-val="{{ true }}">
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+            <button type="button" class="btn" onClick="{{u.primaryAct}}">{{u.primary}}</button>
+            <button type="button" class="btn" onClick="{{u.reset}}">Cấp link đặt lại</button>
+          </div>
+        </sc-if>
+      </article>
+    </sc-for>
+  </div>
+
+  <nav class="tabbar" aria-label="Điều hướng chính">
+    <a href="MobileConversations.dc.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>Hội thoại</a>
+    <a href="MobileDocuments.dc.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg>Tài liệu</a>
+    <a href="MobileServiceKeys.dc.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="m11 12 9-9M17 6l3 3"></path></svg>Khóa AI</a>
+    <a class="on" href="MobileUsers.dc.html" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-4-5.7"></path></svg>Tài khoản</a>
+  </nav>
+
+  <sc-if value="{{resetSheet.open}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim" onClick="{{resetSheet.close}}" onKeyDown="{{resetSheet.onKey}}">
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="reset-title" onClick="{{stop}}">
+        <div class="sheet-head">
+          <h2 id="reset-title">Link đặt lại mật khẩu</h2>
+          <button type="button" class="icon-btn" data-autofocus onClick="{{resetSheet.close}}" aria-label="Đóng"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+        </div>
+        <div class="sheet-body">
+          <p style="margin: 0; font-size: 15px; color: #3B4250; line-height: 1.55">Gửi link cho <strong>{{resetSheet.name}}</strong> qua kênh nội bộ. Link dùng một lần, hết hạn sau 30 phút; người dùng phải đặt mật khẩu mới (tối thiểu 12 ký tự).</p>
+          <code class="mono" style="padding: 12px; border-radius: 10px; background: #F5F6F8; font-size: 13px; overflow-wrap: anywhere">https://[WORKSPACE_DOMAIN]/reset#t=••••••••</code>
+          <span style="font-size: 13px; color: #5B6372">Hết hạn lúc 09:42 · mọi phiên cũ của người dùng đã bị thu hồi.</span>
+        </div>
+        <div class="sheet-foot">
+          <button type="button" class="btn primary" onClick="{{resetSheet.copy}}">{{resetSheet.copyLabel}}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{dlg.open}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim" style="z-index: 55" onClick="{{dlg.cancel}}" onKeyDown="{{dlg.onKey}}">
+      <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="u-dlg-title" onClick="{{stop}}">
+        <div class="sheet-body">
+          <h2 id="u-dlg-title" style="margin: 0; font-size: 17px; font-weight: 600">{{dlg.title}}</h2>
+          <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #3B4250">{{dlg.body}}</p>
+        </div>
+        <div class="sheet-foot">
+          <button type="button" class="btn" data-autofocus onClick="{{dlg.cancel}}">Huỷ</button>
+          <button type="button" class="btn danger" onClick="{{dlg.confirm}}">{{dlg.confirmLabel}}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{toast.show}}" hint-placeholder-val="{{ false }}">
+    <div class="toast" role="status" aria-live="polite"><span style="flex: 1; min-width: 0">{{toast.text}}</span><button type="button" onClick="{{toast.close}}" aria-label="Đóng thông báo">×</button></div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const STYLE = { active: 'background:#E6F4EC;color:#1D5E3A', must: 'background:#F5EDE3;color:#482B09', locked: 'background:#FFF4E5;color:#7A4300', off: 'background:#EEF0F4;color:#3B4250' };
+    const LABEL = { active: 'Hoạt động', must: 'Chờ đổi mật khẩu', locked: 'Tạm khoá', off: 'Vô hiệu' };
+    const INITIAL = [
+      { id: 'u1', name: 'Quản trị viên', email: 'admin@qstcnc.com', state: 'active', last: '17/11 09:05', self: true },
+      { id: 'u2', name: 'Nguyễn Văn B', email: 'b.nguyen@qstcnc.com', state: 'must', last: '—' },
+      { id: 'u3', name: 'Trần Thị C', email: 'c.tran@qstcnc.com', state: 'locked', last: '16/11 18:20' },
+      { id: 'u4', name: 'Lê Văn D', email: 'd.le@qstcnc.com', state: 'off', last: '02/11 10:11' }
+    ];
+    const users = st.users || INITIAL;
+    const fresh = () => this.state || {};
+    const showToast = (patch, text) => {
+      const id = Date.now();
+      this.setState({ ...patch, toast: { id, text } });
+      setTimeout(() => { if ((fresh().toast || {}).id === id) this.setState({ toast: null }); }, 6000);
+    };
+    const setUser = (id, state) => users.map((u) => (u.id === id ? { ...u, state } : u));
+    const closeDlg = () => this.setState({ confirm: null });
+    const cf = st.confirm;
+    const target = cf && users.find((u) => u.id === cf.id);
+    const dlg = target ? {
+      open: true, title: 'Khoá ' + target.name + '?',
+      body: 'Người dùng bị đăng xuất khỏi mọi phiên và không đăng nhập được cho tới khi mở khoá.',
+      confirmLabel: 'Khoá tài khoản', cancel: closeDlg,
+      onKey: (e) => { if (e.key === 'Escape') { e.preventDefault(); closeDlg(); } },
+      confirm: () => showToast({ confirm: null, users: setUser(target.id, 'locked') }, 'Đã khoá ' + target.name + '.')
+    } : { open: false };
+    const rs = st.resetFor && users.find((u) => u.id === st.resetFor);
+    const closeReset = () => this.setState({ resetFor: null, resetCopied: false });
+    const resetSheet = rs ? {
+      open: true, name: rs.name, close: closeReset,
+      onKey: (e) => { if (e.key === 'Escape') { e.preventDefault(); closeReset(); } },
+      copyLabel: st.resetCopied ? 'Đã sao chép link' : 'Sao chép link',
+      copy: () => showToast({ resetCopied: true }, 'Đã sao chép link đặt lại cho ' + rs.name + '.')
+    } : { open: false };
+    const ts = st.toast;
+    return {
+      users: users.map((u) => {
+        const act = u.state === 'locked' ? ['Mở khoá', () => showToast({ users: setUser(u.id, 'active') }, 'Đã mở khoá ' + u.name + '.')]
+          : u.state === 'off' ? ['Kích hoạt lại', () => showToast({ users: setUser(u.id, 'active') }, 'Đã kích hoạt lại ' + u.name + '.')]
+          : ['Khoá', () => this.setState({ confirm: { id: u.id } })];
+        return {
+          ...u, isSelf: !!u.self, notSelf: !u.self,
+          state: u.state === 'locked' && u.id === 'u3' ? 'Tạm khoá đến 14:35' : LABEL[u.state], stateStyle: STYLE[u.state],
+          primary: act[0], primaryAct: act[1],
+          reset: () => this.setState({ resetFor: u.id, resetCopied: false })
+        };
+      }),
+      dlg, resetSheet,
+      stop: (e) => e.stopPropagation(),
+      toast: ts ? { show: true, text: ts.text, close: () => this.setState({ toast: null }) } : { show: false }
+    };
+  }
+}
+</script>
+</body>
+</html>

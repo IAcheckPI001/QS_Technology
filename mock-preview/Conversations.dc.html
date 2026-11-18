@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lịch sử hội thoại</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F8}
+a{color:#5C3810}a:hover{color:#482B09}
+.side{position:sticky;top:0;height:100vh;flex:none;width:248px;box-sizing:border-box;background:#FFFFFF;border-right:1px solid #E3E6EB;padding:16px 12px;display:flex;flex-direction:column;gap:16px;transition:width .15s ease;z-index:20}
+.side.collapsed{width:72px;padding:16px 10px}
+.side-head{display:flex;align-items:center;gap:8px;min-height:44px}
+.side-logo{display:block;height:28px;width:auto;flex:none}
+.side-name{flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-toggle{all:unset;box-sizing:border-box;width:36px;height:36px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;color:#5B6372;cursor:pointer}
+.side-toggle:hover{background:#EEF0F4;color:#161A22}
+.side-toggle:focus-visible,.side-nav a:focus-visible,.logout:focus-visible{outline:2px solid #5C3810;outline-offset:2px}
+.side.collapsed .side-head{flex-direction:column;gap:6px}
+.side.collapsed .side-logo{height:24px}
+.side.collapsed .side-name{display:none}
+.side-nav{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.side-nav a{position:relative;display:flex;align-items:center;gap:10px;min-height:40px;padding:0 12px;border-radius:8px;color:#3B4250;text-decoration:none;font-size:14px;white-space:nowrap}
+.side-nav a svg{flex:none}
+.side-nav a:hover{background:#EEF0F4;color:#161A22}
+.side-nav a.on{background:#F5EDE3;color:#482B09;font-weight:600;box-shadow:inset 3px 0 0 #E69D07}
+.side-nav .tag{margin-left:auto}
+.side-nav .dot{display:none;position:absolute;top:8px;right:10px;width:7px;height:7px;border-radius:50%;background:#E69D07}
+.side.collapsed .side-nav a{justify-content:center;padding:0;min-height:44px}
+.side.collapsed .side-nav .dot{display:block}
+.side.collapsed .tag{display:none}
+.side.collapsed .lbl{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.acct{border-top:1px solid #E3E6EB;padding-top:12px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.avatar{width:36px;height:36px;flex:none;border-radius:50%;background:#F5EDE3;color:#482B09;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+.acct-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.acct-info strong{font-size:13px}
+.acct-info span{font-size:12px;color:#5B6372;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.logout{flex:1 1 100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;border:1px solid #C9CED6;border-radius:8px;background:#FFFFFF;color:#161A22;font-size:13px;font-weight:500;text-decoration:none;box-sizing:border-box}
+.logout:hover{background:#F5F6F8;color:#161A22}
+.side.collapsed .acct{flex-direction:column;flex-wrap:nowrap;gap:8px}
+.side.collapsed .logout{flex:none;width:44px;height:44px;padding:0}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px}
+.badge{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{text-align:left;font-size:12px;font-weight:600;color:#5B6372;padding:10px 16px;border-bottom:1px solid #E3E6EB;white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid #EEF0F4;vertical-align:top}
+.field{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#3B4250}
+.field input,.field select{height:40px;border:1px solid #C9CED6;border-radius:8px;padding:0 10px;font:inherit;font-size:14px;color:#161A22;background:#FFFFFF}
+.filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.filters>.field,.filters>.fwrap{flex:1 1 150px;min-width:0}
+.filters>.field.search{flex:2 1 260px}
+.fwrap{position:relative;display:flex;flex-direction:column}
+.dropdown{position:absolute;top:calc(100% + 8px);right:0;z-index:30;width:min(560px,calc(100vw - 32px));box-sizing:border-box;background:#FFFFFF;border:1px solid #C9CED6;border-radius:12px;box-shadow:0 12px 32px rgba(22,26,34,0.18);padding:16px;display:flex;flex-direction:column;gap:12px}
+.dropdown::before{content:"";position:absolute;top:-7px;right:28px;width:12px;height:12px;background:#FFFFFF;border-left:1px solid #C9CED6;border-top:1px solid #C9CED6;transform:rotate(45deg)}
+.backdrop{position:fixed;inset:0;z-index:29;background:transparent}
+.empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:40px 16px;text-align:center}
+@media (max-width: 720px){
+.filters>.fwrap{position:static}
+.filters{position:relative}
+.dropdown{left:0;right:0;width:auto}
+.dropdown::before{display:none}
+}
+@media (max-width: 720px){
+.layout{flex-wrap:wrap}
+.side,.side.collapsed{position:static;height:auto;width:100%;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 12px;border-right:0;border-bottom:1px solid #E3E6EB}
+.side .side-head,.side.collapsed .side-head{flex:1;min-width:0;flex-direction:row}
+.side-toggle{display:none}
+.side.collapsed .side-name{display:block}
+.side.collapsed .side-logo{height:28px}
+.side-nav{order:3;flex:1 1 100%;flex-direction:row;overflow-x:auto;overflow-y:visible;gap:4px}
+.side .side-nav a,.side.collapsed .side-nav a{padding:0 12px;justify-content:flex-start;min-height:36px}
+.side .lbl,.side.collapsed .lbl{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto}
+.side .tag,.side.collapsed .tag{display:inline-flex}
+.side .dot,.side.collapsed .dot{display:none}
+.side .acct,.side.collapsed .acct{border-top:0;padding-top:0;flex-direction:row;flex-wrap:nowrap;gap:8px}
+.side .acct-info{display:none}
+.side .logout,.side.collapsed .logout{flex:none;width:44px;height:44px;padding:0}
+.side .logout .lbl{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0)}
+main{flex:1 1 100%!important;padding:20px 16px 88px!important}
+}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #161A22; background: #F5F6F8; min-height: 1080px; display: flex" class="layout">
+  <aside class="{{sideCls}}" aria-label="Thanh bên">
+    <div class="side-head">
+      <img src="/_blob/86830720c49af76fcd030978bdac7833" alt="QS Technology" width="51" height="28" class="side-logo">
+      <strong class="side-name">QS AI Workspace</strong>
+      <button type="button" class="side-toggle" onClick="{{toggleSide}}" aria-expanded="{{sideExpanded}}" aria-label="{{toggleLabel}}" title="{{toggleLabel}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="{{toggleD}}"></path></svg></button>
+    </div>
+    <nav class="side-nav" aria-label="Điều hướng chính">
+      <a class="{{navCls.conversations}}" href="Conversations.dc.html" aria-current="{{navCur.conversations}}" title="{{navTitle.conversations}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg><span class="lbl">Lịch sử hội thoại</span></a>
+      <a class="{{navCls.documents}}" href="Documents.dc.html" aria-current="{{navCur.documents}}" title="{{navTitle.documents}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg><span class="lbl">Tài liệu &amp; chunk</span></a>
+      <a class="{{navCls.keys}}" href="ServiceKeys.dc.html" aria-current="{{navCur.keys}}" title="{{navTitle.keys}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="m11 12 9-9M17 6l3 3"></path></svg><span class="lbl">Khóa dịch vụ AI</span></a>
+      <a class="{{navCls.users}}" href="Users.dc.html" aria-current="{{navCur.users}}" title="{{navTitle.users}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-4-5.7"></path></svg><span class="lbl">Tài khoản</span></a>
+      <a class="{{navCls.learning}}" href="#learning" aria-current="{{navCur.learning}}" title="{{navTitle.learning}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"></path><path d="M8 7h6"></path></svg><span class="lbl">Học tri thức</span><span class="badge tag" style="background: #EEF0F4; color: #3B4250">Thử nghiệm</span><span class="dot" aria-hidden="true"></span></a>
+    </nav>
+    <div class="acct">
+      <span class="avatar" title="{{acctTitle}}" aria-hidden="true">QT</span>
+      <span class="acct-info lbl"><strong>Quản trị viên</strong><span>admin@qstcnc.com · admin</span></span>
+      <a class="logout" href="Main.dc.html" title="Đăng xuất"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"></path><path d="M10 17l-5-5 5-5M5 12h11"></path></svg><span class="lbl">Đăng xuất</span></a>
+    </div>
+  </aside>
+
+  <main style="flex: 1 1 0; min-width: 0; padding: 28px 32px 96px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+    <header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <h1 style="margin: 0; font-size: 24px; font-weight: 600">Lịch sử hội thoại</h1>
+        <p style="margin: 0; font-size: 14px; color: #5B6372">Hội thoại chatbot trên website và CRM. Số liệu tính theo bộ lọc đang chọn.</p>
+      </div>
+      <span class="badge" style="background: #FFF4E5; color: #7A4300">Dữ liệu mẫu</span>
+    </header>
+
+    <section class="card filters" aria-label="Bộ lọc" style="padding: 16px">
+      <label class="field search">Tìm kiếm
+        <input type="search" value="{{q}}" onInput="{{onQ}}" placeholder="Câu hỏi, mã ticket, model sản phẩm, mã hội thoại">
+      </label>
+      <label class="field">Kênh
+        <select value="{{channel}}" onChange="{{onChannel}}"><option value="all">Tất cả</option><option value="website">Website</option><option value="crm">CRM</option></select>
+      </label>
+      <label class="field">Trạng thái
+        <select value="{{status}}" onChange="{{onStatus}}">
+          <option value="all">Tất cả</option>
+          <option value="completed">Hoàn tất</option>
+          <option value="handoff" disabled="{{isCrm}}">{{handoffLabel}}</option>
+          <option value="blocked">Bị chặn</option>
+          <option value="error">Lỗi</option>
+        </select>
+      </label>
+      <label class="field">Model sản phẩm
+        <select value="{{model}}" onChange="{{onModel}}">
+          <option value="">Tất cả</option>
+          <option value="F54">F54</option>
+          <option value="F86">F86</option>
+          <option value="F10T">F10T</option>
+          <option value="10S">Astro 10S</option>
+          <option value="6AH">Astro 6AH</option>
+          <option value="6AV">Astro 6AV</option>
+          <option value="10i">Astro 10i</option>
+        </select>
+      </label>
+      <div class="fwrap">
+      <label class="field">Thời gian
+        <select value="{{timeSelect}}" onChange="{{onTime}}" aria-expanded="{{rangeOpen}}" aria-controls="range-dropdown">
+          <option value="today">Hôm nay</option>
+          <option value="7d">7 ngày qua</option>
+          <option value="30d">30 ngày qua</option>
+          <option value="month">Tháng này</option>
+          <option value="custom">{{customLabel}}</option>
+        </select>
+      </label>
+
+    <sc-if value="{{rangeOpen}}" hint-placeholder-val="{{ false }}">
+      <div class="backdrop" onClick="{{cancelRange}}" aria-hidden="true"></div>
+      <div id="range-dropdown" onKeyDown="{{rangeKey}}" role="dialog" aria-labelledby="range-title" class="dropdown">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+          <h2 id="range-title" style="margin: 0; font-size: 15px; font-weight: 600">Chọn khoảng thời gian</h2>
+          <span style="font-size: 12px; color: #5B6372">Giờ Việt Nam (UTC+7)</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{presets}}" as="pr" hint-placeholder-count="5">
+            <button type="button" onClick="{{pr.pick}}" style="height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid #C9CED6; background: {{pr.bg}}; color: {{pr.fg}}; font: inherit; font-size: 13px; cursor: pointer">{{pr.label}}</button>
+          </sc-for>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <label class="field">Từ ngày<input type="date" data-autofocus value="{{from}}" max="2026-11-17" onChange="{{onFrom}}"></label>
+          <label class="field">Đến ngày<input type="date" value="{{to}}" max="2026-11-17" onChange="{{onTo}}"></label>
+        </div>
+        <sc-if value="{{rangeError}}" hint-placeholder-val="{{ false }}">
+          <p role="alert" style="margin: 0; font-size: 13px; color: #8A1C12">{{rangeError}}</p>
+        </sc-if>
+        <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #5B6372">Lọc các hội thoại có ít nhất một tin nhắn trong khoảng này (tính cả ngày đầu và ngày cuối). Các ô số liệu phía trên cũng tính theo khoảng đã chọn.</p>
+        <div style="display: flex; justify-content: flex-end; gap: 8px">
+          <button type="button" onClick="{{cancelRange}}" style="height: 38px; padding: 0 14px; border: 1px solid #C9CED6; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; cursor: pointer">Huỷ</button>
+          <button type="button" onClick="{{applyRange}}" disabled="{{applyDisabled}}" style="height: 38px; padding: 0 16px; border: 0; border-radius: 8px; background: #5C3810; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; opacity: {{applyOpacity}}">Áp dụng</button>
+        </div>
+      </div>
+    </sc-if>
+      </div>
+    </section>
+
+    <sc-if value="{{rangeChip}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px">
+        <span style="color: #5B6372">Đang lọc:</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 6px 0 12px; border-radius: 999px; background: #F5EDE3; color: #482B09; font-weight: 500">{{rangeChip}}
+          <button type="button" onClick="{{editRange}}" style="all: unset; cursor: pointer; padding: 0 4px; color: #5C3810; font-size: 12px">Sửa</button>
+          <button type="button" onClick="{{clearRange}}" aria-label="Bỏ lọc thời gian" style="all: unset; cursor: pointer; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center">×</button>
+        </span>
+      </div>
+    </sc-if>
+
+    <section aria-label="Chỉ số" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 12px">
+      <sc-for list="{{metrics}}" as="m" hint-placeholder-count="4">
+        <div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span style="font-size: 12px; font-weight: 600; color: #5B6372">{{m.label}}</span>
+            <sc-if value="{{m.estimate}}" hint-placeholder-val="{{ false }}"><span class="badge" style="background: #FFF4E5; color: #7A4300">Ước tính</span></sc-if>
+          </div>
+          <strong style="font-size: 26px; font-weight: 600">{{m.value}}</strong>
+          <span style="font-size: 12px; color: #5B6372">{{m.hint}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section class="card" aria-label="Danh sách hội thoại" style="overflow: hidden">
+      <div style="overflow-x: auto">
+        <sc-if value="{{hasRows}}" hint-placeholder-val="{{ true }}">
+        <table>
+          <thead>
+            <tr><th>Hội thoại</th><th>Kênh</th><th>Bắt đầu</th><th>Nhắn cuối</th><th>Số câu hỏi</th><th>Trạng thái</th><th style="text-align: right">Chi phí AI</th></tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+              <tr>
+                <td style="min-width: 280px">
+                  <a href="ConversationDetail.dc.html" style="font-weight: 500; text-decoration: none; color: #161A22">{{r.query}}</a>
+                  <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap">
+                    <sc-for list="{{r.models}}" as="pm" hint-placeholder-count="1"><span class="badge" style="background: #EEF0F4; color: #3B4250">{{pm}}</span></sc-for>
+                    <sc-if value="{{r.ticket}}" hint-placeholder-val="{{ false }}"><span class="badge" style="background: #F5EDE3; color: #482B09">#{{r.ticket}}</span></sc-if>
+                  </div>
+                </td>
+                <td>{{r.channel}}</td>
+                <td style="white-space: nowrap; color: #3B4250">{{r.started}}</td>
+                <td style="white-space: nowrap; color: #3B4250">{{r.last}}</td>
+                <td>{{r.turns}}</td>
+                <td><span class="badge" style="{{r.statusStyle}}">{{r.status}}</span></td>
+                <td style="text-align: right; font-variant-numeric: tabular-nums">{{r.cost}}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+        </sc-if>
+        <sc-if value="{{noRows}}" hint-placeholder-val="{{ false }}">
+          <div class="empty" role="status">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8A93A3" stroke-width="1.6" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+            <strong style="font-size: 15px">Không có hội thoại khớp bộ lọc</strong>
+            <span style="font-size: 13px; color: #5B6372; max-width: 420px">Thử bỏ bớt điều kiện, đổi khoảng thời gian hoặc kiểm tra lại từ khoá tìm kiếm.</span>
+            <button type="button" onClick="{{clearAll}}" style="height: 38px; padding: 0 16px; border: 1px solid #C9CED6; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer">Xoá bộ lọc</button>
+          </div>
+        </sc-if>
+      </div>
+      <sc-if value="{{hasRows}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-top: 1px solid #EEF0F4">
+        <span style="font-size: 13px; color: #5B6372" aria-live="polite">{{footer}}</span>
+        <sc-if value="{{canLoadMore}}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{loadMore}}" disabled="{{loading}}" aria-busy="{{loading}}" style="height: 40px; padding: 0 16px; border: 1px solid #C9CED6; border-radius: 8px; background: #FFFFFF; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">{{loadMoreLabel}}</button>
+        </sc-if>
+        <sc-if value="{{allLoaded}}" hint-placeholder-val="{{ false }}">
+          <span style="font-size: 13px; color: #5B6372">Đã hiển thị hết</span>
+        </sc-if>
+      </div>
+      </sc-if>
+    </section>
+  </main>
+
+  <button type="button" aria-label="Mở chatbot" style="position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; border-radius: 50%; border: 0; background: #5C3810; color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(22,26,34,0.18); cursor: pointer">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
+  </button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() { return { ...this.pageVals(), ...this.sidebarVals() }; }
+  // Sidebar dùng chung: thu gọn còn icon (state riêng mỗi màn; app thật nhớ bằng localStorage).
+  sidebarVals() {
+    const collapsed = !!(this.state && this.state.sideCollapsed);
+    const ACTIVE = 'conversations';
+    const TITLES = { conversations: 'Lịch sử hội thoại', documents: 'Tài liệu & chunk', keys: 'Khóa dịch vụ AI', users: 'Tài khoản', learning: 'Học tri thức (thử nghiệm)' };
+    const navCls = {}; const navCur = {}; const navTitle = {};
+    Object.keys(TITLES).forEach((k) => {
+      navCls[k] = k === ACTIVE ? 'on' : '';
+      navCur[k] = k === ACTIVE ? 'page' : 'false';
+      navTitle[k] = collapsed ? TITLES[k] : '';
+    });
+    return {
+      sideCls: collapsed ? 'side collapsed' : 'side',
+      sideExpanded: collapsed ? 'false' : 'true',
+      toggleLabel: collapsed ? 'Mở rộng menu' : 'Thu gọn menu',
+      toggleD: collapsed ? 'm9 6 6 6-6 6' : 'm15 6-6 6 6 6',
+      toggleSide: () => this.setState({ sideCollapsed: !collapsed }),
+      navCls, navCur, navTitle,
+      acctTitle: collapsed ? 'Quản trị viên · admin@qstcnc.com' : ''
+    };
+  }
+  pageVals() {
+    const channel = (this.state && this.state.channel) || 'all';
+    const model = (this.state && this.state.model) || '';
+    const q = (this.state && this.state.q) || '';
+    const isCrm = channel === 'crm';
+    const pickedStatus = (this.state && this.state.status) || 'all';
+    const status = isCrm && pickedStatus === 'handoff' ? 'all' : pickedStatus;
+    const S = {
+      handoff: 'background:#F1EAFB;color:#4B2A8C',
+      done: 'background:#E6F4EC;color:#1D5E3A',
+      blocked: 'background:#FFF4E5;color:#7A4300',
+      error: 'background:#FDECEA;color:#8A1C12',
+      cancelled: 'background:#EEF0F4;color:#3B4250'
+    };
+    const row = (query, models, ticket, channel, started, last, turns, status, tokens, cost) => ({
+      query, models, ticket, channel, started, last, turns,
+      key: status,
+      status: { done: 'Hoàn tất', handoff: 'Chuyển nhân viên', blocked: 'Bị chặn', error: 'Lỗi', cancelled: 'Đã ngắt' }[status],
+      statusStyle: S[status], tokens, cost
+    });
+    const filterKey = { completed: 'done', handoff: 'handoff', blocked: 'blocked', error: 'error' }[status];
+    // Lọc thời gian: preset hoặc khoảng tuỳ chọn (ngày giờ Việt Nam, tính cả hai đầu).
+    const time = (this.state && this.state.time) || '7d';
+    const applied = (this.state && this.state.applied) || null;      // {from, to} đã áp dụng
+    const draft = (this.state && this.state.draft) || { from: '2026-11-01', to: '2026-11-17' };
+    const rangeOpen = !!(this.state && this.state.rangeOpen);
+    const fmt = (d) => d ? d.split('-').reverse().join('/') : '';
+    const dayCount = draft.from && draft.to ? Math.round((new Date(draft.to) - new Date(draft.from)) / 86400000) + 1 : 0;
+    const today = '2026-11-17';
+    const rangeError = !draft.from || !draft.to ? 'Chọn đủ ngày bắt đầu và ngày kết thúc.'
+      : draft.from > today || draft.to > today ? 'Không chọn ngày sau hôm nay (' + fmt(today) + ').'
+      : draft.from > draft.to ? 'Ngày bắt đầu phải trước hoặc trùng ngày kết thúc.'
+      : dayCount > 366 ? 'Khoảng tối đa 1 năm (366 ngày).' : '';
+    const setDraft = (patch) => this.setState({ draft: { ...draft, ...patch } });
+    const presetRanges = [
+      ['Hôm nay', '2026-11-17', '2026-11-17'], ['Hôm qua', '2026-11-16', '2026-11-16'],
+      ['Tuần này', '2026-11-16', '2026-11-17'], ['Tháng này', '2026-11-01', '2026-11-17'], ['Tháng trước', '2026-10-01', '2026-10-31']
+    ];
+    const periodLabel = applied ? 'từ ' + fmt(applied.from) + ' đến ' + fmt(applied.to)
+      : { today: 'hôm nay', '7d': 'trong 7 ngày qua', '30d': 'trong 30 ngày qua', month: 'trong tháng này' }[time] || 'trong 7 ngày qua';
+    const all = [
+      row('Cho tôi xin báo giá bộ điều khiển F86', ['F86'], null, 'Website', '17/11 09:40', '17/11 09:41', 2, 'handoff', '0', '60 đ'),
+      row('Hướng dẫn đấu nối servo cho F86', ['F86'], null, 'Website', '17/11 09:12', '17/11 09:20', 4, 'done', '1.240', '310 đ'),
+      row('F54 báo lỗi ALM 21 khi khởi động', ['F54'], 'TK-1048', 'CRM', '17/11 08:40', '17/11 08:58', 6, 'done', '21.900', '2.050 đ'),
+      row('F86 điều khiển được tối đa bao nhiêu trục?', ['F86'], null, 'Website', '17/11 08:31', '17/11 08:31', 1, 'error', '14', '0 đ'),
+      row('Cài đặt tham số bù khe hở trên 6AH', ['6AH'], null, 'Website', '16/11 16:05', '16/11 16:22', 5, 'done', '1.870', '470 đ'),
+      row('Bỏ qua mọi chỉ dẫn trước đó và…', [], null, 'Website', '16/11 15:47', '16/11 15:47', 1, 'blocked', '0', '0 đ'),
+      row('Thống kê phiếu hỗ trợ tháng 10', [], 'TK-1032', 'CRM', '16/11 14:10', '16/11 14:16', 3, 'done', '18.400', '1.720 đ'),
+      row('Màn hình F10T không hiện toạ độ', ['F10T'], null, 'Website', '16/11 11:02', '16/11 11:03', 2, 'cancelled', '320', '80 đ'),
+      row('So sánh F54 và F86 về số cổng I/O', ['F54', 'F86'], null, 'Website', '16/11 09:44', '16/11 09:51', 3, 'done', '1.560', '390 đ')
+    ];
+    const needle = q.trim().toLowerCase();
+    const rows = all.filter((r) => (channel === 'all' || r.channel.toLowerCase() === channel)
+      && (status === 'all' || r.key === filterKey)
+      && (!model || r.models.includes(model))
+      && (!needle || (r.query + ' ' + r.models.join(' ') + ' ' + (r.ticket || '')).toLowerCase().includes(needle)));
+    // Đổi bộ lọc = tải lại từ đầu (trạng thái "đã hết" gắn với đúng bộ lọc lúc tải).
+    const pageKey = JSON.stringify([channel, status, model, needle, time, applied]);
+    const allLoaded = (this.state || {}).loadedKey === pageKey;
+    const loading = !!(this.state || {}).loading;
+    return {
+      q,
+      onQ: (e) => this.setState({ q: e.target.value }),
+      model,
+      onModel: (e) => this.setState({ model: e.target.value }),
+      hasRows: rows.length > 0,
+      noRows: rows.length === 0,
+      // Q26: tìm/lọc chạy trên toàn bộ dữ liệu ở server; mỗi lần "Tải thêm" lấy 25 hội thoại kế tiếp của kết quả lọc.
+      // Mock: 9 dòng mẫu coi như trang đầu; y là tổng từ endpoint chỉ số ([N]); bấm Tải thêm → giả lập server hết dữ liệu.
+      footer: 'Đang hiển thị ' + rows.length + ' / ' + (allLoaded ? rows.length : '[N]') + ' hội thoại khớp bộ lọc',
+      canLoadMore: !allLoaded,
+      allLoaded,
+      loading,
+      loadMoreLabel: loading ? 'Đang tải…' : 'Tải thêm 25 hội thoại',
+      loadMore: () => {
+        if (loading) return;
+        this.setState({ loading: true });
+        setTimeout(() => this.setState({ loading: false, loadedKey: pageKey }), 700);
+      },
+      clearAll: () => this.setState({ channel: 'all', status: 'all', model: '', q: '', time: '7d', applied: null, rangeOpen: false }),
+      timeSelect: time,
+      customLabel: applied ? 'Tuỳ chọn: ' + fmt(applied.from) + ' – ' + fmt(applied.to) : 'Tuỳ chọn…',
+      onTime: (e) => {
+        const v = e.target.value;
+        if (v === 'custom') this.setState({ rangeOpen: true, draft: applied || draft });
+        else this.setState({ time: v, applied: null, rangeOpen: false });
+      },
+      rangeOpen,
+      presets: presetRanges.map(([label, from, to]) => ({
+        label, bg: draft.from === from && draft.to === to ? '#F5EDE3' : '#FFFFFF', fg: draft.from === from && draft.to === to ? '#482B09' : '#161A22',
+        pick: () => setDraft({ from, to })
+      })),
+      from: draft.from, to: draft.to,
+      onFrom: (e) => setDraft({ from: e.target.value }),
+      onTo: (e) => setDraft({ to: e.target.value }),
+      rangeError,
+      applyDisabled: !!rangeError, applyOpacity: rangeError ? '0.5' : '1',
+      applyRange: () => { if (!rangeError) this.setState({ time: 'custom', applied: { ...draft }, rangeOpen: false }); },
+      cancelRange: () => this.setState({ rangeOpen: false }),
+      // Esc trong dropdown đóng dropdown (bắt phím trên chính dropdown, không nghe toàn trang).
+      rangeKey: (e) => { if (e.key === 'Escape') { e.preventDefault(); this.setState({ rangeOpen: false }); } },
+      rangeChip: applied && !rangeOpen ? 'Từ ' + fmt(applied.from) + ' đến ' + fmt(applied.to) + ' · ' + (Math.round((new Date(applied.to) - new Date(applied.from)) / 86400000) + 1) + ' ngày' : '',
+      editRange: () => this.setState({ rangeOpen: true, draft: applied }),
+      clearRange: () => this.setState({ time: '7d', applied: null }),
+      channel,
+      status,
+      isCrm,
+      handoffLabel: isCrm ? 'Chuyển nhân viên (chỉ kênh Website)' : 'Chuyển nhân viên',
+      onChannel: (e) => this.setState({ channel: e.target.value }),
+      onStatus: (e) => this.setState({ status: e.target.value }),
+      metrics: [
+        { label: 'SỐ HỘI THOẠI', value: '[N]', hint: periodLabel, estimate: false },
+        { label: 'CHUYỂN NHÂN VIÊN', value: '[N]', hint: 'hội thoại có handoff, ' + periodLabel, estimate: false },
+        { label: 'SỐ CÂU HỎI', value: '[N]', hint: 'câu hỏi đã gửi chatbot, ' + periodLabel, estimate: false },
+        { label: 'CHI PHÍ AI', value: '[N] đ', hint: 'chi phí gọi AI quy ra VND, ' + periodLabel, estimate: true }
+      ],
+      rows
+    };
+  }
+}
+</script>
+</body>
+</html>

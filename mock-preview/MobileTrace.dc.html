@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diễn biến xử lý (điện thoại)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9EBEF}
+a{color:#5C3810}a:hover{color:#482B09}
+.phone{width:390px;height:844px;position:relative;overflow:hidden;display:flex;flex-direction:column;background:#F5F6F8;font-family:Inter,system-ui,sans-serif;color:#161A22}
+.appbar{flex:none;height:56px;display:flex;align-items:center;gap:4px;padding:0 4px;background:#FFFFFF;border-bottom:1px solid #E3E6EB}
+.appbar h1{flex:1;min-width:0;margin:0;font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.icon-btn{all:unset;box-sizing:border-box;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;color:#3B4250;cursor:pointer}
+.icon-btn:focus-visible{outline:2px solid #5C3810}
+.body{flex:1;min-height:0;overflow-y:auto;padding:12px 16px 24px;display:flex;flex-direction:column;gap:12px}
+.body>*{flex-shrink:0}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px}
+.badge{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.step{all:unset;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;width:100%;min-height:56px;padding:10px 14px;cursor:pointer;border-top:1px solid #F0F2F5}
+.step:focus-visible{outline:2px solid #5C3810;outline-offset:-2px}
+.tech summary{cursor:pointer;font-size:14px;font-weight:500;color:#5C3810;min-height:44px;display:flex;align-items:center}
+</style>
+</helmet>
+<div class="phone">
+  <header class="appbar">
+    <a class="icon-btn" href="MobileConversationDetail.dc.html" aria-label="Quay lại hội thoại"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg></a>
+    <h1>Diễn biến xử lý · lượt 2</h1>
+  </header>
+
+  <div class="body">
+    <span style="font-size: 13px; color: #5B6372; line-height: 1.45">CRM · 17/11 08:47 · “Đã kiểm tra công tắc giới hạn, vẫn báo lỗi”</span>
+
+    <section role="alert" style="display: flex; gap: 10px; padding: 14px; border-radius: 12px; background: #FDECEA; color: #8A1C12; border: 1px solid #F3C7C1">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex: none; margin-top: 1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg>
+      <div style="display: flex; flex-direction: column; gap: 4px; font-size: 14px; line-height: 1.5">
+        <strong>Thất bại ở bước “Phân tích câu hỏi”.</strong>
+        <span>Nhà cung cấp AI (OpenAI) từ chối yêu cầu: hết hạn mức hoặc vượt giới hạn gọi. Khách không nhận được câu trả lời.</span>
+      </div>
+    </section>
+
+    <section aria-label="Tóm tắt" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+      <sc-for list="{{summary}}" as="s" hint-placeholder-count="4">
+        <div class="card" style="padding: 12px; display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 12px; color: #5B6372">{{s.label}}</span>
+          <strong style="font-size: 17px; font-weight: 600; {{s.tone}}">{{s.value}}</strong>
+        </div>
+      </sc-for>
+    </section>
+
+    <section class="card" aria-labelledby="steps-title" style="overflow: hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px">
+        <h2 id="steps-title" style="margin: 0; font-size: 15px; font-weight: 600">Các bước</h2>
+        <button type="button" onClick="{{toggleOnlyErr}}" aria-pressed="{{onlyErr}}" style="all: unset; cursor: pointer; font-size: 13px; color: #5C3810; font-weight: 500; min-height: 44px; display: inline-flex; align-items: center">{{onlyErrLabel}}</button>
+      </div>
+      <sc-for list="{{spans}}" as="sp" hint-placeholder-count="9">
+        <div style="{{sp.rowTone}}">
+          <button type="button" class="step" onClick="{{sp.toggle}}" aria-expanded="{{sp.open}}" style="padding-left: {{sp.pad}}">
+            <span style="display: flex; justify-content: space-between; gap: 8px; align-items: center">
+              <span style="font-size: 14px; font-weight: 500; min-width: 0">{{sp.label}}</span>
+              <span style="display: inline-flex; gap: 8px; align-items: center; flex: none">
+                <span class="mono" style="font-size: 12px; color: #3B4250">{{sp.dur}}</span>
+                <span class="badge" style="{{sp.statusStyle}}">{{sp.status}}</span>
+              </span>
+            </span>
+            <span style="position: relative; height: 6px; background: #EEF0F4; border-radius: 3px" aria-hidden="true">
+              <span style="position: absolute; top: 0; height: 6px; border-radius: 3px; {{sp.bar}}"></span>
+            </span>
+          </button>
+          <sc-if value="{{sp.open}}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 0 14px 12px; padding-left: {{sp.pad}}; display: flex; flex-direction: column; gap: 6px">
+              <span class="mono" style="font-size: 12px; color: #5B6372">{{sp.name}} · bắt đầu {{sp.start}}</span>
+              <sc-if value="{{sp.detail}}" hint-placeholder-val="{{ false }}">
+                <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #3B4250">{{sp.detail}}</p>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </section>
+
+    <section class="card" aria-label="Chi tiết bước lỗi" style="padding: 14px; display: flex; flex-direction: column; gap: 6px">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 600">Gọi AI để phân tích câu hỏi · lỗi</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #3B4250">AI không phản hồi sau 3 lần thử trong 5 giây. Cần kiểm tra hạn mức tài khoản OpenAI.</p>
+      <details class="tech">
+        <summary>Thông tin kỹ thuật</summary>
+        <div class="mono" style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #3B4250; overflow-wrap: anywhere">
+          <span>span = llm.chat_json</span><span>model = gpt-4o-mini</span><span>messages = 2</span><span>error_type = RateLimitError</span>
+        </div>
+      </details>
+      <p style="margin: 0; font-size: 12px; color: #5B6372; line-height: 1.5">Diễn biến chỉ ghi thông tin vận hành; không lưu nội dung tin nhắn hay câu trả lời.</p>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const total = 5755.5;
+    const ok = 'background:#E6F4EC;color:#1D5E3A';
+    const bad = 'background:#FDECEA;color:#8A1C12';
+    const color = { server: '#5B6372', db: '#8C6D1F', stage: '#5C3810', llm: '#6B3FC4' };
+    const opened = st.opened || { 'llm.chat_json': true };
+    const onlyErr = !!st.onlyErr;
+    const ms = (v) => (v >= 1000 ? (v / 1000).toFixed(2).replace('.', ',') + ' s' : Math.round(v) + ' ms');
+    const sp = (label, name, depth, kind, start, dur, failed, detail) => ({
+      label, name, failed, detail: detail || '',
+      dur: ms(dur), start: ms(start),
+      status: failed ? 'Lỗi' : 'Xong', statusStyle: failed ? bad : ok,
+      rowTone: failed ? 'background:#FFF8F7' : '',
+      pad: (14 + depth * 14) + 'px',
+      open: !!opened[name],
+      toggle: () => this.setState({ opened: { ...opened, [name]: !opened[name] } }),
+      bar: 'left:' + (start / total * 100).toFixed(2) + '%;width:' + Math.max(dur / total * 100, 1).toFixed(2) + '%;background:' + (failed ? '#B42318' : color[kind])
+    });
+    const spans = [
+      sp('Toàn bộ lượt trả lời', 'chat.request', 0, 'server', 0, 5755.5, true, 'Kết quả: lỗi phân tích. Lượt được lưu với trạng thái Lỗi.'),
+      sp('Mở phiên hội thoại', 'session.resolve', 1, 'db', 122.9, 41.3, false),
+      sp('Kiểm tra an toàn nội dung', 'stage.security', 1, 'stage', 166.1, 4.2, false, 'Cho qua: không khớp luật chặn nào.'),
+      sp('Đọc lịch sử hội thoại', 'stage.context_load', 1, 'stage', 170.4, 39.7, false),
+      sp('Rút gọn lịch sử', 'stage.prune', 1, 'stage', 210.2, 334.9, false),
+      sp('Kiểm tra câu hỏi làm rõ', 'stage.clarification', 1, 'stage', 545.2, 0, false),
+      sp('Phân tích câu hỏi', 'stage.analysis', 1, 'stage', 545.2, 5145.1, true),
+      sp('Gọi AI để phân tích', 'llm.chat_json', 2, 'llm', 545.2, 5064, true, 'OpenAI từ chối yêu cầu (RateLimitError) sau 3 lần thử.'),
+      sp('Lưu lịch sử', 'history.write', 1, 'db', 5690.3, 34, false)
+    ];
+    return {
+      summary: [
+        { label: 'Kết quả', value: 'Lỗi phân tích', tone: 'color:#8A1C12' },
+        { label: 'Tổng thời gian', value: '5,76 giây', tone: '' },
+        { label: 'Số lần gọi AI', value: '1', tone: '' },
+        { label: 'Tra cứu tài liệu', value: 'Không chạy', tone: '' }
+      ],
+      onlyErr,
+      onlyErrLabel: onlyErr ? 'Hiện mọi bước' : 'Chỉ bước lỗi',
+      toggleOnlyErr: () => this.setState({ onlyErr: !onlyErr }),
+      spans: onlyErr ? spans.filter((s) => s.failed) : spans
+    };
+  }
+}
+</script>
+</body>
+</html>

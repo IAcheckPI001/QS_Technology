@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Khóa dịch vụ AI (điện thoại)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9EBEF}
+a{color:#5C3810}a:hover{color:#482B09}
+.phone{width:390px;height:844px;position:relative;overflow:hidden;display:flex;flex-direction:column;background:#F5F6F8;font-family:Inter,system-ui,sans-serif;color:#161A22}
+.appbar{flex:none;height:56px;display:flex;align-items:center;gap:4px;padding:0 4px 0 16px;background:#FFFFFF;border-bottom:1px solid #E3E6EB}
+.appbar h1{flex:1;min-width:0;margin:0;font-size:18px;font-weight:600}
+.icon-btn{all:unset;box-sizing:border-box;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;color:#3B4250;cursor:pointer}
+.icon-btn:focus-visible{outline:2px solid #5C3810}
+.body{flex:1;min-height:0;overflow-y:auto;padding:12px 16px 24px;display:flex;flex-direction:column;gap:14px}
+.body>*{flex-shrink:0}
+.tabbar{flex:none;height:64px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:#FFFFFF;border-top:1px solid #E3E6EB}
+.tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:500;color:#5B6372;text-decoration:none}
+.tabbar a.on{color:#5C3810;font-weight:600;box-shadow:inset 0 3px 0 #E69D07}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px}
+.badge{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 14px;border:1px solid #C9CED6;border-radius:10px;background:#FFFFFF;font:inherit;font-size:14px;font-weight:500;color:#161A22;cursor:pointer;text-decoration:none;box-sizing:border-box}
+.btn.primary{background:#5C3810;border-color:#5C3810;color:#FFFFFF;font-weight:600}
+.btn.danger-outline{color:#8A1C12;border-color:#E8B4AE}
+.btn.danger{background:#B42318;border-color:#B42318;color:#FFFFFF;font-weight:600}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500;color:#3B4250}
+.field input,.field select{height:44px;border:1px solid #C9CED6;border-radius:10px;padding:0 12px;font:inherit;font-size:16px;color:#161A22;background:#FFFFFF;width:100%;box-sizing:border-box;min-width:0}
+.scrim{position:absolute;inset:0;z-index:40;background:rgba(15,18,24,0.45);display:flex;flex-direction:column;justify-content:flex-end}
+.sheet{background:#FFFFFF;border-radius:16px 16px 0 0;max-height:90%;display:flex;flex-direction:column}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:6px 4px 6px 16px;border-bottom:1px solid #EEF0F4}
+.sheet-head h2{margin:0;font-size:17px;font-weight:600}
+.sheet-body{overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.sheet-foot{display:flex;gap:8px;padding:12px 16px 16px;border-top:1px solid #EEF0F4}
+.sheet-foot .btn{flex:1}
+.toast{position:absolute;left:12px;right:12px;bottom:76px;z-index:60;display:flex;align-items:center;gap:10px;padding:10px 8px 10px 14px;border-radius:12px;background:#161A22;color:#FFFFFF;font-size:13px;line-height:1.45;box-shadow:0 8px 24px rgba(22,26,34,0.25)}
+.toast button{all:unset;cursor:pointer;color:#C9CED6;min-width:32px;min-height:32px;display:inline-flex;align-items:center;justify-content:center}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;font-size:13px}
+.kv dt{color:#5B6372}
+.kv dd{margin:0;color:#161A22}
+</style>
+</helmet>
+<div class="phone">
+  <header class="appbar">
+    <h1>Khóa dịch vụ AI</h1>
+    <button type="button" class="icon-btn" onClick="{{openForm}}" aria-label="Tạo khóa"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+  </header>
+
+  <div class="body">
+    <p style="margin: 0; font-size: 14px; color: #5B6372; line-height: 1.5">Khóa giúp hệ thống CRM và website kết nối với chatbot AI. Mỗi khóa chỉ dùng được cho đúng kênh của nó.</p>
+
+    <sc-for list="{{integrations}}" as="it" hint-placeholder-count="2">
+      <section class="card" aria-label="{{it.label}}" style="overflow: hidden">
+        <div style="padding: 14px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid #EEF0F4">
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600; margin-right: 4px">{{it.label}}</h2>
+            <span class="badge" style="{{it.stateStyle}}">{{it.state}}</span>
+          </div>
+          <span style="font-size: 12px; color: #5B6372">Hệ thống dùng: {{it.name}} · tạo {{it.created}}</span>
+          <sc-if value="{{it.off}}" hint-placeholder-val="{{ false }}"><span style="font-size: 13px; color: #7A4300; line-height: 1.45">Kênh đang tạm dừng: chatbot trên {{it.channel}} không trả lời được.</span></sc-if>
+        </div>
+        <sc-for list="{{it.keys}}" as="k" hint-placeholder-count="2">
+          <div style="padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #EEF0F4">
+            <div style="display: flex; justify-content: space-between; gap: 8px; align-items: center">
+              <strong style="font-size: 15px; min-width: 0; overflow-wrap: anywhere">{{k.name}}</strong>
+              <span class="badge" style="{{k.stateStyle}}">{{k.state}}</span>
+            </div>
+            <dl class="kv" style="margin: 0">
+              <dt>Khóa</dt><dd class="mono" style="font-size: 12px">{{k.masked}}</dd>
+              <dt>Tạo</dt><dd>{{k.created}}</dd>
+              <dt>Hết hạn</dt><dd>{{k.expires}}</dd>
+              <dt>Dùng gần nhất</dt><dd>{{k.used}}</dd>
+            </dl>
+            <sc-if value="{{k.canRevoke}}" hint-placeholder-val="{{ true }}">
+              <button type="button" class="btn danger-outline" onClick="{{k.revoke}}">Thu hồi khóa</button>
+            </sc-if>
+          </div>
+        </sc-for>
+        <div style="padding: 12px 14px">
+          <button type="button" class="{{it.toggleCls}}" onClick="{{it.toggle}}" style="width: 100%">{{it.toggleLabel}}</button>
+        </div>
+      </section>
+    </sc-for>
+  </div>
+
+  <nav class="tabbar" aria-label="Điều hướng chính">
+    <a href="MobileConversations.dc.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>Hội thoại</a>
+    <a href="MobileDocuments.dc.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg>Tài liệu</a>
+    <a class="on" href="MobileServiceKeys.dc.html" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="m11 12 9-9M17 6l3 3"></path></svg>Khóa AI</a>
+    <a href="MobileUsers.dc.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-4-5.7"></path></svg>Tài khoản</a>
+  </nav>
+
+  <sc-if value="{{showForm}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim" onClick="{{closePanel}}" onKeyDown="{{panelKey}}">
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="new-key-title" onClick="{{stop}}">
+        <div class="sheet-head">
+          <h2 id="new-key-title">Tạo khóa</h2>
+          <button type="button" class="icon-btn" onClick="{{closePanel}}" aria-label="Đóng"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+        </div>
+        <div class="sheet-body">
+          <label class="field">Kênh tích hợp
+            <select value="{{fIntegration}}" onChange="{{onIntegration}}"><option value="crm_main">Kênh CRM</option><option value="website_main">Kênh Website</option></select>
+          </label>
+          <label class="field">Tên khóa
+            <input type="text" data-autofocus value="{{fName}}" onInput="{{onName}}" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Vd. crm-chinh" aria-invalid="{{nameInvalid}}" aria-describedby="m-key-hint" style="border-color: {{nameBorder}}">
+          </label>
+          <span id="m-key-hint" style="margin-top: -8px; font-size: 13px; color: {{nameHintColor}}; line-height: 1.45">{{nameHint}}</span>
+          <label class="field">Hết hạn
+            <select value="{{fExpiry}}" onChange="{{onExpiry}}"><option value="1">1 ngày</option><option value="7">7 ngày</option><option value="30">30 ngày</option><option value="0">Không hết hạn</option></select>
+          </label>
+          <span style="margin-top: -8px; font-size: 13px; color: #5B6372">{{expiryHint}}</span>
+        </div>
+        <div class="sheet-foot">
+          <button type="button" class="btn" onClick="{{closePanel}}">Huỷ</button>
+          <button type="button" class="btn primary" onClick="{{create}}" disabled="{{createDisabled}}">Tạo khóa</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{showReveal}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim">
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="reveal-title">
+        <div class="sheet-body">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <h2 id="reveal-title" style="margin: 0; font-size: 17px; font-weight: 600">Khóa mới: {{reveal.name}}</h2>
+            <span style="font-size: 13px; color: #5B6372">{{reveal.integration}} · hết hạn {{reveal.expires}}</span>
+          </div>
+          <div style="display: flex; gap: 10px; padding: 12px; border-radius: 10px; background: #FFF4E5; color: #7A4300; font-size: 14px; line-height: 1.45">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M12 3 2 20h20L12 3z"></path><path d="M12 10v4M12 17h.01"></path></svg>
+            <span>Khóa chỉ hiện một lần. Sao chép và gửi cho người cài đặt hệ thống {{reveal.channel}} ngay.</span>
+          </div>
+          <code class="mono" style="padding: 12px; border-radius: 10px; background: #161A22; color: #E8EAEE; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere">{{reveal.secret}}</code>
+          <button type="button" class="btn" data-autofocus onClick="{{copy}}">{{copyLabel}}</button>
+          <sc-if value="{{warnNotCopied}}" hint-placeholder-val="{{ false }}">
+            <div role="alert" style="display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 10px; border: 1px solid #E8B4AE; background: #FDECEA; color: #8A1C12; font-size: 14px; line-height: 1.45">
+              <strong>Bạn chưa sao chép khóa.</strong>
+              <span>Đóng lại thì không xem được nữa; khi đó phải tạo khóa mới.</span>
+              <button type="button" class="btn" onClick="{{forceClose}}">Vẫn đóng</button>
+            </div>
+          </sc-if>
+        </div>
+        <div class="sheet-foot">
+          <button type="button" class="btn primary" onClick="{{done}}">Tôi đã lưu khóa</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{dlg.open}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim" style="z-index: 55" onClick="{{dlg.cancel}}" onKeyDown="{{dlg.onKey}}">
+      <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="m-dlg-title" onClick="{{stop}}">
+        <div class="sheet-body">
+          <h2 id="m-dlg-title" style="margin: 0; font-size: 17px; font-weight: 600">{{dlg.title}}</h2>
+          <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #3B4250">{{dlg.body}}</p>
+          <label class="field">Gõ <span class="mono" style="font-weight: 600; color: #161A22">{{dlg.expect}}</span> để xác nhận
+            <input type="text" data-autofocus value="{{dlg.typed}}" onInput="{{dlg.onTyped}}" autocapitalize="off" autocomplete="off" spellcheck="false" class="mono">
+          </label>
+        </div>
+        <div class="sheet-foot">
+          <button type="button" class="btn" onClick="{{dlg.cancel}}">Huỷ</button>
+          <button type="button" class="btn danger" onClick="{{dlg.confirm}}" disabled="{{dlg.blocked}}">{{dlg.confirmLabel}}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{toast.show}}" hint-placeholder-val="{{ false }}">
+    <div class="toast" role="status" aria-live="polite"><span style="flex: 1; min-width: 0">{{toast.text}}</span><button type="button" onClick="{{toast.close}}" aria-label="Đóng thông báo">×</button></div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const STYLE = { active: 'background:#E6F4EC;color:#1D5E3A', revoked: 'background:#EEF0F4;color:#3B4250', expired: 'background:#FDECEA;color:#8A1C12' };
+    const LABEL = { active: 'Hoạt động', revoked: 'Đã thu hồi', expired: 'Hết hạn' };
+    const INITIAL = [
+      { name: 'CRM backend', id: 'crm_main', channel: 'CRM', created: '30/10/2026', off: false, keys: [
+        { name: 'crm-prod-2026-11', masked: 'qsk_9f3a1c7e…', created: '17/11/2026', expires: '15/02/2027', used: '—', state: 'active' },
+        { name: 'crm-test', masked: 'qsk_4b20e9d1…', created: '30/10/2026', expires: 'Không', used: '—', state: 'active' },
+        { name: 'crm-2026-10', masked: 'qsk_77c0a3f5…', created: '01/10/2026', expires: '30/10/2026', used: '—', state: 'revoked' }
+      ]},
+      { name: 'Website backend', id: 'website_main', channel: 'Website', created: '28/10/2026', off: false, keys: [
+        { name: 'widget-backend', masked: 'qsk_1e8d52b0…', created: '28/10/2026', expires: 'Không', used: '—', state: 'active' },
+        { name: 'widget-old', masked: 'qsk_c4a91f06…', created: '01/09/2026', expires: '01/10/2026', used: '—', state: 'expired' }
+      ]}
+    ];
+    const ints = st.ints || INITIAL;
+    const panel = st.panel || null;
+    const reveal = st.reveal || {};
+    const fresh = () => this.state || {};
+    const showToast = (patch, text) => {
+      const id = Date.now();
+      this.setState({ ...patch, toast: { id, text } });
+      setTimeout(() => { if ((fresh().toast || {}).id === id) this.setState({ toast: null }); }, 6000);
+    };
+    const updateInt = (id, fn) => ints.map((it) => (it.id === id ? fn(it) : it));
+    const fIntegration = st.fIntegration || 'crm_main';
+    const fName = st.fName || '';
+    const fExpiry = st.fExpiry || '30';
+    const target = ints.find((it) => it.id === fIntegration);
+    const name = fName.trim();
+    // Tên trùng với khóa đã có trong cùng kênh → tự thêm hậu tố -1, -2… (tăng dần).
+    const taken = new Set(target.keys.map((k) => k.name));
+    const uniqueName = (base) => { if (!taken.has(base)) return base; let n = 1; while (taken.has(base + '-' + n)) n += 1; return base + '-' + n; };
+    const finalName = name ? uniqueName(name) : '';
+    const nameErr = !name ? '' : name.length < 3 ? 'Tên khóa cần ít nhất 3 ký tự.' : name.length > 64 ? 'Tên khóa tối đa 64 ký tự.' : '';
+    const renamed = !nameErr && finalName && finalName !== name;
+    const pad = (n) => String(n).padStart(2, '0');
+    const expiryText = (days) => {
+      if (days === '0') return 'Không';
+      const d = new Date(2026, 10, 17 + Number(days));
+      return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear();
+    };
+    const closePanel = () => this.setState({ panel: null });
+    const cf = st.confirm || null;
+    const typed = st.typed || '';
+    const closeDlg = () => this.setState({ confirm: null, typed: '' });
+    const dlg = { open: false };
+    if (cf && cf.kind === 'revoke') {
+      Object.assign(dlg, { open: true, expect: cf.key, title: 'Thu hồi khóa?',
+        body: 'Hệ thống đang dùng “' + cf.key + '” sẽ bị từ chối từ lần gọi kế tiếp. Không hoàn tác được.',
+        confirmLabel: 'Thu hồi',
+        confirm: () => showToast({ confirm: null, typed: '',
+          ints: updateInt(cf.integration, (it) => ({ ...it, keys: it.keys.map((k) => (k.name === cf.key ? { ...k, state: 'revoked' } : k)) })) }, 'Đã thu hồi khóa ' + cf.key + '.') });
+    } else if (cf && cf.kind === 'pause') {
+      const it = ints.find((x) => x.id === cf.integration);
+      Object.assign(dlg, { open: true, expect: 'Kênh ' + it.channel, title: 'Tạm dừng Kênh ' + it.channel + '?',
+        body: 'Tất cả khóa của Kênh ' + it.channel + ' ngừng hoạt động ngay: chatbot trên ' + it.channel + ' sẽ không trả lời được. Khóa không bị xoá; mở lại kênh thì khóa còn hạn dùng tiếp.',
+        confirmLabel: 'Tạm dừng',
+        confirm: () => showToast({ confirm: null, typed: '', ints: updateInt(cf.integration, (x) => ({ ...x, off: true })) }, 'Đã tạm dừng Kênh ' + it.channel + '.') });
+    }
+    if (dlg.open) Object.assign(dlg, { typed, onTyped: (e) => this.setState({ typed: e.target.value }), cancel: closeDlg, blocked: typed.trim() !== dlg.expect,
+      onKey: (e) => { if (e.key === 'Escape') { e.preventDefault(); closeDlg(); } } });
+    const ts = st.toast;
+    return {
+      integrations: ints.map((it) => ({
+        ...it,
+        label: 'Kênh ' + it.channel,
+        state: it.off ? 'Đang tạm dừng' : 'Đang hoạt động',
+        stateStyle: it.off ? 'background:#FFF4E5;color:#7A4300' : STYLE.active,
+        toggleLabel: it.off ? 'Mở lại kênh' : 'Tạm dừng kênh',
+        toggleCls: it.off ? 'btn' : 'btn danger-outline',
+        toggle: it.off
+          ? () => showToast({ ints: updateInt(it.id, (x) => ({ ...x, off: false })) }, 'Đã mở lại Kênh ' + it.channel + '.')
+          : () => this.setState({ confirm: { kind: 'pause', integration: it.id }, typed: '' }),
+        keys: it.keys.map((k) => ({
+          ...k,
+          state: it.off && k.state === 'active' ? 'Tạm ngừng theo kênh' : LABEL[k.state],
+          stateStyle: it.off && k.state === 'active' ? STYLE.revoked : STYLE[k.state],
+          canRevoke: k.state === 'active',
+          revoke: () => this.setState({ confirm: { kind: 'revoke', integration: it.id, key: k.name }, typed: '' })
+        }))
+      })),
+      openForm: () => this.setState({ panel: 'form', fIntegration: 'crm_main', fName: '', fExpiry: '30', warn: false }),
+      showForm: panel === 'form', showReveal: panel === 'reveal',
+      closePanel,
+      panelKey: (e) => { if (e.key === 'Escape') { e.preventDefault(); closePanel(); } },
+      stop: (e) => e.stopPropagation(),
+      fIntegration, fName, fExpiry,
+      onIntegration: (e) => this.setState({ fIntegration: e.target.value }),
+      onName: (e) => this.setState({ fName: e.target.value }),
+      onExpiry: (e) => this.setState({ fExpiry: e.target.value }),
+      nameInvalid: nameErr ? 'true' : 'false',
+      nameBorder: nameErr ? '#B42318' : '#C9CED6',
+      nameHint: nameErr || (renamed
+        ? 'Kênh ' + target.channel + ' đã có khóa “' + name + '”; khóa mới sẽ được lưu là “' + finalName + '”.'
+        : 'Đặt tên dễ nhận biết. Trùng tên thì tự thêm -1, -2…'),
+      nameHintColor: nameErr ? '#8A1C12' : renamed ? '#7A4300' : '#5B6372',
+      expiryHint: fExpiry === '0' ? 'Khóa dùng mãi cho tới khi thu hồi.' : 'Hết hạn ngày ' + expiryText(fExpiry) + '.',
+      createDisabled: !name || !!nameErr,
+      create: () => {
+        if (!name || nameErr) return;
+        const hex = Array.from({ length: 16 }, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('');
+        const expires = expiryText(fExpiry);
+        this.setState({
+          ints: updateInt(target.id, (it) => ({ ...it, keys: [{ name: finalName, masked: 'qsk_' + hex.slice(0, 8) + '…', created: '17/11/2026', expires, used: '—', state: 'active' }, ...it.keys] })),
+          panel: 'reveal', copied: false, warn: false,
+          reveal: { name: finalName, integration: 'Kênh ' + target.channel, channel: target.channel, expires, secret: 'qsk_' + hex + '_••••••••••••••••••••••••' }
+        });
+      },
+      reveal,
+      copyLabel: st.copied ? 'Đã sao chép' : 'Sao chép khóa',
+      copy: () => showToast({ copied: true, warn: false }, 'Đã sao chép khóa vào bộ nhớ tạm.'),
+      warnNotCopied: !!st.warn,
+      done: () => (st.copied ? showToast({ panel: null, warn: false }, 'Đã tạo khóa ' + reveal.name + '.') : this.setState({ warn: true })),
+      forceClose: () => this.setState({ panel: null, warn: false }),
+      dlg,
+      toast: ts ? { show: true, text: ts.text, close: () => this.setState({ toast: null }) } : { show: false }
+    };
+  }
+}
+</script>
+</body>
+</html>

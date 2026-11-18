@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đăng nhập QS AI Workspace</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F8}
+a{color:#5C3810}a:hover{color:#482B09}
+input:focus{outline:2px solid #5C3810;outline-offset:1px}
+.pw-toggle{all:unset;cursor:pointer;position:absolute;right:6px;top:6px;height:32px;padding:0 10px;border-radius:6px;font-size:13px;font-weight:500;color:#5C3810;display:inline-flex;align-items:center;gap:6px}
+.pw-toggle:hover{background:#F5EDE3}
+.pw-toggle:focus-visible{outline:2px solid #5C3810;outline-offset:1px}
+</style>
+</helmet>
+<div style="min-height: 100vh; font-family: Inter, system-ui, sans-serif; color: #161A22; background: #F5F6F8; display: flex; align-items: center; justify-content: center; padding: 48px 16px; box-sizing: border-box">
+  <div style="width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 24px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <img src="/_blob/86830720c49af76fcd030978bdac7833" alt="QS Technology" width="72" height="40" style="display: block; height: 40px; width: auto; flex: none">
+      <div style="display: flex; flex-direction: column">
+        <strong style="font-size: 16px">QS AI Workspace</strong>
+        <span style="font-size: 13px; color: #5B6372">QS Technology</span>
+      </div>
+    </div>
+
+    <form onSubmit="{{submit}}" novalidate="novalidate" style="background: #FFFFFF; border: 1px solid #E3E6EB; border-radius: 12px; padding: 32px; display: flex; flex-direction: column; gap: 20px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 600">Đăng nhập</h1>
+        <p style="margin: 0; font-size: 14px; color: #5B6372">Dành cho admin, kỹ thuật viên và reviewer.</p>
+      </div>
+
+      <sc-if value="{{error}}" hint-placeholder-val="{{ false }}">
+        <div role="alert" style="display: flex; gap: 10px; padding: 12px 14px; border-radius: 8px; background: #FDECEA; color: #8A1C12; font-size: 13px; line-height: 1.45">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex: none; margin-top: 1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg>
+          <span>{{error}}</span>
+        </div>
+      </sc-if>
+
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="email" style="font-size: 13px; font-weight: 500">Email</label>
+        <input id="email" type="email" autocomplete="username" value="{{email}}" onInput="{{onEmail}}" placeholder="ten@qstcnc.com" style="height: 44px; border: 1px solid #C9CED6; border-radius: 8px; padding: 0 12px; font: inherit; font-size: 14px; color: #161A22">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="password" style="font-size: 13px; font-weight: 500">Mật khẩu</label>
+        <div style="position: relative">
+          <input id="password" type="{{pwType}}" autocomplete="current-password" value="{{password}}" onInput="{{onPassword}}" style="height: 44px; width: 100%; box-sizing: border-box; border: 1px solid #C9CED6; border-radius: 8px; padding: 0 84px 0 12px; font: inherit; font-size: 14px; color: #161A22">
+          <button type="button" class="pw-toggle" onClick="{{togglePw}}" aria-pressed="{{pwShown}}" aria-controls="password" aria-label="{{pwAria}}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="{{pwIcon}}"></path><circle cx="12" cy="12" r="3"></circle></svg>{{pwLabel}}
+          </button>
+        </div>
+      </div>
+      <button type="submit" disabled="{{busy}}" style="height: 44px; border: 0; border-radius: 8px; background: #5C3810; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">{{submitLabel}}</button>
+    </form>
+    <!-- Đăng nhập đúng → chuyển sang Lịch sử hội thoại (link giữa các artboard của canvas). -->
+    <a id="go-home" href="Conversations.dc.html" tabindex="-1" aria-hidden="true" style="display: none">Lịch sử hội thoại</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const email = st.email === undefined ? 'admin@qstcnc.com' : st.email;
+    const password = st.password || '';
+    const shown = !!st.pwShown;
+    const busy = !!st.busy;
+    return {
+      email, password,
+      onEmail: (e) => this.setState({ email: e.target.value, error: '' }),
+      onPassword: (e) => this.setState({ password: e.target.value, error: '' }),
+      pwType: shown ? 'text' : 'password',
+      pwShown: shown,
+      pwLabel: shown ? 'Ẩn' : 'Hiện',
+      pwAria: shown ? 'Ẩn mật khẩu' : 'Hiện mật khẩu',
+      // Mắt mở / mắt gạch chéo.
+      pwIcon: shown ? 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zM3 3l18 18' : 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z',
+      togglePw: () => this.setState({ pwShown: !shown }),
+      error: st.error || '',
+      busy,
+      submitLabel: busy ? 'Đang đăng nhập…' : 'Đăng nhập',
+      // Mock: thiếu email/mật khẩu → báo; mật khẩu dưới 12 ký tự → lỗi chung (không lộ lý do);
+      // còn lại coi là đúng → chuyển thẳng sang Lịch sử hội thoại.
+      submit: (e) => {
+        e.preventDefault();
+        if (busy) return;
+        if (!email.trim() || !password) { this.setState({ error: 'Nhập email và mật khẩu.' }); return; }
+        if (password.length < 12) { this.setState({ error: 'Email hoặc mật khẩu không đúng.' }); return; }
+        this.setState({ error: '', busy: true });
+        setTimeout(() => { const a = document.getElementById('go-home'); if (a) a.click(); }, 400);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

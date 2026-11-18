@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lịch sử hội thoại (điện thoại)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9EBEF}
+a{color:#5C3810}a:hover{color:#482B09}
+.phone{width:390px;height:844px;position:relative;overflow:hidden;display:flex;flex-direction:column;background:#F5F6F8;font-family:Inter,system-ui,sans-serif;color:#161A22}
+.appbar{flex:none;height:56px;display:flex;align-items:center;gap:4px;padding:0 4px 0 16px;background:#FFFFFF;border-bottom:1px solid #E3E6EB}
+.appbar h1{flex:1;min-width:0;margin:0;font-size:18px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.icon-btn{all:unset;box-sizing:border-box;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;color:#3B4250;cursor:pointer}
+.icon-btn:focus-visible{outline:2px solid #5C3810}
+.body{flex:1;min-height:0;overflow-y:auto;padding:12px 16px 20px;display:flex;flex-direction:column;gap:12px}
+.body>*{flex-shrink:0}
+.tabbar{flex:none;height:64px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:#FFFFFF;border-top:1px solid #E3E6EB}
+.tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:500;color:#5B6372;text-decoration:none}
+.tabbar a.on{color:#5C3810;font-weight:600;box-shadow:inset 0 3px 0 #E69D07}
+.card{background:#FFFFFF;border:1px solid #E3E6EB;border-radius:12px}
+.badge{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border:1px solid #C9CED6;border-radius:10px;background:#FFFFFF;font:inherit;font-size:14px;font-weight:500;color:#161A22;cursor:pointer;text-decoration:none;box-sizing:border-box}
+.btn.primary{background:#5C3810;border-color:#5C3810;color:#FFFFFF;font-weight:600}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;margin:0 -16px;padding-left:16px;padding-right:16px}
+.chip{display:inline-flex;align-items:center;gap:6px;flex:none;height:36px;padding:0 12px;border-radius:999px;border:1px solid #C9CED6;background:#FFFFFF;font:inherit;font-size:13px;color:#161A22;white-space:nowrap;cursor:pointer}
+.chip.on{background:#F5EDE3;border-color:#D9C3A5;color:#482B09;font-weight:600}
+.chip:disabled{opacity:.45;cursor:not-allowed}
+.field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500;color:#3B4250}
+.field input,.field select{height:44px;border:1px solid #C9CED6;border-radius:10px;padding:0 12px;font:inherit;font-size:16px;color:#161A22;background:#FFFFFF;width:100%;box-sizing:border-box}
+.group{display:flex;flex-direction:column;gap:8px}
+.group h3{margin:0;font-size:13px;font-weight:600;color:#3B4250}
+.wrap{display:flex;flex-wrap:wrap;gap:8px}
+.scrim{position:absolute;inset:0;z-index:40;background:rgba(15,18,24,0.45);display:flex;flex-direction:column;justify-content:flex-end}
+.sheet{background:#FFFFFF;border-radius:16px 16px 0 0;max-height:90%;display:flex;flex-direction:column}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:6px 4px 6px 16px;border-bottom:1px solid #EEF0F4}
+.sheet-head h2{margin:0;font-size:17px;font-weight:600}
+.sheet-body{overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:18px}
+.sheet-foot{display:flex;gap:8px;padding:12px 16px 16px;border-top:1px solid #EEF0F4}
+.sheet-foot .btn{flex:1}
+.conv{display:flex;flex-direction:column;gap:8px;padding:14px;text-decoration:none;color:#161A22}
+.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+</style>
+</helmet>
+<div class="phone">
+  <header class="appbar">
+    <h1>Lịch sử hội thoại</h1>
+    <button type="button" class="icon-btn" aria-label="Mở chatbot thử"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg></button>
+  </header>
+
+  <div class="body">
+    <label style="position: relative; display: block">
+      <span style="position: absolute; left: 12px; top: 12px; color: #5B6372" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></span>
+      <input type="search" value="{{q}}" onInput="{{onQ}}" aria-label="Tìm hội thoại" placeholder="Câu hỏi, mã ticket, model" style="height: 44px; width: 100%; box-sizing: border-box; border: 1px solid #C9CED6; border-radius: 10px; padding: 0 12px 0 40px; font: inherit; font-size: 16px; background: #FFFFFF">
+    </label>
+
+    <div class="chips" role="group" aria-label="Bộ lọc đang dùng">
+      <button type="button" class="{{filterChipCls}}" onClick="{{openSheet}}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>{{filterChipLabel}}
+      </button>
+      <button type="button" class="chip on" onClick="{{openSheet}}">{{periodChip}}</button>
+      <sc-for list="{{activeChips}}" as="ac" hint-placeholder-count="0">
+        <button type="button" class="chip on" onClick="{{ac.clear}}" aria-label="Bỏ lọc {{ac.label}}">{{ac.label}}<span aria-hidden="true" style="font-size: 16px; line-height: 1">×</span></button>
+      </sc-for>
+    </div>
+
+    <section aria-label="Chỉ số" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+      <sc-for list="{{metrics}}" as="m" hint-placeholder-count="4">
+        <div class="card" style="padding: 12px; display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 12px; color: #5B6372">{{m.label}}</span>
+          <strong style="font-size: 20px; font-weight: 600">{{m.value}}</strong>
+          <sc-if value="{{m.estimate}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; color: #7A4300">ước tính</span></sc-if>
+        </div>
+      </sc-for>
+    </section>
+    <span style="font-size: 12px; color: #5B6372; margin-top: -4px">Số liệu {{periodLabel}} · theo bộ lọc đang chọn</span>
+
+    <sc-if value="{{hasRows}}" hint-placeholder-val="{{ true }}">
+      <section aria-label="Danh sách hội thoại" style="display: flex; flex-direction: column; gap: 10px">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+          <a class="card conv" href="MobileConversationDetail.dc.html">
+            <span style="display: flex; justify-content: space-between; gap: 8px; align-items: flex-start">
+              <strong class="clamp" style="font-size: 15px; line-height: 1.4; font-weight: 600">{{r.query}}</strong>
+              <span class="badge" style="{{r.statusStyle}}; flex: none">{{r.status}}</span>
+            </span>
+            <span style="display: flex; flex-wrap: wrap; gap: 6px">
+              <sc-for list="{{r.models}}" as="pm" hint-placeholder-count="1"><span class="badge" style="background: #EEF0F4; color: #3B4250">{{pm}}</span></sc-for>
+              <sc-if value="{{r.ticket}}" hint-placeholder-val="{{ false }}"><span class="badge" style="background: #F5EDE3; color: #482B09">#{{r.ticket}}</span></sc-if>
+            </span>
+            <span style="display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: #5B6372">
+              <span>{{r.channel}} · {{r.last}} · {{r.turns}} câu hỏi</span>
+              <span style="font-variant-numeric: tabular-nums; color: #3B4250">{{r.cost}}</span>
+            </span>
+          </a>
+        </sc-for>
+      </section>
+      <span style="font-size: 12px; color: #5B6372; text-align: center" aria-live="polite">{{footer}}</span>
+      <sc-if value="{{canLoadMore}}" hint-placeholder-val="{{ true }}">
+        <button type="button" class="btn" onClick="{{loadMore}}" disabled="{{loading}}" aria-busy="{{loading}}">{{loadMoreLabel}}</button>
+      </sc-if>
+      <sc-if value="{{allLoaded}}" hint-placeholder-val="{{ false }}">
+        <span style="font-size: 13px; color: #5B6372; text-align: center">Đã hiển thị hết</span>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{noRows}}" hint-placeholder-val="{{ false }}">
+      <div class="card" role="status" style="padding: 32px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#8A93A3" stroke-width="1.6" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <strong style="font-size: 15px">Không có hội thoại khớp bộ lọc</strong>
+        <span style="font-size: 14px; color: #5B6372; line-height: 1.5">Thử bỏ bớt điều kiện, đổi khoảng thời gian hoặc kiểm tra lại từ khoá.</span>
+        <button type="button" class="btn" onClick="{{clearAll}}">Xoá bộ lọc</button>
+      </div>
+    </sc-if>
+  </div>
+
+  <nav class="tabbar" aria-label="Điều hướng chính">
+    <a class="on" href="MobileConversations.dc.html" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>Hội thoại</a>
+    <a href="MobileDocuments.dc.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5z"></path><path d="m3 13 9 5 9-5"></path></svg>Tài liệu</a>
+    <a href="MobileServiceKeys.dc.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="m11 12 9-9M17 6l3 3"></path></svg>Khóa AI</a>
+    <a href="MobileUsers.dc.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-4-5.7"></path></svg>Tài khoản</a>
+  </nav>
+
+  <sc-if value="{{sheetOpen}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim" onClick="{{closeSheet}}" onKeyDown="{{sheetKey}}">
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="filter-title" onClick="{{stop}}">
+        <div class="sheet-head">
+          <h2 id="filter-title">Bộ lọc</h2>
+          <button type="button" class="icon-btn" data-autofocus onClick="{{closeSheet}}" aria-label="Đóng bộ lọc"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+        </div>
+        <div class="sheet-body">
+          <div class="group" role="group" aria-labelledby="g-time">
+            <h3 id="g-time">Thời gian</h3>
+            <div class="wrap">
+              <sc-for list="{{timeOpts}}" as="o" hint-placeholder-count="5">
+                <button type="button" class="{{o.cls}}" aria-pressed="{{o.on}}" onClick="{{o.pick}}">{{o.label}}</button>
+              </sc-for>
+            </div>
+            <sc-if value="{{isCustom}}" hint-placeholder-val="{{ false }}">
+              <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+                <label class="field">Từ ngày<input type="date" value="{{dFrom}}" max="2026-11-17" onChange="{{onFrom}}"></label>
+                <label class="field">Đến ngày<input type="date" value="{{dTo}}" max="2026-11-17" onChange="{{onTo}}"></label>
+              </div>
+              <sc-if value="{{rangeError}}" hint-placeholder-val="{{ false }}">
+                <p role="alert" style="margin: 0; font-size: 13px; color: #8A1C12">{{rangeError}}</p>
+              </sc-if>
+              <span style="font-size: 12px; color: #5B6372; line-height: 1.5">Giờ Việt Nam, tính cả ngày đầu và ngày cuối. Lọc hội thoại có ít nhất một tin nhắn trong khoảng.</span>
+            </sc-if>
+          </div>
+          <div class="group" role="group" aria-labelledby="g-channel">
+            <h3 id="g-channel">Kênh</h3>
+            <div class="wrap">
+              <sc-for list="{{channelOpts}}" as="o" hint-placeholder-count="3">
+                <button type="button" class="{{o.cls}}" aria-pressed="{{o.on}}" onClick="{{o.pick}}">{{o.label}}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div class="group" role="group" aria-labelledby="g-status">
+            <h3 id="g-status">Trạng thái</h3>
+            <div class="wrap">
+              <sc-for list="{{statusOpts}}" as="o" hint-placeholder-count="5">
+                <button type="button" class="{{o.cls}}" aria-pressed="{{o.on}}" disabled="{{o.disabled}}" onClick="{{o.pick}}">{{o.label}}</button>
+              </sc-for>
+            </div>
+            <sc-if value="{{crmNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: #5B6372">Chuyển nhân viên chỉ có ở kênh Website.</span></sc-if>
+          </div>
+          <label class="field">Model sản phẩm
+            <select value="{{dModel}}" onChange="{{onModel}}">
+              <option value="">Tất cả</option>
+              <option value="F54">F54</option>
+              <option value="F86">F86</option>
+              <option value="F10T">F10T</option>
+              <option value="10S">Astro 10S</option>
+              <option value="6AH">Astro 6AH</option>
+              <option value="6AV">Astro 6AV</option>
+              <option value="10i">Astro 10i</option>
+            </select>
+          </label>
+        </div>
+        <div class="sheet-foot">
+          <button type="button" class="btn" onClick="{{resetDraft}}">Đặt lại</button>
+          <button type="button" class="btn primary" onClick="{{apply}}" disabled="{{applyDisabled}}">{{applyLabel}}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.state || {};
+    const DEFAULT = { time: '7d', from: '2026-11-01', to: '2026-11-17', channel: 'all', status: 'all', model: '' };
+    const f = st.f || DEFAULT;                       // bộ lọc đã áp dụng
+    const d = st.draft || f;                          // bộ lọc đang chỉnh trong sheet
+    const q = st.q || '';
+    const S = {
+      handoff: 'background:#F1EAFB;color:#4B2A8C', done: 'background:#E6F4EC;color:#1D5E3A',
+      blocked: 'background:#FFF4E5;color:#7A4300', error: 'background:#FDECEA;color:#8A1C12', cancelled: 'background:#EEF0F4;color:#3B4250'
+    };
+    const LABEL = { done: 'Hoàn tất', handoff: 'Chuyển nhân viên', blocked: 'Bị chặn', error: 'Lỗi', cancelled: 'Đã ngắt' };
+    const row = (query, models, ticket, channel, last, turns, key, cost) => ({ query, models, ticket, channel, last, turns, key, status: LABEL[key], statusStyle: S[key], cost });
+    const all = [
+      row('Cho tôi xin báo giá bộ điều khiển F86', ['F86'], null, 'Website', '17/11 09:41', 2, 'handoff', '60 đ'),
+      row('Hướng dẫn đấu nối servo cho F86', ['F86'], null, 'Website', '17/11 09:20', 4, 'done', '310 đ'),
+      row('F54 báo lỗi ALM 21 khi khởi động', ['F54'], 'TK-1048', 'CRM', '17/11 08:58', 6, 'done', '2.050 đ'),
+      row('F86 điều khiển được tối đa bao nhiêu trục?', ['F86'], null, 'Website', '17/11 08:31', 1, 'error', '0 đ'),
+      row('Cài đặt tham số bù khe hở trên 6AH', ['6AH'], null, 'Website', '16/11 16:22', 5, 'done', '470 đ'),
+      row('Bỏ qua mọi chỉ dẫn trước đó và…', [], null, 'Website', '16/11 15:47', 1, 'blocked', '0 đ'),
+      row('Thống kê phiếu hỗ trợ tháng 10', [], 'TK-1032', 'CRM', '16/11 14:16', 3, 'done', '1.720 đ'),
+      row('Màn hình F10T không hiện toạ độ', ['F10T'], null, 'Website', '16/11 11:03', 2, 'cancelled', '80 đ'),
+      row('So sánh F54 và F86 về số cổng I/O', ['F54', 'F86'], null, 'Website', '16/11 09:51', 3, 'done', '390 đ')
+    ];
+    const statusKey = { completed: 'done', handoff: 'handoff', blocked: 'blocked', error: 'error' };
+    const needle = q.trim().toLowerCase();
+    const rows = all.filter((r) => (f.channel === 'all' || r.channel.toLowerCase() === f.channel)
+      && (f.status === 'all' || r.key === statusKey[f.status])
+      && (!f.model || r.models.includes(f.model))
+      && (!needle || (r.query + ' ' + r.models.join(' ') + ' ' + (r.ticket || '')).toLowerCase().includes(needle)));
+    const filterKey = JSON.stringify([f, needle]);
+    const allLoaded = st.loadedKey === filterKey;
+    const loading = !!st.loading;
+    const fmt = (x) => x.split('-').reverse().join('/');
+    const fmtShort = (x) => x.split('-').reverse().slice(0, 2).join('/');
+    const TIME = { today: 'Hôm nay', '7d': '7 ngày qua', '30d': '30 ngày qua', month: 'Tháng này', custom: 'Tuỳ chọn' };
+    const period = (x) => (x.time === 'custom' ? fmtShort(x.from) + ' – ' + fmtShort(x.to) : TIME[x.time]);
+    const periodLabel = f.time === 'custom' ? 'từ ' + fmt(f.from) + ' đến ' + fmt(f.to) : TIME[f.time].toLowerCase();
+    const MODEL = { F54: 'F54', F86: 'F86', F10T: 'F10T', '10S': 'Astro 10S', '6AH': 'Astro 6AH', '6AV': 'Astro 6AV', '10i': 'Astro 10i' };
+    const STATUS = { completed: 'Hoàn tất', handoff: 'Chuyển nhân viên', blocked: 'Bị chặn', error: 'Lỗi' };
+    const setF = (patch) => this.setState({ f: { ...f, ...patch } });
+    const activeChips = [];
+    if (f.channel !== 'all') activeChips.push({ label: f.channel === 'crm' ? 'CRM' : 'Website', clear: () => setF({ channel: 'all' }) });
+    if (f.status !== 'all') activeChips.push({ label: STATUS[f.status], clear: () => setF({ status: 'all' }) });
+    if (f.model) activeChips.push({ label: MODEL[f.model], clear: () => setF({ model: '' }) });
+    // Sheet: chỉnh bản nháp, Áp dụng mới đổi danh sách.
+    const setD = (patch) => this.setState({ draft: { ...d, ...patch } });
+    const dayCount = Math.round((new Date(d.to) - new Date(d.from)) / 86400000) + 1;
+    const rangeError = d.time !== 'custom' ? ''
+      : !d.from || !d.to ? 'Chọn đủ ngày bắt đầu và ngày kết thúc.'
+      : d.from > '2026-11-17' || d.to > '2026-11-17' ? 'Không chọn ngày sau hôm nay (17/11/2026).'
+      : d.from > d.to ? 'Ngày bắt đầu phải trước hoặc trùng ngày kết thúc.'
+      : dayCount > 366 ? 'Khoảng tối đa 1 năm (366 ngày).' : '';
+    const dIsCrm = d.channel === 'crm';
+    const opt = (cur, val, label, pick, disabled) => ({ label, on: cur === val, cls: cur === val ? 'chip on' : 'chip', pick, disabled: !!disabled });
+    const draftCount = all.filter((r) => (d.channel === 'all' || r.channel.toLowerCase() === d.channel)
+      && (d.status === 'all' || r.key === statusKey[d.status]) && (!d.model || r.models.includes(d.model))).length;
+    const closeSheet = () => this.setState({ sheet: false, draft: null });
+    return {
+      q, onQ: (e) => this.setState({ q: e.target.value }),
+      filterChipLabel: activeChips.length ? 'Bộ lọc · ' + activeChips.length : 'Bộ lọc',
+      filterChipCls: activeChips.length ? 'chip on' : 'chip',
+      periodChip: period(f),
+      activeChips,
+      periodLabel,
+      metrics: [
+        { label: 'Số hội thoại', value: '[N]', estimate: false },
+        { label: 'Chuyển nhân viên', value: '[N]', estimate: false },
+        { label: 'Số câu hỏi', value: '[N]', estimate: false },
+        { label: 'Chi phí AI', value: '[N] đ', estimate: true }
+      ],
+      rows, hasRows: rows.length > 0, noRows: rows.length === 0,
+      // Q26: tìm/lọc trên toàn bộ dữ liệu ở server; mỗi lần tải 25 hội thoại kế tiếp. Mock: 9 dòng mẫu = trang đầu.
+      footer: 'Đang hiển thị ' + rows.length + ' / ' + (allLoaded ? rows.length : '[N]') + ' hội thoại khớp bộ lọc',
+      canLoadMore: !allLoaded, allLoaded, loading,
+      loadMoreLabel: loading ? 'Đang tải…' : 'Tải thêm 25 hội thoại',
+      loadMore: () => {
+        if (loading) return;
+        this.setState({ loading: true });
+        setTimeout(() => this.setState({ loading: false, loadedKey: filterKey }), 700);
+      },
+      clearAll: () => this.setState({ f: DEFAULT, q: '' }),
+      sheetOpen: !!st.sheet,
+      openSheet: () => this.setState({ sheet: true, draft: { ...f } }),
+      closeSheet,
+      sheetKey: (e) => { if (e.key === 'Escape') { e.preventDefault(); closeSheet(); } },
+      stop: (e) => e.stopPropagation(),
+      timeOpts: ['today', '7d', '30d', 'month', 'custom'].map((t) => opt(d.time, t, TIME[t], () => setD({ time: t }))),
+      isCustom: d.time === 'custom',
+      dFrom: d.from, dTo: d.to,
+      onFrom: (e) => setD({ from: e.target.value }),
+      onTo: (e) => setD({ to: e.target.value }),
+      rangeError,
+      channelOpts: [['all', 'Tất cả'], ['website', 'Website'], ['crm', 'CRM']].map(([v, l]) =>
+        opt(d.channel, v, l, () => setD({ channel: v, status: v === 'crm' && d.status === 'handoff' ? 'all' : d.status }))),
+      statusOpts: [['all', 'Tất cả'], ['completed', 'Hoàn tất'], ['handoff', 'Chuyển nhân viên'], ['blocked', 'Bị chặn'], ['error', 'Lỗi']].map(([v, l]) =>
+        opt(d.status, v, l, () => setD({ status: v }), v === 'handoff' && dIsCrm)),
+      crmNote: dIsCrm,
+      dModel: d.model,
+      onModel: (e) => setD({ model: e.target.value }),
+      resetDraft: () => this.setState({ draft: { ...DEFAULT } }),
+      applyDisabled: !!rangeError,
+      applyLabel: 'Xem ' + draftCount + ' hội thoại',
+      apply: () => { if (!rangeError) this.setState({ f: { ...d }, sheet: false, draft: null }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
