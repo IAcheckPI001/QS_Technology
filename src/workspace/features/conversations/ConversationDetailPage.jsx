@@ -10,6 +10,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { ChevronLeft, FileSearch, MessageSquareOff } from 'lucide-react';
 import { conversationsApi, TURN_PAGE_SIZE } from '../../api/conversations.js';
+import Highlight from '../../components/Highlight.jsx';
 import Modal from '../../components/Modal.jsx';
 import { Badge, Button, Card, EmptyState, ErrorBanner, SkeletonBlock } from '../../components/ui.jsx';
 import { PHONE_QUERY, useMediaQuery } from '../../hooks/useMediaQuery.js';
@@ -61,7 +62,21 @@ export default function ConversationDetailPage() {
     );
   }
 
-  return <Detail key={sessionId} sessionId={sessionId} turns={turns} backTo={backTo} from={location.state?.from} />;
+  // Mở từ dòng khớp tìm kiếm (B2): `?turn=` là lượt khớp, `?q=` là từ khoá để tô.
+  const params = new URLSearchParams(location.search);
+  const focusId = params.get('turn');
+  const query = params.get('q') || '';
+  return (
+    <Detail
+      key={`${sessionId}:${focusId || ''}`}
+      sessionId={sessionId}
+      turns={turns}
+      backTo={backTo}
+      from={location.state?.from}
+      focusId={turns.some((turn) => turn.id === focusId) ? focusId : null}
+      query={query}
+    />
+  );
 }
 
 function BackLink({ to }) {
@@ -75,12 +90,14 @@ function BackLink({ to }) {
 
 const traceLink = (sessionId, turnId) => `/conversations/${encodeURIComponent(sessionId)}/turns/${encodeURIComponent(turnId)}/trace`;
 
-function Detail({ sessionId, turns, backTo, from }) {
+function Detail({ sessionId, turns, backTo, from, focusId, query }) {
   const phone = useMediaQuery(PHONE_QUERY);
-  const [visible, setVisible] = useState(TURN_PAGE_SIZE);
+  // Lượt khớp nằm ngoài 20 lượt mới nhất: mở rộng phần đang hiện tới lượt đó.
+  const focusIndex = focusId ? turns.findIndex((turn) => turn.id === focusId) : -1;
+  const [visible, setVisible] = useState(() => Math.max(TURN_PAGE_SIZE, focusIndex >= 0 ? turns.length - focusIndex : 0));
   const [tech, setTech] = useState({});
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [pickedId, setPickedId] = useState(null);
+  const [pickedId, setPickedId] = useState(focusId);
   const scrollRef = useRef(null);
   const anchorRef = useRef(null);
   const docsRef = useRef(null);
@@ -119,13 +136,22 @@ function Detail({ sessionId, turns, backTo, from }) {
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    // Mở từ kết quả tìm kiếm (chưa bấm tải lượt cũ hơn): cuộn tới lượt khớp thay vì cuối khung.
+    // Chạy lại (StrictMode) vẫn cho cùng kết quả.
+    if (focusId && anchorRef.current === null) {
+      const target = el.querySelector('[data-focus="true"]');
+      if (target) {
+        el.scrollTop += target.getBoundingClientRect().top - el.getBoundingClientRect().top - 12;
+        return;
+      }
+    }
     if (anchorRef.current !== null) {
       el.scrollTop = el.scrollHeight - anchorRef.current;
       anchorRef.current = null;
     } else {
       el.scrollTop = el.scrollHeight;
     }
-  }, [visible]);
+  }, [visible, focusId]);
 
   const loadOlder = () => {
     const el = scrollRef.current;
@@ -201,6 +227,8 @@ function Detail({ sessionId, turns, backTo, from }) {
                 from={from}
                 phone={phone}
                 perTurn={perTurn}
+                focused={turn.id === focusId}
+                query={query}
                 selected={turn.id === panelTurnId}
                 legacyCount={turn.id === panelTurnId ? legacyCount : 0}
                 techOpen={Boolean(tech[turn.id])}
@@ -235,15 +263,16 @@ function Detail({ sessionId, turns, backTo, from }) {
   );
 }
 
-function Turn({ turn, no, sessionId, from, phone, perTurn, selected, legacyCount, techOpen, onToggleTech, onPick, onOpenSheet }) {
+function Turn({ turn, no, sessionId, from, phone, perTurn, focused, query, selected, legacyCount, techOpen, onToggleTech, onPick, onOpenSheet }) {
   const asked = askedAt(turn);
   const kind = perTurn ? sourceKind(turn.sources, turn.status) : null;
   const picked = selected && !phone && (perTurn || legacyCount > 0);
+  const className = [styles.turn, picked && styles.turnPicked, focused && styles.turnFocus].filter(Boolean).join(' ');
   return (
-    <article aria-label={`Lượt ${no}`} className={picked ? `${styles.turn} ${styles.turnPicked}` : styles.turn}>
+    <article aria-label={`Lượt ${no}`} className={className} data-focus={focused || undefined}>
       <div className={styles.ask}>
         <span className={styles.who}>{S.conv.customerAsked(asked ? formatTime(asked) : '')}</span>
-        <div className={styles.askBubble}>{turn.query_origin}</div>
+        <div className={styles.askBubble}><Highlight text={turn.query_origin} query={query} /></div>
       </div>
       <div className={styles.answer}>
         <span className={styles.who}>{turn.answer ? S.conv.botAnswered(formatTime(turn.created_at)) : S.conv.botNoAnswer}</span>

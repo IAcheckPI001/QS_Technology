@@ -20,6 +20,7 @@ from app.modules.chatbot.repositories.chat_session_repository import (
     ChatSessionRepository,
     ChatTurnLeaseRepository,
 )
+from app.modules.chatbot.repositories.conversation_repository import ConversationRepository
 from app.modules.chatbot.repositories.history_repository import HistoryRepository
 from app.modules.chatbot.repositories.service_key_repository import ServiceKeyRepository
 from app.modules.chatbot.repositories.trace_repository import TraceRepository
@@ -41,6 +42,12 @@ def get_history_repository(
     db: AsyncSession = Depends(get_db_session),
 ) -> HistoryRepository:
     return HistoryRepository(db)
+
+
+def get_conversation_repository(
+    db: AsyncSession = Depends(get_db_session),
+) -> ConversationRepository:
+    return ConversationRepository(db)
 
 
 def get_chatbot_service(

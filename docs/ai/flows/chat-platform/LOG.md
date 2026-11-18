@@ -7,6 +7,36 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-07 (nguyên văn từ `current-state.md` và `architecture.md`, gồm Finding
 status, API gateway, service key, lease, tracing): [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-18 · B2: bảng tóm tắt hội thoại, tìm không dấu, phân trang (Q29, Q30) · loại: thay đổi
+
+- Vấn đề: danh sách hội thoại chạy window function trên toàn `chat_history` và đọc JSON mỗi request
+  (100.000 lượt: vài giây); tìm kiếm chỉ trên lượt cuối, phân biệt dấu, không escape; số liệu không
+  theo bộ lọc (F8); không phân trang.
+- Quyết định/luật (Toma duyệt cách kết hợp Q30 và phạm vi tìm Q29):
+  - Python tính cờ của lượt (`turn_sources.turn_flags`: `has_tool_errors`, `is_handoff`,
+    `product_models`, `ticket_id`) và ghi vào cột mới của `chat_history` ở cả 4 nhánh ghi;
+  - trigger `AFTER INSERT` chỉ cộng dồn vào bảng `chat_conversations` (`sql/chat_conversations.sql`),
+    `NOWAIT`, bắt mọi lỗi để không làm hỏng việc ghi lượt; `rebuild_chat_conversations()` phát lại qua
+    cùng hàm; rủi ro R1–R10 ở FRONTEND_REQUIREMENTS 19.11;
+  - `GET /chatbot/conversations` đường B2 (`q`, `status=handoff`, `channel`, `product_model`,
+    `from`/`to` giờ Việt Nam, `limit`, `cursor` keyset gắn dấu bộ lọc, `match`); không gửi tham số mới
+    thì như cũ (`/legacy`);
+  - `/conversations/metrics`, `/conversations/{id}` sau `WORKSPACE_CONVERSATION_API_ENABLED` (TR-16);
+  - `/history` thêm `limit`/`cursor`, `asked_at`, `answered_at`, `turn_number`, `has_trace`;
+  - bỏ `cost_source` của `/metrics` (spec 19.5 ghi lý do).
+- File: `sql/chat_conversations.sql`, `db/models/history.py`, `repositories/{history,conversation}_repository.py`,
+  `services/{turn_sources,conversation_filters,conversation_views,chat_service}.py`, `routers/workspace.py`,
+  `api/v1/router.py`, `core/config.py`, `scripts/{backfill_history_flags,check_conversation_summary}.py`;
+  test `test_conversation_api.py` (mới), `test_turn_sources.py`, `test_history_api.py`.
+- Kiểm chứng: Toma áp SQL, chạy điền cờ (222 lượt, 169 lượt lệch được ghi), `rebuild_chat_conversations()`,
+  script so lệch → "Khớp" (14 phiên). API thật: tìm không dấu/đảo thứ tự/đ, phân trang 5 dòng duyệt đủ 14
+  phiên không trùng, lọc 7 ngày (3 phiên, khớp `/metrics`), lỗi ngày và cursor → 422, `/history?limit=3`
+  đánh số 93–95 rồi 90–92. `pytest tests` → 1071 passed, 14 skipped, 1 failed có sẵn (CRLF).
+- Ảnh hưởng contract/API/schema: có (api_guidelines mục conversations và history; deploy-rules SQL mục 7,
+  biến `WORKSPACE_CONVERSATION_API_ENABLED`).
+- Mở tiếp: chưa kiểm `EXPLAIN` (index trigram có được dùng) trên dữ liệu lớn; chưa có job so lệch định kỳ
+  (R1); lượt bị ngắt ghi bằng session riêng chưa kiểm khoá dòng thật (R5).
+
 ## 2026-11-18 · Kiểm B3 và W2 với lượt thật: khóa OpenAI hết hạn · loại: sự cố
 
 - Vấn đề: Toma gửi một câu hỏi qua widget (phiên `10507a81…`) để kiểm B3; lượt lỗi `analysis_error`.

@@ -6,6 +6,33 @@ sang `LOG-archive-<ngày của mục mới nhất bị cắt>.md` và để lạ
 
 Sau khi thêm mục, viết lại [STATE.md](STATE.md).
 
+## 2026-11-18 · B2 trên giao diện: bộ lọc, ô số liệu, tìm không dấu có tô sáng, mở đúng lượt khớp (WU-7) · loại: thay đổi
+
+- Vấn đề: trước B2 chỉ có ô tìm (lượt cuối) và lọc trạng thái; "Tải thêm" cắt trang ở trình duyệt.
+- Quyết định/luật (theo mock v47, Q12, Q14, Q16, Q19, Q26, Q29):
+  - `api/conversations.js`: gửi bộ lọc, `limit` 25, `cursor` lên máy chủ; `metrics()` trả null khi route
+    chưa bật (404) → ẩn 4 ô số liệu và "/ y";
+  - bộ lọc Kênh, Trạng thái (thêm "Chuyển nhân viên", khoá khi chọn kênh CRM), Model sản phẩm (7 mục, tạm
+    khai báo ở `status.js` tới khi có registry B8), Thời gian (Hôm nay / 7 ngày qua mặc định / 30 ngày /
+    Tháng này / Tuỳ chọn có bảng chọn, nút nhanh, kiểm ngày, thẻ "Từ … đến … · n ngày" có ×), tất cả trên URL;
+  - 4 ô số liệu (không token), cột Số câu hỏi và Chi phí AI (VND);
+  - tô từ khớp không dấu (`utils/search.js`, `components/Highlight.jsx`, cùng quy tắc máy chủ); khớp ở lượt
+    khác lượt cuối thì thêm dòng "Khớp ở lượt N: …";
+  - link chi tiết thêm `?turn=&q=`: chi tiết mở rộng phần lượt đang hiện tới lượt khớp, cuộn tới, viền nét
+    đứt, tô từ khoá; khung nguồn chọn sẵn lượt đó.
+- Sửa lỗi có sẵn: `state.from` bị đặt trong `to` của `Link` nên nút quay lại từ chi tiết mất bộ lọc.
+- File: `ConversationsPage.jsx`, `ConversationDetailPage.jsx`, `timeRange.js`, `status.js`,
+  `conversations.module.css`, `detail.module.css`, `api/conversations.js`, `api/fixtures/conversations.js`
+  (giả lập B2), `utils/search.js`, `components/Highlight.jsx`, `strings.vi.js`; test `conversations.test.jsx`,
+  `api/conversations.test.js`, `utils/search.test.js`.
+- Kiểm chứng: `npm test` → 11 file, 84 test đạt; `npx eslint src/workspace` → 0 lỗi; `npm run build` đạt.
+  Preview 5174 với backend B2 thật: 14 hội thoại / 3 chuyển nhân viên / 222 câu hỏi (30 ngày); "truc dieu
+  khien" tô "điều khiển", "trục"; "khach hang" → "Khớp ở lượt 62", mở chi tiết cuộn đúng lượt 62, khung nguồn
+  lượt 62, quay lại giữ bộ lọc; Tháng trước → 10 hội thoại; 375px không tràn ngang. Sửa trong lúc kiểm: cuộn
+  tới lượt khớp bị StrictMode chạy effect lần hai đẩy xuống cuối.
+- Mở tiếp: chi tiết vẫn tải mọi lượt một lần (chưa dùng `/history?limit`, cần `/conversations/{id}` cho đầu
+  trang); danh sách model của bộ lọc chờ B8; dữ liệu cũ lưu `ASTRO_10S` nên lọc "Astro 10S" (`10S`) không ra.
+
 ## 2026-11-18 · Lỗi công cụ CRM bằng lời dễ hiểu, kết luận có lấy được số liệu không · loại: thay đổi
 
 - Vấn đề (Toma): bảng công cụ chỉ hiện mã (`tool_invalid_args`) hoặc nhãn ngắn ("Truy vấn CRM không hợp lệ"), người không chuyên kỹ thuật không biết lỗi là gì và câu trả lời có bị ảnh hưởng không; nhãn `crm_query_invalid` còn sai nghĩa với `crm_schema` (thực ra là CRM không có bảng).

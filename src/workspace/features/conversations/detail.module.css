@@ -34,6 +34,9 @@
 
 .turn { display: flex; flex-direction: column; gap: 10px; padding: 14px 12px; border: 1px solid transparent; border-bottom-color: var(--ws-hover); border-radius: 10px; }
 .turnPicked { padding: 13px 11px; border: 2px solid var(--ws-brand); background: #fcf9f4; }
+/* Lượt khớp tìm kiếm (B2): viền nét đứt; từ khớp tô vàng trên bong bóng tối. */
+.turnFocus { outline: 2px dashed #e69d07; outline-offset: 2px; }
+.askBubble mark { padding: 0 2px; border-radius: 2px; background: #ffd666; color: #1f2937; }
 .ask { align-self: flex-end; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 85%; }
 .answer { display: flex; flex-direction: column; gap: 4px; max-width: 90%; }
 .who { font-size: 12px; color: var(--ws-text-muted); }

@@ -1,6 +1,7 @@
 """Endpoint đọc cho Support Workspace (chưa có xác thực/ownership)."""
 
 import logging
+from datetime import date
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
@@ -9,22 +10,39 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.config import settings
 from app.modules.chatbot.dependencies import (
+    get_conversation_repository,
     get_history_repository,
     get_trace_reader,
     request_id_of,
 )
+from app.modules.chatbot.repositories.conversation_repository import ConversationRepository
 from app.modules.chatbot.repositories.history_repository import HistoryRepository
 from app.modules.chatbot.repositories.trace_repository import TraceRepository
 from app.modules.chatbot.routers.sse import error_response
 from app.modules.chatbot.schemas.history import (
+    ChatChannel,
     ChatHistoryResponse,
-    ChatStatus,
     ChatTraceResponse,
+    ConversationDetail,
     ConversationListResponse,
+    ConversationMetricsResponse,
+    ConversationStatusFilter,
     ConversationSummary,
     RetrievalSnapshotResponse,
     TraceSpan,
     TraceSummary,
+)
+from app.modules.chatbot.services.conversation_filters import (
+    ConversationFilters,
+    ConversationQueryError,
+    build_filters,
+    decode_cursor,
+    encode_cursor,
+)
+from app.modules.chatbot.services.conversation_views import (
+    conversation_detail,
+    conversation_metrics,
+    conversation_summary,
 )
 from app.modules.chatbot.services.turn_sources import history_item, retrieval_view
 
@@ -43,14 +61,44 @@ def _database_unavailable(
     return error_response(request, 503, "database_unavailable", message, request_id)
 
 
+def _invalid_query(request: Request, error: ConversationQueryError) -> JSONResponse:
+    return error_response(request, 422, error.code, error.message, request_id_of(request))
+
+
+def _session_not_found() -> JSONResponse:
+    return JSONResponse(
+        status_code=404,
+        content={
+            "detail": {
+                "code": "session_not_found",
+                "message": "No chat history found for this session.",
+            }
+        },
+    )
+
+
 @router.get("/chatbot/sessions/{session_id}/history", response_model=ChatHistoryResponse)
 async def get_chat_history(
     request: Request,
     session_id: UUID,
+    limit: int | None = Query(default=None, ge=1, le=100),
+    cursor: str | None = Query(default=None, max_length=200),
     repository: HistoryRepository = Depends(get_history_repository),
 ) -> ChatHistoryResponse | JSONResponse:
+    """Không có `limit`: mọi lượt như cũ. Có `limit`: trang `limit` lượt mới nhất, `cursor` tới lượt cũ hơn (19.7)."""
     try:
-        history = await repository.list_for_history(session_id=session_id)
+        before = decode_cursor(cursor) if cursor else None
+    except ConversationQueryError as error:
+        return _invalid_query(request, error)
+    try:
+        if limit is None:
+            history = await repository.list_for_history(session_id=session_id)
+            first_number, next_cursor = 1, None
+        else:
+            page = await repository.history_page(session_id=session_id, limit=limit, before=before)
+            history, first_number = page.rows, page.first_turn_number
+            next_cursor = encode_cursor(history[0].created_at, history[0].id) if page.has_more else None
+        traced = await repository.traced_history_ids([item.id for item in history]) if history else set()
     except SQLAlchemyError:
         return _database_unavailable(
             request,
@@ -59,20 +107,32 @@ async def get_chat_history(
             session_id,
         )
 
-    if not history:
-        return JSONResponse(
-            status_code=404,
-            content={
-                "detail": {
-                    "code": "session_not_found",
-                    "message": "No chat history found for this session.",
-                }
-            },
-        )
+    if not history and before is None:
+        return _session_not_found()
 
     return ChatHistoryResponse(
         session_id=session_id,
-        messages=[history_item(item, settings.usd_to_vnd_rate) for item in history],
+        messages=[
+            history_item(
+                item, settings.usd_to_vnd_rate, turn_number=first_number + index, has_trace=item.id in traced,
+            )
+            for index, item in enumerate(history)
+        ],
+        next_cursor=next_cursor,
+    )
+
+
+def _filters(
+    *,
+    q: str | None,
+    status: str | None,
+    channel: str | None,
+    product_model: list[str] | None,
+    from_date: date | None,
+    to_date: date | None,
+) -> ConversationFilters:
+    return build_filters(
+        q=q, status=status, channel=channel, product_models=product_model, from_date=from_date, to_date=to_date,
     )
 
 
@@ -80,9 +140,49 @@ async def get_chat_history(
 async def list_conversations(
     request: Request,
     search: str | None = Query(default=None, max_length=200),
-    status: ChatStatus | None = None,
+    q: str | None = Query(default=None, max_length=200),
+    status: ConversationStatusFilter | None = None,
+    channel: ChatChannel | None = None,
+    product_model: list[str] | None = Query(default=None, max_length=20),
+    from_date: date | None = Query(default=None, alias="from"),
+    to_date: date | None = Query(default=None, alias="to"),
+    limit: int | None = Query(default=None, ge=1, le=100),
+    cursor: str | None = Query(default=None, max_length=300),
     repository: HistoryRepository = Depends(get_history_repository),
+    conversations: ConversationRepository = Depends(get_conversation_repository),
 ) -> ConversationListResponse | JSONResponse:
+    """Có tham số B2 (q, channel, product_model, from/to, limit, cursor, status=handoff): đọc bảng
+    tóm tắt (19.4). Không có: hành vi cũ cho /legacy (search/status trên lượt cuối, trả hết)."""
+    b2 = (
+        limit is not None or cursor is not None or q is not None or channel is not None
+        or bool(product_model) or from_date is not None or to_date is not None or status == "handoff"
+    )
+    if b2:
+        try:
+            filters = _filters(
+                q=q if q is not None else search, status=status, channel=channel,
+                product_model=product_model, from_date=from_date, to_date=to_date,
+            )
+            after = decode_cursor(cursor, filters) if cursor else None
+        except ConversationQueryError as error:
+            return _invalid_query(request, error)
+        try:
+            # Lấy thêm một dòng để biết còn trang sau.
+            rows = await conversations.search(filters, limit=None if limit is None else limit + 1, after=after)
+        except SQLAlchemyError:
+            return _database_unavailable(
+                request,
+                "Conversations could not be loaded. Please try again.",
+                "Conversation list load failed",
+            )
+        has_more = limit is not None and len(rows) > limit
+        rows = rows[:limit] if limit is not None else rows
+        last = rows[-1].summary if has_more else None
+        return ConversationListResponse(
+            conversations=[conversation_summary(row, settings.usd_to_vnd_rate) for row in rows],
+            next_cursor=encode_cursor(last.last_message_at, last.session_id, filters) if last else None,
+        )
+
     try:
         rows = await repository.list_conversations(search=search or None, status=status)
         metrics = await repository.aggregate_metrics()
@@ -115,6 +215,61 @@ async def list_conversations(
         total_tokens=metrics.total_tokens,
         total_cost_vnd=round(metrics.cost_usd * settings.usd_to_vnd_rate, 2),
     )
+
+
+# B2: chưa có xác thực nên chỉ đăng ký khi WORKSPACE_CONVERSATION_API_ENABLED (TR-16, api/v1/router.py).
+# /metrics khai báo trước /{session_id}.
+conversation_router = APIRouter(tags=["chatbot-workspace"])
+
+
+@conversation_router.get("/chatbot/conversations/metrics", response_model=ConversationMetricsResponse)
+async def conversation_metrics_view(
+    request: Request,
+    q: str | None = Query(default=None, max_length=200),
+    status: ConversationStatusFilter | None = None,
+    channel: ChatChannel | None = None,
+    product_model: list[str] | None = Query(default=None, max_length=20),
+    from_date: date | None = Query(default=None, alias="from"),
+    to_date: date | None = Query(default=None, alias="to"),
+    conversations: ConversationRepository = Depends(get_conversation_repository),
+) -> ConversationMetricsResponse | JSONResponse:
+    """19.5: số liệu của đúng tập hội thoại khớp bộ lọc (cùng tham số với danh sách)."""
+    try:
+        filters = _filters(
+            q=q, status=status, channel=channel, product_model=product_model, from_date=from_date, to_date=to_date,
+        )
+    except ConversationQueryError as error:
+        return _invalid_query(request, error)
+    try:
+        totals = await conversations.totals(filters)
+    except SQLAlchemyError:
+        return _database_unavailable(
+            request,
+            "Conversation metrics could not be loaded. Please try again.",
+            "Conversation metrics load failed",
+        )
+    return conversation_metrics(totals, settings.usd_to_vnd_rate)
+
+
+@conversation_router.get("/chatbot/conversations/{session_id}", response_model=ConversationDetail)
+async def get_conversation(
+    request: Request,
+    session_id: UUID,
+    conversations: ConversationRepository = Depends(get_conversation_repository),
+) -> ConversationDetail | JSONResponse:
+    """19.6: đầu màn Chi tiết hội thoại khi mở bằng link."""
+    try:
+        row = await conversations.get(session_id)
+    except SQLAlchemyError:
+        return _database_unavailable(
+            request,
+            "Conversation could not be loaded. Please try again.",
+            "Conversation load failed (session_id=%s)",
+            session_id,
+        )
+    if row is None:
+        return _session_not_found()
+    return conversation_detail(row, settings.usd_to_vnd_rate)
 
 
 @router.get(

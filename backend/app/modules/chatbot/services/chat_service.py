@@ -9,6 +9,7 @@ import anyio
 
 from app.core.config import settings
 from app.core.tracing import current_trace, set_root, span
+from app.modules.chatbot.services.turn_sources import turn_flags
 from app.modules.chatbot.services.turn_usage import USAGE_SOURCE_ESTIMATE, TurnUsage, usage_from_trace
 from app.util.token_counter import count_tokens
 from app.modules.chatbot.schemas.security.principal import PrincipalContext, RequestContext
@@ -153,6 +154,7 @@ class ChatbotService:
                 set_root(flow="human_agent_mode", history_status="completed")
                 yield answer
                 with span("history.write", "db", history_status="completed"):
+                    state_json = conversation_state.model_dump(mode="json")
                     await self._history_repository.create(
                         session_id=session_id,
                         query_origin=message,
@@ -160,9 +162,10 @@ class ChatbotService:
                         status="completed",
                         model=None,
                         latency_ms=round((perf_counter() - started_at) * 1000),
-                        conversation_state=conversation_state.model_dump(mode="json"),
+                        conversation_state=state_json,
                         channel=channel,
                         **turn_ids,
+                        **turn_flags(None, state_json),
                     )
                 finalized = True
                 return
@@ -249,11 +252,10 @@ class ChatbotService:
                     status="completed",
                     model=self._provider.model,
                     latency_ms=round((perf_counter() - started_at) * 1000),
-                    conversation_state=next_state.model_dump(mode="json"),
                     channel=channel,
                     **turn_ids,
                     normalized_query=_normalized_query(state),
-                    **self._turn_record(state, message, answer),
+                    **self._turn_record(state, message, answer, next_state.model_dump(mode="json")),
                 )
             finalized = True
         except (asyncio.CancelledError, GeneratorExit):
@@ -402,13 +404,23 @@ class ChatbotService:
             source=USAGE_SOURCE_ESTIMATE, input_tokens=input_tokens, output_tokens=output_tokens, cost_usd=cost,
         )
 
-    def _turn_record(self, state: RunState | None, message: str, answer: str) -> dict:
-        """Snapshot tra cứu (kèm chi tiết usage) và các cột token/chi phí cho một dòng chat_history."""
+    def _turn_record(
+        self,
+        state: RunState | None,
+        message: str,
+        answer: str,
+        conversation_state: dict | None = None,
+    ) -> dict:
+        """Snapshot tra cứu (kèm chi tiết usage), các cột token/chi phí và cờ B2 cho một dòng
+        chat_history. `conversation_state` chỉ có ở lượt completed và cũng được ghi vào dòng."""
         usage = self._usage(message, answer)
         snapshot = self._retrieval_snapshot(state) if state is not None else None
         if snapshot is not None:
             snapshot["usage"] = usage.detail()
-        return {"retrieval_snapshot": snapshot, **usage.columns()}
+        record = {"retrieval_snapshot": snapshot, **usage.columns(), **turn_flags(snapshot, conversation_state)}
+        if conversation_state is not None:
+            record["conversation_state"] = conversation_state
+        return record
 
     async def _transfer_handoff(
         self,

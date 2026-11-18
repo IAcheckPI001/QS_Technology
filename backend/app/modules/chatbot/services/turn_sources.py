@@ -5,6 +5,7 @@ Hàm thuần, đọc `retrieval_snapshot` đã lưu (không truy vấn thêm): `
 """
 
 from collections.abc import Mapping
+from datetime import timedelta
 from typing import Any
 from uuid import UUID
 
@@ -77,6 +78,28 @@ def summarize_turn(snapshot: Mapping[str, Any] | None) -> TurnSources:
     )
 
 
+def turn_flags(snapshot: Mapping[str, Any] | None, conversation_state: Mapping[str, Any] | None) -> dict:
+    """Cờ của một lượt ghi vào chat_history (B2, FRONTEND_REQUIREMENTS 19.11): nơi duy nhất quyết định
+    "nghĩa"; trigger trong Postgres chỉ cộng dồn các cờ này vào chat_conversations.
+
+    - has_tool_errors: có bước công cụ lỗi (như `summarize_turn`);
+    - is_handoff: phiên đang/được chuyển nhân viên (`mode` khác `bot`) hoặc ý định `handoff.*` (Q14);
+    - product_models, ticket_id: từ conversation_state (chỉ lượt completed có state).
+    """
+    state = conversation_state if isinstance(conversation_state, Mapping) else {}
+    mode = state.get("mode")
+    intent = state.get("last_intent")
+    models = state.get("last_models")
+    ticket = state.get("ticket_id")
+    return {
+        "has_tool_errors": summarize_turn(snapshot).has_tool_errors if isinstance(snapshot, Mapping) else False,
+        "is_handoff": (isinstance(mode, str) and mode not in ("", "bot"))
+        or (isinstance(intent, str) and intent.startswith("handoff.")),
+        "product_models": [str(model) for model in models] if isinstance(models, list) else [],
+        "ticket_id": ticket if isinstance(ticket, str) and ticket else None,
+    }
+
+
 def usage_info(row: Any) -> TurnUsageInfo | None:
     """Nguồn số liệu token/chi phí của lượt (B3): `snapshot["usage"]` có thì là usage thật."""
     snapshot = getattr(row, "retrieval_snapshot", None)
@@ -99,14 +122,26 @@ def usage_info(row: Any) -> TurnUsageInfo | None:
     return None
 
 
-def history_item(row: Any, usd_to_vnd_rate: float) -> ChatHistoryItem:
-    """Một lượt của GET /history kèm tóm tắt nguồn (B5), nguồn số liệu và chi phí VND (B3)."""
+def history_item(
+    row: Any,
+    usd_to_vnd_rate: float,
+    *,
+    turn_number: int | None = None,
+    has_trace: bool | None = None,
+) -> ChatHistoryItem:
+    """Một lượt của GET /history kèm tóm tắt nguồn (B5), nguồn số liệu và chi phí VND (B3),
+    giờ hỏi/trả lời, số thứ tự lượt và cờ có trace (B2, 19.7)."""
     item = ChatHistoryItem.model_validate(row)
     cost = item.cost_usd
+    latency = item.latency_ms
     return item.model_copy(update={
         "sources": summarize_turn(getattr(row, "retrieval_snapshot", None)),
         "usage": usage_info(row),
         "cost_vnd": None if cost is None else round(cost * usd_to_vnd_rate, 2),
+        "asked_at": None if latency is None else item.created_at - timedelta(milliseconds=latency),
+        "answered_at": item.created_at,
+        "turn_number": turn_number,
+        "has_trace": has_trace,
     })
 
 

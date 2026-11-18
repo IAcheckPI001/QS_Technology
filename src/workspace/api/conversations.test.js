@@ -1,32 +1,35 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiError } from './errors.js';
 
 vi.mock('./client.js', () => ({ api: { get: vi.fn() } }));
 const { api } = await import('./client.js');
-const { CONVERSATION_PAGE_SIZE, conversationsApi, resetConversationCache } = await import('./conversations.js');
+const { CONVERSATION_PAGE_SIZE, conversationParams, conversationsApi } = await import('./conversations.js');
 
-const rows = (n) => Array.from({ length: n }, (_, i) => ({ session_id: `s${i}` }));
+describe('conversationsApi (B2: lọc và chia trang ở máy chủ)', () => {
+  beforeEach(() => api.get.mockReset());
 
-describe('listPage (cắt trang ở trình duyệt khi chưa có B2)', () => {
-  beforeEach(() => resetConversationCache());
+  it('listPage gửi bộ lọc, limit và cursor; trả items và next_cursor của máy chủ', async () => {
+    api.get.mockResolvedValue({ conversations: [{ session_id: 's1' }], next_cursor: 'abc', total: null });
+    const filters = { q: ' cam bien ', status: 'error', channel: 'crm', productModel: 'F86', from: '2026-11-12', to: '2026-11-18' };
+    const page = await conversationsApi.listPage(filters, { cursor: 'prev' });
 
-  it('trang đầu 25 dòng, "Tải thêm" dùng lại danh sách đã tải, không gọi lại API', async () => {
-    api.get.mockResolvedValue({ conversations: rows(30) });
-    const first = await conversationsApi.listPage({ search: 'f54', status: 'error' });
-    expect(api.get).toHaveBeenCalledWith('/chatbot/conversations', expect.objectContaining({ params: { search: 'f54', status: 'error' } }));
-    expect(first.items).toHaveLength(CONVERSATION_PAGE_SIZE);
-    expect(first).toMatchObject({ next_cursor: '25', total: 30 });
-
-    const second = await conversationsApi.listPage({ search: 'f54', status: 'error' }, { cursor: first.next_cursor });
-    expect(api.get).toHaveBeenCalledTimes(1);
-    expect(second.items.map((row) => row.session_id)).toEqual(['s25', 's26', 's27', 's28', 's29']);
-    expect(second.next_cursor).toBeNull();
+    expect(api.get).toHaveBeenCalledWith('/chatbot/conversations', expect.objectContaining({
+      params: { q: 'cam bien', status: 'error', channel: 'crm', product_model: 'F86', from: '2026-11-12', to: '2026-11-18', limit: CONVERSATION_PAGE_SIZE, cursor: 'prev' },
+    }));
+    expect(page).toEqual({ items: [{ session_id: 's1' }], next_cursor: 'abc' });
   });
 
-  it('bộ lọc rỗng không gửi tham số; đổi bộ lọc thì tải lại', async () => {
-    api.get.mockResolvedValue({ conversations: rows(2) });
-    await conversationsApi.listPage({ search: '', status: '' });
-    expect(api.get).toHaveBeenLastCalledWith('/chatbot/conversations', expect.objectContaining({ params: { search: undefined, status: undefined } }));
-    await conversationsApi.listPage({ search: 'x', status: '' }, { cursor: '25' });
-    expect(api.get).toHaveBeenCalledTimes(2);
+  it('bỏ tham số rỗng', () => {
+    expect(conversationParams({ q: '  ', status: '', channel: '', productModel: '', from: '2026-11-12', to: '2026-11-18' }))
+      .toEqual({ from: '2026-11-12', to: '2026-11-18' });
+  });
+
+  it('metrics: route chưa bật (404) thì trả null; lỗi khác ném tiếp', async () => {
+    api.get.mockRejectedValueOnce(new ApiError({ status: 404, kind: 'not_found', code: 'not_found' }));
+    expect(await conversationsApi.metrics({ from: '2026-11-12', to: '2026-11-18' })).toBeNull();
+    expect(api.get).toHaveBeenCalledWith('/chatbot/conversations/metrics', expect.objectContaining({ params: { from: '2026-11-12', to: '2026-11-18' } }));
+
+    api.get.mockRejectedValueOnce(new ApiError({ status: 503, kind: 'server' }));
+    await expect(conversationsApi.metrics({})).rejects.toMatchObject({ kind: 'server' });
   });
 });

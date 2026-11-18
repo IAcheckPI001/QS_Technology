@@ -1,7 +1,8 @@
-// Dữ liệu giả cho màn hội thoại (chỉ dev, VITE_WORKSPACE_FIXTURES). Theo đúng dạng response hiện tại
-// của /chatbot/conversations, /history, /retrieval, /trace (api_guidelines.md), không có trường của
-// B2/B5. Không phải dữ liệu thật: dùng để thử giao diện khi backend :8000 không chạy.
+// Dữ liệu giả cho màn hội thoại (chỉ dev, VITE_WORKSPACE_FIXTURES). Theo dạng response của
+// /chatbot/conversations (B2), /metrics, /history, /retrieval, /trace (api_guidelines.md). Không phải
+// dữ liệu thật: dùng để thử giao diện khi backend :8000 không chạy.
 
+import { matchesAll } from '../../utils/search.js';
 import { ApiError } from '../errors.js';
 
 const MINUTE = 60 * 1000;
@@ -75,7 +76,7 @@ const shortSessions = Array.from({ length: 28 }, (_, i) => {
   const base = 400 + i * 95;
   const turns = [turn(sessionId, channel, base + 8, { q }), turn(sessionId, channel, base, { q: `${q} (hỏi thêm)`, a: status === 'error' ? null : 'Dạ, anh/chị tham khảo…', status })];
   if (status === 'error') turns[1].answer = null;
-  return { sessionId, channel, turns, models: q.match(/F\d+T?|6AH/g) || [] };
+  return { sessionId, channel, turns, models: q.match(/F\d+T?|6AH/g) || [], handoff: i === 2 };
 });
 
 const SESSIONS = [
@@ -99,6 +100,12 @@ function summary(entry) {
     status: latest.status,
     total_tokens: turns.reduce((sum, t) => sum + t.total_tokens, 0),
     cost_usd: turns.reduce((sum, t) => sum + (t.cost_usd || 0), 0),
+    // B2
+    question_count: turns.length,
+    has_handoff: Boolean(entry.handoff),
+    has_tool_errors: false,
+    cost_vnd: Math.round(turns.reduce((sum, t) => sum + (t.cost_usd || 0), 0) * 26000 * 100) / 100,
+    match: null,
   };
 }
 
@@ -249,23 +256,57 @@ const TRACES = {
   ]),
 };
 
+// ---- B2: lọc, tìm không dấu, phân trang như máy chủ (FRONTEND_REQUIREMENTS 19.4–19.5) ----
+const VND = 26000;
+const VN_OFFSET_MS = 7 * 3_600_000;
+const vnDay = (iso) => new Date(new Date(iso).getTime() + VN_OFFSET_MS).toISOString().slice(0, 10);
+const inRange = (turnRow, from, to) => !from || (vnDay(turnRow.created_at) >= from && vnDay(turnRow.created_at) <= to);
+
+function matchTurn(entry, q, from, to) {
+  if (!q) return { ok: true, match: null };
+  const raw = q.trim();
+  const exact = raw.replace(/^#/, '').toLowerCase();
+  const turns = entry.turns.map((row, index) => ({ row, no: index + 1 })).filter(({ row }) => inRange(row, from, to));
+  const hit = [...turns].reverse().find(({ row }) => row.id === raw || matchesAll(row.query_origin, raw));
+  if (hit) return { ok: true, match: { history_id: hit.row.id, turn_number: hit.no, query: hit.row.query_origin } };
+  const ok = entry.sessionId === raw
+    || (entry.ticket || '').toLowerCase() === exact
+    || entry.models.some((model) => model.toLowerCase() === exact);
+  return { ok, match: null };
+}
+
+function filterSessions({ q, status, channel, product_model: productModel, from, to } = {}) {
+  return SESSIONS.flatMap((entry) => {
+    const row = summary(entry);
+    if (channel && row.channel !== channel) return [];
+    if (status === 'handoff' ? !row.has_handoff : status && row.status !== status) return [];
+    if (productModel && !row.product_models.includes(productModel)) return [];
+    if (from && !entry.turns.some((turnRow) => inRange(turnRow, from, to))) return [];
+    const { ok, match } = matchTurn(entry, q, from, to);
+    return ok ? [{ entry, row: { ...row, match } }] : [];
+  }).sort((a, b) => b.row.updated_date.localeCompare(a.row.updated_date));
+}
+
 export const fixtureConversations = {
-  async list({ search, status } = {}) {
+  async list({ limit = 25, cursor, ...filters } = {}) {
     await delay(250);
-    const needle = (search || '').toLowerCase();
-    const rows = SESSIONS.map(summary)
-      .filter((row) => !status || row.status === status)
-      .filter((row) => !needle || row.last_query.toLowerCase().includes(needle) || (row.model || '').toLowerCase().includes(needle))
-      .sort((a, b) => b.updated_date.localeCompare(a.updated_date));
-    const all = SESSIONS.map(summary);
-    const costUsd = all.reduce((sum, row) => sum + row.cost_usd, 0);
+    const rows = filterSessions(filters).map(({ row }) => row);
+    const start = cursor ? Number(cursor) || 0 : 0;
+    const end = start + limit;
+    return { conversations: rows.slice(start, end), next_cursor: end < rows.length ? String(end) : null };
+  },
+
+  async metrics(filters = {}) {
+    await delay(200);
+    const found = filterSessions(filters);
+    const turns = found.flatMap(({ entry }) => entry.turns.filter((turnRow) => inRange(turnRow, filters.from, filters.to)));
+    const costUsd = turns.reduce((sum, turnRow) => sum + (turnRow.cost_usd || 0), 0);
     return {
-      conversations: rows,
-      total: rows.length,
-      conversation_count: all.length,
-      handoff_count: 0,
-      total_tokens: all.reduce((sum, row) => sum + row.total_tokens, 0),
-      total_cost_vnd: costUsd * 26000,
+      conversation_count: found.length,
+      handoff_count: found.filter(({ row }) => row.has_handoff).length,
+      question_count: turns.length,
+      cost_usd: costUsd,
+      cost_vnd: Math.round(costUsd * VND * 100) / 100,
     };
   },
 

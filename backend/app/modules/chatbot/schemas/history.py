@@ -72,12 +72,32 @@ class ChatHistoryItem(BaseModel):
     usage: TurnUsageInfo | None = None
     # cost_usd × USD_TO_VND_RATE.
     cost_vnd: float | None = None
+    # B2 (19.7, W3): giờ hỏi = created_at − latency_ms (null khi thiếu latency); giờ trả lời = created_at.
+    asked_at: datetime | None = None
+    answered_at: datetime | None = None
+    # Số thứ tự (từ 1) của lượt trong cả phiên, đúng cả khi phân trang.
+    turn_number: int | None = None
+    # Có dòng chat_traces cho lượt này (mở được "Xem diễn biến xử lý").
+    has_trace: bool | None = None
+
+
+# Bộ lọc trạng thái hội thoại: trạng thái lượt mới nhất, hoặc `handoff` = phiên có chuyển nhân viên.
+ConversationStatusFilter = Literal["completed", "handoff", "blocked", "error", "cancelled"]
+
+
+class ConversationMatch(BaseModel):
+    """Lượt khớp từ khoá `q` (lượt khớp mới nhất của phiên)."""
+
+    history_id: UUID
+    turn_number: int
+    query: str
 
 
 class ConversationSummary(BaseModel):
     session_id: UUID
     model: str | None = None
-    # Model sản phẩm và ticket lấy từ conversation_state của lượt mới nhất.
+    # Model sản phẩm và ticket: legacy lấy từ conversation_state của lượt mới nhất; B2 lấy từ bảng
+    # tóm tắt (model của lượt gần nhất có model, ticket gần nhất).
     product_models: list[str] = Field(default_factory=list)
     ticket_id: str | None = None
     last_query: str
@@ -89,16 +109,43 @@ class ConversationSummary(BaseModel):
     status: str
     total_tokens: int = 0
     cost_usd: float = 0
+    # B2 (19.4); null ở đường legacy (không gửi tham số mới).
+    question_count: int | None = None
+    has_handoff: bool | None = None
+    has_tool_errors: bool | None = None
+    cost_vnd: float | None = None
+    match: ConversationMatch | None = None
+
+
+class ConversationDetail(ConversationSummary):
+    """19.6: đầu màn Chi tiết hội thoại khi mở bằng link."""
+
+    # Nhân viên CRM của phiên (chat_sessions); null với khách website hoặc phiên chưa có dòng.
+    acting_user_id: str | None = None
 
 
 class ConversationListResponse(BaseModel):
     conversations: list[ConversationSummary]
-    total: int
+    # Đường legacy (không gửi tham số B2): tổng và số liệu như cũ. Đường B2: null, lấy ở /metrics.
+    total: int | None = None
+    conversation_count: int | None = None
+    handoff_count: int | None = None
+    total_tokens: int | None = None
+    # Ước tính từ token câu hỏi/câu trả lời, chưa gồm prompt context và embedding.
+    total_cost_vnd: float | None = None
+    # Đường B2 có `limit`: cursor của trang sau, null khi hết.
+    next_cursor: str | None = None
+
+
+class ConversationMetricsResponse(BaseModel):
+    """19.5: số liệu của đúng tập hội thoại khớp bộ lọc (không trả token, Q12)."""
+
     conversation_count: int
     handoff_count: int
-    total_tokens: int
-    # Ước tính từ token câu hỏi/câu trả lời, chưa gồm prompt context và embedding.
-    total_cost_vnd: float
+    # Có from/to: chỉ tính lượt trong khoảng; không có: mọi lượt của các hội thoại khớp.
+    question_count: int
+    cost_usd: float
+    cost_vnd: float
 
 
 class ChunkResult(BaseModel):
@@ -165,6 +212,8 @@ class RetrievalSnapshotResponse(BaseModel):
 class ChatHistoryResponse(BaseModel):
     session_id: UUID
     messages: list[ChatHistoryItem]
+    # Có `limit`: cursor tới các lượt cũ hơn (null khi đã tới lượt đầu). Không có `limit`: luôn null.
+    next_cursor: str | None = None
 
 
 class TraceSpan(BaseModel):

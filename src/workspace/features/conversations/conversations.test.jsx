@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { ApiError } from '../../api/errors.js';
@@ -9,7 +9,7 @@ import TracePage from './TracePage.jsx';
 vi.mock('../../api/conversations.js', () => ({
   CONVERSATION_PAGE_SIZE: 25,
   TURN_PAGE_SIZE: 20,
-  conversationsApi: { listPage: vi.fn(), history: vi.fn(), retrieval: vi.fn(), retrievalForTurn: vi.fn(), trace: vi.fn() },
+  conversationsApi: { listPage: vi.fn(), metrics: vi.fn(), history: vi.fn(), retrieval: vi.fn(), retrievalForTurn: vi.fn(), trace: vi.fn() },
 }));
 const { conversationsApi } = await import('../../api/conversations.js');
 
@@ -41,39 +41,113 @@ const turn = (i, extra = {}) => ({
   latency_ms: 4000, total_tokens: 100, cost_usd: 0.0001, model: 'gpt-4.1-mini', ...extra,
 });
 
+const METRICS = { conversation_count: 3, handoff_count: 1, question_count: 12, cost_usd: 0.01, cost_vnd: 260 };
+
 describe('Lịch sử hội thoại', () => {
-  it('hiện trang đầu, "Tải thêm" nối trang kế, hết thì báo đã hiển thị hết', async () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-18T05:00:00Z')); // 12:00 giờ Việt Nam
+    conversationsApi.metrics.mockReset().mockResolvedValue(METRICS);
+    conversationsApi.listPage.mockReset();
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('hiện trang đầu, 4 ô số liệu, cột số câu hỏi và chi phí; "Tải thêm" nối trang kế', async () => {
     conversationsApi.listPage
-      .mockResolvedValueOnce({ items: [conv(1, { product_models: ['F54'], ticket_id: 'TK-1048' }), conv(2, { status: 'error' })], next_cursor: '2', total: 3 })
-      .mockResolvedValueOnce({ items: [conv(3)], next_cursor: null, total: 3 });
+      .mockResolvedValueOnce({ items: [conv(1, { product_models: ['F54'], ticket_id: 'TK-1048', question_count: 7, cost_vnd: 12.5 }), conv(2, { status: 'error' })], next_cursor: 'c2' })
+      .mockResolvedValueOnce({ items: [conv(3)], next_cursor: null });
     renderAt('/conversations');
 
     const table = await screen.findByRole('table');
     expect(within(table).getByRole('link', { name: 'Câu hỏi 1' }).getAttribute('href')).toBe('/conversations/s1');
     expect(within(table).getByText('#TK-1048')).toBeTruthy();
     expect(within(table).getByText('Lỗi')).toBeTruthy();
+    expect(within(table).getByText('7')).toBeTruthy();
+    const metrics = screen.getByRole('region', { name: 'Chỉ số' });
+    expect(await within(metrics).findByText('12')).toBeTruthy();
+    expect(within(metrics).getAllByText(/trong 7 ngày qua/)).toHaveLength(4);
     expect(screen.getByText('Đang hiển thị 2 / 3 hội thoại')).toBeTruthy();
+    // Mặc định lọc 7 ngày qua theo giờ Việt Nam (Q19).
+    expect(conversationsApi.listPage).toHaveBeenCalledWith(
+      { q: '', status: '', channel: '', productModel: '', from: '2026-11-12', to: '2026-11-18' },
+      expect.objectContaining({ cursor: null }),
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Tải thêm 25 hội thoại' }));
     expect(await within(table).findByRole('link', { name: 'Câu hỏi 3' })).toBeTruthy();
     expect(screen.getByText('Đã hiển thị hết')).toBeTruthy();
-    expect(conversationsApi.listPage).toHaveBeenLastCalledWith({ search: '', status: '' }, expect.objectContaining({ cursor: '2' }));
+    expect(conversationsApi.listPage).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ cursor: 'c2' }));
   });
 
-  it('lọc trạng thái ghi lên URL và tải lại từ đầu; không khớp thì có "Xoá bộ lọc"', async () => {
-    conversationsApi.listPage.mockResolvedValue({ items: [], next_cursor: null, total: 0 });
+  it('dòng khớp ở lượt khác: ghi "Khớp ở lượt N", tô từ khớp không dấu, link mở đúng lượt', async () => {
+    conversationsApi.listPage.mockResolvedValue({
+      items: [conv(1, { last_query: 'Cảm ơn', match: { history_id: 'h3', turn_number: 3, query: 'Đổi cảm biến báo lỗi' } })],
+      next_cursor: null,
+    });
+    renderAt('/conversations?q=cam%20bien');
+
+    const table = await screen.findByRole('table');
+    expect(within(table).getByText('Khớp ở lượt 3:', { exact: false })).toBeTruthy();
+    const marks = [...table.querySelectorAll('mark')].map((mark) => mark.textContent);
+    expect(marks).toEqual(['Cảm', 'cảm', 'biến']);
+    expect(within(table).getByRole('link', { name: 'Cảm ơn' }).getAttribute('href')).toBe('/conversations/s1?turn=h3&q=cam+bien');
+    conversationsApi.history.mockResolvedValue({ session_id: 's1', messages: [turn(3)] });
+    conversationsApi.retrieval.mockResolvedValue(null);
+    fireEvent.click(within(table).getByRole('link', { name: 'Cảm ơn' }));
+    expect(screen.getByTestId('where').textContent).toBe('/conversations/s1?turn=h3&q=cam+bien');
+  });
+
+  it('lọc trạng thái ghi lên URL và tải lại từ đầu; kênh CRM khoá "Chuyển nhân viên"; không khớp thì có "Xoá bộ lọc"', async () => {
+    conversationsApi.listPage.mockResolvedValue({ items: [], next_cursor: null });
     renderAt('/conversations');
     await screen.findByText('Chưa có hội thoại nào');
 
     fireEvent.change(screen.getByLabelText('Trạng thái'), { target: { value: 'error' } });
     expect(screen.getByTestId('where').textContent).toBe('/conversations?status=error');
-    await waitFor(() => expect(conversationsApi.listPage).toHaveBeenLastCalledWith({ search: '', status: 'error' }, expect.objectContaining({ cursor: null })));
+    await waitFor(() => expect(conversationsApi.listPage).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'error' }), expect.objectContaining({ cursor: null })));
+    expect(conversationsApi.metrics).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'error' }), expect.anything());
+
+    fireEvent.change(screen.getByLabelText('Kênh'), { target: { value: 'crm' } });
+    const handoff = within(screen.getByLabelText('Trạng thái')).getByRole('option', { name: /Chuyển nhân viên/ });
+    expect(handoff.disabled).toBe(true);
+
     fireEvent.click(await screen.findByRole('button', { name: 'Xoá bộ lọc' }));
     expect(screen.getByTestId('where').textContent).toBe('/conversations');
   });
 
+  it('khoảng tuỳ chọn: kiểm tra ngày, áp dụng thì lọc và hiện thẻ; bỏ thẻ thì về 7 ngày qua', async () => {
+    conversationsApi.listPage.mockResolvedValue({ items: [conv(1)], next_cursor: null });
+    renderAt('/conversations');
+    await screen.findByRole('table');
+
+    fireEvent.change(screen.getByLabelText('Thời gian'), { target: { value: 'custom' } });
+    const panel = screen.getByRole('dialog', { name: 'Chọn khoảng thời gian' });
+    fireEvent.change(within(panel).getByLabelText('Từ ngày'), { target: { value: '2026-11-10' } });
+    fireEvent.change(within(panel).getByLabelText('Đến ngày'), { target: { value: '2026-11-19' } });
+    expect(within(panel).getByRole('alert').textContent).toBe('Không chọn ngày sau hôm nay.');
+    expect(within(panel).getByRole('button', { name: 'Áp dụng' }).disabled).toBe(true);
+
+    fireEvent.change(within(panel).getByLabelText('Đến ngày'), { target: { value: '2026-11-11' } });
+    fireEvent.click(within(panel).getByRole('button', { name: 'Áp dụng' }));
+    expect(screen.getByTestId('where').textContent).toBe('/conversations?time=custom&from=2026-11-10&to=2026-11-11');
+    expect(screen.getByText('Từ 10/11/2026 đến 11/11/2026 · 2 ngày')).toBeTruthy();
+    await waitFor(() => expect(conversationsApi.listPage).toHaveBeenLastCalledWith(expect.objectContaining({ from: '2026-11-10', to: '2026-11-11' }), expect.anything()));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Bỏ lọc thời gian' }));
+    expect(screen.getByTestId('where').textContent).toBe('/conversations');
+  });
+
+  it('máy chủ chưa bật route số liệu: ẩn các ô số liệu, không có "/ y"', async () => {
+    conversationsApi.metrics.mockResolvedValue(null);
+    conversationsApi.listPage.mockResolvedValue({ items: [conv(1)], next_cursor: null });
+    renderAt('/conversations');
+    await screen.findByRole('table');
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'Chỉ số' })).toBeNull());
+    expect(screen.getByText('Đang hiển thị 1 hội thoại')).toBeTruthy();
+  });
+
   it('lỗi tải thì báo và cho thử lại', async () => {
-    conversationsApi.listPage.mockRejectedValueOnce(new ApiError({ status: 503, kind: 'server' })).mockResolvedValueOnce({ items: [conv(1)], next_cursor: null, total: 1 });
+    conversationsApi.listPage.mockRejectedValueOnce(new ApiError({ status: 503, kind: 'server' })).mockResolvedValueOnce({ items: [conv(1)], next_cursor: null });
     renderAt('/conversations');
     fireEvent.click(await screen.findByRole('button', { name: 'Thử lại' }));
     expect(await screen.findByRole('table')).toBeTruthy();
@@ -91,7 +165,7 @@ describe('Chi tiết hội thoại', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Hỏi 2');
     // created_at 01:01 UTC − 4 giây = 08:00:56 giờ Việt Nam
     expect(within(first).getByText('Khách hỏi · 08:00')).toBeTruthy();
-    expect(within(first).getByText(/Tài liệu đã dùng \(1\)/)).toBeTruthy();
+    expect(await within(first).findByText(/Tài liệu đã dùng \(1\)/)).toBeTruthy();
     const second = screen.getByRole('article', { name: 'Lượt 2' });
     expect(within(second).queryByText(/Tài liệu đã dùng/)).toBeNull();
     expect(within(second).getByText('Chatbot · không có câu trả lời')).toBeTruthy();
@@ -100,6 +174,26 @@ describe('Chi tiết hội thoại', () => {
 
     fireEvent.click(within(second).getByRole('button', { name: 'Chi tiết kỹ thuật' }));
     expect(within(second).getByRole('link', { name: 'Xem diễn biến xử lý' }).getAttribute('href')).toBe('/conversations/s1/turns/h2/trace');
+  });
+
+  it('mở từ kết quả tìm kiếm (?turn=): hiện cả lượt khớp cũ hơn 20 lượt mới nhất, đánh dấu và tô từ khoá', async () => {
+    conversationsApi.history.mockResolvedValue({ session_id: 's1', messages: Array.from({ length: 30 }, (_, i) => turn(i + 1, i === 2 ? { query_origin: 'Đổi cảm biến home' } : {})) });
+    conversationsApi.retrieval.mockResolvedValue(null);
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/conversations/s1', search: '?turn=h3&q=cam%20bien', state: { from: '?q=cam%20bien' } }]}>
+        <Routes>
+          <Route path="/conversations/:sessionId" element={<ConversationDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const focused = await screen.findByRole('article', { name: 'Lượt 3' });
+    expect(screen.getByRole('link', { name: 'Lịch sử hội thoại' }).getAttribute('href')).toBe('/conversations?q=cam%20bien');
+    expect(focused.getAttribute('data-focus')).toBe('true');
+    expect([...focused.querySelectorAll('mark')].map((mark) => mark.textContent)).toEqual(['cảm', 'biến']);
+    // 28 lượt (3…30) đang hiện, còn 2 lượt cũ hơn.
+    expect(screen.getAllByRole('article')).toHaveLength(28);
+    expect(screen.getByRole('button', { name: 'Tải 2 lượt cũ hơn' })).toBeTruthy();
   });
 
   it('hội thoại dài: hiện 20 lượt mới nhất, "Tải lượt cũ hơn" thêm phần còn lại', async () => {

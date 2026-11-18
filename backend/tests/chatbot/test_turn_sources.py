@@ -1,6 +1,6 @@
 import pytest
 
-from app.modules.chatbot.services.turn_sources import summarize_turn, tool_usage
+from app.modules.chatbot.services.turn_sources import summarize_turn, tool_usage, turn_flags
 
 
 def _tool(name, status="ok"):
@@ -51,3 +51,35 @@ def test_malformed_snapshot_fields_are_ignored():
     assert summary.answer_source == "direct"
     assert summary.chunk_count == 0
     assert summary.tools == []
+
+
+def test_turn_flags_from_snapshot_and_state():
+    snapshot = {"agent_steps": [
+        {"kind": "tool", "name": "crm_query", "status": "tool_invalid_args"},
+        {"kind": "tool", "name": "crm_query", "status": "ok"},
+    ]}
+    state = {"mode": "bot", "last_intent": "handoff.request", "last_models": ["QS-1325"], "ticket_id": "T-9"}
+    assert turn_flags(snapshot, state) == {
+        "has_tool_errors": True,
+        "is_handoff": True,
+        "product_models": ["QS-1325"],
+        "ticket_id": "T-9",
+    }
+
+
+@pytest.mark.parametrize("state, handoff", [
+    ({"mode": "with_agent"}, True),
+    ({"mode": "awaiting_agent"}, True),
+    ({"mode": "bot", "last_intent": "product.spec"}, False),
+    (None, False),
+])
+def test_turn_flags_handoff(state, handoff):
+    assert turn_flags(None, state)["is_handoff"] is handoff
+
+
+def test_turn_flags_defaults_for_missing_or_malformed_input():
+    assert turn_flags(None, None) == {
+        "has_tool_errors": False, "is_handoff": False, "product_models": [], "ticket_id": None,
+    }
+    flags = turn_flags({"agent_steps": "x"}, {"last_models": "QS", "ticket_id": ""})
+    assert flags["product_models"] == [] and flags["ticket_id"] is None

@@ -90,6 +90,8 @@ class Settings(BaseSettings):
     ollama_window_tokens: int = Field(default=2500, alias="OLLAMA_WINDOW_TOKENS")
     # Endpoint học tri thức chưa có xác thực: chỉ bật khi kiểm thử nội bộ.
     learning_api_enabled: bool = Field(default=False, alias="LEARNING_API_ENABLED")
+    # B2: GET /chatbot/conversations/metrics và /chatbot/conversations/{id} (chưa có xác thực, TR-16).
+    workspace_conversation_api_enabled: bool = Field(default=False, alias="WORKSPACE_CONVERSATION_API_ENABLED")
     cors_origins: list[str] = Field(
         default_factory=lambda: [
             "http://localhost:5173",

@@ -20,6 +20,8 @@ Các route hiện được include từ `backend/app/api/v1/router.py`:
   session đã lưu.
 - `GET /chatbot/conversations`: danh sách hội thoại chatbot và số liệu tổng
   cho màn Lịch sử hội thoại của Support Workspace.
+- `GET /chatbot/conversations/metrics`, `GET /chatbot/conversations/{session_id}`: số liệu
+  theo bộ lọc và đầu trang hội thoại (B2); chỉ khi `WORKSPACE_CONVERSATION_API_ENABLED=true`.
 - `GET /chatbot/sessions/{session_id}/retrieval`: snapshot chunk truy xuất của
   lượt gần nhất có chunk, cho màn Kết quả chunk.
 - `GET /chatbot/sessions/{session_id}/trace`: trace (cây span) của một lượt chat.
@@ -109,11 +111,50 @@ Endpoint này đọc các trạng thái đã lưu (`completed`, `blocked`, `erro
 phục hồi lịch sử UI. Session không có history trả `404 session_not_found`;
 database lỗi trả `503 database_unavailable`.
 
+B2 (2026-11-18, FRONTEND_REQUIREMENTS 19.7): mỗi lượt thêm `asked_at` (`created_at − latency_ms`,
+`null` khi thiếu `latency_ms`), `answered_at` (= `created_at`), `turn_number` (số thứ tự từ 1 trong
+cả phiên) và `has_trace` (có dòng `chat_traces`). Query tùy chọn `limit` (1–100) và `cursor`: có
+`limit` thì trả `limit` lượt mới nhất trước `cursor` (trang đầu: mới nhất), vẫn xếp tăng dần trong
+trang, kèm `next_cursor` tới các lượt cũ hơn (`null` khi đã tới lượt đầu). Cursor sai →
+`422 invalid_cursor`. Không gửi `limit` thì trả hết như cũ (`next_cursor: null`).
+
 ### `GET /chatbot/conversations`
 
-Thay đổi dự kiến cho QS AI Workspace (phân trang, lọc, chỉ số theo bộ lọc; B2, chưa có code):
-[FRONTEND_REQUIREMENTS.md mục 19](FRONTEND_REQUIREMENTS.md). Mục này vẫn mô tả hành vi hiện tại.
+**Đường B2** (2026-11-18, FRONTEND_REQUIREMENTS 19.4): dùng khi gửi một trong `limit`, `cursor`,
+`q`, `channel`, `product_model`, `from`/`to` hoặc `status=handoff`. Đọc bảng tóm tắt
+`chat_conversations` (`sql/chat_conversations.sql`), lọc trên toàn bộ dữ liệu, sắp
+`(updated_date desc, session_id desc)`, phân trang keyset.
 
+| Query | Nghĩa |
+|---|---|
+| `q` (≤ 200) | Tách theo từ (bỏ từ < 2 ký tự, tối đa 8 từ): mọi từ phải có trong **cùng một câu hỏi** của **bất kỳ lượt nào**, không phân biệt hoa thường và dấu (kể cả đ/d), `%` `_` được escape. Hoặc khớp chính xác: mã hội thoại, mã lượt, `request_id` (chat_traces), mã ticket (bỏ `#` đầu), model sản phẩm. Không gửi `q` thì `search` được dùng như `q` |
+| `status` | `completed` \| `blocked` \| `error` \| `cancelled` (trạng thái lượt mới nhất) \| `handoff` (phiên có lượt chuyển nhân viên) |
+| `channel` | `website` \| `crm` |
+| `product_model` | lặp được; khớp khi model sản phẩm của phiên có ít nhất một mã |
+| `from`, `to` | `YYYY-MM-DD` giờ Việt Nam, tính cả hai đầu; có ít nhất một lượt trong khoảng. Thiếu một đầu, `from > to`, `to` sau hôm nay, quá 366 ngày → `422 invalid_date_range` |
+| `limit` | 1–100; không gửi thì trả hết |
+| `cursor` | `next_cursor` của trang trước; sai hoặc của bộ lọc khác → `422 invalid_cursor` |
+
+Response: `{conversations, next_cursor}`; các khoá tổng (`total`, `conversation_count`,
+`handoff_count`, `total_tokens`, `total_cost_vnd`) là `null` (lấy ở `/metrics`). Mỗi dòng có các
+trường cũ cùng `question_count`, `has_handoff`, `has_tool_errors`, `cost_vnd` và `match`
+(`{history_id, turn_number, query}` của lượt khớp mới nhất khi `q` khớp câu hỏi hoặc mã lượt;
+`null` nếu không). `product_models` là model của lượt gần nhất có model, `ticket_id` là ticket gần
+nhất, `model` là model AI của lượt cuối.
+
+### `GET /chatbot/conversations/metrics` và `GET /chatbot/conversations/{session_id}`
+
+Chỉ mount khi `WORKSPACE_CONVERSATION_API_ENABLED=true` (mặc định tắt, chưa có xác thực).
+
+- `/metrics`: cùng tham số lọc với danh sách (trừ `limit`, `cursor`, `search`). Trả
+  `{conversation_count, handoff_count, question_count, cost_usd, cost_vnd}`; có `from`/`to` thì
+  `question_count` và chi phí chỉ tính lượt trong khoảng. Không trả token (Q12).
+- `/{session_id}`: một dòng như danh sách B2 (không có `match`) cùng `acting_user_id` (từ
+  `chat_sessions`, `null` với khách website). Không có phiên → `404 session_not_found`.
+
+Database lỗi → `503 database_unavailable`.
+
+**Đường legacy** (không gửi tham số B2, dùng cho `/legacy`):
 Query: `search` (tối đa 200 ký tự, khớp `query_origin` hoặc `model` của lượt
 mới nhất) và `status` (`completed` | `blocked` | `error` | `cancelled`; giá trị khác trả
 `422`). Mỗi session một dòng, mới nhất trước:

@@ -38,6 +38,9 @@ class _TurnRepo:
 
     latest_retrieval_turn = HistoryRepository.latest_retrieval_turn
 
+    async def traced_history_ids(self, history_ids):
+        return set()
+
     async def get_turn(self, *, session_id, history_id):
         if self.session_id is not None and session_id != self.session_id:
             return None
@@ -59,15 +62,24 @@ def test_history_endpoint_returns_ordered_history():
             channel="website",
         )
     ]
+    async def traced(ids):
+        return {history_id}
+
     repository = SimpleNamespace(
-        list_for_history=lambda *, session_id: _history(rows, session_id=session_id)
+        list_for_history=lambda *, session_id: _history(rows, session_id=session_id),
+        traced_history_ids=traced,
     )
 
     response = _client(repository).get(f"/chatbot/sessions/{session_id}/history")
 
     assert response.status_code == 200
     assert response.json()["session_id"] == str(session_id)
-    assert response.json()["messages"][0]["answer"] == "Chào bạn"
+    message = response.json()["messages"][0]
+    assert message["answer"] == "Chào bạn"
+    assert message["turn_number"] == 1
+    assert message["has_trace"] is True
+    assert message["asked_at"] is None  # thiếu latency_ms
+    assert response.json()["next_cursor"] is None
 
 
 def test_history_endpoint_returns_404_for_unknown_session():

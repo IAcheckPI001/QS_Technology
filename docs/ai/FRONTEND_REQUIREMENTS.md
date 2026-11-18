@@ -915,7 +915,11 @@ mỗi màn nối API thật ngay khi endpoint tương ứng xong.
 | Danh sách hội thoại trả hết một lần (chưa phân trang) | Ưu tiên B2 trước khi dữ liệu lớn; tạm giới hạn hiển thị phía client |
 | Ảnh đoạn tài liệu chưa có trên Storage | GĐ 5 phụ thuộc việc tải ảnh lên; trước đó hiện khung thay thế |
 
-## 19. Đặc tả API hội thoại cho Workspace (B2, B5, registry của B8; chưa có code)
+## 19. Đặc tả API hội thoại cho Workspace (B2, B5, registry của B8)
+
+Trạng thái 2026-11-18: B5 (19.8, 19.14–19.15) và B2 (19.4–19.7, 19.11) đã có code và đã kiểm với
+Supabase thật; contract chuẩn ở [api_guidelines.md](api_guidelines.md). Còn lại: registry model
+(19.10, B8); giao diện Chi tiết chưa dùng `/history?limit` và `/conversations/{id}`.
 
 Viết 2026-11-18 sau khi đối chiếu bảng thật (`chat_history`, `chat_traces`, `chat_sessions`)
 và luồng ghi của `services/chat_service.py`. Phục vụ màn Lịch sử hội thoại, Chi tiết, Diễn
@@ -958,10 +962,10 @@ quyền `conversations:read` (B1, đóng DR-05).
 
 | Tham số | Kiểu | Nghĩa |
 |---|---|---|
-| `q` | chuỗi ≤ 200 | Q15: khớp `query_origin` của **mọi lượt**; mã ticket (`TK-1048` hoặc `#TK-1048`); model sản phẩm; mã hội thoại (UUID, khớp chính xác). Không phân biệt hoa thường và dấu (`unaccent`), escape `%` `_`. Không tìm trong câu trả lời. `search` cũ vẫn nhận, coi như `q` |
+| `q` | chuỗi ≤ 200 | Q15, bổ sung Q29 (Toma 2026-11-18): khớp `query_origin` của **mọi lượt**; mã ticket (`TK-1048` hoặc `#TK-1048`); model sản phẩm; khớp chính xác mã hội thoại, **mã lượt (`history_id`)** và **`request_id`** (từ `chat_traces`). Tách theo từ: **mọi từ phải có trong cùng một câu hỏi, không cần đúng thứ tự**; từ dưới 2 ký tự bỏ qua. Không phân biệt hoa thường và dấu (`unaccent`, kể cả đ/d), escape `%` `_`. Không tìm trong câu trả lời (có thể thêm tuỳ chọn sau). Mỗi dòng trả `match` (`history_id`, số thứ tự lượt, câu hỏi khớp) để giao diện tô sáng và mở đúng lượt. `search` cũ vẫn nhận, coi như `q` |
 | `status` | `completed` \| `handoff` \| `blocked` \| `error` \| `cancelled` | Trạng thái hội thoại = trạng thái lượt mới nhất; `handoff` = phiên có lượt thoả dòng "Chuyển nhân viên" ở 19.1. Giao diện không đưa `cancelled` vào bộ lọc (Q14) |
 | `channel` | `website` \| `crm` | |
-| `product_model` | mã registry, lặp được | Q16: so với `last_models` của **lượt `completed` mới nhất** (còn mở: thêm cột theo lượt, mục Trạng thái, ý 1) |
+| `product_model` | mã registry, lặp được | Q16: so với `last_models` của **lượt `completed` mới nhất có model** (cột `product_models` của bảng tóm tắt); khớp khi có ít nhất một mã |
 | `from`, `to` | `YYYY-MM-DD` | Q19: giờ `Asia/Ho_Chi_Minh`, tính cả hai đầu → UTC `[from 00:00, to+1 00:00)`. Hội thoại khớp khi có **ít nhất một lượt** trong khoảng. Thiếu một đầu, `from > to`, `to` sau hôm nay, quá 366 ngày → `422 invalid_date_range` |
 | `limit` | 1–100 | Có thì phân trang; Workspace gửi 25 (Q26). Không có thì trả hết như cũ |
 | `cursor` | chuỗi mờ | `next_cursor` của trang trước. Sai hoặc không khớp bộ lọc → `422 invalid_cursor` |
@@ -1000,10 +1004,14 @@ Cùng tham số lọc với 19.4 (trừ `limit`, `cursor`). Sửa F8.
   "handoff_count": 4,
   "question_count": 1280,
   "cost_usd": 0.41,
-  "cost_vnd": 10660,
-  "cost_source": "estimate"
+  "cost_vnd": 10660
 }
 ```
+
+Đã làm 2026-11-18: bỏ `cost_source` (từ B3 lượt mới là chi phí thật, lượt cũ là ước tính; muốn biết
+phải đọc JSON của mọi lượt, mất ý nghĩa của bảng tóm tắt). `/metrics` và `/{session_id}` (19.6)
+chỉ mount khi `WORKSPACE_CONVERSATION_API_ENABLED=true` vì chưa có xác thực (TR-16); tham số mới
+của 19.4 và 19.7 nằm trên route có sẵn.
 
 `conversation_count` = số hội thoại khớp (giá trị "y" trong "Đang hiển thị x / y").
 `question_count` và chi phí: các lượt của những hội thoại khớp, **chỉ tính lượt trong
@@ -1062,14 +1070,56 @@ Query `for=conversation_filter` trả đúng 7 mục của Q16 (F54, F86, F10T, 
 theo thứ tự đó; không có thì trả cả registry (`extraction/registry.py`). Frontend không ghi
 cứng danh sách.
 
-### 19.11 SQL, index, hiệu năng
+### 19.11 Lưu trữ, index, hiệu năng: cách kết hợp (Q30, Toma duyệt 2026-11-18)
 
-- File mới trong `sql/` (idempotent, áp tay, DR-04): `CREATE EXTENSION IF NOT EXISTS unaccent`;
-  index `chat_history (session_id, created_at, id)` cho 19.7 và `chat_history (created_at)` cho
-  lọc thời gian.
-- Truy vấn danh sách hiện chạy window function trên toàn `chat_history` mỗi request. Với dữ liệu
-  hiện tại chấp nhận được; khi chậm (vd > 100.000 lượt) thêm bảng tóm tắt mỗi hội thoại cập nhật
-  lúc ghi lượt, và index phục vụ tìm kiếm.
+Lý do: truy vấn danh sách cũ chạy window function trên **toàn** `chat_history` và đọc cả
+`retrieval_snapshot` mỗi request; ước lượng ~1.000 lượt: vài chục ms, 100.000 lượt: vài giây.
+Chọn **cách kết hợp** (so với trigger thuần và code ứng dụng): Python quyết định "nghĩa" của từng
+lượt, trigger trong Postgres chỉ cộng dồn vào bảng tóm tắt.
+
+1. **Python ghi cờ của lượt** vào cột mới của `chat_history` (mặc định an toàn, code cũ vẫn chạy):
+   `has_tool_errors` (từ `agent_steps`, `turn_sources.summarize_turn`), `is_handoff`
+   (`conversation_state.mode != bot` hoặc `last_intent` bắt đầu `handoff.`), `product_models`
+   (`last_models` của lượt `completed`), `ticket_id`. Ba hàm `HistoryRepository.create*` nhận thêm
+   các trường này; test bằng pytest.
+2. **Bảng `chat_conversations`** (một dòng mỗi phiên): kênh, giờ đầu/cuối, lượt cuối (id, câu hỏi,
+   trạng thái), số câu hỏi, chi phí, có chuyển nhân viên, có lỗi công cụ, model sản phẩm, ticket.
+   **Trigger `AFTER INSERT ON chat_history`** gọi hàm `chat_conversations_apply` (chỉ cộng/gán,
+   không đọc JSON); khoá dòng bằng `NOWAIT`; mọi lỗi bị bắt (`RAISE WARNING`) để không bao giờ làm
+   hỏng việc ghi lượt. Không có trigger UPDATE/DELETE (code không sửa/xoá `chat_history`).
+3. **Dựng lại và kiểm tra lệch**: `rebuild_chat_conversations()` phát lại từng dòng `chat_history`
+   theo thời gian qua **cùng** hàm `chat_conversations_apply` (một bản logic);
+   `scripts/check_conversation_summary.py` so bảng với kết quả tính lại;
+   `scripts/backfill_history_flags.py` điền cờ cho lượt cũ (một lần) bằng chính hàm Python ở bước 1.
+4. **Tìm kiếm và lọc**: index trigram GIN trên `immutable_unaccent(lower(query_origin))` (dùng lại hàm
+   của `doc_chunks_v2.sql`, extension `pg_trgm`); index `chat_history (session_id, created_at, id)`,
+   `(created_at)`; `chat_conversations (last_message_at desc, session_id desc)`, GIN `product_models`.
+   Danh sách, phân trang, lọc kênh/trạng thái/model/cờ đọc bảng tóm tắt; từ khoá và thời gian dùng
+   `EXISTS` trên `chat_history` có index; số liệu không lọc thời gian cộng từ bảng tóm tắt.
+5. **Thứ tự triển khai**: (1) áp `sql/chat_conversations.sql`; (2) chạy `backfill_history_flags.py` rồi
+   `select public.rebuild_chat_conversations();`; (3) chạy code mới; (4) chạy
+   `check_conversation_summary.py`. Rollback: `drop trigger`, chạy code cũ (cột/bảng mới vô hại).
+
+Hiệu quả dự kiến: danh sách/phân trang/số liệu vài chục ms và gần như không tăng theo dữ liệu; tìm
+kiếm mọi lượt, không dấu, có index; số liệu khớp bộ lọc (sửa F8); mỗi lượt chat thêm ~1–5 ms ghi
+trong database (không thêm vòng mạng; lượt ghi sau khi câu trả lời đã gửi xong). Phụ thuộc
+**PostgreSQL** (trigger, `unaccent`, `pg_trgm` là chuẩn/contrib), không riêng Supabase; chỉ tên
+schema `extensions` là quy ước của Supabase.
+
+**Rủi ro còn lại và cách giảm** (cập nhật khi kiểm thử phát hiện thêm):
+
+| # | Rủi ro | Hậu quả | Cách giảm | Còn lại |
+|---|---|---|---|---|
+| R1 | Bảng tóm tắt lệch không ai biết (trigger lỗi bị bắt) | Hội thoại thiếu trong danh sách / số liệu sai; dữ liệu gốc vẫn đủ | `RAISE WARNING` vào log Postgres; script so lệch; hàm dựng lại | Chưa có job định kỳ: chạy so lệch bằng tay sau mỗi lần triển khai |
+| R2 | Sửa/xoá `chat_history` bằng tay | Bảng tóm tắt không tự cập nhật | Quy tắc trong `deploy-rules.md`: sửa tay thì chạy `rebuild_chat_conversations()` | Phụ thuộc người làm |
+| R3 | Trigger và hàm dựng lại tính khác nhau | Dựng lại xong lại lệch | Dựng lại phát lại qua cùng hàm `chat_conversations_apply` | Dựng lại chậm hơn `GROUP BY` (100.000 dòng: vài chục giây), hiếm khi chạy. Lượt ghi **trong lúc** dựng lại bị trigger bỏ qua (bảng đang khoá, `NOWAIT`) → chạy lúc vắng, so lệch xong chạy lại nếu cần |
+| R4 | Lượt cũ thiếu dữ liệu tính cờ | Hội thoại cũ có thể hiện "không có lỗi công cụ" dù trace có lỗi | Script điền cờ dùng mọi dữ liệu có trong snapshot | Lượt trước khi có `agent_steps` không khôi phục được |
+| R5 | Khoá dòng tóm tắt giữ tới khi request commit (cùng loại sự cố 2026-10-30) | Kết nối khác của cùng phiên có thể phải chờ | Lease chặn hai lượt song song; trigger dùng `NOWAIT`, bị khoá thì bỏ qua (thành R1) thay vì chờ | Hiếm; kiểm lượt bị ngắt trên database thật |
+| R6 | Trigger không có test pytest | Bug phần cộng dồn chỉ lộ trên Postgres thật | Phần cộng dồn đơn giản; script so lệch sau khi áp | Một lần kiểm tay trên Supabase |
+| R7 | Triển khai làm tay sai thứ tự | Bảng rỗng hoặc lệch | Danh sách bước ở trên và trong `deploy-rules.md`; script so lệch | Phụ thuộc người làm |
+| R8 | Quyền tạo extension trên Supabase | Áp SQL lỗi | Đặt trong schema `extensions`, gọi đầy đủ `extensions.…` | Kiểm khi áp |
+| R9 | Bỏ dấu tiếng Việt chưa đúng hết (đ, dấu tổ hợp) | Một số từ không khớp | Kiểm bằng bộ từ tiếng Việt; thiếu thì bổ sung quy tắc | Thấp |
+| R10 | Index chữ làm ghi chậm thêm, tốn chỗ | ~ms mỗi lượt; index cỡ 2–3 lần cột câu hỏi | Chỉ đánh index câu hỏi, không đánh câu trả lời | Không đáng kể ở quy mô hiện tại |
 
 ### 19.12 Test cần có
 
