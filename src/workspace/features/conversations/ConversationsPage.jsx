@@ -4,22 +4,25 @@
 // Tìm không dấu trong câu hỏi của mọi lượt; dòng khớp ở lượt khác lượt cuối ghi "Khớp ở lượt N" và
 // mở chi tiết đúng lượt đó.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MessagesSquare, SearchX, X } from 'lucide-react';
+import { MessagesSquare, SearchX } from 'lucide-react';
 import { CONVERSATION_PAGE_SIZE, conversationsApi } from '../../api/conversations.js';
 import Highlight from '../../components/Highlight.jsx';
-import { Badge, Button, Card, EmptyState, ErrorBanner, LoadMore, PageHeader, SelectField, Skeleton, TextField } from '../../components/ui.jsx';
+import { Badge, Button, Card, EmptyState, ErrorBanner, LoadMore, PageHeader, Skeleton } from '../../components/ui.jsx';
 import { useCursorList } from '../../hooks/useCursorList.js';
+import { PHONE_QUERY, useMediaQuery } from '../../hooks/useMediaQuery.js';
 import { useResource } from '../../hooks/useResource.js';
 import { useUrlFilters } from '../../hooks/useUrlFilters.js';
 import { S } from '../../strings.vi.js';
 import { formatDayTime, formatNumber, formatVnd } from '../../utils/format.js';
-import { CHANNEL_FILTER_OPTIONS, PRODUCT_MODEL_OPTIONS, channelLabel, statusFilterOptions, statusLabel, statusTone } from './status.js';
-import { DEFAULT_TIME, TIME_PRESETS, activeRange, daysBetween, formatIsoDate, quickRanges, rangeError, vnToday } from './timeRange.js';
+import { DesktopFilters, MobileFilters, RangeChip } from './ConversationFilters.jsx';
+import { FILTER_DEFAULTS, toApiFilters } from './filterModel.js';
+import { channelLabel, statusLabel, statusTone } from './status.js';
+import { DEFAULT_TIME, activeRange, formatIsoDate, vnToday } from './timeRange.js';
 import styles from './conversations.module.css';
 
-const DEFAULTS = { q: '', channel: '', status: '', model: '', time: DEFAULT_TIME, from: '', to: '' };
+const DEFAULTS = FILTER_DEFAULTS;
 const SEARCH_DELAY = 300;
 
 export default function ConversationsPage() {
@@ -39,15 +42,13 @@ export default function ConversationsPage() {
     setQuery(filters.q);
   }
 
+  const phone = useMediaQuery(PHONE_QUERY);
+  const [rangeOpen, setRangeOpen] = useState(false);
   const today = vnToday();
   const range = activeRange(filters, today);
-  // Kênh CRM không chuyển nhân viên (Q14): bỏ trạng thái handoff khi đang lọc kênh CRM.
-  const status = filters.channel === 'crm' && filters.status === 'handoff' ? '' : filters.status;
-  const apiFilters = useMemo(
-    () => ({ q: filters.q.trim(), status, channel: filters.channel, productModel: filters.model, from: range.from, to: range.to }),
-    [filters.q, status, filters.channel, filters.model, range.from, range.to],
-  );
-  const key = JSON.stringify(apiFilters);
+  const key = JSON.stringify(toApiFilters(filters, today));
+  const apiFilters = useMemo(() => JSON.parse(key), [key]);
+  const status = apiFilters.status;
 
   const fetchPage = useCallback(({ cursor, signal }) => conversationsApi.listPage(apiFilters, { cursor, signal }), [apiFilters]);
   const list = useCursorList(fetchPage, key);
@@ -66,49 +67,24 @@ export default function ConversationsPage() {
     <div className={styles.page}>
       <PageHeader title={S.conv.title} description={S.conv.description} />
 
-      <Card className={styles.filters} aria-label={S.conv.filters}>
-        <TextField
-          className={styles.searchField}
-          type="search"
-          label={S.conv.search}
-          placeholder={S.conv.searchPlaceholder}
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-        <SelectField
-          className={styles.selectField}
-          label={S.conv.channelFilter}
-          value={filters.channel}
-          options={CHANNEL_FILTER_OPTIONS}
-          onChange={(event) => setFilters({ channel: event.target.value })}
-        />
-        <SelectField
-          className={styles.selectField}
-          label={S.conv.statusLabel}
-          value={status}
-          options={statusFilterOptions(filters.channel)}
-          onChange={(event) => setFilters({ status: event.target.value })}
-        />
-        <SelectField
-          className={styles.selectField}
-          label={S.conv.modelFilter}
-          value={filters.model}
-          options={PRODUCT_MODEL_OPTIONS}
-          onChange={(event) => setFilters({ model: event.target.value })}
-        />
-        <TimeFilter range={range} today={today} setFilters={setFilters} />
-      </Card>
-
-      {range.custom && (
-        <div className={styles.chipRow}>
-          <span>{S.conv.time.filtering}</span>
-          <span className={styles.chip}>
-            {S.conv.time.chip(formatIsoDate(range.from), formatIsoDate(range.to), daysBetween(range.from, range.to))}
-            <button type="button" className={styles.chipButton} aria-label={S.conv.time.clear} onClick={() => setFilters({ time: DEFAULT_TIME, from: '', to: '' })}>
-              <X size={14} aria-hidden="true" />
-            </button>
-          </span>
-        </div>
+      {phone ? (
+        <MobileFilters filters={filters} setFilters={setFilters} query={query} setQuery={setQuery} range={range} today={today} />
+      ) : (
+        <>
+          <DesktopFilters
+            filters={filters}
+            setFilters={setFilters}
+            query={query}
+            setQuery={setQuery}
+            range={range}
+            today={today}
+            rangeOpen={rangeOpen}
+            setRangeOpen={setRangeOpen}
+          />
+          {range.custom && (
+            <RangeChip range={range} onEdit={() => setRangeOpen(true)} onClear={() => setFilters({ time: DEFAULT_TIME, from: '', to: '' })} />
+          )}
+        </>
       )}
 
       {metrics.data !== null && (
@@ -143,98 +119,6 @@ export default function ConversationsPage() {
           </>
         )}
       </Card>
-    </div>
-  );
-}
-
-// ---- Bộ lọc Thời gian (Q19) ------------------------------------------------------------------
-
-function TimeFilter({ range, today, setFilters }) {
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState({ from: range.from, to: range.to });
-  const panelRef = useRef(null);
-  const error = rangeError(draft.from, draft.to, today);
-
-  const options = [
-    ...TIME_PRESETS.map((value) => ({ value, label: S.conv.time[value] })),
-    {
-      value: 'custom',
-      label: range.custom ? S.conv.time.customValue(formatIsoDate(range.from).slice(0, 5), formatIsoDate(range.to)) : S.conv.time.custom,
-    },
-  ];
-  const openPanel = () => {
-    setDraft({ from: range.from, to: range.to });
-    setOpen(true);
-  };
-  const onSelect = (event) => {
-    const value = event.target.value;
-    if (value === 'custom') openPanel();
-    else setFilters({ time: value, from: '', to: '' });
-  };
-  const apply = () => {
-    if (error) return;
-    setFilters({ time: 'custom', from: draft.from, to: draft.to });
-    setOpen(false);
-  };
-
-  useEffect(() => {
-    if (open) panelRef.current?.querySelector('input')?.focus();
-  }, [open]);
-
-  return (
-    <div className={styles.timeWrap}>
-      <SelectField
-        className={styles.selectField}
-        label={S.conv.time.label}
-        value={range.custom ? 'custom' : range.preset}
-        options={options}
-        onChange={onSelect}
-        aria-expanded={open}
-        aria-controls="range-panel"
-      />
-      {range.custom && !open && (
-        <button type="button" className={styles.linkButton} onClick={openPanel}>{S.conv.time.edit}</button>
-      )}
-      {open && (
-        <div
-          id="range-panel"
-          ref={panelRef}
-          role="dialog"
-          aria-labelledby="range-title"
-          className={styles.rangePanel}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') setOpen(false);
-          }}
-        >
-          <div className={styles.rangeHead}>
-            <h2 id="range-title" className={styles.rangeTitle}>{S.conv.time.panelTitle}</h2>
-            <span className={styles.rangeTz}>{S.conv.time.panelTz}</span>
-          </div>
-          <div className={styles.quick}>
-            {quickRanges(today).map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                className={styles.quickButton}
-                aria-pressed={draft.from === item.from && draft.to === item.to}
-                onClick={() => setDraft({ from: item.from, to: item.to })}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-          <div className={styles.rangeInputs}>
-            <TextField type="date" label={S.conv.time.from} value={draft.from} max={today} onChange={(event) => setDraft((d) => ({ ...d, from: event.target.value }))} />
-            <TextField type="date" label={S.conv.time.to} value={draft.to} max={today} onChange={(event) => setDraft((d) => ({ ...d, to: event.target.value }))} />
-          </div>
-          {error && <p className={styles.rangeError} role="alert">{error}</p>}
-          <p className={styles.rangeNote}>{S.conv.time.panelNote}</p>
-          <div className={styles.rangeActions}>
-            <Button onClick={() => setOpen(false)}>{S.conv.time.cancel}</Button>
-            <Button variant="primary" onClick={apply} disabled={Boolean(error)}>{S.conv.time.apply}</Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

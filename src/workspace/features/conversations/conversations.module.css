@@ -3,17 +3,13 @@
 .page { display: flex; flex-direction: column; gap: 20px; padding: 28px 32px 96px; }
 
 .filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; padding: 16px; }
-.searchField { flex: 1 1 320px; }
-.selectField { flex: 0 1 170px; min-width: 150px; }
+.searchField { flex: 1 1 280px; }
+.selectField { flex: 0 1 170px; min-width: 140px; }
 
-/* Bộ lọc Thời gian và bảng chọn khoảng (Q19) */
-.timeWrap { position: relative; display: flex; align-items: flex-end; gap: 8px; }
-.timeWrap .selectField { flex-basis: 220px; }
-.linkButton {
-  padding: 8px 4px; border: 0; background: none; font: inherit; font-size: 13px; color: var(--ws-brand); cursor: pointer;
-}
-.linkButton:hover { text-decoration: underline; }
-.linkButton:focus-visible { outline: none; box-shadow: var(--ws-focus); border-radius: 4px; }
+/* Bộ lọc Thời gian và bảng chọn khoảng (Q19). Ô Thời gian đủ rộng cho "Tuỳ chọn: 01/10 – 31/10". */
+.timeWrap { position: relative; flex: 0 1 200px; min-width: 170px; }
+.timeField { width: 100%; }
+.rangeBackdrop { position: fixed; inset: 0; z-index: 19; }
 .rangePanel {
   position: absolute; top: calc(100% + 8px); right: 0; z-index: 20;
   display: flex; flex-direction: column; gap: 12px;
@@ -26,9 +22,10 @@
 .rangeTz { font-size: 12px; color: var(--ws-text-muted); }
 .quick { display: flex; flex-wrap: wrap; gap: 6px; }
 .quickButton {
-  padding: 5px 10px; border: 1px solid var(--ws-border); border-radius: 999px; background: none;
+  min-height: 32px; padding: 0 12px; border: 1px solid var(--ws-border); border-radius: 999px; background: none;
   font: inherit; font-size: 13px; color: var(--ws-text-2); cursor: pointer;
 }
+.quickButton:hover { background: var(--ws-hover); }
 .quickButton[aria-pressed='true'] { border-color: var(--ws-brand); color: var(--ws-brand); font-weight: 600; }
 .quickButton:focus-visible { outline: none; box-shadow: var(--ws-focus); }
 .rangeInputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -36,22 +33,48 @@
 .rangeNote { margin: 0; font-size: 12px; line-height: 1.5; color: var(--ws-text-muted); }
 .rangeActions { display: flex; justify-content: flex-end; gap: 8px; }
 
+/* Thẻ khoảng đang lọc: "Từ … đến … · n ngày" · Sửa · × */
 .chipRow { display: flex; align-items: center; gap: 8px; margin-top: -8px; font-size: 13px; color: var(--ws-text-muted); }
 .chip {
-  display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 12px;
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 12px;
   border-radius: 999px; background: var(--ws-hover); color: var(--ws-text); font-weight: 500;
 }
+.chipEdit {
+  min-height: 28px; padding: 0 8px; border: 0; border-radius: 999px; background: none;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--ws-brand); cursor: pointer;
+}
+.chipEdit:hover { background: var(--ws-border); }
 .chipButton {
-  display: inline-grid; place-items: center; width: 22px; height: 22px; padding: 0;
+  display: inline-grid; place-items: center; width: 28px; height: 28px; padding: 0;
   border: 0; border-radius: 999px; background: none; color: var(--ws-text-2); cursor: pointer;
 }
 .chipButton:hover { background: var(--ws-border); }
-.chipButton:focus-visible { outline: none; box-shadow: var(--ws-focus); }
+.chipEdit:focus-visible, .chipButton:focus-visible { outline: none; box-shadow: var(--ws-focus); }
 
-/* Ô số liệu */
+/* Điện thoại: ô tìm + hàng chip + sheet bộ lọc (mock MobileConversations). */
+.mobileFilters { display: flex; flex-direction: column; gap: 10px; }
+.mobileSearch > label {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+.chips { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 0 16px 2px; scrollbar-width: none; }
+.filterChip {
+  display: inline-flex; flex: none; align-items: center; gap: 6px; height: 36px; padding: 0 12px;
+  border: 1px solid var(--ws-border-strong); border-radius: 999px; background: var(--ws-surface, #fff);
+  font: inherit; font-size: 13px; color: var(--ws-text); white-space: nowrap; cursor: pointer;
+}
+.filterChipOn, .filterChip[aria-pressed='true'] { border-color: #d9c3a5; background: var(--ws-selected, #f5ede3); color: var(--ws-brand-strong, #482b09); font-weight: 600; }
+.filterChip:disabled { opacity: 0.45; cursor: not-allowed; }
+.filterChip:focus-visible { outline: none; box-shadow: var(--ws-focus); }
+.sheetBody { display: flex; flex-direction: column; gap: 18px; }
+.sheetGroup { display: flex; flex-direction: column; gap: 8px; }
+.sheetGroupTitle { margin: 0; font-size: 13px; font-weight: 600; color: var(--ws-text-2); }
+.wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.sheetRange { display: flex; flex-direction: column; gap: 10px; margin-top: -8px; }
+
+/* Ô số liệu: hàng nhãn cố định 22px (bằng nhãn "Ước tính") để các con số thẳng hàng. */
 .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .metric { display: flex; flex-direction: column; gap: 6px; padding: 16px; }
-.metricHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.metricHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 22px; }
 .metricLabel { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ws-text-muted); }
 .metricValue { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ws-text); }
 .metricHint { font-size: 12px; line-height: 1.4; color: var(--ws-text-muted); }
@@ -87,7 +110,10 @@
 .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
 .cards { display: none; margin: 0; padding: 0; list-style: none; }
-.cardItem { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--ws-hover); }
+/* Cả thẻ bấm được (mock): link tiêu đề phủ toàn thẻ bằng ::after. */
+.cardItem { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--ws-hover); }
+.cardItem .rowLink::after { content: ''; position: absolute; inset: 0; }
+.cardItem:active { background: var(--ws-hover); }
 .cardMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 13px; color: var(--ws-text-muted); }
 .cardItem .tags { margin-top: 0; }
 
@@ -99,10 +125,8 @@
 }
 
 @media (max-width: 720px) {
-  .page { padding: 16px 16px 32px; gap: 16px; }
-  .searchField, .selectField, .timeWrap { flex: 1 1 100%; }
-  .timeWrap .selectField { flex: 1 1 auto; }
-  .rangePanel { left: 0; right: auto; }
+  /* Đáy trang chừa chỗ cho nút chat thử nổi (≈ 64px) để không che thẻ cuối. */
+  .page { padding: 16px 16px 96px; gap: 14px; }
   .rangeInputs { grid-template-columns: 1fr; }
   .metrics { gap: 10px; }
   .metric { padding: 12px; }

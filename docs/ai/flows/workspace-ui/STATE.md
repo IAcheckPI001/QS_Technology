@@ -54,8 +54,9 @@ checkout chính, có `WORKSPACE_CONVERSATION_API_ENABLED=true`), rồi preview `
 
 | Ngày | Lệnh | Kết quả |
 |---|---|---|
+| 2026-11-18 | playwright-cli, preview 5174 + backend thật, 1440×900 và 375×812 | Kiểm duyệt khoảng cách, cỡ chữ, nút, sự kiện: 9 lỗi đã sửa (LOG); bộ lọc điện thoại dạng chip + sheet theo mock |
+| 2026-11-18 | `npm test` | 11 file, 87 test đạt |
 | 2026-11-18 | Preview 5174 + backend B2 thật, 1440×900 và 375×812 | 30 ngày: 14 hội thoại / 3 chuyển nhân viên / 222 câu hỏi / 199 đ; tìm không dấu có tô sáng; "Khớp ở lượt 62" mở chi tiết cuộn đúng lượt, khung nguồn lượt 62, quay lại giữ bộ lọc; Tháng trước → 10 hội thoại, thẻ khoảng ngày; điện thoại không tràn ngang |
-| 2026-11-18 | `npm test` | 11 file, 84 test đạt |
 | 2026-11-18 | `npx eslint src/workspace` | 0 lỗi (toàn repo: 141 lỗi có sẵn, WU-1) |
 | 2026-11-18 | `npm run build` | Đạt; không có dữ liệu giả trong bundle production |
 | 2026-11-18 | Preview 5174 + backend B5 thật, 1280×800 | Hội thoại CRM 95 lượt: nhãn và khung nguồn đúng từng loại; lượt 95 hiện bảng công cụ (6 lần gọi, 5 lỗi) |
