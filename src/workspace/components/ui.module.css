@@ -179,6 +179,8 @@ textarea.control { height: auto; min-height: 96px; padding: 10px; line-height: 1
   .small { min-height: 40px; }
   .iconButton { width: 44px; height: 44px; }
   .control { height: 44px; font-size: 16px; }
+  /* Chữ gõ 16px để iOS không tự phóng to; chữ gợi ý giữ 14px cho vừa ô (gợi ý dài như ô tìm hội thoại). */
+  .control::placeholder { font-size: 14px; }
   .controlAction { height: 40px; }
   textarea.control { font-size: 16px; }
   .pageTitle { font-size: 20px; }

@@ -26,7 +26,9 @@
 .brandName { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .collapsed .brandName { display: none; }
 
-.nav { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+/* <nav> giãn chiếm phần còn lại của sidebar: khối tài khoản luôn nằm sát đáy ở mọi chiều cao; menu dài thì tự cuộn. */
+.navArea { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.nav { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .navLink {
   position: relative;
   display: flex;
@@ -48,7 +50,7 @@
 .collapsed .navLink { justify-content: center; padding: 0; min-height: 44px; }
 .collapsed .label { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-.account { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid var(--ws-border); }
+.account { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 16px; border-top: 1px solid var(--ws-border); }
 .collapsed .account { flex-direction: column; flex-wrap: nowrap; gap: 8px; }
 .avatar {
   width: 36px;
@@ -125,6 +127,10 @@
   .tabLink:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--ws-brand); }
   .tabActive { color: var(--ws-brand); font-weight: 600; box-shadow: inset 0 3px 0 var(--ws-accent); }
 
-  /* Nút chat thử (widget cũ, cố định góc dưới) nằm trên thanh dưới, không đè lên nó. */
+  /* Nút chat thử (widget cũ, cố định góc dưới; z-index gốc 1200 xem rule ngoài media) nằm trên thanh dưới, không đè lên nó. */
   .chatSlot > div:first-child { bottom: calc(var(--ws-tabbar) + 12px); }
 }
+
+/* Widget chat cũ đặt z-index 1200 (src/chatbot, dùng chung với /legacy): trong Workspace hạ xuống dưới
+   cửa sổ nổi/sheet (Overlay .scrim 60) để không đè lên bộ lọc, hộp thoại; vẫn trên nội dung (≤ 30). */
+.chatSlot > div:first-child { z-index: 50; }

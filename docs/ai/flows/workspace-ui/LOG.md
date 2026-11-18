@@ -6,6 +6,36 @@ sang `LOG-archive-<ngày của mục mới nhất bị cắt>.md` và để lạ
 
 Sau khi thêm mục, viết lại [STATE.md](STATE.md).
 
+## 2026-11-18 · Kiểm duyệt giao diện B2 bằng playwright-cli, sửa 9 lỗi · loại: thay đổi
+
+- Vấn đề (Toma yêu cầu kiểm khoảng cách, cỡ chữ, nút, sự kiện bằng playwright-cli trên nhánh
+  `feature/deploy_ai_service`, dữ liệu thật, 1440×900 và 375×812):
+  1. lọc khoảng tuỳ chọn: ô Thời gian và "Sửa" xuống dòng thứ hai, chữ bị cắt ("31/10/202");
+  2. điện thoại: 5 ô lọc xếp chồng chiếm hết màn đầu (mock dùng ô tìm + chip + sheet);
+  3. điện thoại: bảng chọn ngày tràn ngang, bị thanh dưới che nút Áp dụng;
+  4. đang lọc "Chuyển nhân viên" mà chọn kênh CRM: URL vẫn giữ `status=handoff`, đổi lại Website thì bộ lọc ẩn bật lại;
+  5. bấm ra ngoài không đóng bảng chọn khoảng (mock có lớp nền);
+  6. nút chat thử che thẻ cuối trên điện thoại và đè lên sheet/hộp thoại (widget cũ z-index 1200);
+  7. con số ô "Chi phí AI" thấp hơn 3 ô kia 5px (nhãn "Ước tính" làm hàng nhãn cao hơn);
+  8. nút nhỏ: × của thẻ khoảng 22px, nút chọn nhanh 31px, link quay lại 19px;
+  9. điện thoại: chỉ dòng tiêu đề của thẻ hội thoại bấm được.
+- Quyết định/luật (Toma: sửa tất cả): theo mock v47 (Conversations, MobileConversations):
+  - tách `ConversationFilters.jsx` (máy tính: hàng ô lọc, bảng chọn khoảng có lớp nền; thẻ khoảng có "Sửa" và ×;
+    điện thoại: ô tìm, chip "Bộ lọc · n" / khoảng / bộ lọc đang dùng có ×, sheet chỉnh nháp với "Đặt lại" và
+    "Xem n hội thoại" đếm theo nháp sau 300 ms) và `filterModel.js` (bộ lọc URL → tham số API);
+  - đổi kênh sang CRM xoá `status=handoff` trên URL; ô Thời gian 200px, nhãn "Tuỳ chọn: 01/10 – 31/10";
+  - hàng nhãn ô số liệu cao cố định 22px; nút chọn nhanh 32px, × và "Sửa" 28px, link quay lại 32px;
+  - điện thoại: cả thẻ hội thoại là link (`::after`), đáy trang chừa 96px cho nút chat thử;
+  - widget chat cũ trong Workspace hạ z-index xuống 50 (dưới cửa sổ nổi 60, trên nội dung ≤ 30); không sửa widget vì `/legacy` dùng chung.
+- Đính chính báo cáo kiểm duyệt: ô nhập trên điện thoại đã 44px / chữ 16px từ trước (`ui.module.css`), không phải lỗi.
+- File: `ConversationsPage.jsx`, `ConversationFilters.jsx` (mới), `filterModel.js` (mới), `conversations.module.css`,
+  `detail.module.css`, `trace.module.css`, `layout/AppShell.module.css`, `strings.vi.js`; test `conversations.test.jsx` (+3).
+- Kiểm chứng: `npm test` → 87 đạt; `npx eslint src/workspace` → 0 lỗi; build đạt. playwright-cli trên preview 5174 +
+  backend thật: ô lọc một hàng, chữ ô Thời gian không cắt; × 28px, "Sửa" 28px, nút chọn nhanh 32px; 4 con số cùng y = 311;
+  bấm ngoài đóng bảng, URL giữ nguyên; handoff → CRM cho `?channel=crm`; điện thoại: chip "Bộ lọc", "30 ngày qua", sheet
+  "Xem 9 hội thoại" (Website, tháng 10), áp dụng → chip "Bộ lọc · 1", "01/10 – 31/10", "Website"; nút áp dụng 44px nằm
+  trong màn; nút chat không che thẻ cuối và nằm dưới sheet; bấm vùng meta của thẻ mở chi tiết; link quay lại 32px.
+
 ## 2026-11-18 · B2 trên giao diện: bộ lọc, ô số liệu, tìm không dấu có tô sáng, mở đúng lượt khớp (WU-7) · loại: thay đổi
 
 - Vấn đề: trước B2 chỉ có ô tìm (lượt cuối) và lọc trạng thái; "Tải thêm" cắt trang ở trình duyệt.

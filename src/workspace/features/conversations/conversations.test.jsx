@@ -137,6 +137,60 @@ describe('Lịch sử hội thoại', () => {
     expect(screen.getByTestId('where').textContent).toBe('/conversations');
   });
 
+  it('đang lọc "Chuyển nhân viên" mà chọn kênh CRM thì bỏ luôn trạng thái trên URL', async () => {
+    conversationsApi.listPage.mockResolvedValue({ items: [conv(1)], next_cursor: null });
+    renderAt('/conversations?status=handoff');
+    await screen.findByRole('table');
+    fireEvent.change(screen.getByLabelText('Kênh'), { target: { value: 'crm' } });
+    expect(screen.getByTestId('where').textContent).toBe('/conversations?channel=crm');
+    fireEvent.change(screen.getByLabelText('Kênh'), { target: { value: 'website' } });
+    expect(screen.getByTestId('where').textContent).toBe('/conversations?channel=website');
+  });
+
+  it('bảng chọn khoảng: bấm ra ngoài là huỷ; thẻ khoảng có "Sửa" mở lại với ngày đang lọc', async () => {
+    conversationsApi.listPage.mockResolvedValue({ items: [conv(1)], next_cursor: null });
+    const { container } = renderAt('/conversations?time=custom&from=2026-11-01&to=2026-11-05');
+    await screen.findByRole('table');
+    expect(within(screen.getByLabelText('Thời gian', { selector: 'select' })).getByRole('option', { name: 'Tuỳ chọn: 01/11 – 05/11' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sửa' }));
+    const panel = screen.getByRole('dialog', { name: 'Chọn khoảng thời gian' });
+    expect(within(panel).getByLabelText('Từ ngày').value).toBe('2026-11-01');
+    fireEvent.mouseDown(container.querySelector('[class*="rangeBackdrop"]'));
+    expect(screen.queryByRole('dialog', { name: 'Chọn khoảng thời gian' })).toBeNull();
+    expect(screen.getByTestId('where').textContent).toBe('/conversations?time=custom&from=2026-11-01&to=2026-11-05');
+  });
+
+  it('điện thoại: ô tìm + chip; sheet chỉnh nháp, "Xem n hội thoại" mới áp dụng; chip có × bỏ từng bộ lọc', async () => {
+    const original = window.matchMedia;
+    window.matchMedia = (query) => ({ matches: query.includes('720'), media: query, addEventListener() {}, removeEventListener() {} });
+    try {
+      conversationsApi.listPage.mockResolvedValue({ items: [conv(1)], next_cursor: null });
+      renderAt('/conversations');
+      await screen.findByRole('group', { name: 'Bộ lọc đang dùng' });
+      expect(screen.queryByLabelText('Kênh')).toBeNull();
+      const chips = screen.getByRole('group', { name: 'Bộ lọc đang dùng' });
+      expect(within(chips).getByRole('button', { name: '7 ngày qua' })).toBeTruthy();
+
+      fireEvent.click(within(chips).getByRole('button', { name: 'Bộ lọc' }));
+      const sheet = screen.getByRole('dialog', { name: 'Bộ lọc' });
+      fireEvent.click(within(sheet).getByRole('button', { name: 'CRM' }));
+      expect(within(sheet).getByRole('button', { name: 'Chuyển nhân viên' }).disabled).toBe(true);
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Lỗi' }));
+      // Chưa áp dụng: URL chưa đổi.
+      expect(screen.getByTestId('where').textContent).toBe('/conversations');
+      const apply = await within(sheet).findByRole('button', { name: 'Xem 3 hội thoại' });
+      fireEvent.click(apply);
+      expect(screen.getByTestId('where').textContent).toBe('/conversations?channel=crm&status=error');
+      expect(within(chips).getByRole('button', { name: 'Bộ lọc · 2' })).toBeTruthy();
+
+      fireEvent.click(within(chips).getByRole('button', { name: 'Bỏ lọc CRM' }));
+      expect(screen.getByTestId('where').textContent).toBe('/conversations?status=error');
+    } finally {
+      window.matchMedia = original;
+    }
+  });
+
   it('máy chủ chưa bật route số liệu: ẩn các ô số liệu, không có "/ y"', async () => {
     conversationsApi.metrics.mockResolvedValue(null);
     conversationsApi.listPage.mockResolvedValue({ items: [conv(1)], next_cursor: null });

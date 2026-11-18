@@ -2,7 +2,9 @@
 
 .page { display: flex; flex-direction: column; gap: 18px; padding: 24px 32px 64px; }
 .pad { padding: 20px; }
-.back { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; text-decoration: none; }
+.back { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; margin: -6px -8px; padding: 0 8px; border-radius: 8px; font-size: 13px; text-decoration: none; }
+.back:hover { background: var(--ws-hover); }
+.back:focus-visible { outline: none; box-shadow: var(--ws-focus); }
 
 .header { display: flex; flex-direction: column; gap: 4px; }
 .title { font-size: 22px; font-weight: 600; line-height: 1.3; }

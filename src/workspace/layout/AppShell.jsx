@@ -35,7 +35,7 @@ export default function AppShell() {
             onClick={() => setCollapsed((value) => !value)}
           />
         </div>
-        <nav aria-label={S.nav.label}>
+        <nav className={styles.navArea} aria-label={S.nav.label}>
           <ul className={styles.nav}>
             {items.map((item) => {
               const NavIcon = item.icon;
