@@ -24,7 +24,8 @@
 - Màn Service keys đổi thành "Khóa dịch vụ AI", chữ dễ hiểu, tên trùng tự thêm -1/-2 (Q27, version 45).
 - Quyết định đã chốt: Q1–Q27 (mục 13). Kế hoạch backend cho màn tài liệu: mục 15.
 - Đặc tả API hội thoại (B2, B5, registry model) cho GĐ 2: mục 19 (2026-11-18); giờ hỏi tính từ
-  `created_at − latency_ms` (19.2 W3, đã chốt).
+  `created_at − latency_ms` (19.2 W3, đã chốt). Khung "Nguồn câu trả lời" theo lượt (Q28): 19.14,
+  mock version 49 đã duyệt; B5 đã làm và kiểm với dữ liệu thật (19.15).
 - **Còn mở**:
   1. Lưu `conversation_state.last_models` theo từng lượt (cột `product_models` mỗi lượt) hay chỉ
      sửa tạm đọc lượt `completed` gần nhất (mục M2/Q16).
@@ -498,7 +499,7 @@ Review tri thức: Domain, chưa có API.
 |---|---|---|---|
 | B1 | Đăng nhập bằng bảng tài khoản riêng + permission theo vai trò (đợt đầu `admin`), bảo vệ mọi route Workspace kể cả GET `/chatbot/*` (mục 14) | Mọi màn quản trị | Cao, làm trước |
 | B2 | Phân trang cursor cho `/chatbot/conversations` và `/history`, lọc kênh/thời gian phía server, endpoint chỉ số theo cùng bộ lọc (mục 13); thêm số câu hỏi mỗi hội thoại và tổng số câu hỏi (Q12); bộ lọc `handoff` cho kênh website (Q14); tìm kiếm theo Q15 và bộ lọc model sản phẩm (Q16). **Đặc tả: mục 19** | M1, M2 | Cao |
-| B3 | Ghi usage thật (từ trace) và đơn giá theo model vào `chat_history` | M2 | Trung bình |
+| B3 | Ghi usage thật (từ trace) và đơn giá theo model vào `chat_history`. **Đã làm 2026-11-18** (lượt mới; bản ghi cũ giữ ước tính, phân biệt qua `usage.source`) | M2 | Trung bình |
 | B4 | API thống kê theo thời gian/kênh/model; lưu `credential_id` vào history | M2, M6 | Trung bình |
 | B5 | `/retrieval?history_id`; trả `retrieval_tasks`, `agent_steps`; ghi mã lỗi nhà cung cấp (vd `credit_balance_exhausted`) vào thuộc tính span LLM; cờ "có lỗi công cụ" cho lượt hoàn tất trong history/danh sách; lưu nguồn của chunk vào snapshot. **Đặc tả: mục 19** | M1, M3 | Trung bình |
 | B6 | API chunk/phiên bản trên `doc_chunks_v2` (phiên bản đang kích hoạt mỗi `doc_id`, rollback, chunk phân trang offset theo `chunk_index`); bảng tài liệu (doc_id, phiên bản, link PDF trên CRM, hash, số trang) và kiểm file CRM khớp file đã xử lý (Q17); tải ảnh của chunk lên Supabase Storage + link có thời hạn; bảng revision của đoạn + API sửa/khôi phục + tạo lại embedding (Q18); bảng duyệt (người duyệt, thời điểm, ghi chú); tích hợp v2 vào chat | M5 | Cao |
@@ -785,7 +786,7 @@ duyệt + hoàn tác, duyệt cả mục, sửa (lỗi + bỏ thay đổi + lưu
 Esc), xem ảnh ← →, khoá tài khoản, link đặt lại, đăng nhập. Lỗi tìm ra và đã sửa: thẻ có
 `overflow: hidden` trong thân trang bị co và cắt nội dung (thêm `flex-shrink: 0`).
 
-## 18. Kế hoạch triển khai frontend v1 (2026-11-18, GĐ 0 xong, GĐ 1 xong phần giao diện)
+## 18. Kế hoạch triển khai frontend v1 (2026-11-18, GĐ 0 xong, GĐ 1 và 2 xong phần giao diện)
 
 Giao diện chuẩn: canvas "QS AI Workspace mock" **version 47** (desktop 1–7, điện thoại M1–M7)
 cùng quyết định Q1–Q27. Mock là bản vẽ, không phải code để chép: dựng lại bằng React theo
@@ -873,7 +874,7 @@ mặc định tắt). Không mô tả màn chạy fixture là đã xong (TR-10).
 |---|---|---|---|---|
 | 0 | Nền: thư mục, router, `AppShell`/sidebar/thanh dưới, tokens, component 18.3, lớp API, fixture, trang lỗi 404/403 | — | Có | **Xong 2026-11-18.** 27 test đạt, build đạt, code mới 0 lỗi lint (toàn repo còn 141 lỗi có sẵn ở trang cũ); `/` → Workspace mới, bản cũ ở `/legacy` |
 | 1 | Đăng nhập, đặt lại, đổi mật khẩu bắt buộc, `AuthProvider`, chặn route, 401/403, đăng xuất | **B1** (bảng tài khoản, phiên cookie, CSRF, `/workspace/auth/*`; contract giả định ở README luồng workspace-ui) | Không. Dựng với fixture | **Giao diện xong 2026-11-18** (fixture). Còn: đăng nhập thật được trên dev; mọi route Workspace yêu cầu đăng nhập (đóng DR-05) |
-| 2 | Lịch sử hội thoại, Chi tiết (2 khung tự cuộn), Diễn biến xử lý (4 trạng thái) | Đọc: **có sẵn**. Bổ sung: **B2** (phân trang, lọc kênh/thời gian/model, chỉ số cùng bộ lọc), **B5** (`/retrieval?history_id`, tài liệu nguồn). Không cần B4: chi phí ở v1 là ước tính từ `chat_history.cost_usd` (nhãn "Ước tính", Q4), ô Chi phí AI lấy từ endpoint chỉ số của B2; B3 chỉ để bỏ nhãn ước tính, B4 phục vụ thống kê/biểu đồ chưa có trong mock v1 | Một phần: danh sách, lịch sử, trace đọc được ngay; bộ lọc chạy trên server chỉ có `search`, `status` | Đủ Q12–Q16, Q19, Q23, Q26 khi B2/B5 xong; trước đó ẩn các bộ lọc chưa có API thay vì lọc ở trình duyệt |
+| 2 | Lịch sử hội thoại, Chi tiết (2 khung tự cuộn), Diễn biến xử lý (4 trạng thái) | Đọc: **có sẵn**. Bổ sung: **B2** (phân trang, lọc kênh/thời gian/model, chỉ số cùng bộ lọc), **B5** (`/retrieval?history_id`, tài liệu nguồn). Không cần B4: chi phí ở v1 là ước tính từ `chat_history.cost_usd` (nhãn "Ước tính", Q4), ô Chi phí AI lấy từ endpoint chỉ số của B2; B3 chỉ để bỏ nhãn ước tính, B4 phục vụ thống kê/biểu đồ chưa có trong mock v1 | Một phần: danh sách, lịch sử, trace đọc được ngay; bộ lọc chạy trên server chỉ có `search`, `status` | **Phần đọc dựng xong 2026-11-18** (kiểm trên dữ liệu giả; chưa kiểm với backend thật). Đủ Q12–Q16, Q19, Q23, Q26 khi B2/B5 xong; trước đó ẩn các bộ lọc chưa có API thay vì lọc ở trình duyệt |
 | 3 | Khóa dịch vụ AI | **B7** (API tạo/thu hồi khóa, tạm dừng kênh, tự thêm hậu tố tên, `last_used_at`) | Không (hiện chỉ có CLI) | Đủ Q27 |
 | 4 | Tài khoản (danh sách, tạo, khoá/mở, vô hiệu, cấp link đặt lại) | **B1** | Không | Đủ 14.3; không tự khoá chính mình hay admin cuối cùng |
 | 5 | Kho tài liệu, Xem và duyệt (PDF, Mục lục, tìm kiếm, sửa/lịch sử/khôi phục, duyệt/tắt, ảnh) | **B6** (mục 15), ảnh trên Storage, sửa T-07 để cây mục đúng | Không | Đủ Q17, Q18, Q20, Q24, Q25 trên dữ liệu thật `doc_chunks_v2` |
@@ -976,13 +977,14 @@ keyset. Response giữ khoá cũ, thêm trường mới:
       "last_query": "…", "created_at": "lượt đầu", "updated_date": "lượt cuối",
       "product_models": ["F86"], "ticket_id": null, "model": "gpt-4o-mini",
       "question_count": 7, "has_handoff": false, "has_tool_errors": true,
-      "total_tokens": 120, "cost_usd": 0.0001
+      "total_tokens": 120, "cost_usd": 0.0001, "cost_vnd": 2.6
     }
   ],
   "next_cursor": "eyJ0IjoiMjAyNi0xMS0xOFQwODox…"
 }
 ```
 
+- `cost_vnd` (thêm 2026-11-18 khi dựng GĐ 2): `cost_usd × USD_TO_VND_RATE` để cột "Chi phí AI" hiện VND mà frontend không phải biết tỉ giá; tương tự thêm `cost_vnd` cho mỗi lượt ở 19.7.
 - `question_count`: mọi lượt của phiên (không giới hạn theo `from`/`to`).
 - `has_tool_errors`: phiên có lượt mà `agent_steps` có status khác `ok`/`deduplicated` (như 19.7).
 - `next_cursor = null`: hết dữ liệu. Có `limit` thì **không** trả `total`, `conversation_count`… (lấy ở 19.5).
@@ -1031,6 +1033,7 @@ lượt đầu). Mỗi lượt thêm:
 | `retrieval_chunk_count` | Số phần tử `retrieval_snapshot.chunks`; để hiện "Tài liệu đã dùng (n)" mà không gọi 19.8 cho từng lượt |
 | `has_tool_errors` | `agent_steps` có status khác `ok`/`deduplicated`; lượt không phải agent luôn `false` |
 | `has_trace` | Có dòng `chat_traces` cùng `history_id` (index `chat_traces_history_idx` đã có) |
+| `cost_vnd` | `cost_usd × USD_TO_VND_RATE` (ước tính, Q4) |
 
 ### 19.8 `GET /chatbot/sessions/{session_id}/retrieval?history_id=` (sửa, B5)
 
@@ -1079,5 +1082,64 @@ thiếu quyền → 403.
 ### 19.13 Giao diện làm gì trong lúc chờ
 
 Trước B2: chỉ ô tìm (`search` cũ, lượt cuối) và lọc trạng thái; ẩn Kênh, Thời gian, Model sản
-phẩm và 4 ô số liệu; không có "Tải thêm". Trước B5: khung tài liệu chỉ có cho lượt mới nhất,
+phẩm, 4 ô số liệu, cột Số câu hỏi và Chi phí AI (chi phí từng lượt hiện USD ước tính trong "Chi
+tiết kỹ thuật"). "Tải thêm" / "Tải lượt cũ hơn" cắt trang trên danh sách đầy đủ API đang trả
+(đã làm 2026-11-18, `api/conversations.js`). Trước B5: khung tài liệu chỉ có cho lượt mới nhất,
 thẻ đoạn không có nguồn. Bật từng phần khi endpoint tương ứng xong.
+
+### 19.14 Khung "Nguồn câu trả lời" theo lượt (Q28, 2026-11-18)
+
+Khung phải của Chi tiết hội thoại đổi tên "Tài liệu chatbot đã dùng" → **"Nguồn câu trả lời ·
+lượt N"**, đi theo lượt đang chọn (mặc định lượt mới nhất; bấm lượt khác thì đổi). Nội dung theo
+cách chatbot trả lời lượt đó; nhãn dưới mỗi lượt ở khung trái cho biết trước khi bấm:
+
+| Loại (`answer_source` / `retrieval_status`) | Khung phải | Nhãn dưới lượt |
+|---|---|---|
+| Có đoạn tài liệu (`documents`, `ok`) | Ô tóm tắt + thẻ đoạn (như hiện tại), có nguồn và mục | "Tài liệu đã dùng (n)" |
+| Gọi công cụ CRM, không tra tài liệu (`crm_data`) | "Lượt này lấy dữ liệu CRM, không dùng tài liệu" + bảng công cụ (tên, số lần, lỗi) + link Diễn biến | "Dữ liệu CRM (n lần gọi)", dấu cảnh báo khi có lỗi |
+| Cả hai (`documents_and_crm`) | Thẻ đoạn + bảng công cụ | "Tài liệu (n) · CRM (m)" |
+| Trả lời thẳng (`direct`, `not_applicable`) | "Chatbot trả lời trực tiếp, không cần tra cứu" | "Không tra cứu" |
+| Tra cứu không có kết quả (`no_hits`) | "Đã tra cứu nhưng không tìm thấy tài liệu phù hợp" (nổi bật: tài liệu thiếu nội dung) | "Không tìm thấy tài liệu" |
+| Tra cứu lỗi (`error`, `partial_error`) | Hộp cảnh báo: chatbot vẫn trả lời nhưng có thể thiếu căn cứ | "Tra cứu lỗi" |
+| Không có snapshot (`none`: bị chặn, nhân viên đang xử lý, lượt cũ) | Một câu lý do theo trạng thái lượt | "Không có nguồn" (vẫn bấm được để đọc lý do) |
+
+Mock: canvas **version 49** (2026-11-18), màn 3 và M3, hội thoại mẫu 10 lượt đủ 7 loại; mặc định
+xem lượt mới nhất; đoạn được câu trả lời trích dẫn có nhãn "Được trích dẫn [S1]"; tên tài liệu tạm
+là `doc_id`. Toma duyệt 2026-11-18; giao diện đã làm (`SourcePanel.jsx`, `sources.js`).
+
+Tiêu đề hội thoại ở chi tiết = câu hỏi cuối, khớp cột "Hội thoại" của danh sách (Toma chốt
+2026-11-18).
+
+### 19.15 Kế hoạch triển khai B5 (luồng chat-platform; **đã làm và kiểm với Supabase thật 2026-11-18**)
+
+Toma duyệt kế hoạch và mock version 49; hai ý cần chốt theo đề xuất: gộp đoạn trùng theo
+`chunk_id`, tên tài liệu tạm là `doc_id`. Contract đã ghi vào `api_guidelines.md`.
+
+Căn cứ code (2026-11-18): mọi lượt `completed`/`error`/`cancelled` đều ghi `retrieval_snapshot`
+(kể cả lượt không tra cứu: `chunks: []`, `retrieval_status: not_applicable`); lượt agent có thêm
+`agent_steps` (mỗi bước `kind` llm/tool, `name`, `status`). Lượt `blocked` và lượt nhân viên đang
+xử lý không có snapshot. Router `/retrieval` hiện tự chọn "lượt mới nhất có chunk" (logic nằm ở
+router). Trace ghi lỗi ở `core/tracing.py` chỉ có `error_type`.
+
+| # | Việc | File | Ghi chú |
+|---|---|---|---|
+| 1 | **W1** ghi nguồn chunk: snapshot thêm `chunk_id`, `doc_id`, `section_title`, `section_path`, `source_id` (S1…, để đánh dấu đoạn được trích dẫn trong câu trả lời) | `services/chat_service.py` `_retrieval_snapshot` | Chỉ thêm; lượt cũ thiếu → `null` |
+| 2 | Hàm thuần tóm tắt nguồn của một lượt từ dòng history: `answer_source`, `retrieval_status`, `chunk_count`, `tools: [{name, calls, failed}]` (bước `kind=tool`; lỗi = status khác `ok`/`deduplicated`), `has_tool_errors` | mới `services/turn_sources.py` | Một chỗ cho cả 2 endpoint; không đặt ở router (TR-01) |
+| 3 | Repository: `get_turn(session_id, history_id)`; `latest_retrieval_turn(session_id)` (chuyển logic chọn lượt khỏi router) | `repositories/history_repository.py` | `get_turn` lọc cả `session_id` để không đọc lượt của phiên khác |
+| 4 | Schema (chỉ thêm, có mặc định): `ChunkResult` + 5 trường của bước 1; `RetrievalSnapshotResponse` + `turn_status`, `sources` (tóm tắt bước 2), `retrieval_tasks`, `agent_steps`, `answered_without_tools`, `invalid_citations`; `ChatHistoryItem` + `sources` | `schemas/history.py` | `agent_steps` chỉ metadata, không nội dung |
+| 5 | `GET /retrieval?history_id=`: lượt không thuộc phiên → `404 history_not_found` (mã mới); lượt không có snapshot → `200`, `chunks: []`, `sources.answer_source = none`; không gửi `history_id` → như cũ | `routers/workspace.py` | Giữ `/legacy` chạy |
+| 6 | `GET /history`: mỗi lượt thêm `sources` (cùng hàm bước 2); không đổi thứ tự, chưa phân trang (B2) | `routers/workspace.py` | Đủ cho nhãn dưới lượt mà không gọi `/retrieval` từng lượt |
+| 7 | **W2**: span lỗi ghi thêm `http_status` (thuộc tính `status_code` kiểu int của exception) và `provider_error_code` (thuộc tính `code` kiểu chuỗi, chỉ nhận `[a-z0-9_]{1,64}`) | `core/tracing.py` | Đọc chung bằng `getattr`, không import SDK OpenAI; OpenAI dùng `insufficient_quota` / `rate_limit_exceeded` |
+| 8 | Test: snapshot có trường nguồn; tóm tắt cho 6 loại ở 19.14; `/retrieval` theo `history_id` (đúng lượt, lượt phiên khác → 404, lượt `blocked` → 200 rỗng, không tham số → như cũ); `/history` có `sources`; span lỗi có `provider_error_code` | `tests/chatbot/test_retrieval_snapshot.py`, `test_history_api.py`, `test_tracing.py`, mới `test_turn_sources.py` | Chạy `pytest tests\chatbot tests\api`, rồi cả `tests` |
+| 9 | Tài liệu: `api_guidelines.md` (retrieval, history, mã `history_not_found`, thuộc tính span), chat-platform STATE/LOG, mục 19.7–19.9 ở đây | | TR-06 |
+| 10 | Frontend (workspace-ui): khung "Nguồn câu trả lời" và nhãn theo 19.14; nhận biết backend đã có B5 qua trường `sources` trong `/history`, chưa có thì giữ hành vi hiện tại | `features/conversations/` | Làm sau bước 1–9 |
+
+Không cần SQL mới, không thêm dependency. Route vẫn chưa xác thực như các GET khác (DR-05, chờ
+B1); dữ liệu thêm chỉ là metadata đã có trong DB.
+
+Cần chốt trước khi làm:
+1. **Đoạn trùng giữa các lần agent gọi tra cứu:** snapshot hiện xếp mọi hit, một đoạn có thể xuất
+   hiện hai lần. Đề xuất gộp theo `chunk_id`, giữ điểm cao nhất (chỉ áp dụng cho lượt mới có
+   `chunk_id`).
+2. **Tên tài liệu hiển thị:** `ChunkHit` chỉ có `doc_id`. Đề xuất tạm hiện `doc_id` + mục, chờ bảng
+   tài liệu của B6; không thêm truy vấn mới vào luồng chat.

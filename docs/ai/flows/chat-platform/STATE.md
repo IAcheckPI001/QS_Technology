@@ -1,6 +1,6 @@
 # Trạng thái chat-platform
 
-Cập nhật: 2026-11-11
+Cập nhật: 2026-11-18
 
 Ảnh chụp trạng thái hiện tại. Viết lại khi có thay đổi; lịch sử ở [LOG.md](LOG.md).
 
@@ -20,8 +20,8 @@ Cập nhật: 2026-11-11
 | Service key theo kênh | có | Chưa có scope theo integration, rate limit theo key, `last_used_at` |
 | Session + ownership khi ghi | có | Xóa hội thoại chưa có |
 | Turn lease | có, test bằng fake | Khóa dòng thật cần kiểm live |
-| Ghi `chat_history` | có | Token và chi phí là ước tính từ text câu hỏi/trả lời |
-| Đọc history, retrieval, trace, conversations | có, không xác thực | Giữ nội bộ |
+| Ghi `chat_history` | có | B3 (2026-11-18): token và chi phí thật từ trace, giá theo model (`core/pricing.py`); bản ghi cũ là ước tính (`usage.source`) |
+| Đọc history, retrieval, trace, conversations | có, không xác thực | Giữ nội bộ. B5 (2026-11-18): `sources` theo lượt, `/retrieval?history_id`, nguồn của chunk, mã lỗi nhà cung cấp trong trace; đã kiểm đọc với Supabase thật (hội thoại 95 lượt), chưa có lượt mới ghi nguồn chunk. Phân trang/lọc (B2) chưa có |
 | Tracing giai đoạn 0 | có | Chưa OpenTelemetry, chưa truyền `traceparent` sang CRM/OpenAI, chưa retention, chưa UI |
 | Health | một phần | `/health/db` chỉ `SELECT 1`; chưa định nghĩa readiness, chưa kiểm schema |
 
@@ -33,10 +33,15 @@ Cập nhật: 2026-11-11
 | Cao | Key CRM là tin cậy ủy quyền: `user_id` do CRM backend khẳng định; key lộ thì mạo danh được mọi nhân viên của integration (chỉ có thu hồi + cấp lại) |
 | Trung bình | GET `/chatbot/...` không ownership; `/chatbot/conversations` liệt kê mọi session |
 | Trung bình | Retry sau khi lượt gốc xong vẫn chạy lại (không replay theo `Idempotency-Key`) |
-| Thấp | Usage thật của provider có trong trace nhưng chưa ghi về `chat_history`, chưa đổi ra chi phí |
+| Cao | 2026-11-18: tài khoản OpenAI của môi trường dev **hết credit** (429 `credit_balance_exhausted`, sau khi thay khóa hết hạn 401 `expired_secret_key`); mọi lượt chat lỗi `analysis_error` cho tới khi nạp credit |
+| Thấp | Bảng giá model mặc định (`core/pricing.py`) cần đối chiếu định kỳ với giá OpenAI; bản ghi trước 2026-11-18 vẫn là chi phí ước tính |
 | Thấp | `npm run lint` lỗi sẵn có: 139 lỗi trong `src/`, 290 lỗi do eslint quét `.claude/worktrees/` |
 
 ## Kết quả kiểm gần nhất
+
+2026-11-18 (B5, worktree `frontend-requirements-analysis`): `pytest tests` → 1033 passed,
+14 skipped, 1 failed có sẵn (`test_f86_baseline_csv_unchanged`, CSV bị đổi CRLF khi checkout
+worktree).
 
 2026-11-11:
 - Từ `backend/`: `.\venv\Scripts\python.exe -m pytest tests` → 938 passed, 14 skipped

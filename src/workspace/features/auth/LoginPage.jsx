@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation, useSearchParams } from 'react-router-dom';
-import { USE_FIXTURES } from '../../config.js';
+import { fixturesFor } from '../../config.js';
 import { FIXTURE_HINTS } from '../../api/fixtures/auth.js';
 import { safeNext } from '../../auth/paths.js';
 import { useAuth } from '../../auth/useAuth.js';
@@ -54,7 +54,7 @@ export default function LoginPage() {
     }
   };
 
-  const devHints = USE_FIXTURES && (
+  const devHints = import.meta.env.DEV && fixturesFor('auth') && (
     <aside className={styles.devHints} aria-label={S.auth.devHintsTitle}>
       <strong>{S.auth.devHintsTitle}</strong>
       <ul>

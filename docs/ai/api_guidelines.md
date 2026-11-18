@@ -66,14 +66,43 @@ Các endpoint chưa có authentication/ownership và chỉ được bật rõ r�
       "output_tokens": 80,
       "total_tokens": 92,
       "cost_usd": 0.00005,
-      "latency_ms": 1800
+      "cost_vnd": 1.3,
+      "usage": {"source": "trace", "llm_calls": 2, "cached_input_tokens": 0, "embedding_tokens": 14, "unpriced_models": []},
+      "latency_ms": 1800,
+      "sources": {
+        "answer_source": "documents_and_crm",
+        "retrieval_status": "ok",
+        "chunk_count": 2,
+        "tools": [{"name": "crm_query", "calls": 1, "failed": 0, "errors": {}}],
+        "has_tool_errors": false
+      }
     }
   ]
 }
 ```
 
-`channel` là `website` hoặc `crm`. Token/cost hiện là **ước tính** từ câu hỏi
-và câu trả lời (`count_tokens`), chưa gồm prompt/context gửi LLM và embedding.
+`channel` là `website` hoặc `crm`.
+
+Token và chi phí (B3, 2026-11-18): lượt ghi từ 2026-11-18 lưu **usage thật** OpenAI trả về
+(cộng mọi lần gọi AI của lượt từ trace) và chi phí theo giá từng model (`core/pricing.py`,
+ghi đè bằng `LLM_PRICES_JSON`): `input_tokens`/`output_tokens`/`total_tokens` là token của lời gọi
+AI (không gồm embedding), `cost_usd` gồm cả embedding. Bản ghi cũ là **ước tính** từ chữ câu hỏi
+và câu trả lời theo giá gpt-4o-mini (thấp hơn thực tế nhiều lần). Mỗi lượt thêm:
+- `usage`: `{source: "trace" | "estimate", llm_calls, cached_input_tokens, embedding_tokens,
+  unpriced_models}`; `null` khi lượt không gọi AI (bị chặn, nhân viên đang xử lý). Chi tiết theo
+  model lưu ở `retrieval_snapshot.usage` (DB);
+- `cost_vnd`: `cost_usd × USD_TO_VND_RATE`.
+
+`sources` (B5, 2026-11-18) tóm tắt nguồn câu trả lời của lượt từ `retrieval_snapshot`
+(`services/turn_sources.py`):
+- `answer_source`: `documents` (có tra cứu tài liệu; xem `retrieval_status` để biết có kết quả
+  không), `crm_data` (gọi công cụ `crm_*`, không tra tài liệu), `documents_and_crm`, `direct`
+  (không tra cứu, không gọi công cụ), `none` (không có snapshot: lượt `blocked`, nhân viên đang
+  xử lý, bản ghi cũ).
+- `tools`: công cụ trợ lý đã gọi theo `agent_steps`, trừ `product_docs_ask`; `failed` đếm bước có
+  status khác `ok`/`deduplicated`, `errors` là mã lỗi → số lần.
+- Lượt `error`/`cancelled` dừng trước khi tra cứu có `answer_source = direct`; client kết hợp với
+  `status` của lượt để hiện "không có nguồn".
 
 Endpoint này đọc các trạng thái đã lưu (`completed`, `blocked`, `error`,
 `cancelled`) để
@@ -82,9 +111,8 @@ database lỗi trả `503 database_unavailable`.
 
 ### `GET /chatbot/conversations`
 
-Thay đổi dự kiến cho QS AI Workspace (phân trang, lọc, chỉ số theo bộ lọc, retrieval theo
-lượt; chưa có code): [FRONTEND_REQUIREMENTS.md mục 19](FRONTEND_REQUIREMENTS.md). Mục này
-vẫn mô tả hành vi hiện tại.
+Thay đổi dự kiến cho QS AI Workspace (phân trang, lọc, chỉ số theo bộ lọc; B2, chưa có code):
+[FRONTEND_REQUIREMENTS.md mục 19](FRONTEND_REQUIREMENTS.md). Mục này vẫn mô tả hành vi hiện tại.
 
 Query: `search` (tối đa 200 ký tự, khớp `query_origin` hoặc `model` của lượt
 mới nhất) và `status` (`completed` | `blocked` | `error` | `cancelled`; giá trị khác trả
@@ -123,7 +151,10 @@ Database lỗi trả `503 database_unavailable`.
 
 ### `GET /chatbot/sessions/{session_id}/retrieval`
 
-Trả snapshot `chat_history.retrieval_snapshot` của lượt gần nhất có chunk:
+Query tùy chọn `history_id` (UUID, B5 2026-11-18): trả nguồn câu trả lời của đúng lượt đó.
+Lượt không thuộc phiên → `404 history_not_found`; lượt không có snapshot (bị chặn, nhân viên
+đang xử lý, bản ghi cũ) → `200` với `chunks: []`, `sources.answer_source = "none"`. Không gửi
+`history_id` thì như cũ: snapshot của lượt gần nhất có chunk:
 
 ```json
 {
@@ -147,13 +178,24 @@ Trả snapshot `chat_history.retrieval_snapshot` của lượt gần nhất có 
       "spec_attributes": ["io", "max_axis"],
       "page_start": 4,
       "page_end": 26,
-      "page_label": "page 4 - 26"
+      "page_label": "page 4 - 26",
+      "chunk_id": "…", "doc_id": "f86_installation_v01", "section_title": "…",
+      "section_path": ["2 Installation", "2.6 Wiring"], "source_id": "S1"
     }
-  ]
+  ],
+  "turn_status": "completed",
+  "sources": {"answer_source": "documents", "retrieval_status": "ok", "chunk_count": 1, "tools": [], "has_tool_errors": false},
+  "retrieval_tasks": [{"task_id": "task-retrieve-q1", "status": "completed", "error_code": null, "no_hits": false, "fallback": false}],
+  "agent_steps": [],
+  "answered_without_tools": null,
+  "invalid_citations": []
 }
 ```
 
-Chunk xếp theo `score` giảm dần. `domain`/`scopes`/`control_interface`/
+Chunk xếp theo `score` giảm dần; từ 2026-11-18 đoạn trùng giữa các lần tra cứu của cùng lượt được
+gộp theo `chunk_id` (giữ điểm cao nhất). `chunk_id`, `doc_id`, `section_title`, `section_path`,
+`source_id` (khớp trích dẫn `[S1]` trong câu trả lời) chỉ có ở lượt ghi từ 2026-11-18, bản ghi cũ
+là `null`/`[]`. `sources` giống `/history`. `domain`/`scopes`/`control_interface`/
 `spec_attributes` là metadata của chính chunk trong `doc_chunks`, không phải
 filter của truy vấn. `latency_ms` là thời gian retrieval lâu nhất trong lượt.
 `retrieval_status` tổng hợp các task retrieve của lượt: `ok`, `no_hits` (không
@@ -168,10 +210,10 @@ Lượt agent (kênh CRM) gộp task của mọi lần gọi tool tra cứu: `ta
 `agent_steps: [{step, kind: "llm"|"tool", name, tool_call_id, status,
 latency_ms, finish_reason}]` (`status`: `ok`, `deduplicated` hoặc mã lỗi tool như
 `tool_call_limit`, `model_not_evidenced`), `answered_without_tools: bool` và
-`invalid_citations: [S#]` (không chứa nội dung tin nhắn hay output tool;
-endpoint này chưa trả các khóa đó).
-Không có snapshot trả `404 retrieval_not_found`; database lỗi trả
-`503 database_unavailable`.
+`invalid_citations: [S#]` (không chứa nội dung tin nhắn hay output tool); từ B5 endpoint
+trả các khóa này cùng `retrieval_tasks`.
+Không gửi `history_id` và phiên không có lượt nào có chunk trả `404 retrieval_not_found`;
+database lỗi trả `503 database_unavailable`.
 
 ### `GET /chatbot/sessions/{session_id}/trace`
 
@@ -215,6 +257,10 @@ trace mới nhất của phiên. Đọc `public.chat_traces`; chỉ có dữ li�
   `failed_tool_calls` đếm tool call lỗi.
 - Lượt agent trả lời được nhưng có tool lỗi vẫn `outcome="ok"`; root span có thêm
   `tool_errors: ["crm_query:crm_auth_failed", …]` (`{tool}:{mã}`).
+- Span `llm`/`embedding`/`http` lỗi có thêm `http_status` (int) và `provider_error_code` (mã định
+  danh `[a-z0-9_]{1,64}` của nhà cung cấp, vd `insufficient_quota` = hết credit,
+  `rate_limit_exceeded` = gọi quá nhanh) khi exception có thuộc tính `status_code`/`code` (B5 W2,
+  2026-11-18, `core/tracing.py`). Không ghi thông báo lỗi.
 - Span tool lỗi có `error_detail`: lý do tool trả cho LLM, tách theo `; `, tối đa 5
   mục × 120 ký tự, **giá trị trong nháy bị thay bằng `'…'`** (thông báo validate có thể
   lặp lại giá trị LLM điền, vd. tên người).

@@ -17,17 +17,16 @@ from app.modules.chatbot.repositories.history_repository import HistoryRepositor
 from app.modules.chatbot.repositories.trace_repository import TraceRepository
 from app.modules.chatbot.routers.sse import error_response
 from app.modules.chatbot.schemas.history import (
-    ChatHistoryItem,
     ChatHistoryResponse,
     ChatStatus,
     ChatTraceResponse,
-    ChunkResult,
     ConversationListResponse,
     ConversationSummary,
     RetrievalSnapshotResponse,
     TraceSpan,
     TraceSummary,
 )
+from app.modules.chatbot.services.turn_sources import history_item, retrieval_view
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["chatbot-workspace"])
@@ -73,7 +72,7 @@ async def get_chat_history(
 
     return ChatHistoryResponse(
         session_id=session_id,
-        messages=[ChatHistoryItem.model_validate(item) for item in history],
+        messages=[history_item(item, settings.usd_to_vnd_rate) for item in history],
     )
 
 
@@ -125,10 +124,15 @@ async def list_conversations(
 async def get_retrieval_snapshot(
     request: Request,
     session_id: UUID,
+    history_id: UUID | None = Query(default=None),
     repository: HistoryRepository = Depends(get_history_repository),
 ) -> RetrievalSnapshotResponse | JSONResponse:
+    """Nguồn câu trả lời của lượt `history_id`; không gửi thì lượt mới nhất có chunk (hành vi cũ)."""
     try:
-        rows = await repository.list_for_history(session_id=session_id)
+        if history_id is not None:
+            row = await repository.get_turn(session_id=session_id, history_id=history_id)
+        else:
+            row = await repository.latest_retrieval_turn(session_id=session_id)
     except SQLAlchemyError:
         return _database_unavailable(
             request,
@@ -136,11 +140,16 @@ async def get_retrieval_snapshot(
             "Retrieval snapshot load failed (session_id=%s)",
             session_id,
         )
-    # Lượt mới nhất có chunk; lượt direct-response/handoff không có snapshot.
-    row = next(
-        (item for item in reversed(rows) if (item.retrieval_snapshot or {}).get("chunks")),
-        None,
-    )
+    if row is None and history_id is not None:
+        return JSONResponse(
+            status_code=404,
+            content={
+                "detail": {
+                    "code": "history_not_found",
+                    "message": "No conversation turn found for this session.",
+                }
+            },
+        )
     if row is None:
         return JSONResponse(
             status_code=404,
@@ -151,20 +160,7 @@ async def get_retrieval_snapshot(
                 }
             },
         )
-    snapshot = row.retrieval_snapshot
-    chunks = [ChunkResult.model_validate(chunk) for chunk in snapshot["chunks"]]
-    return RetrievalSnapshotResponse(
-        session_id=session_id,
-        history_id=row.id,
-        query=snapshot.get("query") or row.query_origin,
-        model=snapshot.get("model") or row.model,
-        product_models=snapshot.get("product_models", []),
-        highest_score=max((chunk.score for chunk in chunks), default=None),
-        latency_ms=snapshot.get("latency_ms"),
-        total_tokens=row.total_tokens or 0,
-        retrieval_status=snapshot.get("retrieval_status"),
-        chunks=chunks,
-    )
+    return retrieval_view(session_id, row)
 
 
 @router.get("/chatbot/sessions/{session_id}/trace", response_model=ChatTraceResponse)

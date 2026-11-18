@@ -9,7 +9,7 @@
 // `user` = { id, email, display_name, role, permissions[], must_change_password }.
 // Bật VITE_WORKSPACE_FIXTURES=1 (chỉ dev) để chạy với dữ liệu giả.
 
-import { USE_FIXTURES } from '../config.js';
+import { fixturesFor } from '../config.js';
 import { api } from './client.js';
 import { fixtureAuth } from './fixtures/auth.js';
 
@@ -27,4 +27,5 @@ const real = {
   resetPassword: (body, options) => api.post('/workspace/auth/password-reset', body, own(options)),
 };
 
-export const authApi = USE_FIXTURES ? fixtureAuth : real;
+// `import.meta.env.DEV` viết ngay tại đây để bản build production thay bằng false và bỏ hẳn dữ liệu giả.
+export const authApi = import.meta.env.DEV && fixturesFor('auth') ? fixtureAuth : real;

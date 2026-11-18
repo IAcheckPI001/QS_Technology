@@ -127,3 +127,47 @@ def test_failed_retrieval_is_logged_with_session(caplog):
         assert ChatbotService._retrieval_snapshot(service, state)["retrieval_status"] == "error"
 
     assert "retrieval failed status=error session_id=s-1 failed_tasks=1" in caplog.text
+
+
+def _sourced_hit(score, chunk_id, source_id=None):
+    hit = _hit(score, f"content {chunk_id}")
+    hit.chunk_id = chunk_id
+    hit.doc_id = "f54_operation_v02"
+    hit.section_title = "Note"
+    hit.section_path = ["2.3.2.4 Homing switch wiring diagram", "Note"]
+    hit.source_id = source_id
+    return hit
+
+
+def test_snapshot_records_chunk_source_and_drops_duplicates_keeping_best_score():
+    state = SimpleNamespace(
+        input=SimpleNamespace(message=SimpleNamespace(text="q")),
+        # Hai lần tra cứu cùng trả đoạn c-1: giữ một lần, điểm cao nhất.
+        plan=SimpleNamespace(tasks=[
+            _task(_sourced_hit(0.70, "c-1"), _sourced_hit(0.80, "c-2", "S2")),
+            _task(_sourced_hit(0.90, "c-1", "S1")),
+        ]),
+        retrieval_traces=[],
+    )
+    service = SimpleNamespace(_provider=SimpleNamespace(model="gpt-4o-mini"))
+
+    chunks = ChatbotService._retrieval_snapshot(service, state)["chunks"]
+
+    assert [(c["rank"], c["chunk_id"], c["score"]) for c in chunks] == [(1, "c-1", 0.90), (2, "c-2", 0.80)]
+    assert chunks[0]["doc_id"] == "f54_operation_v02"
+    assert chunks[0]["section_path"] == ["2.3.2.4 Homing switch wiring diagram", "Note"]
+    assert chunks[0]["source_id"] == "S1"
+
+
+def test_snapshot_keeps_hits_without_chunk_id():
+    state = SimpleNamespace(
+        input=SimpleNamespace(message=SimpleNamespace(text="q")),
+        plan=SimpleNamespace(tasks=[_task(_hit(0.9, "a"), _hit(0.8, "a"))]),
+        retrieval_traces=[],
+    )
+    service = SimpleNamespace(_provider=SimpleNamespace(model="gpt-4o-mini"))
+
+    chunks = ChatbotService._retrieval_snapshot(service, state)["chunks"]
+
+    assert len(chunks) == 2
+    assert chunks[0]["chunk_id"] is None and chunks[0]["section_path"] == []

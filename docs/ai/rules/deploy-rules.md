@@ -49,6 +49,7 @@ phải quy trình đang chạy.
 | `CRM_QUERY_AUDIT_LOG` | không | `false` | Khi bật, log server (logger `app.crm_query.audit`) chứa giá trị filter và query gửi CRM, có thể là PII. Chỉ bật có thời hạn để đánh giá query, và giới hạn người được xem log |
 | `LEARNING_API_ENABLED` | không | `false` | Route chưa có xác thực; bật cần `OLLAMA_BASE_URL`, `OLLAMA_MODEL` |
 | `CHAT_TRACE_PERSIST` | không | `false` | Bật cần áp `backend/sql/chat_traces.sql` trước; không có retention tự động |
+| `LLM_PRICES_JSON` | không | rỗng (dùng bảng giá trong `core/pricing.py`) | Ghi đè giá model (USD / 1 triệu token) để tính chi phí thật của lượt, JSON `{"gpt-4.1-mini": {"input": 0.4, "cached_input": 0.1, "output": 1.6}}`. Sai dạng thì ứng dụng không khởi động. Bảng giá mặc định cần đối chiếu định kỳ với giá OpenAI |
 | `DATABASE_POOL_MODE`, `DATABASE_POOL_SIZE`, `DATABASE_MAX_OVERFLOW` | không | `session`, 5, 5 | Chọn theo kiểu kết nối Supabase |
 | `LOG_LEVEL` | không | `INFO` | Log ra stdout, mỗi dòng có `request_id` |
 

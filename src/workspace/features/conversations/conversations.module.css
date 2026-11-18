@@ -1,0 +1,49 @@
+/* Lịch sử hội thoại (mock Conversations, MobileConversations). */
+
+.page { display: flex; flex-direction: column; gap: 20px; padding: 28px 32px 96px; }
+
+.filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; padding: 16px; }
+.searchField { flex: 1 1 320px; }
+.statusField { flex: 0 1 200px; }
+.pending { flex: 1 1 100%; font-size: 12px; color: var(--ws-text-muted); line-height: 1.5; }
+
+.listCard { overflow: hidden; }
+.pad { padding: 16px; }
+
+.tableWrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--ws-border);
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ws-text-muted);
+  white-space: nowrap;
+}
+.table td { padding: 12px 16px; border-bottom: 1px solid var(--ws-hover); vertical-align: top; }
+.table tbody tr:hover { background: #fafbfc; }
+.titleCell { min-width: 280px; }
+.time { white-space: nowrap; color: var(--ws-text-2); font-variant-numeric: tabular-nums; }
+
+.rowLink { font-weight: 500; color: var(--ws-text); text-decoration: none; overflow-wrap: anywhere; }
+.rowLink:hover { color: var(--ws-brand); text-decoration: underline; }
+.rowLink:focus-visible { outline: none; box-shadow: var(--ws-focus); border-radius: 2px; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+.cards { display: none; margin: 0; padding: 0; list-style: none; }
+.cardItem { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--ws-hover); }
+.cardMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 13px; color: var(--ws-text-muted); }
+.cardItem .tags { margin-top: 0; }
+
+.skeleton { display: flex; flex-direction: column; }
+.skeletonRow { display: flex; gap: 24px; align-items: center; padding: 16px; border-bottom: 1px solid var(--ws-hover); }
+
+@media (max-width: 720px) {
+  .page { padding: 16px 16px 32px; gap: 16px; }
+  .searchField, .statusField { flex: 1 1 100%; }
+  .tableWrap { display: none; }
+  .cards { display: block; }
+  .rowLink { font-size: 15px; }
+}

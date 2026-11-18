@@ -58,6 +58,24 @@ class HistoryRepository:
         )
         return list(result.scalars().all())
 
+    async def get_turn(self, *, session_id: UUID, history_id: UUID) -> ChatHistory | None:
+        """Một lượt của đúng phiên (lọc cả session_id để không đọc lượt của phiên khác)."""
+        result = await self.db.execute(
+            select(ChatHistory).where(
+                ChatHistory.id == history_id,
+                ChatHistory.session_id == session_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def latest_retrieval_turn(self, *, session_id: UUID) -> ChatHistory | None:
+        """Lượt mới nhất của phiên có chunk trong retrieval_snapshot (hành vi cũ của /retrieval)."""
+        rows = await self.list_for_history(session_id=session_id)
+        return next(
+            (row for row in reversed(rows) if (row.retrieval_snapshot or {}).get("chunks")),
+            None,
+        )
+
     async def list_for_context(
         self,
         *,

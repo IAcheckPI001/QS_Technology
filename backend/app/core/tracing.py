@@ -42,6 +42,28 @@ STATUS_CANCELLED = "cancelled"
 NON_ERROR_STATUSES = frozenset({STATUS_OK, "deduplicated"})
 
 
+# Span gọi nhà cung cấp bên ngoài: lỗi của chúng mang mã lỗi/HTTP status đáng ghi lại (W2,
+# FRONTEND_REQUIREMENTS 19.15) để phân biệt "hết credit" với "gọi quá nhanh" (cùng HTTP 429).
+_PROVIDER_KINDS = frozenset({"llm", "embedding", "http"})
+_PROVIDER_CODE = re.compile(r"^[a-z0-9_]{1,64}$")
+
+
+def provider_error_attributes(error: BaseException) -> dict[str, AttrValue]:
+    """`http_status` (thuộc tính int `status_code`) và `provider_error_code` (thuộc tính chuỗi `code`).
+
+    Đọc chung bằng getattr, không phụ thuộc SDK (OpenAI: `insufficient_quota`,
+    `rate_limit_exceeded`). Mã chỉ nhận dạng định danh ngắn để không ghi nội dung vào trace.
+    """
+    attributes: dict[str, AttrValue] = {}
+    status_code = getattr(error, "status_code", None)
+    if isinstance(status_code, int) and not isinstance(status_code, bool):
+        attributes["http_status"] = status_code
+    code = getattr(error, "code", None)
+    if isinstance(code, str) and _PROVIDER_CODE.match(code):
+        attributes["provider_error_code"] = code
+    return attributes
+
+
 def redact_quoted(text: str) -> str:
     """Che giá trị trong nháy: thông báo lỗi có thể lặp lại giá trị LLM/người dùng điền."""
     return _QUOTED.sub("'…'", text)
@@ -204,6 +226,32 @@ class Trace:
             "embedding_tokens": total("embedding", "input_tokens"),
         }
 
+    def usage_by_model(self) -> list[dict[str, object]]:
+        """Usage thật của nhà cung cấp gom theo (loại span, model): số lần gọi và token.
+
+        Đọc thuộc tính `model`, `input_tokens`, `cached_input_tokens`, `output_tokens` mà provider ghi
+        vào span `llm`/`embedding` (B3). Span vượt giới hạn trace (`dropped_spans`) không được tính.
+        """
+        groups: dict[tuple[str, str], dict[str, object]] = {}
+
+        def number(span: Span, key: str) -> int:
+            value = span.attributes.get(key)
+            return int(value) if isinstance(value, int | float) and not isinstance(value, bool) else 0
+
+        for span in self.spans:
+            if span.kind not in ("llm", "embedding"):
+                continue
+            model = span.attributes.get("model")
+            key = (span.kind, model if isinstance(model, str) and model else "unknown")
+            group = groups.setdefault(key, {
+                "kind": key[0], "model": key[1], "calls": 0,
+                "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0,
+            })
+            group["calls"] = int(group["calls"]) + 1
+            for field in ("input_tokens", "cached_input_tokens", "output_tokens"):
+                group[field] = int(group[field]) + number(span, field)
+        return list(groups.values())
+
     def to_dict(self) -> dict[str, object]:
         return {
             "version": TRACE_FORMAT_VERSION,
@@ -275,6 +323,8 @@ def span(name: str, kind: SpanKind = "internal", **attributes: object) -> Iterat
         if current.status == STATUS_OK:
             current.status = STATUS_ERROR
         current.attributes["error_type"] = type(error).__name__
+        if current.kind in _PROVIDER_KINDS:
+            current.attributes.update(provider_error_attributes(error))
         raise
     finally:
         if opened is not None and trace is not None:

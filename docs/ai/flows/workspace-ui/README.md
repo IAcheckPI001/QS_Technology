@@ -36,6 +36,8 @@ Luồng này **không** gồm:
 | API | `api/client.js`, `api/errors.js`, `api/<tài nguyên>.js`, `api/fixtures/` | `fetch` + cookie + CSRF; `ApiError` theo `kind`; mỗi tài nguyên một file; dữ liệu giả |
 | Đăng nhập | `auth/` | `AuthProvider` (`/me`, 401 → `/login?next=`), `RequireAuth` (kể cả bắt đổi mật khẩu), `RequirePermission`, `can()`, `safeNext()` |
 | Màn đăng nhập | `features/auth/` | `/login` (M1), `/change-password`, `/reset-password?token=`; luật mật khẩu và câu báo lỗi ở `authMessages.js` |
+| Màn hội thoại | `features/conversations/` | `/conversations` (danh sách), `/conversations/:sessionId` (chi tiết, 2 khung tự cuộn), `…/turns/:historyId/trace` (diễn biến); `traceModel.js` đọc trace (cây span, nhãn tiếng Việt, bước lỗi gốc, chặn/ngắt/lỗi công cụ) |
+| Tiện ích | `utils/format.js` | Ngày giờ theo giờ Việt Nam, thời lượng, số; `askedAt` = `created_at − latency_ms` (19.2 W3) |
 | Hook | `hooks/` | `useResource`, `useCursorList` (Q26), `useUrlFilters`, `useLocalStorage` |
 | Component | `components/` | `ui.jsx` (Button, IconButton, Badge, Card, TextField, PasswordField, SelectField, EmptyState, Skeleton, ErrorBanner, LoadMore, PageHeader), `Modal`, `ConfirmDialog`, `toast/` |
 | Khung | `layout/` | `AppShell` (sidebar Q22, thanh trên + thanh dưới ≤ 720px, widget chat thử), `navItems.js` |
@@ -60,7 +62,7 @@ API backend: [api_guidelines.md](../../api_guidelines.md).
   `user` = `{ id, email, display_name, role, permissions[], must_change_password }`. Trường thêm của lỗi
   nằm trong `detail` cạnh `code`, `message`. Cookie phiên HttpOnly; CSRF đọc từ cookie `ws_csrf`, gửi lại
   qua header `X-CSRF-Token`. Token đặt lại đi trong body POST, không đi trong đường dẫn API.
-- **Hội thoại (có sẵn):** `GET /chatbot/conversations`, `/chatbot/sessions/{id}/history`, `/retrieval`, `/trace`.
+- **Hội thoại (có sẵn):** `GET /chatbot/conversations`, `/chatbot/sessions/{id}/history`, `/retrieval`, `/trace`. Chưa phân trang: `conversationsApi.listPage` tải đủ một lần mỗi bộ lọc rồi cắt 25 dòng ở trình duyệt, trả cùng dạng `{ items, next_cursor, total }` như sau B2.
 - **Hội thoại sau B2/B5 (chưa có backend):** đặc tả ở [FRONTEND_REQUIREMENTS.md mục 19](../../FRONTEND_REQUIREMENTS.md): lọc và tìm trên toàn bộ dữ liệu, phân trang con trỏ `limit` + `cursor` → `next_cursor` (Q26), endpoint chỉ số cùng bộ lọc, retrieval theo `history_id`. Không gửi `limit` thì API trả như cũ cho `/legacy`.
 
 ## Bất biến của luồng
@@ -78,7 +80,7 @@ API backend: [api_guidelines.md](../../api_guidelines.md).
 | Biến hoặc file | Mặc định | Tác dụng |
 |---|---|---|
 | `VITE_WORKSPACE_API_URL` | rỗng (cùng origin) | Gốc URL dịch vụ AI; để trống để cookie đi cùng domain |
-| `VITE_WORKSPACE_FIXTURES` | tắt | `1` + chạy dev: đăng nhập (và các màn chưa có API) dùng dữ liệu giả; kịch bản ghi ở `api/fixtures/auth.js` và hiện dưới màn đăng nhập |
+| `VITE_WORKSPACE_FIXTURES` | tắt | Chỉ khi chạy dev. `1`: mọi vùng dùng dữ liệu giả; danh sách vùng như `auth` hoặc `auth,conversations`: chỉ các vùng đó (vd `auth` để đăng nhập giả mà hội thoại đọc backend :8000 thật). Kịch bản đăng nhập ghi ở `api/fixtures/auth.js` và hiện dưới màn đăng nhập. Chọn nguồn phải viết `import.meta.env.DEV && fixturesFor(…)` để bản production bỏ hẳn dữ liệu giả |
 | `localStorage['ws.sidebarCollapsed']` | `false` | Sidebar thu gọn (Q22) |
 
 ## Test và eval

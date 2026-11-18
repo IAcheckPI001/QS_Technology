@@ -6,6 +6,47 @@ from pydantic import BaseModel, ConfigDict, Field
 
 ChatChannel = Literal["website", "crm"]
 ChatStatus = Literal["completed", "blocked", "error", "cancelled"]
+# Nguồn câu trả lời của một lượt (FRONTEND_REQUIREMENTS 19.14):
+# documents: có tra cứu tài liệu (xem retrieval_status để biết có kết quả không) · crm_data: gọi công
+# cụ CRM, không tra tài liệu · documents_and_crm: cả hai · direct: không tra cứu, không gọi công cụ ·
+# none: lượt không có snapshot (bị chặn, nhân viên đang xử lý, bản ghi cũ).
+AnswerSource = Literal["documents", "crm_data", "documents_and_crm", "direct", "none"]
+
+
+class ToolUsage(BaseModel):
+    """Số lần gọi một công cụ của trợ lý trong lượt (từ agent_steps, không chứa nội dung)."""
+
+    name: str
+    calls: int = 0
+    # Lần gọi có status khác ok/deduplicated.
+    failed: int = 0
+    # Mã lỗi → số lần (vd. {"crm_query_invalid": 1}).
+    errors: dict[str, int] = Field(default_factory=dict)
+
+
+class TurnSources(BaseModel):
+    """Tóm tắt nguồn câu trả lời của một lượt, đủ để hiện nhãn dưới lượt ở màn Chi tiết hội thoại."""
+
+    answer_source: AnswerSource
+    # ok · no_hits · partial_error · error · incomplete · not_applicable; None khi không có snapshot.
+    retrieval_status: str | None = None
+    chunk_count: int = 0
+    # Công cụ trợ lý đã gọi, trừ công cụ tra tài liệu (product_docs_ask: thể hiện qua chunk).
+    tools: list[ToolUsage] = Field(default_factory=list)
+    has_tool_errors: bool = False
+
+
+class TurnUsageInfo(BaseModel):
+    """Nguồn của số token/chi phí của lượt (B3)."""
+
+    # trace: usage thật OpenAI trả về của mọi lần gọi AI + embedding, giá theo model ·
+    # estimate: bản ghi cũ, đếm từ chữ câu hỏi/câu trả lời theo giá gpt-4o-mini.
+    source: Literal["trace", "estimate"]
+    llm_calls: int | None = None
+    cached_input_tokens: int | None = None
+    embedding_tokens: int | None = None
+    # Model chưa có giá: chi phí của chúng không được cộng (thiếu).
+    unpriced_models: list[str] = Field(default_factory=list)
 
 
 class ChatHistoryItem(BaseModel):
@@ -25,6 +66,12 @@ class ChatHistoryItem(BaseModel):
     total_tokens: int = 0
     cost_usd: float | None = None
     latency_ms: int | None = None
+    # Nguồn câu trả lời của lượt (B5); None khi client đọc schema cũ.
+    sources: TurnSources | None = None
+    # B3: nguồn số liệu token/chi phí; None khi lượt không gọi AI (bị chặn, nhân viên xử lý).
+    usage: TurnUsageInfo | None = None
+    # cost_usd × USD_TO_VND_RATE.
+    cost_vnd: float | None = None
 
 
 class ConversationSummary(BaseModel):
@@ -65,6 +112,33 @@ class ChunkResult(BaseModel):
     page_start: int | None = None
     page_end: int | None = None
     page_label: str | None = None
+    # Nguồn của đoạn (W1, lượt ghi từ 2026-11-18); None với bản ghi cũ.
+    chunk_id: str | None = None
+    doc_id: str | None = None
+    section_title: str | None = None
+    section_path: list[str] = Field(default_factory=list)
+    # S1, S2…: khớp trích dẫn [S1] trong câu trả lời.
+    source_id: str | None = None
+
+
+class RetrievalTask(BaseModel):
+    task_id: str
+    status: str
+    error_code: str | None = None
+    no_hits: bool = False
+    fallback: bool = False
+
+
+class AgentStepItem(BaseModel):
+    """Một bước của trợ lý CRM (lần gọi LLM hoặc tool), chỉ metadata."""
+
+    step: int
+    kind: str
+    name: str | None = None
+    tool_call_id: str | None = None
+    status: str
+    latency_ms: int = 0
+    finish_reason: str | None = None
 
 
 class RetrievalSnapshotResponse(BaseModel):
@@ -79,6 +153,13 @@ class RetrievalSnapshotResponse(BaseModel):
     # ok · no_hits · partial_error · error · incomplete · not_applicable; None với bản ghi cũ.
     retrieval_status: str | None = None
     chunks: list[ChunkResult]
+    # B5: trạng thái lượt (completed, error, blocked, cancelled) và tóm tắt nguồn.
+    turn_status: str | None = None
+    sources: TurnSources | None = None
+    retrieval_tasks: list[RetrievalTask] = Field(default_factory=list)
+    agent_steps: list[AgentStepItem] = Field(default_factory=list)
+    answered_without_tools: bool | None = None
+    invalid_citations: list[str] = Field(default_factory=list)
 
 
 class ChatHistoryResponse(BaseModel):
