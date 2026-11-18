@@ -26,7 +26,9 @@
 .brandName { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .collapsed .brandName { display: none; }
 
-.nav { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+/* <nav> giãn chiếm phần còn lại của sidebar: khối tài khoản luôn nằm sát đáy ở mọi chiều cao; menu dài thì tự cuộn. */
+.navArea { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.nav { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .navLink {
   position: relative;
   display: flex;
@@ -48,7 +50,7 @@
 .collapsed .navLink { justify-content: center; padding: 0; min-height: 44px; }
 .collapsed .label { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-.account { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid var(--ws-border); }
+.account { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 16px; border-top: 1px solid var(--ws-border); }
 .collapsed .account { flex-direction: column; flex-wrap: nowrap; gap: 8px; }
 .avatar {
   width: 36px;
