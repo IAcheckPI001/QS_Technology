@@ -1,20 +1,21 @@
 """Truy vấn bảng `doc_chunks_v2` qua `match_doc_chunks_v2` (D-009, `backend/sql/doc_chunks_v2.sql`).
 
-Cùng giao diện `ChunkSearchRepository` với `DocChunkRepository` để `Retriever` dùng được không đổi; tham số riêng
-của v2 (mã, loại chunk, cờ biến thể) nằm trong `MatchV2Options` của repository. Hiện chỉ công cụ đánh giá dùng
-(`evals/run_retrieval_eval.py`); retriever của dịch vụ chat vẫn dùng bảng cũ cho tới bước chuyển (D-009).
+Retriever của dịch vụ chat (luồng website và tool `product_docs_ask` của agent) dùng repository này với
+`MatchV2Options(approved_only=settings.retrieval_approved_only)` (bước 6 của D-009). Công cụ đánh giá
+(`evals/run_retrieval_eval.py`) dùng cùng repository với các biến thể của `MatchV2Options` và
+`approved_only=False`. Giao diện `ChunkSearchRepository` không đổi nên `Retriever` dùng được nguyên vẹn.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+import json
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.chatbot.repositories.doc_chunk_repository import _row, _vector_literal
 from app.modules.chatbot.retrieval.fts_query import clean_fts_query
 from app.modules.chatbot.schemas.system import ChunkMatch, ChunkRecord
 
@@ -55,10 +56,32 @@ _FETCH_SQL = text("""
       and (not :approved_only or review_status = 'approved')
 """)
 
+# Model có chunk tài liệu kỹ thuật đang hoạt động: coverage `technical_docs` của registry nạp lúc khởi động
+# (`extraction/registry.extend_technical_coverage`), cùng điều kiện approved với lúc tìm.
+_TECHNICAL_MODELS_SQL = text("""
+    select distinct unnest(product_models) as model
+    from doc_chunks_v2
+    where is_active and domain = 'technical_docs'
+      and (not :approved_only or review_status = 'approved')
+    order by model
+""")
+
+
+def _vector_literal(embedding: Sequence[float]) -> str:
+    return "[" + ",".join(repr(float(value)) for value in embedding) + "]"
+
+
+def _row(row: Mapping[str, Any]) -> dict[str, Any]:
+    data = dict(row)
+    # text() không gắn kiểu cột nên jsonb có thể về dạng chuỗi tùy driver.
+    if isinstance(data.get("assets"), str):
+        data["assets"] = json.loads(data["assets"])
+    return data
+
 
 @dataclass(frozen=True)
 class MatchV2Options:
-    """Tham số riêng của `match_doc_chunks_v2`. Mặc định = hành vi production dự kiến (chỉ chunk approved, không
+    """Tham số riêng của `match_doc_chunks_v2`. Mặc định = hành vi production (chỉ chunk approved, không
     tìm cha, không nhánh mã, không bỏ dấu, không cộng điểm loại, **làm sạch câu FTS**, **scope cộng điểm 0,003**).
 
     Toma 2026-11-13: bật `fts_clean` (eval 14 câu: MRR core 0,643 → 0,861, không câu nào tụt) nhưng tiếp tục đo song
@@ -160,3 +183,9 @@ class DocChunkV2Repository:
             fields = ChunkRecord.model_fields
             return [ChunkRecord.model_validate({k: v for k, v in _row(row).items() if k in fields})
                     for row in result.mappings()]
+
+    async def technical_docs_models(self) -> list[str]:
+        """Model có chunk `technical_docs` đang hoạt động, theo cùng `approved_only` của repository."""
+        async with self._session() as session:
+            result = await session.execute(_TECHNICAL_MODELS_SQL, {"approved_only": self.options.approved_only})
+            return [row["model"] for row in result.mappings()]
