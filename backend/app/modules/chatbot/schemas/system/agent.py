@@ -36,6 +36,7 @@ class ToolCallRequest(SystemModel):
 class TokenUsage(SystemModel):
     input_tokens: NonNegInt = 0
     output_tokens: NonNegInt = 0
+    cached_input_tokens: NonNegInt | None = None   # phần input OpenAI lấy từ prompt cache
 
 
 class AssistantTurn(SystemModel):

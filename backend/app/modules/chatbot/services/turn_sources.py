@@ -113,6 +113,7 @@ def usage_info(row: Any) -> TurnUsageInfo | None:
         return TurnUsageInfo(
             source="trace",
             llm_calls=count("llm_calls"),
+            estimated_calls=count("estimated_calls"),
             cached_input_tokens=count("cached_input_tokens"),
             embedding_tokens=count("embedding_tokens"),
             unpriced_models=[str(model) for model in models] if isinstance(models, list) else [],

@@ -232,7 +232,7 @@ class ChatbotService:
                         query_origin=message,
                         answer=answer or None,
                         status="error",
-                        model=self._provider.model,
+                        model=self._turn_model(state),
                         latency_ms=round((perf_counter() - started_at) * 1000),
                         channel=channel,
                         **turn_ids,
@@ -250,7 +250,7 @@ class ChatbotService:
                     query_origin=message,
                     answer=answer,
                     status="completed",
-                    model=self._provider.model,
+                    model=self._turn_model(state),
                     latency_ms=round((perf_counter() - started_at) * 1000),
                     channel=channel,
                     **turn_ids,
@@ -311,7 +311,7 @@ class ChatbotService:
             # Lỗi tra cứu không ném lên client (LLM trả lời mềm): lưu lại để truy vết.
             "retrieval_status": status,
             "retrieval_tasks": retrieval_tasks,
-            "model": self._provider.model,
+            "model": self._turn_model(state),
             "product_models": list(dict.fromkeys(
                 model
                 for trace in state.retrieval_traces
@@ -378,7 +378,7 @@ class ChatbotService:
                     session_id=session_id,
                     query_origin=message,
                     answer=answer or None,
-                    model=self._provider.model,
+                    model=self._turn_model(state),
                     latency_ms=round((perf_counter() - started_at) * 1000),
                     channel=channel,
                     **turn_ids,
@@ -387,6 +387,16 @@ class ChatbotService:
                 )
         except Exception:
             logger.exception("failed to record cancelled chat turn session_id=%s", session_id)
+
+    def _turn_model(self, state: RunState | None) -> str:
+        """Model trả lời của lượt: model của vòng lặp agent (AGENT_MODEL) ở lượt CRM chạy agent."""
+        if (
+            self._agent_runner is not None
+            and state is not None
+            and state.request_context.channel is ChannelType.CRM
+        ):
+            return self._agent_runner.model
+        return self._provider.model
 
     def _usage(self, message: str, answer: str) -> TurnUsage:
         """Usage thật của lượt từ trace đang chạy (B3); không có trace thì ước tính như cũ."""

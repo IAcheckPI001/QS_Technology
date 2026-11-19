@@ -63,7 +63,7 @@ def test_snapshot_ranks_hits_across_tasks_by_score():
         ]),
         retrieval_traces=[_trace(90, ["F86"]), _trace(124, ["F86", "F10T"])],
     )
-    service = SimpleNamespace(_provider=SimpleNamespace(model="gpt-4o-mini"))
+    service = SimpleNamespace(_turn_model=lambda state: "gpt-4o-mini")
 
     snapshot = ChatbotService._retrieval_snapshot(service, state)
 
@@ -83,7 +83,7 @@ def test_snapshot_without_plan_has_no_chunks():
         plan=None,
         retrieval_traces=[],
     )
-    service = SimpleNamespace(_provider=SimpleNamespace(model="gpt-4o-mini"))
+    service = SimpleNamespace(_turn_model=lambda state: "gpt-4o-mini")
 
     snapshot = ChatbotService._retrieval_snapshot(service, state)
     assert snapshot["chunks"] == []
@@ -121,7 +121,7 @@ def test_failed_retrieval_is_logged_with_session(caplog):
         plan=SimpleNamespace(tasks=[_failed()]),
         retrieval_traces=[],
     )
-    service = SimpleNamespace(_provider=SimpleNamespace(model="gpt-4o-mini"))
+    service = SimpleNamespace(_turn_model=lambda state: "gpt-4o-mini")
 
     with caplog.at_level("WARNING"):
         assert ChatbotService._retrieval_snapshot(service, state)["retrieval_status"] == "error"
@@ -149,7 +149,7 @@ def test_snapshot_records_chunk_source_and_drops_duplicates_keeping_best_score()
         ]),
         retrieval_traces=[],
     )
-    service = SimpleNamespace(_provider=SimpleNamespace(model="gpt-4o-mini"))
+    service = SimpleNamespace(_turn_model=lambda state: "gpt-4o-mini")
 
     chunks = ChatbotService._retrieval_snapshot(service, state)["chunks"]
 
@@ -165,7 +165,7 @@ def test_snapshot_keeps_hits_without_chunk_id():
         plan=SimpleNamespace(tasks=[_task(_hit(0.9, "a"), _hit(0.8, "a"))]),
         retrieval_traces=[],
     )
-    service = SimpleNamespace(_provider=SimpleNamespace(model="gpt-4o-mini"))
+    service = SimpleNamespace(_turn_model=lambda state: "gpt-4o-mini")
 
     chunks = ChatbotService._retrieval_snapshot(service, state)["chunks"]
 

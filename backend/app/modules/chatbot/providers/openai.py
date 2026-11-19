@@ -1,7 +1,8 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable, Iterator
+from contextlib import contextmanager
 from typing import Any
 
-from app.core.tracing import Span, span
+from app.core.tracing import Span, UsageEntry, UsageKind, current_span, record_usage, span
 from app.modules.chatbot.schemas.system import (
     AssistantTurn,
     LLMCapabilities,
@@ -11,8 +12,9 @@ from app.modules.chatbot.schemas.system import (
     ToolChoice,
 )
 from app.util.parse_json import parse_json_object
+from app.util.token_counter import count_tokens
 
-from openai import AsyncOpenAI
+from openai import APIConnectionError, APIStatusError, APITimeoutError, AsyncOpenAI
 
 # OpenAI Chat Completions hỗ trợ đủ tool calling, nhiều tool call trong một
 # response, tool_choice none và Structured Outputs (strict).
@@ -31,16 +33,74 @@ def is_reasoning_model(model: str) -> bool:
     return name.startswith("gpt-5") or (len(name) > 1 and name[0] == "o" and name[1].isdigit())
 
 
-def _record_usage(target: Span, usage: Any) -> None:
-    """Usage thật của OpenAI vào span (không có usage thì bỏ qua)."""
+def _token_usage(usage: Any) -> TokenUsage | None:
+    """Usage của response OpenAI (chat hoặc embedding); None khi response không kèm usage."""
     if usage is None:
-        return
+        return None
     details = getattr(usage, "prompt_tokens_details", None)
-    target.set(
+    cached = getattr(details, "cached_tokens", None) if details else None
+    return TokenUsage(
         input_tokens=getattr(usage, "prompt_tokens", 0) or 0,
         output_tokens=getattr(usage, "completion_tokens", 0) or 0,
-        cached_input_tokens=getattr(details, "cached_tokens", None) if details else None,
+        cached_input_tokens=cached if isinstance(cached, int) else None,
     )
+
+
+class _Meter:
+    """Ghi usage của một lời gọi vào span và vào sổ usage của trace (`record_usage`)."""
+
+    def __init__(self, kind: UsageKind, model: str, target: Span) -> None:
+        self.kind = kind
+        self.model = model
+        self.target = target
+        self.recorded = False
+        self.streamed: list[str] = []
+
+    def record(self, usage: Any) -> TokenUsage | None:
+        tokens = _token_usage(usage)
+        if tokens is None:
+            return None
+        self.target.set(
+            input_tokens=tokens.input_tokens,
+            output_tokens=tokens.output_tokens,
+            cached_input_tokens=tokens.cached_input_tokens,
+        )
+        record_usage(UsageEntry(
+            kind=self.kind, model=self.model, input_tokens=tokens.input_tokens,
+            output_tokens=tokens.output_tokens, cached_input_tokens=tokens.cached_input_tokens or 0,
+        ))
+        self.recorded = True
+        return tokens
+
+
+@contextmanager
+def _metered(kind: UsageKind, model: str, target: Span, prompt_tokens: Callable[[], int]) -> Iterator[_Meter]:
+    """Lời gọi kết thúc mà chưa có usage thật (hết giờ, bị huỷ, stream ngắt trước chunk usage cuối)
+    vẫn có thể bị tính tiền: ghi một mục ước tính. Request bị từ chối (HTTP lỗi) hoặc không tới được
+    OpenAI (lỗi kết nối) thì không ghi."""
+    meter = _Meter(kind, model, target)
+    billable = True
+    try:
+        yield meter
+    except APITimeoutError:
+        raise                           # OpenAI có thể đã xử lý request: vẫn ước tính
+    except (APIStatusError, APIConnectionError):
+        billable = False
+        raise
+    finally:
+        if billable and not meter.recorded:
+            output = count_tokens("".join(meter.streamed), model) if meter.streamed else 0
+            record_usage(UsageEntry(
+                kind=kind, model=model, input_tokens=prompt_tokens(), output_tokens=output, estimated=True,
+            ))
+            target.set(usage_estimated=True)
+
+
+def _prompt_tokens(messages: list[dict[str, Any]], model: str) -> Callable[[], int]:
+    """Ước tính token prompt; chỉ dùng khi không có usage thật."""
+    def estimate() -> int:
+        return count_tokens("\n".join(str(message.get("content") or "") for message in messages), model)
+    return estimate
 
 
 class OpenAIProvider:
@@ -80,7 +140,10 @@ class OpenAIProvider:
         return options
 
     async def stream_chat(self, messages: list[dict[str, str]]) -> AsyncIterator[str]:
-        with span("llm.stream_chat", "llm", model=self._model, messages=len(messages)) as llm_span:
+        with (
+            span("llm.stream_chat", "llm", model=self._model, messages=len(messages)) as llm_span,
+            _metered("llm", self._model, llm_span, _prompt_tokens(messages, self._model)) as meter,
+        ):
             stream: Any = await self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,
@@ -90,10 +153,11 @@ class OpenAIProvider:
             )
             chunks = 0
             async for part in stream:
-                _record_usage(llm_span, getattr(part, "usage", None))
+                meter.record(getattr(part, "usage", None))
                 text = part.choices[0].delta.content if part.choices else None
                 if text:
                     chunks += 1
+                    meter.streamed.append(text)
                     if chunks == 1:
                         llm_span.set(first_token_ms=round(llm_span.elapsed_ms()))
                     llm_span.set(chunks=chunks)
@@ -104,7 +168,10 @@ class OpenAIProvider:
         messages: list[dict[str, str]],
         response_format: dict[str, Any] | None = None
     ) -> dict[str, Any]:
-        with span("llm.chat_json", "llm", model=self._model, messages=len(messages)) as llm_span:
+        with (
+            span("llm.chat_json", "llm", model=self._model, messages=len(messages)) as llm_span,
+            _metered("llm", self._model, llm_span, _prompt_tokens(messages, self._model)) as meter,
+        ):
             resp = await self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,
@@ -113,7 +180,7 @@ class OpenAIProvider:
                 # Model suy luận cần chỗ cho token suy nghĩ.
                 **self._generation_options(2000 if self._reasoning else 600),
             )
-            _record_usage(llm_span, resp.usage)
+            meter.record(resp.usage)
             if resp.choices:
                 llm_span.set(finish_reason=resp.choices[0].finish_reason)
 
@@ -128,13 +195,16 @@ class OpenAIProvider:
         self,
         messages: list[dict[str, str]],
     ) -> str:
-        with span("llm.chat_text", "llm", model=self._model, messages=len(messages)) as llm_span:
+        with (
+            span("llm.chat_text", "llm", model=self._model, messages=len(messages)) as llm_span,
+            _metered("llm", self._model, llm_span, _prompt_tokens(messages, self._model)) as meter,
+        ):
             response = await self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,
                 stream=False,
             )
-            _record_usage(llm_span, response.usage)
+            meter.record(response.usage)
 
         if not response.choices:
             raise RuntimeError("Ollama returned no completion choices.")
@@ -162,18 +232,20 @@ class OpenAIProvider:
             options["tool_choice"] = tool_choice
             if tool_choice == "auto":
                 options["parallel_tool_calls"] = parallel_tool_calls
-        resp = await self._client.chat.completions.create(
-            model=self._model,
-            messages=messages,
-            stream=False,
-            **self._generation_options(max_tokens),
-            **options,
-        )
+        # Span `llm.chat_tools` do runner mở và đang là span hiện tại.
+        with _metered("llm", self._model, current_span(), _prompt_tokens(messages, self._model)) as meter:
+            resp = await self._client.chat.completions.create(
+                model=self._model,
+                messages=messages,
+                stream=False,
+                **self._generation_options(max_tokens),
+                **options,
+            )
+            usage = meter.record(resp.usage) or TokenUsage()
         if not resp.choices:
             raise RuntimeError("OpenAI returned no completion choices.")
         choice = resp.choices[0]
         message = choice.message
-        usage = resp.usage
         return AssistantTurn(
             content=message.content or None,
             tool_calls=[
@@ -186,21 +258,17 @@ class OpenAIProvider:
                 if call.type == "function"
             ],
             finish_reason=choice.finish_reason,
-            usage=TokenUsage(
-                input_tokens=usage.prompt_tokens if usage else 0,
-                output_tokens=usage.completion_tokens if usage else 0,
-            ),
+            usage=usage,
         )
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
-        with span("embedding", "embedding", model=self._embedding_model, inputs=len(texts)) as embed_span:
-            response = await self._client.embeddings.create(
-                model=self._embedding_model,
-                input=texts,
-            )
-            usage = getattr(response, "usage", None)
-            if usage is not None:
-                embed_span.set(input_tokens=getattr(usage, "prompt_tokens", 0) or 0)
+        model = self._embedding_model
+        with (
+            span("embedding", "embedding", model=model, inputs=len(texts)) as embed_span,
+            _metered("embedding", model, embed_span, lambda: count_tokens("\n".join(texts), model)) as meter,
+        ):
+            response = await self._client.embeddings.create(model=model, input=texts)
+            meter.record(getattr(response, "usage", None))
         ordered = sorted(response.data, key=lambda item: item.index)
         return [list(item.embedding) for item in ordered]
 

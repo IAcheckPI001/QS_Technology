@@ -43,6 +43,8 @@ class TurnUsageInfo(BaseModel):
     # estimate: bản ghi cũ, đếm từ chữ câu hỏi/câu trả lời theo giá gpt-4o-mini.
     source: Literal["trace", "estimate"]
     llm_calls: int | None = None
+    # Lời gọi hết giờ/bị huỷ/stream bị ngắt trước khi có usage: token của chúng là ước tính.
+    estimated_calls: int | None = None
     cached_input_tokens: int | None = None
     embedding_tokens: int | None = None
     # Model chưa có giá: chi phí của chúng không được cộng (thiếu).
