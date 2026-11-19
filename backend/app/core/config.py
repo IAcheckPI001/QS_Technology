@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     # Cosine similarity tối thiểu để chunk được coi là liên quan; cần đo lại trên dữ liệu thật.
     retrieval_min_similarity: float = Field(default=0.25, alias="RETRIEVAL_MIN_SIMILARITY")
     retrieval_spec_boost: float = Field(default=0.005, alias="RETRIEVAL_SPEC_BOOST")
+    # D-009: chat chỉ đọc chunk `review_status = 'approved'` của doc_chunks_v2. Dev/staging đặt false để thử với
+    # chunk `draft`; production giữ true (chưa có chunk approved thì chat không tìm thấy tài liệu nào).
+    retrieval_approved_only: bool = Field(default=True, alias="RETRIEVAL_APPROVED_ONLY")
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
     gpt4o_mini_input_usd_per_million: float = Field(default=0.15, alias="GPT4O_MINI_INPUT_USD_PER_MILLION")

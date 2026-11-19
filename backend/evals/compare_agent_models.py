@@ -205,7 +205,7 @@ async def run_model(model: str, cases: list[dict[str, Any]], runs: int, effort: 
     run_settings = settings.model_copy(update={
         "crm_query_audit_log": True, "agent_model": model, "agent_max_completion_tokens": max_tokens,
     })
-    retriever = ev.Retriever(base, ev.DocChunkRepository(), ev.RetrieverConfig.from_settings(settings))
+    retriever = ev.Retriever(base, ev.doc_repository(),ev.RetrieverConfig.from_settings(settings))
     runner = ev.build_agent_runner(base, retriever, run_settings, agent_provider=metered)  # type: ignore[arg-type]
     audit = OutcomeCollector()
     audit_logger = ev.logging.getLogger(ev.AUDIT_LOGGER)

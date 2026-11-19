@@ -4,6 +4,7 @@ from __future__ import annotations
  
 import difflib
 import re
+from collections.abc import Iterable
 from typing import Any
  
 MAX_SUB_QUERIES = 3
@@ -254,6 +255,25 @@ def routing_rules(version: str | None = None) -> frozenset[str]:
     if not rules <= ROUTING_RULE_IDS:
         raise RegistryError(f"không có phiên bản luật định tuyến {version!r}")
     return rules
+
+
+# ---------------------------------------------------------------- coverage nạp từ DB (D-009 bước 6, R-3)
+def extend_technical_coverage(models: Iterable[str]) -> list[str]:
+    """Thêm vào `coverage["technical_docs"]` các model có chunk tài liệu kỹ thuật trong `doc_chunks_v2`.
+
+    Chạy lúc khởi động dịch vụ (`main.py`) và trong công cụ eval. Interface của model mới lấy từ
+    `capabilities`; model không có trong capabilities (lạ) bị bỏ qua; không xoá hay sửa model đã khai báo.
+    Trả danh sách model đã thêm. `validate_registry` và `product_catalog` đọc coverage lúc gọi nên thay đổi
+    có hiệu lực ngay cho các lượt sau.
+    """
+    technical = REGISTRY["coverage"]["technical_docs"]
+    caps = REGISTRY["capabilities"]["control_interface"]
+    added: list[str] = []
+    for model in models:
+        if model in caps and model not in technical:
+            technical[model] = list(caps[model])
+            added.append(model)
+    return added
 
 
 # ---------------------------------------------------------------- phiên bản mô tả intent
