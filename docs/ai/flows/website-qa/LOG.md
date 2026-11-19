@@ -8,6 +8,21 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-19 · Chat chuyển sang doc_chunks_v2 (D-009 bước 6) · loại: thay đổi, cấu hình
+
+- Quyết định của Toma: thay hẳn bảng cũ (không có cờ chọn bảng; rollback bằng revert); thêm
+  `RETRIEVAL_APPROVED_ONLY` (mặc định `true`); coverage `technical_docs` nạp từ DB lúc khởi động.
+- `main.py`: `build_doc_repository()` → `DocChunkV2Repository(MatchV2Options(approved_only=...))`, các option khác
+  giữ mặc định production; `load_technical_coverage()` gọi `DocChunkV2Repository.technical_docs_models()` rồi
+  `registry.extend_technical_coverage()`; lỗi DB chỉ ghi cảnh báo. Tool `product_docs_ask` dùng chung retriever.
+- Xoá `repositories/doc_chunk_repository.py`; `_row`, `_vector_literal` chuyển sang repository v2.
+  `backend/sql/doc_chunks.sql` ghi chú không còn được chat dùng.
+- Eval giữ nguyên hành vi: `run_retrieval_eval.py` vẫn `approved_only=False` và đủ biến thể; `_patch_coverage`
+  và truy vấn model dùng chung code với production; báo cáo ghi thêm `RETRIEVAL_APPROVED_ONLY` của production.
+  `run_crm_agent_eval.py`, `compare_agent_models.py` dựng retriever như production.
+- Test mới: `tests/chatbot/test_retrieval_v2_wiring.py`.
+- Chưa làm: smoke trên Supabase thật; chưa có chunk `approved` nên production mặc định không có tài liệu.
+
 ## 2026-11-19 · Tổng hợp baseline định tuyến 120 câu `v1/r0` · loại: đánh giá
 
 - Vấn đề: số tổng hợp trong STATE chưa nêu rõ độ phủ từng nhóm, khác biệt intent với route, và hạn chế của chế độ routing.

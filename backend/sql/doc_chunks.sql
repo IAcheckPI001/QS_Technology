@@ -1,4 +1,6 @@
--- doc_chunks + match_doc_chunks cho tầng retrieve của chatbot.
+-- doc_chunks + match_doc_chunks: bảng thử đầu tiên của tầng retrieve.
+-- KHÔNG CÒN ĐƯỢC CHAT DÙNG từ 2026-11-19 (D-009 bước 6): chat tra cứu trên doc_chunks_v2
+-- (backend/sql/doc_chunks_v2.sql). Giữ file và bảng để đối chiếu; không nạp thêm dữ liệu.
 -- Chạy thủ công trên Supabase (SQL editor); repo chưa có migration tool.
 -- File có thể chạy lại: mọi lệnh đều idempotent.
 

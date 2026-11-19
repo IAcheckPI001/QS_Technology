@@ -57,7 +57,10 @@ from app.modules.chatbot.agent.setup import build_agent_runner  # noqa: E402
 from app.modules.chatbot.clarification import update_agent_conversation_state  # noqa: E402
 from app.modules.chatbot.providers.openai import OpenAIProvider  # noqa: E402
 from app.modules.chatbot.reporting.raw.audit import AUDIT_LOGGER  # noqa: E402
-from app.modules.chatbot.repositories.doc_chunk_repository import DocChunkRepository  # noqa: E402
+from app.modules.chatbot.repositories.doc_chunk_v2_repository import (  # noqa: E402
+    DocChunkV2Repository,
+    MatchV2Options,
+)
 from app.modules.chatbot.retrieval import Retriever, RetrieverConfig  # noqa: E402
 from app.modules.chatbot.schemas.default import ChannelType  # noqa: E402
 from app.modules.chatbot.schemas.inbound import (  # noqa: E402
@@ -388,6 +391,11 @@ async def run_case(
     return _check(result, case["expect"])
 
 
+def doc_repository() -> DocChunkV2Repository:
+    """Cùng cấu hình tra cứu với chat production (`app.main.build_doc_repository`, D-009)."""
+    return DocChunkV2Repository(MatchV2Options(approved_only=settings.retrieval_approved_only))
+
+
 async def main(selected: list[str]) -> int:
     if not settings.openai_api_key:
         print("Thiếu OPENAI_API_KEY: eval cần provider thật.")
@@ -398,7 +406,7 @@ async def main(selected: list[str]) -> int:
         embedding_model=settings.embedding_model,
     )
     provider = RecordingProvider(base)
-    retriever = Retriever(base, DocChunkRepository(), RetrieverConfig.from_settings(settings))
+    retriever = Retriever(base, doc_repository(), RetrieverConfig.from_settings(settings))
     audit = AuditCollector()
     audit_logger = logging.getLogger(AUDIT_LOGGER)
     audit_logger.addHandler(audit)

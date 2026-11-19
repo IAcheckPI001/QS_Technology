@@ -6,7 +6,7 @@ retrieve): [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
 ## Phạm vi
 
-Khách trên website hỏi qua widget; dịch vụ AI phân tích câu hỏi, tra `doc_chunks` và stream
+Khách trên website hỏi qua widget; dịch vụ AI phân tích câu hỏi, tra `doc_chunks_v2` và stream
 câu trả lời có trích `[S#]`. Kênh CRM cũng chạy luồng này khi `CRM_CHAT_FLOW=pipeline`
 (rollback). `RetrievalPipeline` của luồng được tool `product_docs_ask` của
 [crm-agent](../crm-agent/README.md) dùng lại. Phần chung của lượt chat (service key, session,
@@ -32,7 +32,8 @@ widget → widget-backend → POST /chat/website
      ClarificationResumeStage (khớp chắc chắn → vá sub-query, không LLM)
      AnalysisStage → QueryAnalyzer (LLM JSON strict; bỏ qua nếu đã resume)
      ExecutionStage → planner → ExecutionScheduler → handlers (không LLM)
-        retrieve: Retriever → embedding → match_doc_chunks (vector + FTS, RRF) → mở rộng chunk cha
+        retrieve: Retriever → embedding → match_doc_chunks_v2 (vector + FTS, RRF; chỉ approved nếu
+                  RETRIEVAL_APPROVED_ONLY) → mở rộng chunk cha
  → chỉ chitchat/out_of_scope/handoff: câu cố định (vi, en) | AnswerComposer → stream_chat
  → HandoffProvider (disabled) + update_conversation_state → history completed → SSE done
 ```
@@ -45,7 +46,7 @@ widget → widget-backend → POST /chat/website
 | Làm rõ | `clarification/`, `stages/clarification_resume_stage.py` | Pending, tối đa 2 lần hỏi, `ttl` |
 | Phân tích | `stages/analysis_stage.py`, `analysis/analyzer.py`, `analysis/prompt/`, `extraction/registry.py` | Intent, entity, `standalone_query` tiếng Việt, `language` |
 | Thực thi | `stages/execution_stage.py`, `orchestration/{planner,scheduler,handlers,collector}.py` | Một task retrieve mỗi sub-query; giữ sub-query đang chờ làm rõ |
-| Retrieval | `retrieval/retriever.py`, `repositories/doc_chunk_repository.py`, `backend/sql/doc_chunks.sql` | Hybrid search có lọc, fallback, gán `S#` |
+| Retrieval | `retrieval/retriever.py`, `repositories/doc_chunk_v2_repository.py`, `backend/sql/doc_chunks_v2.sql`; dựng ở `main.py` (`build_doc_repository`, `load_technical_coverage`) | Hybrid search có lọc, fallback, gán `S#`; coverage `technical_docs` nạp từ DB lúc khởi động |
 | Trả lời | `stages/answer_composer.py`, `prompts/answer.py`, `prompts/direct_responses.py` | Một lần gọi LLM cho câu trả lời cuối; câu cố định cho chitchat/out_of_scope/handoff |
 | Handoff | `providers/handoff.py` | Scaffold: `DisabledHandoffProvider` |
 
@@ -59,7 +60,7 @@ widget → widget-backend → POST /chat/website
 - Snapshot retrieval của lượt (`GET /chatbot/sessions/{id}/retrieval`): api_guidelines.md mục
   "Support chat history".
 - Thiết kế SecurityStage: [security-stage-pipeline.md](../../security-stage-pipeline.md).
-- Cột `doc_chunks` do doc-ingest sinh: [p2_chunk_contract.md](../../reports/p2_chunk_contract.md).
+- Cột `doc_chunks_v2` do doc-ingest sinh (D-009): [p2_chunk_contract.md](../../reports/p2_chunk_contract.md).
 
 ## Bất biến của luồng
 
@@ -90,6 +91,7 @@ widget → widget-backend → POST /chat/website
 | `CONTEXT_TOKEN_BUDGET` | 2048 | Ngân sách Prune |
 | `RETRIEVAL_VECTOR_CANDIDATE_K`, `RETRIEVAL_FTS_CANDIDATE_K`, `RETRIEVAL_RRF_K` | 20, 20, 60 | Giá trị khởi đầu, chưa tối ưu |
 | `RETRIEVAL_FINAL_CHUNK_TOP_K`, `RETRIEVAL_MAX_CONTEXT_PARENTS`, `RETRIEVAL_MIN_SIMILARITY`, `RETRIEVAL_SPEC_BOOST` | 6, 5, 0,25, 0,005 | |
+| `RETRIEVAL_APPROVED_ONLY` | `true` | Chỉ tìm chunk `review_status = approved` (D-009). Dev/staging đặt `false` để thử với chunk `draft`; chưa có chunk approved thì chat không có tài liệu |
 | widget-backend: `CHATBOT_API_KEY`, `ALLOWED_ORIGINS`, `COOKIE_SECURE` | — | Xem `widget-backend/.env.example` |
 
 ## Test
@@ -130,8 +132,10 @@ Chưa có eval cho luồng này.
 
 - crm-agent chạy `RetrievalPipeline` trên RunState con (thêm `CatalogLookupStage`, không
   compose); đổi pipeline thì chạy cả test agent.
-- `doc_chunks` hiện chứa chunk F86 biên soạn tay; chunk mới sẽ do
-  [doc-ingest](../doc-ingest/README.md) cung cấp. Migration schema `doc_chunks` là thay đổi
-  của luồng này.
+- `doc_chunks_v2` do [doc-ingest](../doc-ingest/README.md) nạp (`chunking_loader/load_ingest_run.py`);
+  migration schema là thay đổi của luồng này. Bảng cũ `doc_chunks` không còn được chat dùng
+  từ 2026-11-19.
+- Eval `evals/run_retrieval_eval.py` dùng cùng `DocChunkV2Repository` và
+  `registry.extend_technical_coverage` với production, nhưng `approved_only=False`.
 - Registry model `extraction/registry.py` dùng chung với crm-agent; bản chép ở
   `doc_ingest/profiles/registry_snapshot.json` được test kiểm khớp.

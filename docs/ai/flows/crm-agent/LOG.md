@@ -7,6 +7,13 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-19 · `product_docs_ask` tra cứu trên doc_chunks_v2 · loại: thay đổi
+
+- Theo website-qa (D-009 bước 6): retriever dùng chung chuyển sang `DocChunkV2Repository`, nên tool
+  `product_docs_ask` cũng đọc `doc_chunks_v2`, chỉ chunk `approved` khi `RETRIEVAL_APPROVED_ONLY=true` (mặc định).
+  Chi tiết: [website-qa/LOG.md](../website-qa/LOG.md) mục 2026-11-19.
+- `evals/run_crm_agent_eval.py` (hàm `doc_repository()`) và `compare_agent_models.py` dựng retriever như production.
+
 ## 2026-11-16 · Sửa `backend/.env.example` cho khớp `config.py` (K4 của đợt dọn) · loại: thay đổi
 
 - Vấn đề: `.env.example` lệch code sau đợt dọn (mục dưới): thiếu `AGENT_MODEL`, `CRM_SCHEMA_CACHE_S`,

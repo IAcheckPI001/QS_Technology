@@ -23,7 +23,7 @@ Cập nhật: 2026-11-16
 | Phần | Trạng thái | Ghi chú |
 |---|---|---|
 | `AgentRunner`: vòng lặp, deadline, cancel, giới hạn | có, test bằng fake | Trần chung chỉ đếm call không bị `tool_call_limit`; `plan()` để trống (điểm gắn) |
-| `product_docs_ask` + chọn model theo capabilities | có, test bằng fake | Registry có thêm 10S, 10i (2026-11-14) |
+| `product_docs_ask` + chọn model theo capabilities | có, test bằng fake | Registry có thêm 10S, 10i (2026-11-14). Từ 2026-11-19 tra cứu trên `doc_chunks_v2` (chỉ chunk approved nếu `RETRIEVAL_APPROVED_ONLY=true`, hiện chưa có) |
 | `crm_schema`, `crm_query` | có; eval gpt-4.1-mini 78/81 | Trần `crm_query`: 6 lần thử, 4 lần gửi CRM |
 | Giám sát query (trace, audit sau `CRM_QUERY_AUDIT_LOG`) | có, test bằng fake | Chưa xem trên log server thật |
 | Phân quyền tool theo role/scope | chưa có | `required_scope`, `scopes` là điểm gắn, chưa dùng |

@@ -13,11 +13,35 @@ from app.core.config import settings
 from app.core.logging import configure_logging
 from app.modules.chatbot.agent.setup import build_agent_runner
 from app.modules.chatbot.providers.openai import OpenAIProvider
-from app.modules.chatbot.repositories.doc_chunk_repository import DocChunkRepository
-from app.modules.chatbot.retrieval import Retriever, RetrieverConfig
+from app.modules.chatbot.extraction.registry import extend_technical_coverage
+from app.modules.chatbot.repositories.doc_chunk_v2_repository import DocChunkV2Repository, MatchV2Options
+from app.modules.chatbot.retrieval import QueryEmbedder, Retriever, RetrieverConfig
 from app.modules.learning_ai.ingestion.service import PrivacyConfigurationError, create_privacy_pipeline
 
 logger = logging.getLogger(__name__)
+
+
+def build_doc_repository() -> DocChunkV2Repository:
+    """Repository tra cứu của chat: `doc_chunks_v2` (D-009), mặc định production của `MatchV2Options`."""
+    return DocChunkV2Repository(MatchV2Options(approved_only=settings.retrieval_approved_only))
+
+
+def build_retriever(embedder: QueryEmbedder, repository: DocChunkV2Repository) -> Retriever:
+    return Retriever(embedder, repository, RetrieverConfig.from_settings(settings))
+
+
+async def load_technical_coverage(repository: DocChunkV2Repository) -> list[str]:
+    """Thêm vào registry các model có tài liệu kỹ thuật trong `doc_chunks_v2`; lỗi DB thì giữ registry tĩnh."""
+    try:
+        added = extend_technical_coverage(await repository.technical_docs_models())
+    except Exception:
+        logger.warning("Không nạp được coverage technical_docs từ doc_chunks_v2; dùng registry tĩnh", exc_info=True)
+        return []
+    logger.info(
+        "Coverage technical_docs từ doc_chunks_v2 (approved_only=%s): thêm %s",
+        repository.options.approved_only, ", ".join(added) or "không model nào",
+    )
+    return added
 
 
 @asynccontextmanager
@@ -30,11 +54,9 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
             model=settings.openai_model,
             embedding_model=settings.embedding_model,
         )
-        retriever = Retriever(
-            provider,
-            DocChunkRepository(),
-            RetrieverConfig.from_settings(settings),
-        )
+        repository = build_doc_repository()
+        retriever = build_retriever(provider, repository)
+        await load_technical_coverage(repository)
     agent_runner = None
     agent_provider = None
     if provider is not None and settings.crm_chat_flow == "agent":
