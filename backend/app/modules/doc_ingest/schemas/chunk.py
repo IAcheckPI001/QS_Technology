@@ -11,7 +11,7 @@ from typing import Literal
 from pydantic import Field
 
 from app.modules.doc_ingest.schemas.base import StrictModel
-from app.modules.doc_ingest.schemas.manifest import Scope
+from app.modules.doc_ingest.schemas.manifest import CrmSource, Scope
 from app.modules.doc_ingest.schemas.normalized import ApplicabilityCandidate, Box
 from app.modules.doc_ingest.technical_refs.params import ParamRef
 
@@ -52,6 +52,17 @@ class CuratedDecision(StrictModel):
     value: str
     page_value: str | None = None
     model: str | None = None
+
+
+class ChunkLocation(StrictModel):
+    """Vùng của chunk trên một trang PDF: hợp bbox (point, gốc trên-trái) các phần tử của chunk trên trang đó.
+    `page` là `pdf_page_index` (đánh số như trình xem PDF, từ 1). Dùng để mở `view-pdf#page=N` và tô vùng."""
+
+    page: int
+    printed_page: str | None = None
+    bbox: Box
+    page_width: float | None = None
+    page_height: float | None = None
 
 
 class DraftChunk(StrictModel):
@@ -109,6 +120,9 @@ class DraftChunk(StrictModel):
     flags: list[str] = Field(default_factory=list)
     enrichment_status: Literal["none", "draft", "approved"] = "none"
     curated_decisions: list[CuratedDecision] = Field(default_factory=list)   # chỉ chunk `source = manual`
+    # vị trí trong file và nguồn tài liệu (2026-11-19): trỏ chunk về đúng trang/vùng của PDF trên CRM
+    locations: list[ChunkLocation] = Field(default_factory=list)
+    source_ref: CrmSource | None = None
 
 
 class EnrichmentOutput(StrictModel):

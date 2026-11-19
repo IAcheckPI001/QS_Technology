@@ -20,7 +20,12 @@ LONG = "This sentence describes one step of the procedure in plain words for the
 
 def test_manifests_load_and_resolve_run_doc_ids() -> None:
     manifests = {p.stem: load_manifest(p) for p in MANIFESTS_DIR.glob("*.yaml")}
-    assert set(manifests) == {"f54", "f86_installation", "f86_operation"}
+    legacy = {"f54", "f86_installation", "f86_operation"}            # PDF đưa vào tay, không có nguồn CRM
+    assert legacy <= set(manifests)
+    assert all(manifests[k].source is None for k in legacy)
+    # còn lại do `crm-fetch` sinh: tên file = doc_id, có nguồn CRM
+    assert all(m.source is not None and m.doc_id == k and m.run_doc_ids == [k]
+               for k, m in manifests.items() if k not in legacy)
     assert all(isinstance(m.doc_version, str) for m in manifests.values())
     assert find_manifest("f86_italliation").doc_id == "f86_installation_2024-04-25"
     assert find_manifest("f54").doc_id == "f54_operation_v02"

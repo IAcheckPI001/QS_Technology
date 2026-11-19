@@ -31,6 +31,11 @@ của run nguồn, rồi sinh chunk `product_catalog` (`source = manual`) → `<
     .\\venv\\Scripts\\python.exe -m app.modules.doc_ingest.cli curated-build \\
         --catalog-run ..\\data\\ingest_runs\\qs_catalog\\<run_id> --doc-version 2026-11-14
 
+`crm-plan` / `crm-fetch` / `crm-status`: đồng bộ tài liệu công khai trên CRM (sources/crm, crm.yaml) — so cây CRM
+với sổ nguồn, tải PDF mới/đổi phiên bản + sinh manifest nháp; rồi chạy `run` như thường (không ghi DB):
+    .\\venv\\Scripts\\python.exe -m app.modules.doc_ingest.cli crm-plan
+    .\\venv\\Scripts\\python.exe -m app.modules.doc_ingest.cli crm-fetch --plan ..\\data\\crm_sync\\<ts>
+
 Docling chỉ được import (qua `parse/docling_runner`) khi cần parse hoặc render PDF.
 """
 
@@ -114,7 +119,52 @@ def _parser() -> argparse.ArgumentParser:
     cb.add_argument("--run-id", help="mặc định: curated-YYYYmmdd-HHMMSS")
     cb.add_argument("--vi-keywords", action="store_true",
                     help="đưa nhãn tiếng Việt do người biên soạn đặt vào keywords (mặc định chỉ đề xuất trong báo cáo)")
+    cp = sub.add_parser("crm-plan", help="so cây tài liệu CRM với sổ nguồn → data/crm_sync/<ts>/plan.md (không tải file)")
+    cp.add_argument("--config", type=Path, help="mặc định: sources/crm/crm.yaml")
+    cp.add_argument("--lock", type=Path, help="mặc định: sources/crm/crm_sources.lock.json")
+    cp.add_argument("--out", type=Path, help="mặc định: <repo>/data/crm_sync")
+    cf = sub.add_parser("crm-fetch", help="tải PDF mới/đổi phiên bản của plan + sinh manifest nháp + cập nhật sổ nguồn")
+    cf.add_argument("--plan", type=Path, required=True, help="thư mục data/crm_sync/<ts> của crm-plan")
+    cf.add_argument("--only", nargs="+", help="chỉ các doc_id này")
+    cf.add_argument("--config", type=Path)
+    cf.add_argument("--lock", type=Path)
+    cf.add_argument("--sources-dir", type=Path, help="mặc định: <repo>/data/crm_sources")
+    cf.add_argument("--manifests-dir", type=Path, help="mặc định: doc_ingest/manifests")
+    cs = sub.add_parser("crm-status", help="sổ nguồn CRM + run mới nhất của từng tài liệu (chỉ đọc)")
+    cs.add_argument("--config", type=Path)
+    cs.add_argument("--lock", type=Path)
+    cs.add_argument("--runs-dir", type=Path, default=DEFAULT_OUT)
     return parser
+
+
+def _crm(args: argparse.Namespace):
+    from app.modules.doc_ingest.sources.crm import config as cfg
+    from app.modules.doc_ingest.sources.crm.client import http_fetcher
+
+    config = cfg.load_config(args.config or cfg.CONFIG_FILE)
+    return cfg, config, http_fetcher(config.user_agent, config.timeout_s), args.lock or cfg.LOCK_FILE
+
+
+def cmd_crm(args: argparse.Namespace) -> int:
+    from app.modules.doc_ingest.manifest import MANIFESTS_DIR
+    from app.modules.doc_ingest.sources.crm.client import CrmError
+    from app.modules.doc_ingest.sources.crm.commands import run_fetch, run_plan, run_status
+
+    cfg, config, fetch, lock = _crm(args)
+    try:
+        if args.command == "crm-plan":
+            out = run_plan(config, fetch, lock, args.out or cfg.SYNC_DIR)
+            print(f"Báo cáo: {out / 'plan.md'}")
+            return 0
+        if args.command == "crm-fetch":
+            errors = run_fetch(config, fetch, args.plan, lock_path=lock, sources_dir=args.sources_dir or cfg.SOURCES_DIR,
+                               manifests_dir=args.manifests_dir or MANIFESTS_DIR, only=args.only)
+            return 1 if errors else 0
+        run_status(config, lock, args.runs_dir)
+        return 0
+    except CrmError as exc:
+        print(f"Lỗi CRM: {exc}")
+        return 2
 
 
 def _curated_check(catalog_run: Path):
@@ -463,6 +513,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return cmd_curate_check(args)
     elif args.command == "curated-build":
         print(f"Báo cáo: {cmd_curated_build(args)}")
+    elif args.command in ("crm-plan", "crm-fetch", "crm-status"):
+        return cmd_crm(args)
     return 0
 
 

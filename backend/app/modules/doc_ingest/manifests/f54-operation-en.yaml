@@ -1,0 +1,29 @@
+# F54 - Operation Guide · sinh từ CRM bởi `crm-fetch` (doc_ingest/sources/crm).
+# TODO người kiểm: exclude_pages/exclude_sections (bìa, lời cảm ơn, lịch sử phiên bản), scope_rules, rồi xoá dòng TODO.
+doc_id: f54-operation-en
+run_doc_ids:
+- f54-operation-en
+doc_type: user_guide
+doc_title: F54 - Operation Guide
+doc_version: '1.0'
+product_models:
+- F54
+lang: en
+default_scopes:
+- operation
+scope_rules:
+- match: (?i)wiring|connection|install|đấu nối|lắp đặt
+  scopes:
+  - installation
+storage_bucket: f54-docs
+exclude_pages: []
+exclude_sections: []
+exclude_reason: ''
+note: Sinh từ CRM 2026-11-19; cần người kiểm exclude_pages (bìa, lời cảm ơn) và scope_rules
+source:
+  system: crm
+  crm_id: 6be0e54f-56cc-4454-8002-5e8efb59f056
+  version: '1.0'
+  file_id: 52b53f5d-02e6-4874-8dba-f5cccddf8dff
+  sha256: 5e3debbf70f63a7b575208385267f3a51c65acad291842c95a4abb680addcff9
+  synced_at: '2026-11-19'

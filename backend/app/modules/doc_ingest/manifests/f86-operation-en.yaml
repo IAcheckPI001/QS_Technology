@@ -1,0 +1,29 @@
+# F86 - Operation Guide · sinh từ CRM bởi `crm-fetch` (doc_ingest/sources/crm).
+# TODO người kiểm: exclude_pages/exclude_sections (bìa, lời cảm ơn, lịch sử phiên bản), scope_rules, rồi xoá dòng TODO.
+doc_id: f86-operation-en
+run_doc_ids:
+- f86-operation-en
+doc_type: user_guide
+doc_title: F86 - Operation Guide
+doc_version: '1.0'
+product_models:
+- F86
+lang: en
+default_scopes:
+- operation
+scope_rules:
+- match: (?i)wiring|connection|install|đấu nối|lắp đặt
+  scopes:
+  - installation
+storage_bucket: f86-docs
+exclude_pages: []
+exclude_sections: []
+exclude_reason: ''
+note: Sinh từ CRM 2026-11-19; cần người kiểm exclude_pages (bìa, lời cảm ơn) và scope_rules
+source:
+  system: crm
+  crm_id: d8823267-ff95-4b3c-9239-754a559039b8
+  version: '1.0'
+  file_id: 3d3f380f-e951-4189-8134-c5aeda884142
+  sha256: 660ed264c2cfa10d40cd731126ac5beb4c55e6e8db7734475261b66080d9ad27
+  synced_at: '2026-11-19'

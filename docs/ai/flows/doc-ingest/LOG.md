@@ -6,6 +6,32 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 
 Các mục tới 2026-11-09: [LOG-archive-2026-11-09.md](LOG-archive-2026-11-09.md).
 
+## 2026-11-19 · crm-sync giai đoạn 1: lấy tài liệu từ CRM, chunk có vị trí trong PDF (I-51, I-52) · loại: thay đổi, quyết định, triển khai
+
+- Vấn đề: PDF đưa tay, `doc_id`/`doc_version` gõ tay; kho tài liệu công khai của CRM không đồng bộ với kho tri thức;
+  chunk chỉ trỏ được tới trang, không tới vùng trên trang hay file nguồn.
+- Quyết định/luật (duyệt: Toma, 2026-11-19): khóa tài liệu là `id` CRM (`root_id` thừa); cây chỉ trả bản hiện hành;
+  đổi phiên bản phát hiện bằng `version` (dạng "1.0", chỉ nhánh Bộ điều khiển) + mã file trong `file_url`; CRM
+  không có sha256; không lưu URL đã ký; mỗi (model, loại tài liệu) một bản, ưu tiên EN; dừng trước làm giàu để
+  duyệt nội dung trích xuất gốc; thêm `DocManifest.source` + `metadata.crm`/`metadata.locations` (contract C2 §3, §9).
+- File: `sources/crm/` (`crm.yaml`, `config`, `client` (urllib), `tree`, `diff`, `lock`, `manifest_draft`,
+  `commands`), `cli.py` (`crm-plan`, `crm-fetch`, `crm-status`), `schemas/manifest.py` (`CrmSource`),
+  `schemas/chunk.py` (`ChunkLocation`, `locations`, `source_ref`), `build/loader.py` (kích thước trang từ `raw/`),
+  `build/fields.py`, `export/doc_chunks_v2.py`, `report/chunks_report.py`, `.gitignore`; 10 manifest CRM; sổ nguồn;
+  test `test_crm_sync.py`, `test_chunk_locations.py`, sửa `test_chunker.py` (cho phép manifest CRM).
+- Kiểm chứng: `pytest tests\doc_ingest` (venv ingest) → 396 passed, 1 failed có sẵn (CRLF); `pytest tests` (venv
+  chính) → 1098 passed trước khi sửa `test_chunker` (lỗi do manifest CRM mới), sau sửa `test_chunker.py` 31 passed.
+  Chạy thật: `crm-plan` → 11 mới, 3 bỏ qua (bản VI trùng loại), 50 ngoài phạm vi; "Catalogue sản phẩm" đã bị gỡ khỏi
+  cây CRM so với lúc đọc buổi sáng. `crm-fetch` → 11/11 PDF (kiểm `%PDF`, `file_size`, sha256). `run`/`build`
+  `crm-1.0-a` cho 10 tài liệu → 847 chunk, CQ không lỗi, 0 lỗi xuất v2, mọi chunk có `locations` + `metadata.crm`.
+- Ảnh hưởng contract/API/schema/cấu hình: C2 thêm trường tùy chọn (manifest cũ và output cũ không đổi, trừ thêm
+  `metadata.locations`); không đổi SQL, loader, API chat.
+- Phát hiện: I-51 bản Operation là ảnh scan (92–105 trang OCR mỗi bản; 606/847 chunk chặn `ocr_required`);
+  I-52 "F54 - Operation Guide" CRM 106 trang ≠ bản V.02 171 trang đã xử lý; F86 Installation, F86 Operation,
+  Hồ sơ công ty trùng sha256 file cũ; `f10t-operation-vi` OCR sai ngôn ngữ (I-29).
+- Chưa kiểm / mở tiếp: chưa duyệt chunk, chưa nạp DB; giai đoạn 2 (nạp theo sổ nguồn, gỡ bản cũ, lịch chạy plan);
+  run và PDF nằm trong `data/` của worktree nhánh `claude/crm-sync-phase1`.
+
 ## 2026-11-19 · Đối chiếu trạng thái với kiến trúc và code hiện tại · loại: đánh giá
 
 - Vấn đề: `STATE.md` mốc 14/11 chưa mô tả rõ ranh giới giữa builder offline, nhánh catalog biên soạn, loader v2 và consumer truy xuất.

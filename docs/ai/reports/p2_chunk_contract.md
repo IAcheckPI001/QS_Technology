@@ -108,6 +108,7 @@ File `backend/app/modules/doc_ingest/manifests/{doc}.yaml`, schema `DocManifest`
 | `default_scopes` | `[operation]` | Scope khi không có luật nào khớp |
 | `scope_rules` | `[{match: "(?i)wiring\|connection\|install", scopes: [installation]}, …]` | Regex trên `section_path`, luật đầu tiên khớp thắng |
 | `storage_bucket` | `f54-docs` | Bucket ảnh khi xuất bản |
+| `source` (tùy chọn, 2026-11-19) | `{system: crm, crm_id, version, file_id, sha256, synced_at}` | Do `crm-fetch` sinh (tài liệu lấy từ CRM); `None` = PDF đưa tay. Chuyển sang `metadata.crm` của chunk (§9). Tên file manifest CRM = `doc_id` (vd. `f54-installation-en`) |
 | `exclude_pages`, `exclude_sections`, `exclude_reason` | `[1, 2]`, `[]`, "bìa và lời cảm ơn…" | (2026-11-13, duyệt: Toma) Trang (`pdf_page_index`) / mục (tiền tố tiêu đề một cấp của `section_path`) không có nội dung kỹ thuật → phần tử không vào chunk, độ phủ đếm lý do `manifest_excluded` |
 
 Manifest của đợt này: `f54.yaml`, `f86_installation.yaml` (`f86_installation_2024-04-25`), `f86_operation.yaml`
@@ -295,6 +296,8 @@ khi sửa I-29 (OCR mất dấu).
 | `review_notes` | Mã review chặn fact (thông tin cho người duyệt) |
 | `enrichment` | `{status: none\|draft\|approved, model, created_at}` |
 | Trường ứng viên §13 | `chunk_role`, `source`, `io_codes`, `applies_to_models`, … do adapter v1 gói vào đây |
+| `locations` (2026-11-19, duyệt: Toma) | Vị trí của chunk trong PDF: `[{page, printed_page, bbox: {x0,y0,x1,y1}, page_width, page_height}]`, mỗi trang một vùng = hợp bbox (point, gốc trên-trái) các phần tử của chunk; chunk bảng dùng bbox ô của các dòng thuộc chunk. `page` = `pdf_page_index` (từ 1, như trình xem PDF); kích thước trang từ Docling `raw/`, thiếu thì bỏ khóa. Dùng để mở `view-pdf#page=N` và tô vùng |
+| `crm` (2026-11-19, duyệt: Toma) | Nguồn tài liệu trên CRM khi manifest có `source`: `{system, crm_id, version, file_id, sha256, synced_at}`. Không chứa URL đã ký (`exp`, `sig` hết hạn theo ngày); link xem PDF dựng lại từ `crm_id` lúc cần. Manifest không có `source` (PDF đưa tay) → không có khóa này |
 
 ## 10. Kiểm chất lượng (Bước 2b) và cổng
 

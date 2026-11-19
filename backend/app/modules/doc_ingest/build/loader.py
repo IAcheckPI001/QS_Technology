@@ -27,6 +27,23 @@ class RunInput:
     # (content_hash, section_path) -> làm giàu Bước 3
     enrichment: dict[tuple[str, tuple[str, ...]], EnrichmentRecord] = field(default_factory=dict)
     approval: EnrichmentApproval | None = None                               # phiên bản làm giàu đã qua cổng 2c
+    # pdf_page_index -> (rộng, cao) theo point, từ `raw/p{n}.docling.json`; rỗng khi run không còn raw
+    page_sizes: dict[int, tuple[float, float]] = field(default_factory=dict)
+
+
+def load_page_sizes(run_dir: Path) -> dict[int, tuple[float, float]]:
+    """Kích thước trang (point) từ Docling JSON đã lưu; số trang Docling (`page_no`) đánh từ 1 như trình xem PDF."""
+    sizes: dict[int, tuple[float, float]] = {}
+    for path in sorted((run_dir / "raw").glob("p*.docling.json")):
+        try:
+            pages = json.loads(path.read_text(encoding="utf-8")).get("pages") or {}
+        except (OSError, ValueError):
+            continue
+        for no, page in pages.items():
+            size = page.get("size") or {}
+            if "width" in size and "height" in size:
+                sizes[int(no)] = (float(size["width"]), float(size["height"]))
+    return sizes
 
 
 def load_approval(run_dir: Path) -> EnrichmentApproval | None:
@@ -71,4 +88,4 @@ def load_run(run_dir: Path) -> RunInput:
         figure_ocr[str(row["element_id"])] = [str(t) for t in row.get("labels", [])]   # type: ignore[union-attr]
     return RunInput(run_dir=run_dir, report=report, elements=elements, tables=tables, review=review,
                     ocr_pages=ocr, figure_ocr=figure_ocr, enrichment=load_enrichment(run_dir),
-                    approval=load_approval(run_dir))
+                    approval=load_approval(run_dir), page_sizes=load_page_sizes(run_dir))

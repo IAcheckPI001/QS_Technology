@@ -1,0 +1,26 @@
+# F86 - Installation Guide · sinh từ CRM bởi `crm-fetch` (doc_ingest/sources/crm).
+# TODO người kiểm: exclude_pages/exclude_sections (bìa, lời cảm ơn, lịch sử phiên bản), scope_rules, rồi xoá dòng TODO.
+doc_id: f86-installation-en
+run_doc_ids:
+- f86-installation-en
+doc_type: installation_manual
+doc_title: F86 - Installation Guide
+doc_version: '1.0'
+product_models:
+- F86
+lang: en
+default_scopes:
+- installation
+scope_rules: []
+storage_bucket: f86-docs
+exclude_pages: []
+exclude_sections: []
+exclude_reason: ''
+note: Sinh từ CRM 2026-11-19; cần người kiểm exclude_pages (bìa, lời cảm ơn) và scope_rules
+source:
+  system: crm
+  crm_id: 7db742e8-494d-43ef-a0ef-e0e22caa9311
+  version: '1.0'
+  file_id: 538be223-a491-45e0-82dd-cdd23a849ed7
+  sha256: adefef9c0ff5201b938a07ed5921ad27713f5036e9e5375a72d1f4e48b183710
+  synced_at: '2026-11-19'

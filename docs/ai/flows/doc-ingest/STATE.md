@@ -6,75 +6,70 @@ Cập nhật: 2026-11-19
 
 ## Tóm tắt
 
-- Có hai đường tạo chunk nháp: PDF → S0/Docling → chuẩn hóa T-xx/V-01 → `build`; và dữ liệu catalog biên soạn đã duyệt → `curated-build` (`source=manual`). Cả hai xuất file `doc_chunks_v2.jsonl` và report; builder không ghi database.
-- `chunking_loader` ở ngoài `doc_ingest` có thể nạp run vào `doc_chunks_v2` (draft); đây là bước riêng. Chat production vẫn đọc bảng `doc_chunks` cũ. Chưa có luồng xuất bản/duyệt hoàn chỉnh từ tool.
-- Chưa có: đánh giá tra cứu offline hoàn chỉnh, trích fact, gán unit, CLI review, xuất bản. Làm giàu VI có CLI và cổng 2c, nhưng mẫu F54 v4 chưa qua duyệt.
-- F54 (`eval-k`): 296 chunk, **cổng 2b đạt (tạm)** 296 ok / 0 fix (nhãn `verified: false`); 2c tự động đạt, 30 mẫu chờ.
-- D-008: thiết kế tra cứu chỉ tìm trên chunk con/độc lập, cha chỉ mở rộng ngữ cảnh; SQL/retriever và chuyển bảng đọc sang `doc_chunks_v2` chưa hoàn tất.
-- F86 Installation, F86 Operation chưa được team duyệt; F10T, F86 Operation không đạt cổng đánh giá (OCR).
+- Hai đường tạo chunk nháp: PDF → S0/Docling → chuẩn hóa T-xx/V-01 → `build`; dữ liệu catalog biên soạn → `curated-build` (`source=manual`). Cả hai xuất `doc_chunks_v2.jsonl` + report; builder không ghi database. `chunking_loader` (ngoài `doc_ingest`) nạp run vào `doc_chunks_v2` (draft) là bước riêng; chat đọc `doc_chunks_v2` từ 2026-11-19.
+- **crm-sync giai đoạn 1 (2026-11-19, nhánh `claude/crm-sync-phase1`, chưa merge):** `crm-plan` / `crm-fetch` / `crm-status` lấy PDF từ kho tài liệu công khai của CRM, so phiên bản với sổ nguồn `sources/crm/crm_sources.lock.json`, sinh manifest nháp có `source`. Đã tải 11 tài liệu (10 bộ điều khiển + Hồ sơ công ty) và chạy `run`/`build` tới bước sinh chunk, **dừng trước làm giàu**: 847 chunk nháp, **chưa duyệt, chưa nạp DB**.
+- Chunk có vị trí trong PDF: `metadata.locations` (trang + vùng bbox + kích thước trang) và `metadata.crm` (id, mã file, version; không lưu URL đã ký).
+- Chưa có: trích fact, gán unit, CLI review, xuất bản theo sổ nguồn, gỡ phiên bản cũ. Làm giàu VI có CLI và cổng 2c, F54 v4 chưa qua duyệt.
 
 ## Độ chín từng bước
 
 | Bước | Luật | Trạng thái | Backlog |
 |---|---|---|---|
-| S0 hồ sơ tài liệu + OCR theo trang | — | có | BL-24 |
-| Parse Docling | — | có | — |
-| Khung chữ, nhãn khung | T-20 | có (chỉ trang text layer) | — |
-| Header/footer, nhãn sát hình | T-17, T-18 | có | BL-07, BL-10 |
-| Phân loại nhãn, mục lục | T-16 | có | BL-33 |
-| Bảng logic | T-01…T-05, T-15 | có | BL-05, BL-06, BL-27 |
-| Mã parameter, điều kiện áp dụng | T-12, T-13 | có (ô bảng + text) | BL-11 |
-| Trang in, section path | T-06, T-07 | có (dời hình lạc thứ tự; chưa có ghi đè manifest) | BL-07, BL-08 |
-| List cha–con | T-08 | có (v1, mới kiểm trên F54) | BL-09 |
-| Hình: screenshot, watermark, trùng, caption, crop | T-09, T-10, T-19, T-11, T-14 | có (chưa render trang xoay) | BL-10 |
+| Nguồn CRM (plan, fetch, status) | — | có (giai đoạn 1); chưa nạp DB, chưa chạy theo lịch | — |
+| S0 + OCR theo trang, parse Docling | — | có; OCR chỉ tiếng Anh (I-29) | BL-24 |
+| Khung chữ, header/footer, nhãn, mục lục | T-20, T-17, T-18, T-16 | có | BL-07, BL-10, BL-33 |
+| Bảng logic; mã parameter, điều kiện áp dụng | T-01…T-05, T-15; T-12, T-13 | có | BL-05, BL-06, BL-11, BL-27 |
+| Trang in, section path, list cha–con | T-06, T-07, T-08 | có (list v1 mới kiểm trên F54) | BL-07…BL-09 |
+| Hình: screenshot, watermark, trùng, caption, crop | T-09…T-11, T-14, T-19 | có (chưa render trang xoay) | BL-10 |
 | Kiểm bất biến | V-01…V-04 | một phần: chỉ V-01 | BL-25 |
-| Đánh giá đa tài liệu | — | có; nhãn mẫu `verified: false` | BL-34 |
-| Chunk builder + kiểm 2b | C2 | có; xuất DraftChunk, v1/v2 và report; F54 296 chunk đạt cổng 2b tạm thời (nhãn `verified: false`) | BL-15, BL-16 |
-| Làm giàu tiếng Việt (Bước 3) | C2 §8, 2c | CLI/pipeline/cổng tự động và duyệt mẫu có trong code; F54 v4 chưa đạt cổng 2c, cần prompt v5 và duyệt mẫu | — |
-| Trích fact | — | chưa có | BL-17 |
-| Duyệt theo unit | — | một phần: lõi approval; chưa gán unit, chưa CLI | BL-18…BL-21 |
-| Xuất bản → `doc_chunks` | — | chưa có; loader phải bỏ qua embed cha (D-008) | BL-22, BL-90… |
+| Chunk builder + kiểm 2b | C2 | có; thêm `locations`, `source_ref` (2026-11-19) | BL-15, BL-16 |
+| Làm giàu tiếng Việt (Bước 3) | C2 §8, 2c | có trong code; F54 v4 chưa đạt 2c | — |
+| Trích fact; duyệt theo unit | — | chưa có; một phần (lõi approval) | BL-17…BL-21 |
+| Xuất bản → `doc_chunks_v2` | — | loader nạp draft được; chưa nạp theo sổ nguồn CRM | BL-22, BL-90… |
 
 ## Đang làm
 
-Cổng 2c v4 **không đạt** (chờ prompt v5); vision (`vision-trial-3`, 14 chunk) chờ duyệt. Ảnh (chốt 2026-11-14):
-`embed_text` chỉ câu mô tả có mã phân biệt, bỏ fact dịch nhãn. Catalog `curated-a` chờ Toma (verdict 37 chunk, `--vi-keywords`); còn soạn servo/board/phụ kiện/công ty. Gọi LLM (enrich, embed) đang chặn: OpenAI hết credit.
+Duyệt nội dung trích xuất của 10 tài liệu CRM (`data/ingest_runs/<doc_id>/crm-1.0-a/report/chunks.html`, trong
+worktree của nhánh), Installation trước. Cổng 2c v4 không đạt (chờ prompt v5); catalog `curated-a` chờ verdict.
 
 ## Vấn đề mở
 
 | ID | Mức | Vấn đề |
 |---|---|---|
-| D-008 (tra cứu) | — | Cột `chunk_role` + lọc cha trong `match_doc_chunks` chưa làm (cùng bước xuất bản, E-01) |
-| I-40 (c), (d) | P2 | Đoạn lặp nguyên văn ở nhiều mục; lỗi in của PDF gốc (cần errata cấp manifest) |
-| I-47…I-50 | P0 | Brochure công ty/catalog (2026-11-14): lỗi bảng mã font không bị S0 bắt; cặp "tên \| giá trị" tách + T-17 loại giá trị lặp; bảng ✓/✗ dạng icon; không heading số → `section_path` rỗng. Hướng tạm: nguồn biên soạn `curated/` (C2 §15): 7 bộ điều khiển → 37 chunk (`qs_catalog/curated-a`, đã nạp draft, chờ verdict; chưa gắn hình). Chi tiết: LOG |
-| I-46 | P1 | Scope theo nội dung (`eval-m`, đã nạp, đo **đạt**; CP-I46 để khôi phục). Còn: siết luật `maintenance` (B0175 M100 bị gán bảo trì) |
-| I-41 | P2 | Số mục in sai (3.3.x) làm `section_path` của 3.3.4, 3.3.5, 3.9.2 và 4.3.6 thành mục gốc |
-| I-32 | P0 (bảng cổng) | Bảng cổng F86 Installation lệch ô mô tả giữa các dòng |
-| I-28, I-29 | P0 | F10T: khung trang hai cột bị nhận là picture; OCR tiếng Anh trên tài liệu tiếng Việt |
-| I-30 | P1 | `M0100.txt` (tên macro) bị nhận là parameter |
-| I-22, I-31, I-33…I-35 | — | Bảng vẽ dạng ảnh (F86 trang 15); mục lục F86 không nhận; chunk hình không caption; độ hạt bảng cổng; luật loại chunk thô |
+| I-51 | P0 | Bản Operation trên CRM (10iV, 6AH, 6AVE, F10T, F54, F86) là ảnh scan: 92–105/97–110 trang OCR; 606/847 chunk bị chặn `ocr_required` → cần kiểm OCR trước khi duyệt |
+| I-28, I-29 | P0 | F10T: khung hai cột thành picture; OCR tiếng Anh trên tài liệu tiếng Việt (`f10t-operation-vi`: `ocr_lang_mismatch`, 1.370 ký tự VI) |
+| I-52 | P1 | "F54 - Operation Guide" trên CRM (106 trang) khác bản V.02 đã xử lý (171 trang, sha khác); duyệt/nhãn cũ `f54/eval-*` không chép sang được |
+| I-47…I-50 | P0 | Brochure (catalog, hồ sơ công ty): lỗi bảng mã font, cặp tên–giá trị, bảng icon, `section_path` rỗng → nguồn `curated/`. "Catalogue sản phẩm" đã bị gỡ khỏi cây CRM (2026-11-19) |
+| I-46 | P1 | Scope theo nội dung: còn siết luật `maintenance` |
+| I-40 (c,d), I-41, I-30 | P2 | Đoạn lặp; errata; số mục in sai; `M0100.txt` nhận nhầm là parameter |
+| I-32, I-22, I-31, I-33…I-35 | — | Bảng cổng F86 lệch ô; bảng vẽ dạng ảnh; mục lục F86; hình không caption; độ hạt bảng cổng; luật loại chunk |
 
-Mô tả đầy đủ: [p1_chunking_impact_assessment.md](../../reports/p1_chunking_impact_assessment.md); I-46: website-qa LOG.
+Mô tả đầy đủ: [p1_chunking_impact_assessment.md](../../reports/p1_chunking_impact_assessment.md); I-51, I-52: LOG 2026-11-19.
+
 ## Kết quả kiểm gần nhất
 
-Chunk nháp, đọc từ `chunk_quality.json` và `chunk_review.json` ngày 2026-11-13:
+Run `crm-1.0-a` (2026-11-19, profile `qs_controller`, không enrich, không figure-ocr; cổng 2b chưa có nhãn → trống):
 
-| Tài liệu (run) | Chunk (cha/con/độc lập) | CQ, độ phủ, ranh giới | Duyệt tay ok / fix / chờ |
-|---|---|---|---|
-| F54 (`f54/eval-l` = `eval-k` + `doc_chunks_v2.jsonl`, 243 lá làm giàu v4) | 296 (53/150/93) | đạt; 1,0; P/R 1,0 | 296 / 0 / 0 |
-| F86 Installation (`f86_italliation/eval-j-regress`, không render ảnh) | 23 (0/0/23) | đạt; 1,0; P/R 1,0 | 0 / 0 / 23 |
-| F86 Operation (`f86/eval-b`, nháp) | 16 (0/0/16) | đạt; 1,0; — | 0 / 0 / 16 |
+| Tài liệu | Trang (OCR) | Chunk (cha/con/độc lập) | Độ phủ | Chặn `ocr_required` | Ghi chú |
+|---|---|---|---|---|---|
+| f54-installation-en | 19 (1) | 17 (0/0/17) | 77/77 | 1 | |
+| f86-installation-en | 26 (1) | 22 (0/0/22) | 53/53 | 1 | trùng file `f86_italliation` cũ |
+| f10t-installation-vi | 27 (1) | 23 (0/0/23) | 62/62 | 1 | 5 `column_count_mismatch` |
+| 6ave-installation-vi | 32 (1) | 30 (0/0/30) | 84/84 | 1 | 6 `column_count_mismatch` |
+| f86-operation-en | 97 (92) | 115 (15/31/69) | 679/679 | 92 | trùng file `f86` cũ |
+| 6ah-operation-en | 103 (98) | 125 (18/37/70) | 783/783 | 99 | |
+| f10t-operation-vi | 105 (101) | 128 (19/43/66) | 601/601 | 102 | OCR sai ngôn ngữ |
+| f54-operation-en | 106 (100) | 144 (18/40/86) | 737/737 | 118 | |
+| 10iv-operation-en | 110 (97) | 115 (18/37/60) | 595/595 | 91 | |
+| 6ave-operation-en | 110 (105) | 128 (20/41/67) | 644/644 | 100 | |
+| qs-company-profile | 24 (0) | — (`run --no-build`) | — | — | trùng file `qs_company` cũ |
 
-Mốc so sánh: `f54/eval-i` (301, thí điểm làm giàu), `f54/eval-h` (301, chưa làm giàu), `f54/eval-c` (342, 42 fix); lớp chuẩn hóa: [archive](LOG-archive-2026-11-09.md) mục 7.
-
-Test (2026-11-14, từ `backend/`): `..\.venv-ingest\Scripts\python.exe -m pytest tests\doc_ingest` → 376 passed.
+Mọi run: CQ không lỗi, 0 lỗi xuất v2, mọi chunk có `locations` + kích thước trang + `metadata.crm`.
+Test (từ `backend/`): `..\.venv-ingest\Scripts\python.exe -m pytest tests\doc_ingest` → 396 passed, 1 failed có sẵn (CRLF CSV baseline trong worktree).
 
 ## Bước tiếp theo
 
-1. Đã nạp `eval-l` (F54, F86) vào `doc_chunks_v2` (draft) → đo tra cứu web (bộ câu hỏi) → vision, prompt v5, 2c.
-   → Bước 4 đánh giá tra cứu offline (gồm biến thể "không tìm cha", D-008) → Bước 5 schema `doc_chunks`.
-2. Team xác nhận nhãn mẫu và nhãn ranh giới (`verified: true`), chạy lại `eval`; ghi
-   `chunk_review.json` cho F86 Installation.
-3. I-32 trước khi dùng chunk `pinout` của F86 Installation; quyết định hướng sửa I-28…I-30; I-41, I-40 (c, d).
-4. Sau đó: V-02…V-04 (BL-25), trích fact (BL-17), gán unit và CLI review (BL-19, BL-21),
-   xuất bản (BL-22, BL-90…, gồm D-008 phía SQL), chạy F86 đủ 97 trang (BL-13).
+1. Toma duyệt `chunks.html` 4 bản Installation, rồi các bản Operation (kiểm OCR); quyết hướng I-51 (OCR chất lượng cao hơn / bản PDF có text layer từ CRM).
+2. Sửa I-29 (OCR tiếng Việt) trước khi dùng `f10t-operation-vi`; điền `exclude_pages` trong 10 manifest CRM.
+3. Giai đoạn 2 crm-sync: nạp `doc_chunks_v2` theo sổ nguồn, gỡ phiên bản cũ khi bản mới được duyệt, xoá 3 tài liệu thử; chạy `crm-plan` theo lịch.
+4. Sau đó: làm giàu (2c, prompt v5), V-02…V-04, trích fact, gán unit và CLI review.
