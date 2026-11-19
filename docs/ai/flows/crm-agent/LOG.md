@@ -7,6 +7,45 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Đợt 0 hoàn tất trên nền B3: model của agent, sổ usage, cached tokens, luật username (E1) · loại: thay đổi
+
+- Vấn đề: sau B3 (D-013, chat-platform LOG 2026-11-18), nhánh chính còn thiếu bốn điểm của Đợt 0:
+  history ghi `OPENAI_MODEL` cả ở lượt agent; usage cộng từ span nên mất khi vượt
+  `CHAT_TRACE_MAX_SPANS`, lời gọi hết giờ/bị huỷ không được tính; bước agent không ghi cached tokens;
+  guide `crm_query` chưa cấm tự suy username.
+- Quyết định: Toma yêu cầu làm tiếp Đợt 0 trên nền B3 (2026-11-20). Giữ `core/pricing.py`,
+  `LLM_PRICES_JSON`, `turn_usage.py` của B3; bỏ bản Đợt 0 cũ trên nhánh
+  `claude/agent-crm-development-29f518` (commit `e8223e9`, `8351d71`: trùng B3, không merge).
+- Thay đổi (commit `e77f08e`, nhánh `claude/dot0-on-b3` tách từ `6e1f465`):
+  - `core/tracing.py`: `UsageEntry`, `Trace.usage`, `record_usage`; `usage_by_model` đọc sổ (sổ rỗng
+    thì đọc span như cũ), thêm `estimated_calls`.
+  - `providers/openai.py`: mọi lời gọi ghi sổ qua `_metered`; hết giờ, bị huỷ, stream ngắt → mục ước
+    tính; lỗi HTTP/kết nối không ghi. `chat_complete_tools` đọc cached tokens, ghi lên span
+    `llm.chat_tools` của runner.
+  - `services/turn_usage.py`, `turn_sources.py`, `schemas/history.py`: `estimated_calls` trong
+    `retrieval_snapshot.usage` và `usage` của `/history`.
+  - `services/chat_service.py`: `_turn_model` → `AgentRunner.model` ở lượt CRM chạy agent (3 nhánh
+    ghi history và `snapshot.model`).
+  - `tools/crm_query.py`: luật "username, mã, UUID chỉ dùng nguyên văn từ kết quả tool…".
+  - Test: `test_usage_ledger.py` (mới, 8), `test_retrieval_snapshot.py` (fake service).
+- Kiểm chứng: từ `backend/`, `pytest tests` → 1107 passed, 14 skipped, 1 failed có sẵn
+  (`test_f86_baseline`, CSV CRLF trong worktree). Mức chín: code + test bằng fake.
+- Ảnh hưởng contract/API/schema/cấu hình: `/history` thêm `usage.estimated_calls` (chỉ thêm);
+  `model` của lượt agent đổi sang `AGENT_MODEL`. Không biến môi trường mới, không SQL.
+- Chưa kiểm / mở tiếp: chưa merge; chưa chạy trên server thật; chưa eval tác động của luật username.
+
+## 2026-11-20 · Lượt thật trên kênh CRM: pipeline vs agent, chất lượng câu trả lời F86/F54 · loại: kiểm chứng
+
+- Dữ liệu: phiên `c999efd3…`, đọc qua `/chatbot/sessions/{id}/trace|retrieval` của backend local.
+- Hai lượt F86 (2026-11-19 22:41, 22:52) chạy `flow=pipeline` (backend lúc đó đặt
+  `CRM_CHAT_FLOW=pipeline`): "các trục" đúng ý (6 trục) nhưng tên trục X–C lấy từ lịch sử, không
+  có nguồn; "cấu hình, cách sử dụng" chỉ có Installation Manual F86, phần "cách sử dụng" không có
+  trong tài liệu; 4/6 chunk chỉ là tiêu đề trang hình (doc-ingest).
+- Lượt F54 (2026-11-19 23:08) sau khi bật lại agent: `flow=agent`, 2 bước LLM + 1
+  `product_docs_ask`, đúng "4 trục" [S2][S3]; 9.914 token vào (analysis trong tool 5.107, không
+  cache), 9,2 s, một `delta`.
+- Mở tiếp: E7/E8 (giảm prompt analysis), doc-ingest gộp chunk chỉ có tiêu đề; nạp tài liệu vận hành F86.
+
 ## 2026-11-19 · `product_docs_ask` tra cứu trên doc_chunks_v2 · loại: thay đổi
 
 - Theo website-qa (D-009 bước 6): retriever dùng chung chuyển sang `DocChunkV2Repository`, nên tool

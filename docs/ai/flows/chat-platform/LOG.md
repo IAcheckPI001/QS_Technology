@@ -7,6 +7,15 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-07 (nguyên văn từ `current-state.md` và `architecture.md`, gồm Finding
 status, API gateway, service key, lease, tracing): [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · B3 đọc usage từ sổ của trace, không mất khi vượt trần span · loại: thay đổi
+
+- B3 cộng usage từ span nên span bị bỏ vì vượt `CHAT_TRACE_MAX_SPANS` không được tính, lời gọi hết
+  giờ/bị huỷ không ghi gì. Nay `OpenAIProvider` ghi `Trace.usage` cho mọi lời gọi; `usage_by_model`
+  đọc sổ (rỗng thì đọc span như cũ); lời gọi bị ngắt ghi ước tính, đếm ở `usage.estimated_calls`
+  (snapshot và `/history`). History ghi `AGENT_MODEL` ở lượt CRM chạy agent.
+- Chi tiết, file, kiểm chứng: [crm-agent LOG](../crm-agent/LOG.md) mục 2026-11-20 (Đợt 0).
+- Kiểm chứng: `pytest tests` → 1107 passed, 14 skipped, 1 failed có sẵn (CSV CRLF). Chưa merge.
+
 ## 2026-11-18 · B2: bảng tóm tắt hội thoại, tìm không dấu, phân trang (Q29, Q30) · loại: thay đổi
 
 - Vấn đề: danh sách hội thoại chạy window function trên toàn `chat_history` và đọc JSON mỗi request

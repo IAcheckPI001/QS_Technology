@@ -83,16 +83,20 @@ Các endpoint chưa có authentication/ownership và chỉ được bật rõ r�
 }
 ```
 
-`channel` là `website` hoặc `crm`.
+`channel` là `website` hoặc `crm`. `model`: model trả lời của lượt; từ 2026-11-20, lượt `/chat/crm`
+chạy agent ghi model của vòng lặp agent (`AGENT_MODEL`, mặc định = `OPENAI_MODEL`).
 
 Token và chi phí (B3, 2026-11-18): lượt ghi từ 2026-11-18 lưu **usage thật** OpenAI trả về
 (cộng mọi lần gọi AI của lượt từ trace) và chi phí theo giá từng model (`core/pricing.py`,
 ghi đè bằng `LLM_PRICES_JSON`): `input_tokens`/`output_tokens`/`total_tokens` là token của lời gọi
 AI (không gồm embedding), `cost_usd` gồm cả embedding. Bản ghi cũ là **ước tính** từ chữ câu hỏi
 và câu trả lời theo giá gpt-4o-mini (thấp hơn thực tế nhiều lần). Mỗi lượt thêm:
-- `usage`: `{source: "trace" | "estimate", llm_calls, cached_input_tokens, embedding_tokens,
-  unpriced_models}`; `null` khi lượt không gọi AI (bị chặn, nhân viên đang xử lý). Chi tiết theo
-  model lưu ở `retrieval_snapshot.usage` (DB);
+- `usage`: `{source: "trace" | "estimate", llm_calls, estimated_calls, cached_input_tokens,
+  embedding_tokens, unpriced_models}`; `null` khi lượt không gọi AI (bị chặn, nhân viên đang xử
+  lý). `estimated_calls` (từ 2026-11-20; bản ghi trước đó `null`): số lời gọi hết giờ, bị huỷ
+  hoặc stream bị ngắt trước khi OpenAI trả usage, token của chúng là ước tính. Usage đọc từ sổ
+  usage của trace nên đủ cả khi trace vượt `CHAT_TRACE_MAX_SPANS`. Chi tiết theo model lưu ở
+  `retrieval_snapshot.usage` (DB);
 - `cost_vnd`: `cost_usd × USD_TO_VND_RATE`.
 
 `sources` (B5, 2026-11-18) tóm tắt nguồn câu trả lời của lượt từ `retrieval_snapshot`
