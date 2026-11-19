@@ -1,6 +1,6 @@
 # Trạng thái toàn dự án
 
-Cập nhật: 2026-11-18
+Cập nhật: 2026-11-19
 
 Bảng tổng, mỗi luồng một dòng. Chi tiết, vấn đề mở và bước tiếp theo nằm ở `STATE.md` của
 từng luồng; lịch sử ở `LOG.md`. File này không chứa lịch sử; cập nhật dòng của luồng khi
@@ -10,7 +10,7 @@ STATE của luồng đổi trạng thái tổng.
 |---|---|---|---|
 | chat-platform | Service key, session, lease, history, trace có code và test; API Workspace B2/B3/B5 (bảng tóm tắt `chat_conversations`, tìm không dấu, phân trang, nguồn theo lượt, chi phí thật) đã kiểm với Supabase thật, có trên `feature/deploy_ai_service` (D-011–D-013); GET Support Workspace chưa xác thực; `Idempotency-Key` chưa chống trùng | `/health/db`, lease trên khóa dòng | [STATE](flows/chat-platform/STATE.md) |
 | workspace-ui | GĐ 0–2: khung app, đăng nhập (dữ liệu giả, chờ B1), Lịch sử/Chi tiết/Diễn biến hội thoại trên B2/B3/B5 (đã kiểm dữ liệu thật); kiểm duyệt bằng playwright-cli; có trên `feature/deploy_ai_service`; GĐ 3–5 chờ B7, B1, B6 | Đăng nhập thật (B1) | [STATE](flows/workspace-ui/STATE.md) |
-| website-qa | Chạy trọn luồng; chat vẫn dùng bảng cũ `doc_chunks`. Đang làm R-1 (tối ưu bước phân tích + định tuyến, [kế hoạch](reports/p3_r1_routing_plan.md)): công cụ đo và luật định tuyến `r1`/`r2` đã có code (chỉ eval dùng, production giữ `r0`), **chưa đo được vì OpenAI hết credit (2026-11-14)**; handoff là scaffold; chưa có SSE nguồn/ảnh | Chat trên bảng mới `doc_chunks_v2`; số đo luật định tuyến | [STATE](flows/website-qa/STATE.md) |
+| website-qa | Chạy trọn luồng; chat tra cứu trên `doc_chunks_v2` từ 2026-11-19 (D-009 bước 6; mọi chunk còn `draft`, production mặc định `RETRIEVAL_APPROVED_ONLY=true` nên chưa có tài liệu). Đang làm R-1 (tối ưu bước phân tích + định tuyến, [kế hoạch](reports/p3_r1_routing_plan.md)): công cụ đo và luật định tuyến `r1`/`r2` đã có code (chỉ eval dùng, production giữ `r0`), **chưa đo được vì OpenAI hết credit (2026-11-14)**; handoff là scaffold; chưa có SSE nguồn/ảnh | Tra cứu v2 trong lượt thật (chờ credit OpenAI); số đo luật định tuyến | [STATE](flows/website-qa/STATE.md) |
 | crm-agent | Thử nghiệm; tool CRM (`crm_schema`/`crm_query`) sau `CRM_REPORT_ENABLED` (mặc định tắt); eval gpt-4.1-mini 78/81. Đã dọn 2026-11-16 (xoá phương án A, D-010; gỡ `print()` in dữ liệu CRM), đã merge vào `feature/deploy_ai_service`, `.env.example` đã sửa; còn mở: luật username/trả lời khi chạm giới hạn, nghĩa "khách" của phiếu (r1); chưa phân quyền tool | Eval lại sau đợt dọn và sau thay đổi giới hạn gọi tool; `AGENT_MODEL` ở môi trường chạy; audit log trên server thật | [STATE](flows/crm-agent/STATE.md) |
 | learning | Tới hết bước privacy sau `LEARNING_API_ENABLED`, chưa xác thực; segment/extract, job, index chưa nối | Supabase, Ollama | [STATE](flows/learning/STATE.md) |
 | doc-ingest | PDF → chunk nháp → `doc_chunks_v2` (draft): F54 296, F86 Installation 23, catalog 7 bộ điều khiển 37 chunk (nguồn biên soạn `curated/`, chờ verdict, chưa gắn hình); cổng 2c v4 không đạt (chờ prompt v5); còn soạn servo/board/phụ kiện/công ty | — (tool offline, chạy trên PDF thật) | [STATE](flows/doc-ingest/STATE.md) |

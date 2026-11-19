@@ -8,6 +8,19 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-19 · Lượt kiểm thử v2 chưa tới bước tra cứu; đính chính current-state (B-1) · loại: sự cố, kiểm chứng
+
+- Vấn đề: hai lượt kiểm thử sau khi merge PR #3 đều không chạy tra cứu. Lượt 10:12 (kênh crm): server
+  chạy checkout chưa pull (`7599b30`, code cũ). Lượt 10:26 (trace `295fa2aa…`, checkout `d2c907e` có v2):
+  `llm.chat_tools` 429 `credit_balance_exhausted`, agent 0 bước, `retrieval_status=not_applicable`.
+- Kiểm chứng: chạy lại bước khởi động của `main.py` trên Supabase thật, không gọi OpenAI →
+  `DocChunkV2Repository`, `approved_only=False`, model `technical_docs` trong DB: F54, F86; coverage
+  `[F86]` → `[F54, F86]`; `doc_chunks_v2` active: 356 chunk, đều `draft`.
+- Đính chính: mục "Chat chuyển sang doc_chunks_v2" bên dưới quên sửa dòng website-qa trong
+  `current-state.md` (vẫn ghi "chat vẫn dùng bảng cũ"); đã sửa.
+- Chưa kiểm / mở tiếp: tra cứu v2 trong một lượt thật (span `db.match_doc_chunks`, chunk id thuộc
+  `doc_chunks_v2`), chờ nạp credit OpenAI (B-1).
+
 ## 2026-11-19 · Chat chuyển sang doc_chunks_v2 (D-009 bước 6) · loại: thay đổi, cấu hình
 
 - Quyết định của Toma: thay hẳn bảng cũ (không có cờ chọn bảng; rollback bằng revert); thêm
