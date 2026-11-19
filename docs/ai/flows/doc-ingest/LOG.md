@@ -6,6 +6,15 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 
 Các mục tới 2026-11-09: [LOG-archive-2026-11-09.md](LOG-archive-2026-11-09.md).
 
+## 2026-11-19 · Đối chiếu trạng thái với kiến trúc và code hiện tại · loại: đánh giá
+
+- Vấn đề: `STATE.md` mốc 14/11 chưa mô tả rõ ranh giới giữa builder offline, nhánh catalog biên soạn, loader v2 và consumer truy xuất.
+- Quyết định/luật: ghi riêng hai đường tạo chunk; phân biệt artifact/file draft với bước nạp `doc_chunks_v2`; giữ số liệu run gần nhất có ghi nhận và không suy diễn có run/DB mới.
+- File: `STATE.md`.
+- Kiểm chứng: đối chiếu `docs/ai/architecture.md`, `current-state.md`, `README.md`, `build/builder.py`, `curated/build.py` và CLI/loader.
+- Ảnh hưởng contract/API/schema: không.
+- Mở tiếp: hoàn tất đánh giá tra cứu offline/D-008, duyệt verdict catalog và cổng làm giàu 2c.
+
 ## 2026-11-14 · Catalog: code nhánh nguồn biên soạn + 37 chunk 7 bộ điều khiển (run `qs_catalog/curated-a`) · loại: thay đổi
 
 - Toma duyệt nội dung 7 file + bảng chọn khớp PDF; chốt C-13 (`io_link` 6AH/6AV/10i theo bảng chọn); giữ 10iV trong

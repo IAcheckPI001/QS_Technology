@@ -1,16 +1,16 @@
 # Trạng thái luồng doc-ingest
 
-Cập nhật: 2026-11-14
+Cập nhật: 2026-11-19
 
 Ảnh chụp trạng thái hiện tại. Viết lại khi có thay đổi; lịch sử ở [LOG.md](LOG.md).
 
 ## Tóm tắt
 
-- Pipeline chạy từ PDF tới chunk nháp: S0 → Docling → chuẩn hóa (T-xx) → V-01 → `build`.
-- **Chưa ghi database.** Bảng `doc_chunks` vẫn chứa chunk F86 biên soạn tay.
-- Chưa có: đánh giá tra cứu offline, trích fact, gán unit, CLI review, xuất bản. Làm giàu VI: thí điểm 20 chunk.
+- Có hai đường tạo chunk nháp: PDF → S0/Docling → chuẩn hóa T-xx/V-01 → `build`; và dữ liệu catalog biên soạn đã duyệt → `curated-build` (`source=manual`). Cả hai xuất file `doc_chunks_v2.jsonl` và report; builder không ghi database.
+- `chunking_loader` ở ngoài `doc_ingest` có thể nạp run vào `doc_chunks_v2` (draft); đây là bước riêng. Chat production vẫn đọc bảng `doc_chunks` cũ. Chưa có luồng xuất bản/duyệt hoàn chỉnh từ tool.
+- Chưa có: đánh giá tra cứu offline hoàn chỉnh, trích fact, gán unit, CLI review, xuất bản. Làm giàu VI có CLI và cổng 2c, nhưng mẫu F54 v4 chưa qua duyệt.
 - F54 (`eval-k`): 296 chunk, **cổng 2b đạt (tạm)** 296 ok / 0 fix (nhãn `verified: false`); 2c tự động đạt, 30 mẫu chờ.
-- D-008: tra cứu chỉ tìm trên chunk con/độc lập, cha chỉ mở rộng ngữ cảnh; phía SQL/retriever chưa làm.
+- D-008: thiết kế tra cứu chỉ tìm trên chunk con/độc lập, cha chỉ mở rộng ngữ cảnh; SQL/retriever và chuyển bảng đọc sang `doc_chunks_v2` chưa hoàn tất.
 - F86 Installation, F86 Operation chưa được team duyệt; F10T, F86 Operation không đạt cổng đánh giá (OCR).
 
 ## Độ chín từng bước
@@ -29,8 +29,8 @@ Cập nhật: 2026-11-14
 | Hình: screenshot, watermark, trùng, caption, crop | T-09, T-10, T-19, T-11, T-14 | có (chưa render trang xoay) | BL-10 |
 | Kiểm bất biến | V-01…V-04 | một phần: chỉ V-01 | BL-25 |
 | Đánh giá đa tài liệu | — | có; nhãn mẫu `verified: false` | BL-34 |
-| Chunk builder + kiểm 2b | C2 | có (CQ-01…CQ-12, R-12, R-13, loại theo manifest); F54 đạt cổng 2b (tạm) | BL-15, BL-16 |
-| Làm giàu tiếng Việt (Bước 3) | C2 §8, 2c | có (`cli enrich`, prompt v4 + thuật ngữ; cổng 2c); F54 243/243 lá, 30 mẫu chờ duyệt | — |
+| Chunk builder + kiểm 2b | C2 | có; xuất DraftChunk, v1/v2 và report; F54 296 chunk đạt cổng 2b tạm thời (nhãn `verified: false`) | BL-15, BL-16 |
+| Làm giàu tiếng Việt (Bước 3) | C2 §8, 2c | CLI/pipeline/cổng tự động và duyệt mẫu có trong code; F54 v4 chưa đạt cổng 2c, cần prompt v5 và duyệt mẫu | — |
 | Trích fact | — | chưa có | BL-17 |
 | Duyệt theo unit | — | một phần: lõi approval; chưa gán unit, chưa CLI | BL-18…BL-21 |
 | Xuất bản → `doc_chunks` | — | chưa có; loader phải bỏ qua embed cha (D-008) | BL-22, BL-90… |

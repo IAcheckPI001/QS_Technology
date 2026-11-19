@@ -1,6 +1,6 @@
 # Trạng thái luồng website-qa
 
-Cập nhật: 2026-11-16
+Cập nhật: 2026-11-19
 
 Ảnh chụp trạng thái hiện tại. Viết lại khi có thay đổi; lịch sử ở [LOG.md](LOG.md).
 
@@ -43,7 +43,7 @@ Kết quả đo (prompt `v1`, luật `r0`, gpt-4.1-mini, 3 lần mỗi câu; th�
 | Bộ câu | Đúng cả ba web1 / web2 | Ổn định | Ghi chú |
 |---|---|---|---|
 | 40 câu (`20261114-154614-baseline-v1-r0-diverse40`) | 0,867 / 0,867 | 0,925 / 0,95 | Nhiễu giữa các lần 2,5–5 điểm %; web2 scope 0,003: recall@5 0,853, MRR 0,798. Ước tính có luật (không gọi LLM, chưa phải số đo): domain đúng 0,90 → 1,0 |
-| 120 câu nháp (`20261114-155459-draft-v1-r0-routing120`) | 0,936 / 0,942 | 0,975 / 0,983 | Nhóm tên board/phụ kiện 0,29 / 0,71 |
+| 120 câu nháp ([báo cáo](../../reports/website_qa_routing_eval_v1_r0_2026-11-14.md); `20261114-155459-draft-v1-r0-routing120`) | 0,936 / 0,942 | 0,975 / 0,983 | Nhóm phụ kiện 0,29 / 0,71; routing-only, split=all |
 | 14 câu, catalog 20, hai nguồn 19 | **chưa có** | — | Dừng vì hết credit |
 
 ## Vấn đề mở

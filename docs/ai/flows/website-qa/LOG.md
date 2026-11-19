@@ -8,6 +8,16 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-19 · Tổng hợp baseline định tuyến 120 câu `v1/r0` · loại: đánh giá
+
+- Vấn đề: số tổng hợp trong STATE chưa nêu rõ độ phủ từng nhóm, khác biệt intent với route, và hạn chế của chế độ routing.
+- Kết quả: tổng hợp run ngày 14/11 (gpt-4.1-mini, 3 lần, split=all) thành [báo cáo](../../reports/website_qa_routing_eval_v1_r0_2026-11-14.md); tách intent đúng khỏi trường hợp `unknown_product_model` khiến pipeline không tìm.
+- Phát hiện tái lập: artifact có 120 câu/R120 nhưng YAML hiện tại chỉ còn 119 câu, không còn R120.
+- File: báo cáo mới, `STATE.md`.
+- Kiểm chứng: đối chiếu `report.md`, `results.json`, `routing_intent.yaml`; không chạy lại eval.
+- Ảnh hưởng contract/API/schema: không.
+- Mở tiếp: duyệt bộ câu và đồng bộ lại bộ nguồn với artifact; đo split `test` riêng khi chạy lại.
+
 ## 2026-11-16 · Dùng 100milionseek cho eval routing · loại: thay đổi, kiểm thử
 
 - Thêm lựa chọn `--analysis-provider 100milionseek` vào `evals/run_retrieval_eval.py`; provider chỉ được phép

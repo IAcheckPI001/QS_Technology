@@ -6,6 +6,26 @@ sang `LOG-archive-<ngày của mục mới nhất bị cắt>.md` và để lạ
 
 Sau khi thêm mục, viết lại [STATE.md](STATE.md).
 
+## 2026-11-18 · Sidebar: khối tài khoản sát đáy; cỡ chữ gợi ý trên điện thoại; merge và push · loại: thay đổi
+
+- Vấn đề: Toma tự chỉnh CSS ở checkout chính (`.account { margin-top: 312px }`, khoảng cách menu 8px,
+  `.control::placeholder { font-size: 14px }`) và yêu cầu làm lại cho linh động. Nguyên nhân gốc: `.nav { flex: 1 }`
+  đặt trên `<ul>`, còn con trực tiếp của sidebar là `<nav>` không giãn, nên khối tài khoản nằm ngay dưới menu;
+  312px cố định thì màn thấp đẩy khối ra ngoài, màn cao không sát đáy.
+- Quyết định/luật (Toma duyệt):
+  - `<nav>` của sidebar có class `navArea` (`flex: 1; min-height: 0`): khối tài khoản luôn sát đáy, menu tự cuộn
+    khi thiếu chỗ; không dùng khoảng cách cố định. Giữ khoảng cách menu 8px theo Toma;
+  - chữ gợi ý 14px chỉ trong media ≤ 720px (chữ gõ 16px để iOS không tự phóng to); máy tính vốn 14px;
+  - hai bản sửa tay ở checkout chính được gỡ sau khi commit bản thay thế.
+- File: `layout/AppShell.jsx`, `layout/AppShell.module.css`, `components/ui.module.css` (commit `91ca132`).
+- Kiểm chứng: playwright-cli ở 1366×600, 1280×720, 1440×900, 1920×1080 và khi thu gọn: khối tài khoản cách đáy
+  16px, luôn thấy; điện thoại: chữ gõ 16px, gợi ý 14px, gợi ý vừa ô. `npm test` → 87 đạt; eslint `src/workspace` → 0.
+- Nhánh: `0169885` (9 sửa lỗi kiểm duyệt) và `91ca132` merge vào `feature/deploy_ai_service` thành `7599b30`
+  (sau commit `0da64e9` của Toma: skill impeccable, cấu hình Playwright, `vite.config.js` bỏ theo dõi `data/`,
+  `.claude/`); test trên checkout chính 87 đạt; Toma tự push.
+- Quy trình (Toma 2026-11-18): kiểm duyệt giao diện bằng `playwright-cli` (đo khoảng cách, cỡ chữ, vùng bấm, thao tác
+  sự kiện trên dữ liệu thật, 1440×900 và 375×812) trước khi đưa thay đổi giao diện lên nhánh deploy.
+
 ## 2026-11-18 · Kiểm duyệt giao diện B2 bằng playwright-cli, sửa 9 lỗi · loại: thay đổi
 
 - Vấn đề (Toma yêu cầu kiểm khoảng cách, cỡ chữ, nút, sự kiện bằng playwright-cli trên nhánh
