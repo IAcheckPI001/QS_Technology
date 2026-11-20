@@ -7,6 +7,19 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Câu so sánh: chunk riêng của từng model không còn bị bảng chung đẩy ra · loại: thay đổi
+
+- Vấn đề: kiểm thật (mục cùng ngày bên dưới) thiếu số trục/kích thước F86–F54: chunk chung (bảng chọn
+  model, khớp cả hai model, điểm cao) chiếm hết hạn mức của mỗi model; [S#] chỉ gom ở cuối; tự thêm "µs".
+- Thay đổi (commit `a627bd8`, nhánh `claude/dot1-e-d`): `Retriever._select_comparison`:
+  chunk khớp ≥ 2 model là chunk chung; mỗi model giữ `RETRIEVAL_COMPARE_PER_MODEL` (3) chunk riêng, xen kẽ;
+  chunk chung giữ `RETRIEVAL_COMPARE_SHARED` (2) + suất riêng chưa dùng. Guide `product_docs_ask`: [S#] ngay
+  sau từng giá trị, tách "Khác nhau"/"Giống nhau", mở đầu bằng số trục/giao tiếp/kích thước, không thêm
+  đơn vị nguồn không ghi.
+- Kiểm chứng: `pytest tests` → 1113 passed, 14 skipped, 1 failed có sẵn (CSV CRLF). Mức chín: code + test fake.
+- Ảnh hưởng: biến mới `RETRIEVAL_COMPARE_SHARED` (deploy-rules); website so sánh dùng chung cách chọn.
+- Chưa kiểm / mở tiếp: Toma hỏi lại "F86 khác F54 thế nào?", "So sánh F86 và F10T"; `run_retrieval_eval.py`.
+
 ## 2026-11-20 · Kiểm thật gói E+D: so sánh một lần gọi, token giảm 63%, còn thiếu số trục · loại: kiểm chứng
 
 - Dữ liệu: phiên `fd5e7814…`, backend local chạy `5685901`, đọc qua `/history`, `/trace`, `/retrieval`.
