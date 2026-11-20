@@ -11,7 +11,7 @@ Cập nhật: 2026-11-20
 - Đợt 0 (sổ usage, model của agent trong history, cached tokens, luật username) và Đợt 1 bước 1 (gói E
   so sánh + gói D ép tra nguồn) đã merge vào `feature/deploy_ai_service` (`14196d6`, chưa push).
 - Đợt 1 bước 2 (C1–C3: dừng sớm theo tín hiệu tool, báo ngân sách, bước chốt có khung, `final_reason`)
-  xong ở mức code + test bằng fake trên nhánh `claude/dot1-c`, **chưa merge**, chưa kiểm thật.
+  đã merge vào `feature/deploy_ai_service` (`1af808a`, chưa push), chưa kiểm thật.
 - Câu so sánh theo quyết định **tạm** D-014: chunk riêng từng model + chunk chung, cắt cột bảng. Đã kiểm
   bộ C1–C7: cắt cột đạt cả 7 câu; mặc định code 2 + 4, Toma đang chạy 3 + 2 qua env.
 - Model agent ở môi trường chạy: gpt-4.1-mini (`AGENT_MODEL`); analysis trong `product_docs_ask` vẫn
@@ -23,7 +23,7 @@ Cập nhật: 2026-11-20
 | Phần | Trạng thái | Ghi chú |
 |---|---|---|
 | `AgentRunner`: vòng lặp, deadline, cancel, giới hạn | có; kiểm thật 2026-11-20 | Dừng theo số bước, số lần gọi, deadline |
-| Dừng sớm (ambiguous, plateau, budget), `turn_budget`, bước chốt có khung (C1–C3) | có, test bằng fake; chưa merge | Ngưỡng 50% lượt gọi, `AGENT_TURN_INPUT_BUDGET=15000` chưa đo; lưu câu hỏi dở chờ Gói A |
+| Dừng sớm (ambiguous, plateau, budget), `turn_budget`, bước chốt có khung (C1–C3) | có, test bằng fake; đã merge, chưa kiểm thật | Ngưỡng 50% lượt gọi, `AGENT_TURN_INPUT_BUDGET=15000` chưa đo; lưu câu hỏi dở chờ Gói A |
 | Ép tra nguồn (gói D) | có; kiểm thật | Câu nhắc mã model hoặc trích nguồn bị xoá mà không gọi tool → chạy lại 1 bước `required` |
 | `product_docs_ask`, câu so sánh 1 lần gọi (gói E) | có; kiểm thật C1–C7 | Đủ khác biệt ở cặp gần giống; cặp khác nhiều thiếu bảng và LLM gán sai nhãn |
 | `crm_schema`, `crm_query` | có; eval gpt-4.1-mini 78/81 (2026-11-12) | Chưa eval lại sau đợt dọn, Đợt 0, Đợt 1 |
@@ -60,7 +60,7 @@ Cập nhật: 2026-11-20
 
 ## Bước tiếp theo
 
-1. Toma: review, merge `claude/dot1-c`; thêm `AGENT_TURN_INPUT_BUDGET` vào `.env.example`; khởi động lại
+1. Toma: thêm `AGENT_TURN_INPUT_BUDGET` vào `.env.example`; khởi động lại
    backend, chạy 3–5 câu thật (CRM tên trùng, nhiều sale, model không có tài liệu), kiểm `final_reason`.
 2. Toma: chạy `run_crm_agent_eval.py` (mốc G1) và `run_retrieval_eval.py`; đối chiếu `cost_usd`.
 3. Sau đó: CMP-1, CMP-2 rồi chốt D-014; gói A, B, C4 theo kế hoạch Đợt 1.
