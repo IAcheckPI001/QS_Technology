@@ -7,6 +7,22 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Thử so sánh 2 chunk riêng + 4 chunk chung: nguồn đa dạng hơn, lộ lỗi đọc nhầm cột bảng · loại: kiểm chứng
+
+- Dữ liệu: phiên `fd5e7814…`, 05:59 UTC, gpt-4.1-mini, `.env` của Toma đặt `RETRIEVAL_COMPARE_PER_MODEL=2`,
+  `RETRIEVAL_COMPARE_SHARED=4` (code mặc định vẫn 3 + 2).
+- Nguồn: bỏ được hai trang tóm tắt lặp lại; mỗi câu có tổng quan + thông số của từng model và 4 mục bảng
+  chọn model (F86–F54: Hardware, General, Tool Manager, Operation; F86–F10T: Hardware, General, Tool
+  Manager, Multi axis). Token: 10.876 và 11.175 vào; 0,003566 và 0,003395 USD; 1 lần gọi tool mỗi câu.
+- "F86 khác F54": thêm đúng quản lý tuổi dao; đã tách "Khác nhau"/"Giống nhau". Vẫn bỏ sót số trục PLC
+  (0 so với 6/8) và spindle đồng thời (2 so với 4) trong bảng General; xếp Look-Ahead 500/250 vào "Giống nhau".
+- "So sánh F86 và F10T": **sai số liệu do đọc nhầm cột**: "F86 không có trục PLC", "spindle đồng thời F86 là 2"
+  lấy từ cột F54; bảng General ghi F86 và F10T giống hệt nhau (6, tùy chọn 8; 4 spindle). "Thời gian xử lý
+  block 500 so với 500" bị xếp vào "Khác nhau". Màn hình cảm ứng của F10T đã có.
+- Nhận định: bảng chọn model có 4 cột (F54, F86, F10T, ASTRO-10S); khi so sánh 2 model, các cột thừa làm
+  LLM gán nhầm cột. Đề xuất: khi so sánh, cắt bảng chỉ còn cột tên thuộc tính và cột của các model được hỏi;
+  guide: dòng nào giá trị giống nhau thì không đưa vào "Khác nhau". Chờ Toma quyết.
+
 ## 2026-11-20 · Kiểm lại so sánh với gpt-4.1-mini: một lần gọi, đủ thông số chính · loại: kiểm chứng
 
 - Dữ liệu: phiên `fd5e7814…`, 05:44–05:45 UTC, `AGENT_MODEL=gpt-4.1-mini`, backend `f8fc979`.
