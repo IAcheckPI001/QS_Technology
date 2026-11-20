@@ -7,6 +7,21 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Phân loại lỗi câu so sánh: phần lớn do LLM tổng hợp, phần nhỏ do thiếu chunk · loại: đánh giá
+
+- Cách kiểm: với 6 lượt so sánh 05:44–06:15 (phiên `fd5e7814…`), tính token từng nguồn đưa vào tool (tiktoken
+  gpt-4.1-mini): 1.751–2.166 token, dưới ngân sách `AGENT_TOOL_OUTPUT_TOKENS=3000` → LLM nhận **đủ** mọi nguồn,
+  không bị cắt. Sau đó đối chiếu từng lỗi với nội dung nguồn của lượt đó.
+- Do LLM (nguồn có đủ dữ liệu), 9 lỗi: bỏ sót trục PLC 0 so với 6/8 (3 lượt, bảng General có), bỏ sót spindle
+  đồng thời 2/4 (2 lượt), gán spindle 2 cho F86 (06:15), Look-Ahead xếp vào "Giống nhau" (05:59), dòng "Cả hai…"
+  trong "Khác nhau" (06:15), "nhỏ gọn hơn" (05:45, 06:15), đọc nhầm cột bảng 4 cột (05:59, đã hết sau khi cắt cột).
+- Do thiếu chunk, 4 lỗi: thiếu Tool Manager và Multi axis (05:44, cấu hình 3 + 2), thiếu Hardware nên mất "cảm ứng"
+  F10T (05:45), thiếu Multi axis (05:59, 06:15 F54–F86): suất chunk chung chọn theo điểm tìm kiếm, lấy bảng giống
+  nhau (Compensation, Operation) thay bảng có khác biệt.
+- Không có trong tài liệu (trả lời "không có" là đúng): độ bền màn hình cảm ứng, giá.
+- Đề xuất: (1) code tính sẵn dòng khác/giống từ bảng đã cắt cột, đưa vào output tool; (2) khi chọn chunk chung cho
+  câu so sánh, ưu tiên bảng có dòng khác nhau giữa các model được hỏi.
+
 ## 2026-11-20 · Kiểm D-014 trên 2 câu so sánh kèm tư vấn: hết đọc nhầm cột, còn lỗi tổng hợp · loại: kiểm chứng
 
 - Dữ liệu: phiên `fd5e7814…`, 06:15 UTC, gpt-4.1-mini, backend `0f69b58` (mặc định 2 + 4, cắt cột).
