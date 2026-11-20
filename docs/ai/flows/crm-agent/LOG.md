@@ -7,6 +7,35 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Bộ câu so sánh C1–C7: cắt cột đạt cả 7 câu; lỗi còn lại do LLM gán nhãn và chọn bảng chung (D-014) · loại: kiểm chứng, đánh giá
+
+- Dữ liệu: phiên `8de1e4b1…` 07:14–07:26 UTC và `97fa9b85…` 07:29 (website). Backend `14196d6`, Toma đặt
+  hạn mức **3 + 2** qua env (mặc định trong code vẫn 2 + 4). Agent gpt-4.1-mini; pipeline gpt-4o-mini.
+- Đáp án chấm: `doc_ingest/curated/selection_matrix.yaml` (Toma duyệt 2026-11-14), so dòng khác nhau giữa các
+  model, cộng số trục điều khiển ở trang riêng của từng model.
+- Kết quả từng câu (token vào / USD, 1 lần `product_docs_ask` ở mọi lượt agent):
+  - C1 F54–F86 kèm tư vấn: 9.686 / 0,00331 (V4 2 + 4 cùng câu: 11.133 / 0,00429). 9/17 khác biệt; thiếu bảng
+    Tool Manager, Multi axis (không lấy được); bỏ qua trục PLC, spindle đồng thời, block time dù có trong nguồn.
+  - C2 F86–F10T kèm tư vấn: 11.256 / 0,00319 (V4: 3 lần gọi, 22.860 / 0,00486). Đủ 2/2; còn "F86 nhỏ gọn hơn".
+  - C3 F10T–ASTRO-10S: 11.233 / 0,00353. Alias giữ đúng cột ASTRO-10S; đủ 4/4, không sai.
+  - C4 F54, F86, F10T: 11.827 / 0,00351, 11 nguồn (~2.890 token, sát trần 2.968 của output tool). Giữ đúng 3 cột;
+    không sai; phía F54 thiếu spindle đồng thời, Look-Ahead, block time, tuổi dao, đa trục.
+  - C5 F86–F86E: 10.209 / 0,00253. F86E không có trong registry → 1 lần tra, không cắt cột, bảng 4 cột; không gán
+    cột F86 cho F86E, nhưng **bịa** "F86E là bản mở rộng/nâng cấp".
+  - C6 F54 hay F86 cho máy 5 trục: 11.745 / 0,00233. Kết luận đúng theo 4/6 trục.
+  - C7 F86–F54 qua pipeline: kênh CRM `flow=pipeline` 7.744 / 0,00108 (6 điểm); website 7.063 / 0,00085 (chỉ
+    số trục, màn hình, RTCP, kèm câu "không có tài liệu chi tiết"). Chunk chung lấy Compensation (mọi dòng giống
+    nhau) và Tool Manager hoặc Multi axis, không lấy General/Hardware như lượt agent.
+- Lỗi hệ thống: "spindle đồng thời" bị gán giá trị "Max. Spindle" 1/2 (đúng là 2/4) ở **4/5** lượt F54–F86 (V4, C1,
+  C6, C7 CRM), kể cả khi bảng General có dòng đúng trong nguồn → lỗi tổng hợp, không phải lỗi lấy chunk.
+- Kết luận (chờ Toma chốt D-014): cắt cột bảng đạt ở cả 7 câu, kể cả alias, 3 model, model lạ, website; cột bị cắt
+  chỉ là bản sao trong lượt, không ảnh hưởng lượt sau. Hạn mức 2 + 4 hay 3 + 2 không quyết định chất lượng; điểm
+  quyết định là chọn **bảng nào** làm chunk chung.
+- Chưa kiểm / mở tiếp: (CMP-1) chọn chunk chung theo số dòng khác nhau giữa các model được hỏi; (CMP-2) code tính
+  sẵn danh sách khác/giống từ bảng đã cắt cột; (CMP-3) câu hỏi model không có tài liệu vẫn suy đoán; (CMP-4) so
+  từ 4 model sẽ vượt trần output tool. Chưa kiểm: cặp khác trang (F86–10i), cột chung "ASTRO 6AV/H", câu so sánh
+  kèm "có dòng nào tốt hơn"; `run_retrieval_eval.py`. Toma chuyển sang bước 2 của kế hoạch Đợt 1 (C1–C3).
+
 ## 2026-11-20 · Phân loại lỗi câu so sánh: phần lớn do LLM tổng hợp, phần nhỏ do thiếu chunk · loại: đánh giá
 
 - Cách kiểm: với 6 lượt so sánh 05:44–06:15 (phiên `fd5e7814…`), tính token từng nguồn đưa vào tool (tiktoken

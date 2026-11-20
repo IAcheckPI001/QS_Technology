@@ -8,6 +8,13 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-20 · C7: so sánh F86–F54 qua widget đúng cột nhưng thiếu nhiều khác biệt · loại: kiểm chứng
+
+- Phiên `97fa9b85…` 07:29 UTC, pipeline gpt-4o-mini, hạn mức 3 + 2: cắt cột bảng đúng; 7.063 token, 0,00085 USD.
+- Câu trả lời chỉ có số trục, màn hình, RTCP, kèm câu "không có tài liệu chi tiết" gây hiểu nhầm: chunk chung lấy
+  bảng Compensation (giống nhau) và Multi axis thay General/Hardware. Chi tiết: [crm-agent LOG](../crm-agent/LOG.md)
+  mục "Bộ câu so sánh C1–C7". Hướng sửa CMP-1 (chọn bảng có dòng khác nhau) áp chung cho website.
+
 ## 2026-11-20 · Câu so sánh: chunk riêng trước chunk chung, cắt cột bảng (D-014, tạm) · loại: thay đổi
 
 - Retriever dùng chung đổi cách chọn chunk khi so sánh: mỗi model 2 chunk riêng, 4 chunk chung (bảng chọn

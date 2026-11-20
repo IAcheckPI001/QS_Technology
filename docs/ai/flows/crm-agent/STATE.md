@@ -7,66 +7,55 @@ Cập nhật: 2026-11-20
 ## Tóm tắt
 
 - **Thử nghiệm.** Mặc định `CRM_REPORT_ENABLED=false`, agent chỉ có `product_docs_ask`.
-- Bật tool CRM thì agent có `crm_schema` + `crm_query` (phương án C, D-005). Phương án A
-  (`crm_report`, `crm_records`, `CRM_TOOLS`) **đã xoá 2026-11-16** (D-010).
-- **Đợt 0 xong ở mức code + test bằng fake** (2026-11-20, nhánh `claude/dot0-on-b3`, **chưa merge**
-  vào `feature/deploy_ai_service`): history ghi model của agent, usage lấy từ sổ của trace (không
-  mất khi vượt trần span, có ước tính cho lời gọi bị ngắt), cached tokens của bước agent, luật
-  username trong guide `crm_query`. Chi phí thật của lượt là B3 (D-013).
-- Model của agent: **gpt-4.1-mini** (quyết định 2026-11-12); `AGENT_MODEL` chưa đặt ở môi trường
-  chạy (lượt kiểm 2026-11-19 chạy gpt-4o-mini).
-- Luật nghiệp vụ và ngày nằm trong code, áp cho mọi model: năm câu hỏi không nêu bị bỏ; kỳ trong
-  filters thành `date_range`; "khách hàng" không tính spam; "nhân viên sales" theo vai trò, chỉ
-  tài khoản còn dùng; có kỳ thì bỏ `is_current`.
+- Bật tool CRM thì agent có `crm_schema` + `crm_query` (phương án C, D-005). Phương án A đã xoá (D-010).
+- Đợt 0 (sổ usage, model của agent trong history, cached tokens, luật username) và Đợt 1 bước 1 (gói E
+  so sánh + gói D ép tra nguồn) đã merge vào `feature/deploy_ai_service` (`14196d6`, chưa push).
+- Câu so sánh theo quyết định **tạm** D-014: chunk riêng từng model + chunk chung, cắt cột bảng. Đã kiểm
+  bộ C1–C7: cắt cột đạt cả 7 câu; mặc định code 2 + 4, Toma đang chạy 3 + 2 qua env.
+- Model agent ở môi trường chạy: gpt-4.1-mini (`AGENT_MODEL`); analysis trong `product_docs_ask` vẫn
+  dùng `OPENAI_MODEL` (gpt-4o-mini).
 - Dữ liệu CRM (kể cả liên hệ khách hàng) đi tới nhà cung cấp LLM khi bật tool CRM.
 
 ## Độ chín từng phần
 
 | Phần | Trạng thái | Ghi chú |
 |---|---|---|
-| `AgentRunner`: vòng lặp, deadline, cancel, giới hạn | có; kiểm thật 2026-11-19 (1 lượt) | Trần chung chỉ đếm call không bị `tool_call_limit`; `plan()` để trống (điểm gắn) |
-| `product_docs_ask` + chọn model theo capabilities | có; kiểm thật 2026-11-19 | Tra cứu trên `doc_chunks_v2` (chỉ chunk approved nếu `RETRIEVAL_APPROVED_ONLY=true`, hiện chưa có chunk approved) |
-| `crm_schema`, `crm_query` | có; eval gpt-4.1-mini 78/81 | Trần `crm_query`: 6 lần thử, 4 lần gửi CRM |
-| Giám sát query (trace, audit sau `CRM_QUERY_AUDIT_LOG`) | có, test bằng fake | Chưa xem trên log server thật |
-| Usage, model, cached tokens của lượt agent (Đợt 0) | có, test bằng fake; chưa merge | Chưa kiểm trên server thật |
-| Phân quyền tool theo role/scope | chưa có | `required_scope`, `scopes` là điểm gắn, chưa dùng |
+| `AgentRunner`: vòng lặp, deadline, cancel, giới hạn | có; kiểm thật 2026-11-20 | Dừng theo số bước, số lần gọi, deadline; chưa có tín hiệu chững lại/mơ hồ (C1–C3) |
+| Ép tra nguồn (gói D) | có; kiểm thật | Câu nhắc mã model hoặc trích nguồn bị xoá mà không gọi tool → chạy lại 1 bước `required` |
+| `product_docs_ask`, câu so sánh 1 lần gọi (gói E) | có; kiểm thật C1–C7 | Đủ khác biệt ở cặp gần giống; cặp khác nhiều thiếu bảng và LLM gán sai nhãn |
+| `crm_schema`, `crm_query` | có; eval gpt-4.1-mini 78/81 (2026-11-12) | Chưa eval lại sau đợt dọn, Đợt 0, Đợt 1 |
+| Usage, chi phí, cached tokens của lượt | có; kiểm thật | `usage.source=trace`, chi phí theo bảng giá từng model |
+| Giám sát query (trace, audit `CRM_QUERY_AUDIT_LOG`) | có, test bằng fake | Chưa xem trên log server thật |
+| Context phiên ba lớp, kiểm nguồn gốc giá trị | chưa có | Gói A, B của Đợt 1 |
+| Phân quyền tool theo role/scope | chưa có | `required_scope`, `scopes` là điểm gắn |
 | SSE tiến trình, stream token câu trả lời cuối | chưa có | Câu trả lời cuối là một `delta` |
-| Tool ghi dữ liệu, web search, MCP, provider khác OpenAI | chưa có | |
 
 ## Vấn đề mở
 
-| Vấn đề | Ảnh hưởng |
-|---|---|
-| Câu so sánh dùng quyết định **tạm** D-014 (2 chunk riêng + 4 chung, cắt cột bảng): mới kiểm 2 câu | Chạy bộ câu C1–C7 ([kế hoạch](../../reports/crm_agent_dot1_plan_2026-11-20.md) mục 9) rồi chốt hoặc chỉnh |
-| Lượt tài liệu qua agent tốn hơn pipeline khoảng 25% (lượt F54 2026-11-19: 9,9k so với 7,9k token): bước analysis trong `product_docs_ask` tốn ~5,1k token, không được cache | Chi phí, độ trễ; xem E7/E8 |
-| LLM tự suy username (thiếu `@qstcnc.com`): luật trong guide đã thêm (Đợt 0), chưa đo; code chưa chặn giá trị không có nguồn gốc (E2) | Query rỗng, gọi lại tới hết lượt |
-| Chạm giới hạn vẫn có thể trả lời "thử lại sau" (E5) | Gây hiểu nhầm |
-| "Bản ghi đầu/cuối của từng người" phải mỗi người một query (E4) | Nhiều người dễ chạm trần |
-| Chưa có case eval câu hỏi nhiều sale hai lượt; chưa eval lại sau đợt dọn và Đợt 0 | Chưa đo được các lỗi trên |
-| "Khách được hỗ trợ" của phiếu (r1): `customer_organization_id` hay `product_item_id.customer_id` | Cần Toma/CRM chốt |
-| `update_agent_conversation_state` không ghi `language`, mang theo `pending` cũ; `Prune` đếm token theo model chung | Lệch nhỏ |
-| `CRM_REPORT_ENABLED` đặt tên theo phương án A nhưng bật `crm_schema`/`crm_query` | Đổi tên cần quyết định |
-| CRM: mô tả `is_current` mâu thuẫn luật có kỳ; `date_range` cắt theo ngày UTC; index tĩnh lệch 13 bảng; `contains` phân biệt dấu | Chờ CRM (`timezone`, dump mới) |
-| Token CRM không được làm mới; bảng ngoài `customers` cần `auth.manage_roles` | `crm_auth_failed` ở phiên dài; sale thường nhận `crm_forbidden` |
-| `CRM_CHAT_FLOW` mặc định `agent` dù thử nghiệm (D-006) | Xem lại trước production |
+| ID | Vấn đề | Ảnh hưởng |
+|---|---|---|
+| CMP-1 | Chunk chung của câu so sánh chọn theo điểm, hay lấy bảng giống nhau (Compensation) thay bảng có khác biệt | Thiếu khác biệt, kết quả đổi theo cách hỏi |
+| CMP-2 | LLM gán "Max. Spindle" thành "spindle đồng thời" (4/5 lượt F54–F86), bỏ qua dòng có trong nguồn | Sai dữ liệu; đề xuất code tính sẵn khác/giống |
+| CMP-3 | Model không có tài liệu (F86E): vẫn suy đoán "bản nâng cấp" | Thông tin bịa |
+| CMP-4 | So 3 model đã ~2.890/2.968 token output tool | So 4 model bị cắt nguồn |
+| D-014 | Hạn mức 2 + 4 hay 3 + 2 chưa chốt | Chờ CMP-1 rồi Toma chốt |
+| P1–P4 | Không lưu kết quả tool qua lượt; nạp toàn bộ history; chạm trần trả "thử lại sau"; định danh không kiểm nguồn gốc | Gói A, C, B của [kế hoạch Đợt 1](../../reports/crm_agent_dot1_plan_2026-11-20.md) |
+| – | Lượt tài liệu qua agent tốn hơn pipeline ~3 lần ở câu so sánh (0,0023–0,0035 so với 0,0009–0,0011 USD) | Chi phí; analysis không cache được |
+| r1 | "Khách được hỗ trợ" của phiếu: `customer_organization_id` hay `product_item_id.customer_id` | Cần Toma/CRM chốt |
+| – | `update_agent_conversation_state` không ghi `language`, mang theo `pending` cũ; `Prune` đếm token theo model chung | Lệch nhỏ |
+| – | `CRM_REPORT_ENABLED` đặt tên theo phương án A | Đổi tên cần quyết định |
+| – | CRM: `is_current` mâu thuẫn luật có kỳ; `date_range` theo ngày UTC; index tĩnh lệch 13 bảng; token CRM không làm mới | Chờ CRM |
+| – | `CRM_CHAT_FLOW` mặc định `agent` dù thử nghiệm (D-006) | Xem lại trước production |
 
 ## Kết quả kiểm gần nhất
 
-- 2026-11-20, Đợt 0, từ `backend/` của worktree (nhánh `claude/dot0-on-b3`): `pytest tests` →
-  1107 passed, 14 skipped, 1 failed có sẵn (`test_f86_baseline`: CSV bị checkout CRLF trong
-  worktree). Thêm `test_usage_ledger.py` (8 test).
-- 2026-11-19, lượt thật "F54 có bao nhiêu trục" (phiên `c999efd3…`, `flow=agent`): 2 bước LLM,
-  1 lần `product_docs_ask`, trả lời đúng "4 trục" với nguồn catalog; 9.914 token vào, 9,2 s.
-- 2026-11-12, eval gpt-4.1-mini 27 case × 3 ([báo cáo](../../reports/crm_agent_eval_C_gpt41_2026-11-12.md)): **78/81**.
+- 2026-11-20, bộ câu so sánh C1–C7 (phiên `8de1e4b1…`, `97fa9b85…`, backend `14196d6`, hạn mức 3 + 2):
+  1 lần gọi tool mỗi lượt agent, 9,7k–11,8k token vào; cắt cột đúng ở cả 7 câu; C2, C3 đủ khác biệt.
+- 2026-11-20, `pytest tests` (worktree): 1117 passed, 1 failed có sẵn (`test_f86_baseline`, CSV CRLF).
 
 ## Bước tiếp theo
 
-1. Toma review và merge nhánh `claude/dot0-on-b3`; khởi động lại backend, gửi một lượt CRM và kiểm
-   `usage.cached_input_tokens`, `model` trong history.
-2. Toma chạy lại eval (`run_crm_agent_eval.py`) sau đợt dọn và luật username; đặt `AGENT_MODEL`.
-3. Đợt 1 theo [kế hoạch 2026-11-20](../../reports/crm_agent_dot1_plan_2026-11-20.md) (đã duyệt Q1–Q5):
-   gói E+D đã merge (`5685901`) và kiểm thật 2026-11-20: so sánh 1 lần gọi, token giảm 63%, nhưng thiếu
-   số trục (bảng chung chiếm hạn mức) và chưa trích nguồn theo thuộc tính → đã sửa (`a627bd8`: chunk riêng
-   mỗi model trước chunk chung, guide trích theo giá trị), chờ Toma hỏi lại; Toma chạy
-   `run_retrieval_eval.py`; tiếp theo C1–C3, A, B, C4.
+1. Agent: Đợt 1 bước 2, gói C1–C3 (tín hiệu dừng sớm, báo ngân sách, bước chốt có cấu trúc).
+2. Toma: chạy `run_crm_agent_eval.py` (mốc G1) và `run_retrieval_eval.py`; đối chiếu `cost_usd`.
+3. Sau đó: CMP-1, CMP-2 rồi chốt D-014; gói A, B, C4 theo kế hoạch Đợt 1.
 4. Chốt r1; gửi CRM: `timezone`, mô tả `is_current`, dump schema mới.
