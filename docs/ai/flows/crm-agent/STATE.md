@@ -44,8 +44,10 @@ Cập nhật: 2026-11-20
 | D-014 | Hạn mức 2 + 4 hay 3 + 2 chưa chốt | Chờ CMP-1 rồi Toma chốt |
 | P4 | Định danh không kiểm nguồn gốc | Gói B của [kế hoạch Đợt 1](../../reports/crm_agent_dot1_plan_2026-11-20.md); P1–P3 đã có code (A, C1–C3) |
 | LC-1 | `crm_query` tra tên ra nhiều người → dừng hỏi lại; câu "liệt kê nhân viên tên X" không đi tiếp được | Cần đo bằng eval |
-| LC-2 | Gọi gpt-4.1-mini hết giờ 20 s: 4 lượt trong ~1 giờ (2026-11-20) | Có code: thử lại một lần, ghi request id và `timeout_phase` (nhánh `claude/dot1-lc`); chờ kiểm thật |
-| LC-4 | LLM không thử lại sau lỗi cột; đoán cột khi chưa đọc `crm_schema` | Có code: kiểm cột trước CRM kèm gợi ý, bắt sửa một lần (nhánh `claude/dot1-lc`); chờ kiểm thật |
+| LC-2 | gpt-4.1-mini đôi khi treo 20 s (phía OpenAI: `timeout_phase=read`) | Đã merge thử lại một lần; kiểm thật 2026-11-20: cứu được lượt hết giờ |
+| LC-4 | LLM đoán cột khi chưa đọc `crm_schema` | Đã merge kiểm cột kèm gợi ý + bắt sửa; kiểm thật: LLM tự sửa theo gợi ý |
+| LC-7 | `AGENT_TURN_INPUT_BUDGET=15000` thấp: lượt CRM 3 bước ~20k → dừng `budget`, bước chốt nói sai "chưa lấy được" | Đề xuất 40k, sửa chỉ dẫn bước chốt |
+| LC-8 | Bản ghi liệt kê không có cột tên/tiêu đề thì facts không có nhãn; gọi bằng nội dung không khớp | Cần quyết định nhãn từ `content` |
 | LC-5 | "Có thuộc khách hàng" kết luận từ một trang khách bất kỳ; `support_waiting_messages.customer_id` không khoá ngoại | Sai logic; cần hint bảng |
 | LC-6 | "Hộp tin nhắn chờ" lúc 18 tin (mọi tin) lúc 7 (`staff_deleted_at` null) | Cần Toma/CRM chốt nghĩa |
 | LC-3 | Bản ghi nhắc ở lượt trước mất UUID (P1) | Gói A đã giải ở lượt thật; theo dõi thêm |
@@ -58,8 +60,7 @@ Cập nhật: 2026-11-20
 
 ## Kết quả kiểm gần nhất
 
-- 2026-11-20 09:19, gói A, 7 câu CRM (phiên `38f77fbd…`): 1 đúng nhờ facts, 2 hết giờ LLM, 2 không thử lại sau lỗi
-  cột, 1 suy luận sai, 1 lệch định nghĩa (chi tiết LOG).
+- 2026-11-20 09:57, sau LC-2/LC-4, 7 câu CRM (phiên `45efd790…`): 5/7 có số liệu đúng (trước 1/7); sai do LC-7, LC-8.
 - 2026-11-20, lượt CRM thật sau C1–C3 (phiên `8de1e4b1…`, đối chiếu Reporting API): 5/7 lượt đúng; sai do mất
   UUID qua lượt (LC-3) và hết giờ LLM (LC-2). `final_reason` ghi đúng (`answered`, `budget`, `limit`).
 - 2026-11-20, bộ câu so sánh C1–C7 (phiên `8de1e4b1…`, `97fa9b85…`, backend `14196d6`, hạn mức 3 + 2):
@@ -69,8 +70,8 @@ Cập nhật: 2026-11-20
 
 ## Bước tiếp theo
 
-1. Toma: merge `claude/dot1-lc`, chạy lại 7 câu CRM; agent đọc trace (`timeout_phase`, `forced_repair`). Sau đó
-   LC-5 (hint bảng tin nhắn chờ); Toma chốt LC-6.
+1. Agent (chờ Toma duyệt): LC-7 nâng trần token lượt và sửa chỉ dẫn bước chốt; LC-8 theo quyết định của Toma;
+   LC-5 hint bảng tin nhắn chờ. Toma chốt LC-6.
 2. Toma: thêm `AGENT_TURN_INPUT_BUDGET`, `AGENT_HISTORY_TURNS`, `CONTEXT_HISTORY_TURNS` vào `.env.example`; chạy
    `run_crm_agent_eval.py` (G1) và `run_retrieval_eval.py`.
 3. Sau đó: gói B, C4; CMP-1, CMP-2 rồi chốt D-014.

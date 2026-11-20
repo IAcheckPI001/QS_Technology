@@ -7,6 +7,26 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Kiểm lại 7 câu sau LC-2/LC-4: thử lại cứu được lượt hết giờ, gợi ý cột được LLM tự sửa; trần token lượt 15k quá thấp · loại: kiểm chứng
+
+- Dữ liệu: phiên `45efd790…` 09:57–09:59 UTC, backend `a8da3c9`, gpt-4.1-mini; đối chiếu Reporting API (tunnel CRM
+  offline từ 10:00, chưa đối chiếu được tên sale ở câu 6).
+- 5/7 có số liệu đúng (trước: 1/7): 18 tin chờ (định nghĩa "mọi tin", LC-6); 7 tin mới nhất; 2 phiếu tháng 11 đều
+  `closed`; 5 khách mới nhất đúng thứ tự (C000612…C000608) kèm sale; "khách thứ 2" = C000611, 0 thiết bị (ordinal
+  của facts dùng đúng).
+- LC-2: 1 lần hết giờ (câu 1, bước 2) có `timeout_phase=read` (request đã tới OpenAI, chờ phản hồi 19 s); thử lại
+  xong 1,5 s (`provider_processing_ms` 863). Nguồn: phía OpenAI, không phải mạng hay CRM. 20 lần gọi còn lại 0,7–3,4 s.
+- LC-4: câu 6 `name` bị chặn trước CRM với gợi ý `full_name`; câu 5 `created_at` đặt trong filters bị chặn; cả hai
+  LLM tự sửa ở bước sau, không cần `forced_repair`.
+- Sai 1 (câu 3, 4): lọc `title eq "<nội dung>"` thay vì `content`; 0 dòng nên kết luận "không tìm thấy". Facts có
+  id của tin #3 nhưng **không có nhãn**: lượt liệt kê chỉ chọn `content` (không lưu vào facts) nên nhân viên gọi
+  bằng nội dung thì LLM không khớp được.
+- Sai 2 (câu 5, 6): `final_reason=budget` vì token vào cộng dồn 21–24k > `AGENT_TURN_INPUT_BUDGET=15000`; một lượt
+  CRM 3 bước đã khoảng 20k (mỗi bước ~6–8k vì guide). Khung bước chốt khiến LLM nói sai "chưa lấy được…" và hỏi lại
+  thừa dù dữ liệu đủ.
+- Mở tiếp: (LC-7) nâng trần token lượt (đề xuất 40k) và sửa chỉ dẫn bước chốt khi dừng vì ngân sách; (LC-8) nhãn
+  cho bản ghi không có cột tên/tiêu đề trong lượt liệt kê; LC-5, LC-6.
+
 ## 2026-11-20 · LLM hết giờ được đo và thử lại; lỗi cột bị chặn trước CRM, kèm gợi ý, và bắt sửa một lần (LC-2, LC-4) · loại: thay đổi
 
 - Vấn đề: lượt thật 2026-11-20 (mục dưới): 4 lần gọi gpt-4.1-mini treo đúng 20 s (gửi lại cùng nội dung xong
