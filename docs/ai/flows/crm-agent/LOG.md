@@ -7,6 +7,19 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Kiểm lại so sánh với gpt-4.1-mini: một lần gọi, đủ thông số chính · loại: kiểm chứng
+
+- Dữ liệu: phiên `fd5e7814…`, 05:44–05:45 UTC, `AGENT_MODEL=gpt-4.1-mini`, backend `f8fc979`.
+- "F86 khác F54": 1 lần `product_docs_ask`, 8 nguồn (đủ chunk tổng quan hai model); 11.996 token vào
+  (cache 6.272), 560 ra, 0,003356 USD, 11,2 s. Đúng nguồn: 6/4 trục, EtherCAT, kích thước, màn hình,
+  I/O, spindle 2/1, Look-Ahead 500/250, điểm giống nhau. Thiếu quản lý tuổi dao, đa trục tùy chọn (bảng
+  Tool Manager/Multi axis không vào 2 suất chung lần này).
+- "So sánh F86 và F10T": 1 lần gọi, 11.811 token, 557 ra, 0,003294 USD, 9,0 s. Đúng nguồn (kể cả RTCP
+  tùy chọn), trừ suy luận "F10T nhỏ gọn hơn F86" (F10T ngắn hơn nhưng rộng, dày hơn); thiếu "cảm ứng".
+- Cả hai chưa tách mục "Khác nhau"/"Giống nhau" nhưng mỗi dòng ghi rõ "cả hai" hoặc giá trị từng model.
+- Kết luận: G4 đạt trừ một suy luận kích thước tổng hợp; G5 sát ngưỡng (11,8–12,0k). Mở tiếp: guide cấm
+  kết luận "lớn/nhỏ/gọn hơn" từ nhiều số đo; cân nhắc `RETRIEVAL_COMPARE_SHARED=3`.
+
 ## 2026-11-20 · Kiểm thật bản sửa so sánh (`f8fc979`): đủ số trục, nhưng chạy gpt-4o-mini · loại: kiểm chứng
 
 - Dữ liệu: phiên `fd5e7814…`, 2 lượt 05:38–05:39 UTC; **`AGENT_MODEL` vẫn là gpt-4o-mini** (đặt khi kiểm G2),
