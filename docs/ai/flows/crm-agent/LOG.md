@@ -7,6 +7,19 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Trần token lượt 40k; bước chốt khi hết lượt gọi không còn nói thiếu dữ liệu (LC-7) · loại: thay đổi
+
+- Vấn đề: lượt thật 09:57 (mục dưới): câu 5, 6 dừng `budget` ở ~21–24k vì trần 15k, và chỉ dẫn bước chốt ("… mà chưa
+  đủ kết quả", khung "phần chưa lấy được") khiến LLM nói sai "chưa lấy được" và hỏi lại dù dữ liệu đủ.
+- Thay đổi (Toma duyệt 2026-11-20): `AGENT_TURN_INPUT_BUDGET` mặc định 15000 → 40000 (lượt CRM 3 bước ~20k, mỗi bước
+  ~6–8k). Lý do `budget` nêu trung tính ("đã dùng hết ngân sách gọi tool"). Với `budget`/`limit`, chỉ dẫn đặt điều
+  kiện trước: kết quả đã đủ thì trả lời bình thường, không nhắc giới hạn, không nói thiếu, không hỏi lại; chỉ khi thiếu
+  mới theo khung. `ambiguous`/`plateau` giữ khung cũ.
+- File: `agent/prompts.py`, `core/config.py`, `agent/runner.py`; test `test_agent_loop_control.py` (+1).
+- Kiểm chứng: `pytest tests` → 1165 passed, 14 skipped, 1 failed có sẵn (CSV CRLF). Chưa kiểm thật.
+- Ảnh hưởng cấu hình: mặc định mới; `.env` đang đặt `AGENT_TURN_INPUT_BUDGET=15000` thì phải sửa tay.
+- Chưa kiểm / mở tiếp: hỏi lại câu 5, 6; LC-8, LC-5, LC-6.
+
 ## 2026-11-20 · Kiểm lại 7 câu sau LC-2/LC-4: thử lại cứu được lượt hết giờ, gợi ý cột được LLM tự sửa; trần token lượt 15k quá thấp · loại: kiểm chứng
 
 - Dữ liệu: phiên `45efd790…` 09:57–09:59 UTC, backend `a8da3c9`, gpt-4.1-mini; đối chiếu Reporting API (tunnel CRM

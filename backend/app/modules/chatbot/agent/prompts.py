@@ -50,18 +50,27 @@ REPAIR_NOTE = (
 
 
 # Runner chèn trước bước chốt khi dừng vòng lặp sớm (Đợt 1 gói C), theo `final_reason`.
+# Lý do dừng nêu trung tính: "budget"/"limit" chỉ là hết lượt gọi, KHÔNG có nghĩa dữ liệu thiếu (kiểm thật
+# 2026-11-20: câu "…mà chưa đủ kết quả" khiến LLM nói sai "chưa lấy được" dù kết quả đã đủ, LC-7).
 _FINAL_REASONS = {
     "limit": "Lượt đã hết số bước, số lần gọi tool hoặc thời gian.",
     "plateau": "Tool trả rỗng hoặc lỗi ở hai bước liên tiếp; gọi thêm khó có kết quả.",
-    "budget": "Lượt đã dùng phần lớn ngân sách (lần gọi tool hoặc token) mà chưa đủ kết quả.",
+    "budget": "Lượt đã dùng hết ngân sách gọi tool (số lần gọi hoặc token).",
     "ambiguous": "Kết quả tool cho thấy yêu cầu còn mơ hồ: nhiều lựa chọn cùng khớp, cần nhân viên chọn.",
 }
+# Hết lượt gọi (không phải vì dữ liệu): trước hết xét kết quả đã có có đủ trả lời không.
+_ENOUGH_FIRST = (
+    "Không gọi thêm tool. Trước hết đối chiếu câu hỏi với kết quả tool của lượt này: nếu đã đủ trả lời thì trả "
+    "lời bình thường, KHÔNG nhắc giới hạn, KHÔNG nói thiếu dữ liệu, KHÔNG hỏi lại. Chỉ khi thật sự còn thiếu một "
+    "phần câu hỏi thì trả lời theo khung:"
+)
 _FINAL_FORMAT = (
-    "Không gọi thêm tool. Trả lời ngay theo khung:\n"
     "1. Phần đã xác minh: chỉ thông tin có trong kết quả tool của lượt này, giữ [S#].\n"
-    "2. Phần chưa lấy được và lý do (theo lý do dừng ở trên). Không nói \"thử lại sau\".\n"
+    "2. Phần chưa lấy được (nêu cụ thể là phần nào của câu hỏi) và lý do. Không nói \"thử lại sau\".\n"
     "3. Một câu hỏi làm rõ kèm 2-4 lựa chọn cụ thể (lấy từ kết quả tool nếu có), để lượt sau lấy được phần còn thiếu."
 )
+_FINAL_LEAD = {"limit": _ENOUGH_FIRST, "budget": _ENOUGH_FIRST}
+_FINAL_LEAD_DEFAULT = "Không gọi thêm tool. Trả lời ngay theo khung:"
 _FINAL_TAIL = {
     "ambiguous": "Nhân viên chỉ cần danh sách các lựa chọn đó thì trả lời bằng danh sách; cần chọn một để đi tiếp thì mục 3 là bắt buộc.",
 }
@@ -73,7 +82,8 @@ def final_step_note(reason: str) -> str | None:
     cause = _FINAL_REASONS.get(reason)
     if cause is None:
         return None
-    return f"Lý do dừng: {cause}\n{_FINAL_FORMAT}\n{_FINAL_TAIL.get(reason, _FINAL_TAIL_DEFAULT)}"
+    lead = _FINAL_LEAD.get(reason, _FINAL_LEAD_DEFAULT)
+    return f"Lý do dừng: {cause}\n{lead}\n{_FINAL_FORMAT}\n{_FINAL_TAIL.get(reason, _FINAL_TAIL_DEFAULT)}"
 
 
 class GuidedTool(Protocol):

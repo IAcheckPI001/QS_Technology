@@ -91,7 +91,7 @@ class AgentLimits:
     max_concurrent_runs: int = 8
     history_turns: int = 3             # số lượt (hỏi + đáp) gần nhất đưa vào prompt
     max_answer_tokens: int = 1200
-    turn_input_budget: int = 15000     # 0 = tắt
+    turn_input_budget: int = 40000     # 0 = tắt
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "AgentLimits":

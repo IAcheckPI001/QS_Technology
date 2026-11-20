@@ -72,8 +72,8 @@ class Settings(BaseSettings):
     # Số lượt hoàn tất gần nhất ContextLoader đọc từ DB (dùng chung website và CRM); trước đây đọc cả phiên.
     context_history_turns: int = Field(default=10, ge=1, alias="CONTEXT_HISTORY_TURNS")
     # Trần token vào cộng dồn của các bước LLM trong vòng lặp agent (Đợt 1 gói C): vượt thì dừng gọi
-    # tool, chuyển sang bước chốt. 0 = tắt. Đề xuất ban đầu 15k, chỉnh sau khi đo.
-    agent_turn_input_budget: int = Field(default=15000, ge=0, alias="AGENT_TURN_INPUT_BUDGET")
+    # tool, chuyển sang bước chốt. 0 = tắt. 40k (2026-11-20, LC-7): một lượt CRM 3 bước đã ~20k (mỗi bước ~6-8k).
+    agent_turn_input_budget: int = Field(default=40000, ge=0, alias="AGENT_TURN_INPUT_BUDGET")
     # Model riêng cho vòng lặp agent (kênh CRM); rỗng = OPENAI_MODEL. Stage phân tích trong tool
     # product_docs_ask và luồng website vẫn dùng OPENAI_MODEL.
     agent_model: str = Field(default="", alias="AGENT_MODEL")

@@ -46,7 +46,7 @@ Cập nhật: 2026-11-20
 | LC-1 | `crm_query` tra tên ra nhiều người → dừng hỏi lại; câu "liệt kê nhân viên tên X" không đi tiếp được | Cần đo bằng eval |
 | LC-2 | gpt-4.1-mini đôi khi treo 20 s (phía OpenAI: `timeout_phase=read`) | Đã merge thử lại một lần; kiểm thật 2026-11-20: cứu được lượt hết giờ |
 | LC-4 | LLM đoán cột khi chưa đọc `crm_schema` | Đã merge kiểm cột kèm gợi ý + bắt sửa; kiểm thật: LLM tự sửa theo gợi ý |
-| LC-7 | `AGENT_TURN_INPUT_BUDGET=15000` thấp: lượt CRM 3 bước ~20k → dừng `budget`, bước chốt nói sai "chưa lấy được" | Đề xuất 40k, sửa chỉ dẫn bước chốt |
+| LC-7 | Trần token lượt 15k thấp, bước chốt nói sai "chưa lấy được" | Có code (40k, chỉ dẫn "đủ thì trả lời bình thường"), nhánh `claude/dot1-lc7`; chờ kiểm thật |
 | LC-8 | Bản ghi liệt kê không có cột tên/tiêu đề thì facts không có nhãn; gọi bằng nội dung không khớp | Cần quyết định nhãn từ `content` |
 | LC-5 | "Có thuộc khách hàng" kết luận từ một trang khách bất kỳ; `support_waiting_messages.customer_id` không khoá ngoại | Sai logic; cần hint bảng |
 | LC-6 | "Hộp tin nhắn chờ" lúc 18 tin (mọi tin) lúc 7 (`staff_deleted_at` null) | Cần Toma/CRM chốt nghĩa |
@@ -70,7 +70,7 @@ Cập nhật: 2026-11-20
 
 ## Bước tiếp theo
 
-1. Agent (chờ Toma duyệt): LC-7 nâng trần token lượt và sửa chỉ dẫn bước chốt; LC-8 theo quyết định của Toma;
+1. Toma: merge `claude/dot1-lc7`, hỏi lại câu 5, 6 (kiểm `.env` không còn `AGENT_TURN_INPUT_BUDGET=15000`). Agent: LC-8 theo quyết định của Toma;
    LC-5 hint bảng tin nhắn chờ. Toma chốt LC-6.
 2. Toma: thêm `AGENT_TURN_INPUT_BUDGET`, `AGENT_HISTORY_TURNS`, `CONTEXT_HISTORY_TURNS` vào `.env.example`; chạy
    `run_crm_agent_eval.py` (G1) và `run_retrieval_eval.py`.

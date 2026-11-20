@@ -262,7 +262,17 @@ def test_retrieval_view_exposes_final_reason():
 def test_turn_input_budget_setting(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://user:pass@host/db")
     monkeypatch.delenv("AGENT_TURN_INPUT_BUDGET", raising=False)
-    assert Settings(_env_file=None).agent_turn_input_budget == 15000
+    assert Settings(_env_file=None).agent_turn_input_budget == 40000
     monkeypatch.setenv("AGENT_TURN_INPUT_BUDGET", "-1")
     with pytest.raises(ValueError):
         Settings(_env_file=None)
+
+def test_budget_and_limit_notes_put_enough_results_first_and_do_not_claim_missing_data():
+    # LC-7 (2026-11-20): "… mà chưa đủ kết quả" làm LLM nói sai "chưa lấy được" dù dữ liệu đã đủ.
+    for reason in ("budget", "limit"):
+        note = final_step_note(reason)
+        assert "chưa đủ kết quả" not in note
+        assert note.index("đã đủ trả lời thì trả lời bình thường") < note.index("1. Phần đã xác minh")
+        assert "KHÔNG nói thiếu dữ liệu" in note
+    for reason in ("ambiguous", "plateau"):
+        assert "Trả lời ngay theo khung" in final_step_note(reason)

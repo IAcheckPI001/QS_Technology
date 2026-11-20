@@ -115,7 +115,7 @@ Phương án C (D-005) là bộ tool CRM duy nhất từ 2026-11-16 (D-010). Mô
 | `CRM_QUERY_AUDIT_LOG` | `false` | Audit `crm_query` có giá trị filter và body gửi CRM (có thể là PII) vào logger `app.crm_query.audit`; chỉ bật có thời hạn |
 | `CRM_API_TIMEOUT_S`, `CRM_REPORT_TIMEZONE` | 10, `Asia/Ho_Chi_Minh` | |
 | `AGENT_MAX_STEPS`, `AGENT_MAX_TOOL_CALLS` | 6, 8 | |
-| `AGENT_TURN_INPUT_BUDGET` | 15000 | Trần token vào cộng dồn của các bước LLM trong vòng lặp; vượt thì dừng, `final_reason=budget`. 0 = tắt. Ngưỡng đề xuất, chỉnh sau khi đo |
+| `AGENT_TURN_INPUT_BUDGET` | 40000 | Trần token vào cộng dồn của các bước LLM trong vòng lặp; vượt thì dừng, `final_reason=budget`. 0 = tắt. 15k cũ quá thấp: lượt CRM 3 bước ~20k (LC-7) |
 | `AGENT_MODEL`, `AGENT_REASONING_EFFORT`, `AGENT_MAX_COMPLETION_TOKENS` | rỗng (= `OPENAI_MODEL`), rỗng, 1200 | Model riêng cho vòng lặp agent; model suy luận (`gpt-5…`, `o3…`) gửi `max_completion_tokens` và không gửi `temperature` |
 | `AGENT_TURN_TIMEOUT_S`, `AGENT_LLM_TIMEOUT_S`, `AGENT_TOOL_TIMEOUT_S`, `AGENT_FINAL_RESERVE_S` | 60, 20, 20, 10 | Mọi timeout lấy từ deadline chung |
 | `AGENT_TOOL_OUTPUT_TOKENS`, `AGENT_PARALLEL_TOOLS`, `AGENT_MAX_CONCURRENT_RUNS` | 3000, 3, 8 | |

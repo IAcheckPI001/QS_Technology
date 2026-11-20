@@ -47,7 +47,7 @@ phải quy trình đang chạy.
 | `AGENT_REASONING_EFFORT` | không | rỗng | Chỉ cho model suy luận (`gpt-5…`, `o3…`): `none`/`minimal`/`low`/`medium`/`high` tuỳ model |
 | `AGENT_HISTORY_TURNS` | không | 3 | Số lượt (hỏi + đáp) gần nhất vòng lặp agent đưa vào prompt; thay `AGENT_HISTORY_MESSAGES` (không còn dùng) |
 | `CONTEXT_HISTORY_TURNS` | không | 10 | Số lượt hoàn tất gần nhất đọc từ `chat_history` cho context (website và CRM) |
-| `AGENT_TURN_INPUT_BUDGET` | không | 15000 | Trần token vào cộng dồn của các bước LLM trong một lượt agent; vượt thì dừng gọi tool và trả lời phần đã có. `0` = tắt |
+| `AGENT_TURN_INPUT_BUDGET` | không | 40000 | Trần token vào cộng dồn của các bước LLM trong một lượt agent; vượt thì dừng gọi tool và trả lời phần đã có. `0` = tắt |
 | `AGENT_MAX_COMPLETION_TOKENS` | không | 1200 | Token đầu ra mỗi bước LLM của agent; model suy luận tính cả token suy nghĩ, đặt khoảng 4000 |
 | `CRM_QUERY_AUDIT_LOG` | không | `false` | Khi bật, log server (logger `app.crm_query.audit`) chứa giá trị filter và query gửi CRM, có thể là PII. Chỉ bật có thời hạn để đánh giá query, và giới hạn người được xem log |
 | `RETRIEVAL_COMPARE_PER_MODEL`, `RETRIEVAL_COMPARE_SHARED` | không | `2`, `4` | Câu so sánh nhiều model: số chunk riêng của mỗi model, và số chunk chung (khớp nhiều model, vd bảng chọn model) giữ thêm, thay top-k chung. Áp cho cả website và `product_docs_ask`. Mặc định là quyết định **tạm** D-014 (2026-11-20); `.env` đặt giá trị khác sẽ ghi đè |
