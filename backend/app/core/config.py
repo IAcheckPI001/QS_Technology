@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     agent_parallel_tools: int = Field(default=3, alias="AGENT_PARALLEL_TOOLS")
     agent_max_concurrent_runs: int = Field(default=8, alias="AGENT_MAX_CONCURRENT_RUNS")
     agent_history_messages: int = Field(default=6, alias="AGENT_HISTORY_MESSAGES")
+    # Trần token vào cộng dồn của các bước LLM trong vòng lặp agent (Đợt 1 gói C): vượt thì dừng gọi
+    # tool, chuyển sang bước chốt. 0 = tắt. Đề xuất ban đầu 15k, chỉnh sau khi đo.
+    agent_turn_input_budget: int = Field(default=15000, ge=0, alias="AGENT_TURN_INPUT_BUDGET")
     # Model riêng cho vòng lặp agent (kênh CRM); rỗng = OPENAI_MODEL. Stage phân tích trong tool
     # product_docs_ask và luồng website vẫn dùng OPENAI_MODEL.
     agent_model: str = Field(default="", alias="AGENT_MODEL")

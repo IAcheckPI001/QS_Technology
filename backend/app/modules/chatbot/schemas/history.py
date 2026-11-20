@@ -209,6 +209,8 @@ class RetrievalSnapshotResponse(BaseModel):
     agent_steps: list[AgentStepItem] = Field(default_factory=list)
     answered_without_tools: bool | None = None
     invalid_citations: list[str] = Field(default_factory=list)
+    # Lượt agent: lý do kết thúc vòng lặp (answered, limit, plateau, ambiguous, budget, no_answer).
+    final_reason: str | None = None
 
 
 class ChatHistoryResponse(BaseModel):

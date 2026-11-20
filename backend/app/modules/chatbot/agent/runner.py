@@ -37,6 +37,7 @@ from app.modules.chatbot.schemas.system import (
     AgentRun,
     AgentStep,
     AssistantTurn,
+    FinalReason,
     LLMCall,
     LLMStage,
     RunState,
@@ -50,7 +51,7 @@ from app.util.normalize import guess_reply_language
 from app.util.token_counter import count_tokens
 
 from .deadline import Deadline
-from .prompts import FORCE_TOOL_NOTE, build_system_prompt
+from .prompts import FORCE_TOOL_NOTE, build_system_prompt, final_step_note
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,7 @@ class AgentLimits:
     max_concurrent_runs: int = 8
     history_messages: int = 6
     max_answer_tokens: int = 1200
+    turn_input_budget: int = 15000     # 0 = tắt
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "AgentLimits":
@@ -98,6 +100,7 @@ class AgentLimits:
             max_concurrent_runs=settings.agent_max_concurrent_runs,
             history_messages=settings.agent_history_messages,
             max_answer_tokens=settings.agent_max_completion_tokens,
+            turn_input_budget=settings.agent_turn_input_budget,
         )
 
 
@@ -140,6 +143,7 @@ class AgentRunner:
                         tool_calls=sum(1 for step in steps if step.kind == "tool"),
                         answered_without_tools=state.agent.answered_without_tools,
                         invalid_citations=len(state.agent.invalid_citations),
+                        final_reason=state.agent.final_reason,
                     )
                     # Lượt vẫn trả lời được (outcome ok) nhưng tool lỗi: đánh dấu trên root
                     # để lọc/grep được mà không phải đọc từng span.
@@ -177,8 +181,11 @@ class AgentRunner:
 
         step = 0
         tool_calls_used = 0
+        input_tokens = 0                         # token vào cộng dồn của các bước LLM trong vòng lặp
         completed: dict[str, ToolOutcome] = {}   # call key -> outcome thành công trong lượt
         calls_per_tool: Counter[str] = Counter()
+        tracker = _ProgressTracker()
+        reason: FinalReason = "limit"
         tool_choice: ToolChoice = "auto"
         forced = False
         while step < limits.max_steps:
@@ -190,6 +197,7 @@ class AgentRunner:
                 turn = await self._complete(state, messages, tools, tool_choice, timeout, step)
             except TimeoutError:
                 break
+            input_tokens += turn.usage.input_tokens
             tool_choice = "auto"   # chỉ ép một bước, như reset_tool_choice của Agents SDK
             if not turn.tool_calls:
                 if turn.content and turn.content.strip():
@@ -204,7 +212,9 @@ class AgentRunner:
                         messages.append({"role": "system", "content": FORCE_TOOL_NOTE})
                         tool_choice = "required"
                         continue
+                    self._finish(state, "answered")
                     return answer
+                reason = "no_answer"
                 break  # rỗng: thử lại một lần ở bước cuối với tool_choice="none"
 
             # Content đi kèm tool call là suy nghĩ trung gian: không gửi cho người dùng,
@@ -228,16 +238,33 @@ class AgentRunner:
                 outcome = ToolOutcome(tool_call_id=call.id, name=call.name, error_code=skipped_code)
                 self._record_tool(state, step, outcome)
                 outcomes.append(outcome)
-            # Mỗi tool_call_id phải có đúng một message role=tool, theo thứ tự call.
+            # Mỗi tool_call_id phải có đúng một message role=tool, theo thứ tự call. Mỗi message kèm
+            # ngân sách còn lại để LLM tự gói câu trả lời trước khi cạn (Đợt 1 gói C).
+            turn_budget = {"turn_budget": {
+                "steps_left": max(limits.max_steps - step, 0),
+                "tool_calls_left": max(limits.max_tool_calls - tool_calls_used, 0),
+            }}
             for outcome in outcomes:
                 messages.append({
                     "role": "tool",
                     "tool_call_id": outcome.tool_call_id,
-                    "content": outcome.message_content(limits.tool_output_tokens, self._count),
+                    "content": outcome.message_content(limits.tool_output_tokens, self._count, turn_budget),
                 })
             if skipped or tool_calls_used >= limits.max_tool_calls:
                 break
+            stop = tracker.update([(outcome.name, self._progress(outcome)) for outcome in outcomes])
+            if stop is None and not tracker.seen_ok and 2 * tool_calls_used >= limits.max_tool_calls:
+                stop = "budget"          # đã dùng nửa số lần gọi mà chưa có kết quả dùng được
+            if stop is None and 0 < limits.turn_input_budget < input_tokens:
+                stop = "budget"
+            if stop is not None:
+                reason = stop
+                logger.info("agent loop stopped early step=%d reason=%s", step, stop)
+                break
 
+        self._finish(state, reason)
+        if (note := final_step_note(reason)) is not None:
+            messages.append({"role": "system", "content": note})
         final_timeout = deadline.budget(limits.llm_timeout_s)
         if final_timeout < MIN_CALL_BUDGET_S:
             raise AgentError("agent_timeout", "Agent turn ran out of time.")
@@ -488,6 +515,19 @@ class AgentRunner:
             outcome.latency_ms, (outcome.error_detail or "-")[:300],
         )
 
+    def _progress(self, outcome: ToolOutcome) -> str:
+        """Tín hiệu của một outcome: lỗi → "error"; output → theo `ToolSpec.progress` của tool."""
+        spec = self._registry.get(outcome.name)
+        if not outcome.ok or outcome.output is None or spec is None:
+            return "error"
+        return spec.progress_of(outcome.output)
+
+    @staticmethod
+    def _finish(state: RunState, reason: FinalReason) -> None:
+        assert state.agent is not None
+        state.agent.final_reason = reason
+        set_root(final_reason=reason)
+
     def _needs_sources(self, state: RunState, specs: Sequence[ToolSpec]) -> bool:
         """Lượt chưa gọi tool nào mà câu trả lời cần nguồn: LLM trích nguồn không có trong lượt,
         hoặc một tool khai báo `requires_call` cho tin nhắn này (vd nhắc mã model)."""
@@ -519,6 +559,39 @@ class AgentRunner:
 
     def _count(self, text: str) -> int:
         return count_tokens(text, self._provider.model)
+
+
+class _ProgressTracker:
+    """Theo dõi tín hiệu tool qua các bước để dừng sớm (Đợt 1 gói C).
+
+    Mỗi bước gộp theo tool: có `ambiguous` → mơ hồ; có `ok` → ok; còn lại (rỗng, lỗi) → thất bại.
+    Dừng khi một tool báo mơ hồ, hoặc một tool thất bại ở hai bước liên tiếp nó được gọi
+    (các call song song cùng bước không tính là "liên tiếp").
+    """
+
+    PLATEAU_STEPS = 2
+
+    def __init__(self) -> None:
+        self.seen_ok = False
+        self._failed_streak: Counter[str] = Counter()
+
+    def update(self, signals: Sequence[tuple[str, str]]) -> FinalReason | None:
+        by_tool: dict[str, set[str]] = {}
+        for name, signal in signals:
+            by_tool.setdefault(name, set()).add(signal)
+        stop: FinalReason | None = None
+        for name, seen in by_tool.items():
+            if "ok" in seen:
+                self.seen_ok = True
+            if "ambiguous" in seen:
+                stop = "ambiguous"
+            if seen & {"ok", "ambiguous"}:
+                self._failed_streak[name] = 0
+                continue
+            self._failed_streak[name] += 1
+            if stop is None and self._failed_streak[name] >= self.PLATEAU_STEPS:
+                stop = "plateau"
+        return stop
 
 
 def _set_error_detail(target: Any, outcome: ToolOutcome) -> None:

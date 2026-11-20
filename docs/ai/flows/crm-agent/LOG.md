@@ -7,6 +7,37 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Vòng lặp agent dừng sớm theo tín hiệu tool, báo ngân sách, bước chốt có khung (Đợt 1 C1–C3) · loại: thay đổi
+
+- Vấn đề: P3 của [kế hoạch Đợt 1](../../reports/crm_agent_dot1_plan_2026-11-20.md): vòng lặp chỉ dừng theo số bước,
+  số lần gọi, deadline; chạm trần thì LLM hay trả "thử lại sau"; không có tín hiệu để hỏi lại khi mơ hồ.
+- Thay đổi (theo kế hoạch đã duyệt Q1–Q5):
+  - C1: `ToolSpec.progress(output) -> ok|empty|ambiguous`. `product_docs_ask`: `needs_clarification` → ambiguous,
+    `no_docs` → empty. `crm_query`: 0 dòng → empty; `user_profiles` lọc `first_name`/`last_name contains` ra
+    > 1 người không có `user_id.is_active=false` → ambiguous (khớp luật "trùng tên thì hỏi lại" của guide).
+    Runner dừng khi: tool báo ambiguous; một tool rỗng/lỗi ở 2 bước liên tiếp (call song song cùng bước không
+    tính); đã dùng ≥ 50% `AGENT_MAX_TOOL_CALLS` mà chưa có kết quả ok; tổng token vào của các bước LLM trong
+    vòng lặp > `AGENT_TURN_INPUT_BUDGET` (mới, mặc định 15000, 0 = tắt; không tính analysis trong tool).
+  - C2: mọi message role=tool kèm `turn_budget: {steps_left, tool_calls_left}`; phần token của khoá này được trừ
+    khỏi budget trước khi tool tự cắt output.
+  - C3: `final_reason` ∈ answered, limit, plateau, ambiguous, budget, no_answer ghi vào `AgentRun`, root span,
+    span `agent.run`, `retrieval_snapshot` và `GET /retrieval` (trường mới, null với lượt cũ). Dừng không phải
+    answered/no_answer thì chèn chỉ dẫn bước chốt: đã xác minh / chưa lấy được và lý do (cấm "thử lại sau") /
+    một câu hỏi làm rõ 2–4 lựa chọn (bắt buộc khi ambiguous, trừ khi nhân viên chỉ cần danh sách).
+- File: `agent/runner.py`, `agent/prompts.py`, `tools/base.py`, `tools/crm_query.py`, `tools/product_docs.py`,
+  `schemas/system/agent.py`, `schemas/system/__init__.py`, `schemas/history.py`, `services/chat_service.py`,
+  `services/turn_sources.py`, `core/config.py`; test mới `tests/chatbot/test_agent_loop_control.py` (16);
+  `agent_fakes.tool_messages` bỏ `turn_budget` khi so nội dung (test cũ không đổi ý nghĩa).
+- Kiểm chứng: `pytest tests` (worktree, `DATABASE_URL` giả) → 1133 passed, 14 skipped, 1 failed có sẵn
+  (`test_f86_baseline`, CSV CRLF trong worktree); `check_ai_docs.py` đạt. Chưa kiểm trên server thật.
+- Ảnh hưởng contract/API/schema/cấu hình: có. `GET /retrieval` thêm `final_reason` (bổ sung, không phá);
+  biến mới `AGENT_TURN_INPUT_BUDGET` (Toma thêm vào `.env.example`); nội dung message tool gửi LLM có thêm
+  `turn_budget`. Không cần SQL.
+- Chưa kiểm / mở tiếp: lưu câu hỏi dở vào `facts` để lượt sau nối tiếp chờ Gói A; ngưỡng 15k và 50% là đề
+  xuất, cần đo bằng `run_crm_agent_eval.py` (rủi ro: câu "liệt kê nhân viên tên X" giờ dừng ở bước tra tên,
+  trả danh sách hoặc hỏi lại thay vì đi tiếp); Toma chạy 3–5 câu thật (CRM nhiều sale, tên trùng, model lạ)
+  và kiểm `final_reason` trong `/retrieval`. Nhánh `claude/dot1-c` chưa merge.
+
 ## 2026-11-20 · Bộ câu so sánh C1–C7: cắt cột đạt cả 7 câu; lỗi còn lại do LLM gán nhãn và chọn bảng chung (D-014) · loại: kiểm chứng, đánh giá
 
 - Dữ liệu: phiên `8de1e4b1…` 07:14–07:26 UTC và `97fa9b85…` 07:29 (website). Backend `14196d6`, Toma đặt

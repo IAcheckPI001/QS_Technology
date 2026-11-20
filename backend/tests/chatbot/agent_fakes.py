@@ -273,5 +273,15 @@ def crm_state(text: str = "Câu hỏi", history=()) -> RunState:
     return state
 
 
-def tool_messages(messages) -> list[dict]:
-    return [message for message in messages if message["role"] == "tool"]
+def tool_messages(messages, keep_budget: bool = False) -> list[dict]:
+    """Message role=tool; mặc định bỏ khoá `turn_budget` runner thêm vào (test riêng kiểm khoá đó)."""
+    out = [message for message in messages if message["role"] == "tool"]
+    return out if keep_budget else [{**message, "content": _without_budget(message["content"])} for message in out]
+
+
+def _without_budget(content: str) -> str:
+    payload = json.loads(content)
+    if isinstance(payload, dict) and "turn_budget" in payload:
+        payload.pop("turn_budget")
+        return json.dumps(payload, ensure_ascii=False)
+    return content

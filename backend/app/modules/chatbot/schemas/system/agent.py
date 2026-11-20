@@ -9,6 +9,11 @@ from .orchestration import ExecutionPlan
 
 SchemaDialect = Literal["openai_strict", "json_schema_basic"]
 ToolChoice = Literal["auto", "none", "required"]
+# Lý do lượt agent kết thúc (Đợt 1 gói C): answered = LLM tự trả lời; limit = hết bước, lượt gọi
+# tool hoặc thời gian; plateau = tool rỗng/lỗi hai bước liên tiếp; ambiguous = tool báo mơ hồ;
+# budget = đã dùng nửa lượt gọi mà chưa có kết quả, hoặc vượt trần token vào của lượt;
+# no_answer = LLM trả nội dung rỗng.
+FinalReason = Literal["answered", "limit", "plateau", "ambiguous", "budget", "no_answer"]
 
 
 class LLMCapabilities(SystemModel):
@@ -92,6 +97,7 @@ class AgentRun(SystemModel):
     invalid_citations: list[NonEmptyStr] = Field(default_factory=list)
     # State riêng theo tool, khóa là tên class state (mỗi class thuộc một tool).
     tool_states: dict[str, ToolTurnState] = Field(default_factory=dict)
+    final_reason: FinalReason | None = None
 
     def add_step(self, step: AgentStep) -> None:
         self.steps = [*self.steps, step]

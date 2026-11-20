@@ -35,7 +35,7 @@ from app.modules.chatbot.stages.answer_composer import serialize_turn
 from app.modules.chatbot.stages.catalog_lookup_stage import AWAITING_MODELS
 from app.modules.chatbot.stages.retrieval_pipeline import RetrievalPipeline
 
-from .base import ToolArgumentError, ToolContext, ToolOutput, ToolRejected, ToolSpec
+from .base import Progress, ToolArgumentError, ToolContext, ToolOutput, ToolRejected, ToolSpec
 
 PRODUCT_DOCS_TOOL_NAME = "product_docs_ask"
 
@@ -266,7 +266,17 @@ def build_product_docs_tool(pipeline: RetrievalPipeline, timeout_s: float = 20.0
         timeout_s=timeout_s,
         # Tin nhắn nhắc model trong registry: câu trả lời phải dựa trên nguồn của lượt (Đợt 1 gói D).
         requires_call=lambda message: bool(models_in_text(message)),
+        progress=docs_progress,
     )
+
+
+def docs_progress(output: ProductDocsAskOutput) -> Progress:
+    """Tín hiệu cho runner: cần nhân viên chọn model → mơ hồ; không có tài liệu → rỗng."""
+    if output.status == "needs_clarification":
+        return "ambiguous"
+    if output.status == "no_docs":
+        return "empty"
+    return "ok"
 
 
 def evidence_models(

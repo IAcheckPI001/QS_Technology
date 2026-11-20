@@ -40,6 +40,33 @@ FORCE_TOOL_NOTE = (
 )
 
 
+# Runner chèn trước bước chốt khi dừng vòng lặp sớm (Đợt 1 gói C), theo `final_reason`.
+_FINAL_REASONS = {
+    "limit": "Lượt đã hết số bước, số lần gọi tool hoặc thời gian.",
+    "plateau": "Tool trả rỗng hoặc lỗi ở hai bước liên tiếp; gọi thêm khó có kết quả.",
+    "budget": "Lượt đã dùng phần lớn ngân sách (lần gọi tool hoặc token) mà chưa đủ kết quả.",
+    "ambiguous": "Kết quả tool cho thấy yêu cầu còn mơ hồ: nhiều lựa chọn cùng khớp, cần nhân viên chọn.",
+}
+_FINAL_FORMAT = (
+    "Không gọi thêm tool. Trả lời ngay theo khung:\n"
+    "1. Phần đã xác minh: chỉ thông tin có trong kết quả tool của lượt này, giữ [S#].\n"
+    "2. Phần chưa lấy được và lý do (theo lý do dừng ở trên). Không nói \"thử lại sau\".\n"
+    "3. Một câu hỏi làm rõ kèm 2-4 lựa chọn cụ thể (lấy từ kết quả tool nếu có), để lượt sau lấy được phần còn thiếu."
+)
+_FINAL_TAIL = {
+    "ambiguous": "Nhân viên chỉ cần danh sách các lựa chọn đó thì trả lời bằng danh sách; cần chọn một để đi tiếp thì mục 3 là bắt buộc.",
+}
+_FINAL_TAIL_DEFAULT = "Kết quả đã đủ trả lời câu hỏi thì bỏ mục 2 và 3."
+
+
+def final_step_note(reason: str) -> str | None:
+    """Chỉ dẫn cho bước chốt; None khi lượt không dừng sớm vì lý do có khung riêng."""
+    cause = _FINAL_REASONS.get(reason)
+    if cause is None:
+        return None
+    return f"Lý do dừng: {cause}\n{_FINAL_FORMAT}\n{_FINAL_TAIL.get(reason, _FINAL_TAIL_DEFAULT)}"
+
+
 class GuidedTool(Protocol):
     name: str
     guide: str

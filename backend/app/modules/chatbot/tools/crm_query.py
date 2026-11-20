@@ -34,7 +34,15 @@ from app.modules.chatbot.schemas.default import SystemModel
 from app.modules.chatbot.schemas.system import RunState, ToolTurnState
 from app.modules.chatbot.schemas.system.raw_query import RawQuery
 
-from .base import TOOL_CALL_LIMIT, ToolArgumentError, ToolContext, ToolOutput, ToolRejected, ToolSpec
+from .base import (
+    TOOL_CALL_LIMIT,
+    Progress,
+    ToolArgumentError,
+    ToolContext,
+    ToolOutput,
+    ToolRejected,
+    ToolSpec,
+)
 from .crm_common import crm_credential, query_all
 
 CRM_QUERY_TOOL_NAME = "crm_query"
@@ -176,6 +184,29 @@ def query_shape(query: RawQuery) -> dict[str, object]:
     }
 
 
+# Tra nhân viên theo tên (guide: "Chỉ có TÊN nhân viên"): cột tên và cột trạng thái tài khoản.
+_PERSON_DATASET = "user_profiles"
+_NAME_COLUMNS = ("first_name", "last_name")
+_ACTIVE_COLUMN = "user_id.is_active"
+
+
+def query_progress(output: QueryOutput) -> Progress:
+    """Tín hiệu cho runner: rỗng khi 0 dòng; mơ hồ khi tra nhân viên theo tên ra hơn một người còn
+    hoạt động (guide yêu cầu hỏi lại). Chỉ đọc metadata và cột trạng thái, không đọc giá trị tên."""
+    if not output.returned:
+        return "empty"
+    applied = output.applied
+    by_name = any(
+        item.split(" ", 2)[:2] in [[column, "contains"] for column in _NAME_COLUMNS]
+        for item in applied.filters
+    )
+    if applied.dataset == _PERSON_DATASET and applied.mode == "list" and by_name:
+        active = [row for row in output.rows if row.get(_ACTIVE_COLUMN) is not False]
+        if len(active) > 1:
+            return "ambiguous"
+    return "ok"
+
+
 def build_crm_query_tool(
     client: CrmReportClient,
     cache: CrmSchemaCache,
@@ -307,6 +338,7 @@ def build_crm_query_tool(
         max_calls_per_turn=MAX_QUERY_ATTEMPTS_PER_TURN,
         timeout_s=timeout_s,
         on_invalid_args=on_invalid_args,
+        progress=query_progress,
     )
 
 

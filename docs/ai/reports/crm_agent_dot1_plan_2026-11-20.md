@@ -1,7 +1,8 @@
 # Kế hoạch Đợt 1 crm-agent: context phiên, điều khiển vòng lặp, nguồn và so sánh (2026-11-20)
 
-Trạng thái: **Toma duyệt Q1–Q5 theo đề xuất (2026-11-20)**. Bước 1 (Gói E + D) xong ở mức code + test
-(commit `ccc5f5a`, nhánh `claude/dot1-e-d`, chưa merge), chờ kiểm thật.
+Trạng thái: **Toma duyệt Q1–Q5 theo đề xuất (2026-11-20)**. Bước 1 (Gói E + D) đã merge và kiểm thật
+(bộ câu C1–C7, D-014 còn tạm). Bước 2 (C1–C3) xong ở mức code + test bằng fake (nhánh `claude/dot1-c`,
+chưa merge); phần "lưu câu hỏi dở vào `facts`" chờ Gói A.
 
 - Nền: `feature/deploy_ai_service` `8261a79`, đã gồm Đợt 0.
 - Nguồn đề xuất: [báo cáo thảo luận 2026-11-16](crm_agent_architecture_discussion_2026-11-16.md)

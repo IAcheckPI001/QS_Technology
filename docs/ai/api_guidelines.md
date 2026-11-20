@@ -233,7 +233,8 @@ Lượt không thuộc phiên → `404 history_not_found`; lượt không có sn
   "retrieval_tasks": [{"task_id": "task-retrieve-q1", "status": "completed", "error_code": null, "no_hits": false, "fallback": false}],
   "agent_steps": [],
   "answered_without_tools": null,
-  "invalid_citations": []
+  "invalid_citations": [],
+  "final_reason": null
 }
 ```
 
@@ -254,9 +255,11 @@ Lượt agent (kênh CRM) gộp task của mọi lần gọi tool tra cứu: `ta
 `{tool_call_id}:task-retrieve-qN`, và snapshot trong DB có thêm khóa nội bộ
 `agent_steps: [{step, kind: "llm"|"tool", name, tool_call_id, status,
 latency_ms, finish_reason}]` (`status`: `ok`, `deduplicated` hoặc mã lỗi tool như
-`tool_call_limit`, `model_not_evidenced`), `answered_without_tools: bool` và
-`invalid_citations: [S#]` (không chứa nội dung tin nhắn hay output tool); từ B5 endpoint
-trả các khóa này cùng `retrieval_tasks`.
+`tool_call_limit`, `model_not_evidenced`), `answered_without_tools: bool`,
+`invalid_citations: [S#]` (không chứa nội dung tin nhắn hay output tool) và từ 2026-11-20
+`final_reason` (lý do kết thúc vòng lặp: `answered`, `limit`, `plateau`, `ambiguous`, `budget`,
+`no_answer`; `null` với lượt cũ hoặc không qua agent); từ B5 endpoint trả các khóa này cùng
+`retrieval_tasks`.
 Không gửi `history_id` và phiên không có lượt nào có chunk trả `404 retrieval_not_found`;
 database lỗi trả `503 database_unavailable`.
 
@@ -301,7 +304,8 @@ trace mới nhất của phiên. Đọc `public.chat_traces`; chỉ có dữ li�
   `root_error_spans` chỉ đếm nơi lỗi phát sinh (span lỗi không có span con lỗi);
   `failed_tool_calls` đếm tool call lỗi.
 - Lượt agent trả lời được nhưng có tool lỗi vẫn `outcome="ok"`; root span có thêm
-  `tool_errors: ["crm_query:crm_auth_failed", …]` (`{tool}:{mã}`).
+  `tool_errors: ["crm_query:crm_auth_failed", …]` (`{tool}:{mã}`). Root span và span
+  `agent.run` của lượt agent có `final_reason` (như trong snapshot).
 - Span `llm`/`embedding`/`http` lỗi có thêm `http_status` (int) và `provider_error_code` (mã định
   danh `[a-z0-9_]{1,64}` của nhà cung cấp, vd `insufficient_quota` = hết credit,
   `rate_limit_exceeded` = gọi quá nhanh) khi exception có thuộc tính `status_code`/`code` (B5 W2,

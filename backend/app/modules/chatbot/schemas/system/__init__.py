@@ -45,6 +45,7 @@ from .agent import (
     TokenUsage,
     ToolCallRequest,
     ToolChoice,
+    FinalReason,
     ToolTurnState,
 )
 from .catalog import CatalogConditions, CatalogMatch, CatalogModel, CatalogNextAction
@@ -74,7 +75,7 @@ __all__ = [
     "ExecutionPlan", "ExecutionTask", "NormalizedTaskResult", "TaskError",
     "TaskKind", "TaskStatus",
     "AgentRun", "AgentStep", "AgentToolPlan", "AssistantTurn", "LLMCapabilities",
-    "SchemaDialect", "TokenUsage", "ToolCallRequest", "ToolChoice", "ToolTurnState",
+    "SchemaDialect", "TokenUsage", "ToolCallRequest", "ToolChoice", "ToolTurnState", "FinalReason",
     "CatalogConditions", "CatalogMatch", "CatalogModel", "CatalogNextAction",
 ]
  
