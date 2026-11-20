@@ -7,6 +7,23 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Kiểm D-014 trên 2 câu so sánh kèm tư vấn: hết đọc nhầm cột, còn lỗi tổng hợp · loại: kiểm chứng
+
+- Dữ liệu: phiên `fd5e7814…`, 06:15 UTC, gpt-4.1-mini, backend `0f69b58` (mặc định 2 + 4, cắt cột).
+- Cắt cột chạy đúng: mọi bảng chọn model chỉ còn cột của hai model được hỏi.
+- "So sánh F54 và F86, nên lấy con nào, F54 có yếu không": 1 lần gọi, 11.133 token vào (không cache),
+  694 ra, 0,004292 USD, 15,4 s. Đúng: 4/6 trục, kích thước, màn hình, I/O, Look-Ahead 250/500 và thời gian
+  xử lý block 250/500 (đã ở "Khác nhau"), tuổi dao, EtherCAT. Lỗi: câu spindle ghi "F86 … đồng thời 2 spindle,
+  F86 … 4" (2 là của F54); vẫn bỏ sót trục PLC 0 so với 6/8. Tư vấn chọn model dựa vào số trục, có điều kiện.
+- "F86 khác gì F10T, cảm ứng có bền không, bằng giá nên chọn cái nào": 3 lần gọi trong một bước (2 lần so sánh
+  gần trùng + 1 `handoff` về giá), 22.860 token vào (cache 15.488), 0,00486 USD, 9,7 s. Hết lỗi đọc nhầm cột
+  (bảng General của F86/F10T giống nhau, không còn gán sai); độ bền cảm ứng nói rõ tài liệu không có; giá chuyển
+  bộ phận kinh doanh. Lỗi: dòng "Cả hai đều…" nằm trong "Khác nhau"; còn "kích thước nhỏ gọn hơn thì chọn F86".
+- Chưa chạy: C3 (ASTRO-10S), C4 (3 model), C5 (F86E), C7 (website).
+- Kết luận: cắt cột bảng đạt mục tiêu; hạn mức 2 + 4 vẫn tạm (câu F54–F86 lấy bảng Compensation giống nhau,
+  thiếu Multi axis). Lỗi còn lại là bước tổng hợp của LLM. Đề xuất: code tính sẵn dòng khác/giống từ bảng đã cắt
+  cột và đưa vào output tool; gộp lần so sánh trùng model trong cùng lượt.
+
 ## 2026-11-20 · So sánh: cắt cột bảng theo model được hỏi, mặc định 2 + 4 (quyết định tạm D-014) · loại: thay đổi, quyết định
 
 - Vấn đề: kiểm thật 2 + 4 (mục bên dưới): bảng chọn model 4 cột làm LLM ghi giá trị cột F54 cho F86;
