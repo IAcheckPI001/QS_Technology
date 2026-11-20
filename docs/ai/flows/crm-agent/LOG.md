@@ -7,6 +7,36 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Gói A: facts của phiên và lịch sử theo lượt; kiểm thật 7 câu, facts dùng đúng UUID qua lượt · loại: thay đổi, kiểm chứng
+
+- Thay đổi (Toma duyệt thiết kế 2026-11-20: trần 10 dòng/danh sách, nhãn từ cột cho phép, 8 luật chống dùng nhầm):
+  - L1: `list_for_context(limit)` đọc `CONTEXT_HISTORY_TURNS` (10) lượt gần nhất; agent lấy `AGENT_HISTORY_TURNS` (3)
+    lượt hỏi + đáp, thay `AGENT_HISTORY_MESSAGES` (giữ trong config, không dùng).
+  - L2: `ConversationState.facts` (`schemas/system/facts.py`): thực thể (kind, table, id, keys username/code,
+    label ≤ 80 ký tự, ordinal, turn) + 5 lookup + `pending_reason`. Tool ghi qua `ToolSpec.remember`
+    (`crm_query`: 10 dòng đầu của list, cột cho phép; `product_docs_ask`: chỉ lookup). `merge_facts`: danh sách
+    mới xoá ordinal cũ, trùng thì cập nhật, TTL 10 lượt, tối đa 20, đổi `acting_user_id` thì xoá. Prompt
+    `<session_state>` ≤ 500 token kèm luật chỉ dùng cho lời tham chiếu, không thêm điều kiện, nêu nhãn khi dùng.
+  - Guide `crm_query`: UUID lấy được từ `<session_state>`; answer_rules: liệt kê đúng thứ tự tool.
+- File: `schemas/system/{facts,run_context,agent,__init__}.py`, `tools/{base,crm_query,product_docs}.py`,
+  `agent/{runner,prompts}.py`, `clarification/state_update.py`, `stages/context_loader.py`,
+  `repositories/history_repository.py`, `services/chat_service.py`, `core/config.py`; test mới
+  `test_agent_session_facts.py` (17), fake `list_for_context` nhận `limit`.
+- Kiểm chứng: `pytest tests` → 1151 passed, 14 skipped, 1 failed có sẵn (CSV CRLF). Lượt thật 09:19–09:21 UTC (phiên
+  `38f77fbd…`, qua route kiểm thử widget-backend, backend `98f2db4`), đối chiếu Reporting API:
+  - Đúng nhờ facts: "Nội dung F54_…382 có ai phản hồi chưa" lọc `message_id eq <UUID>` lấy từ lượt trước, ra 9 phản
+    hồi (đúng: 4 của chính khách, 5 của nhân viên; câu trả lời gộp thành "nhiều người khác nhau").
+  - Hết giờ LLM 20 s (LC-2): 2/7 lượt (+1 lượt thử trước đó) → không có số liệu, bước chốt hỏi lại vô ích.
+  - LLM không thử lại sau lỗi tham số (LC-4): `customers.name` (cột là `full_name`), `product_ownerships.customer_id`
+    (cột là `owner_customer_id`); cả hai lượt đoán cột, không gọi hoặc gọi `crm_schema` song song với `crm_query`.
+  - Suy luận sai (LC-5): "người nhắn có thuộc khách hàng công ty" lấy 10/562 khách bất kỳ rồi kết luận "có trong
+    danh sách"; `customer_id` của tin nhắn là tài khoản (không khoá ngoại), đường đúng là `product_item_id.customer_id`.
+  - Định nghĩa "hộp tin nhắn chờ" (LC-6): lượt này 18 tin (mọi tin), phiên trước 7 tin (`staff_deleted_at` null).
+- Ảnh hưởng contract/cấu hình: biến mới `AGENT_HISTORY_TURNS`, `CONTEXT_HISTORY_TURNS`; `conversation_state` có khoá
+  `facts` (nội bộ, không SQL). Website cũng chỉ đọc 10 lượt gần nhất.
+- Chưa kiểm / mở tiếp: câu dùng ordinal ("khách thứ 2") chưa kiểm được vì lượt liệt kê lỗi; LC-2, LC-4, LC-5, LC-6;
+  Gói B (kiểm nguồn gốc giá trị) dùng facts làm nguồn hợp lệ.
+
 ## 2026-11-20 · Lượt CRM thật sau C1–C3: mất UUID qua lượt và hết giờ LLM; thêm luật tìm lại bản ghi bằng cột chữ · loại: kiểm chứng, thay đổi
 
 - Dữ liệu: phiên `8de1e4b1…` 07:56–08:16 UTC, `CRM_REPORT_ENABLED=true`, gpt-4.1-mini, backend `4a636b2`. Đối chiếu

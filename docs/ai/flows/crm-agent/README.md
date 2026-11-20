@@ -83,6 +83,7 @@ Phương án C (D-005) là bộ tool CRM duy nhất từ 2026-11-16 (D-010). Mô
 - Thêm tool: input `extra="forbid"`, output kế thừa `ToolOutput` (tự cắt bằng `to_llm`),
   khai báo `read_only`/`concurrency_safe`/`deduplicate`/`max_calls_per_turn`/`required_scope`,
   đăng ký ở `agent/setup.py`. Tool gọi CRM chỉ qua `providers/crm_api.py`.
+- `conversation_state.facts` (gói A, L2): chỉ code ghi qua `ToolSpec.remember` (id, mã, username, nhãn ≤ 80 ký tự từ cột cho phép; không số liệu, SĐT, email khách, nội dung); `merge_facts` ở `clarification/state_update.py`; prompt `<session_state>` ≤ 500 token.
 - Mỗi `tool_call_id` có đúng một `ToolOutcome`; `CancelledError` không bao giờ bị bắt; tầng
   agent không tạo task chạy ngầm.
 - Backend kiểm soát dữ liệu: model trong câu hỏi agent phải có bằng chứng (tin nhắn, history,
@@ -117,7 +118,8 @@ Phương án C (D-005) là bộ tool CRM duy nhất từ 2026-11-16 (D-010). Mô
 | `AGENT_TURN_INPUT_BUDGET` | 15000 | Trần token vào cộng dồn của các bước LLM trong vòng lặp; vượt thì dừng, `final_reason=budget`. 0 = tắt. Ngưỡng đề xuất, chỉnh sau khi đo |
 | `AGENT_MODEL`, `AGENT_REASONING_EFFORT`, `AGENT_MAX_COMPLETION_TOKENS` | rỗng (= `OPENAI_MODEL`), rỗng, 1200 | Model riêng cho vòng lặp agent; model suy luận (`gpt-5…`, `o3…`) gửi `max_completion_tokens` và không gửi `temperature` |
 | `AGENT_TURN_TIMEOUT_S`, `AGENT_LLM_TIMEOUT_S`, `AGENT_TOOL_TIMEOUT_S`, `AGENT_FINAL_RESERVE_S` | 60, 20, 20, 10 | Mọi timeout lấy từ deadline chung |
-| `AGENT_TOOL_OUTPUT_TOKENS`, `AGENT_PARALLEL_TOOLS`, `AGENT_MAX_CONCURRENT_RUNS`, `AGENT_HISTORY_MESSAGES` | 3000, 3, 8, 6 | |
+| `AGENT_TOOL_OUTPUT_TOKENS`, `AGENT_PARALLEL_TOOLS`, `AGENT_MAX_CONCURRENT_RUNS` | 3000, 3, 8 | |
+| `AGENT_HISTORY_TURNS`, `CONTEXT_HISTORY_TURNS` | 3, 10 | Lượt (hỏi + đáp) agent đưa vào prompt; lượt ContextLoader đọc từ DB (chung website). `AGENT_HISTORY_MESSAGES` không còn dùng |
 
 ## Test và eval
 
