@@ -65,7 +65,12 @@ class Settings(BaseSettings):
     agent_tool_output_tokens: int = Field(default=3000, alias="AGENT_TOOL_OUTPUT_TOKENS")
     agent_parallel_tools: int = Field(default=3, alias="AGENT_PARALLEL_TOOLS")
     agent_max_concurrent_runs: int = Field(default=8, alias="AGENT_MAX_CONCURRENT_RUNS")
+    # Không còn dùng từ Đợt 1 gói A (thay bằng AGENT_HISTORY_TURNS); giữ để .env cũ không lỗi.
     agent_history_messages: int = Field(default=6, alias="AGENT_HISTORY_MESSAGES")
+    # Số lượt (hỏi + đáp) gần nhất vòng lặp agent đưa vào prompt; 0 = không đưa lịch sử.
+    agent_history_turns: int = Field(default=3, ge=0, alias="AGENT_HISTORY_TURNS")
+    # Số lượt hoàn tất gần nhất ContextLoader đọc từ DB (dùng chung website và CRM); trước đây đọc cả phiên.
+    context_history_turns: int = Field(default=10, ge=1, alias="CONTEXT_HISTORY_TURNS")
     # Trần token vào cộng dồn của các bước LLM trong vòng lặp agent (Đợt 1 gói C): vượt thì dừng gọi
     # tool, chuyển sang bước chốt. 0 = tắt. Đề xuất ban đầu 15k, chỉnh sau khi đo.
     agent_turn_input_budget: int = Field(default=15000, ge=0, alias="AGENT_TURN_INPUT_BUDGET")

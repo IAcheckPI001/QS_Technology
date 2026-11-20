@@ -8,7 +8,7 @@ from typing import Any, Literal, TypeVar
 from pydantic import BaseModel
 
 from app.modules.chatbot.schemas.default import SystemModel
-from app.modules.chatbot.schemas.system import AgentRun, RunState, ToolTurnState
+from app.modules.chatbot.schemas.system import AgentRun, RunState, ToolMemory, ToolTurnState
 from app.modules.chatbot.stages.execution_stage import SourceAllocator
 
 # Mã lỗi khi call vượt trần riêng của tool trong lượt (runner áp `max_calls_per_turn`, tool có thể
@@ -102,6 +102,9 @@ class ToolSpec:
     requires_call: Callable[[str], bool] | None = None
     # Tín hiệu tiến độ của output thành công; None = mọi output thành công là "ok".
     progress: Callable[[Any], Progress] | None = None
+
+    # Định danh output để lại cho phiên (Đợt 1 gói A, facts L2); None = tool không ghi gì.
+    remember: Callable[[Any], ToolMemory | None] | None = None
 
     def progress_of(self, output: ToolOutput) -> Progress:
         return self.progress(output) if self.progress is not None else "ok"

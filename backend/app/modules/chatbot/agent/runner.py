@@ -41,6 +41,7 @@ from app.modules.chatbot.schemas.system import (
     LLMCall,
     LLMStage,
     RunState,
+    SessionFacts,
     ToolCallRequest,
     ToolChoice,
 )
@@ -51,7 +52,7 @@ from app.util.normalize import guess_reply_language
 from app.util.token_counter import count_tokens
 
 from .deadline import Deadline
-from .prompts import FORCE_TOOL_NOTE, build_system_prompt, final_step_note
+from .prompts import FORCE_TOOL_NOTE, build_system_prompt, final_step_note, render_session_state
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +83,7 @@ class AgentLimits:
     tool_output_tokens: int = 3000
     parallel_tools: int = 3
     max_concurrent_runs: int = 8
-    history_messages: int = 6
+    history_turns: int = 3             # số lượt (hỏi + đáp) gần nhất đưa vào prompt
     max_answer_tokens: int = 1200
     turn_input_budget: int = 15000     # 0 = tắt
 
@@ -98,7 +99,7 @@ class AgentLimits:
             tool_output_tokens=settings.agent_tool_output_tokens,
             parallel_tools=settings.agent_parallel_tools,
             max_concurrent_runs=settings.agent_max_concurrent_runs,
-            history_messages=settings.agent_history_messages,
+            history_turns=settings.agent_history_turns,
             max_answer_tokens=settings.agent_max_completion_tokens,
             turn_input_budget=settings.agent_turn_input_budget,
         )
@@ -250,6 +251,7 @@ class AgentRunner:
                     "tool_call_id": outcome.tool_call_id,
                     "content": outcome.message_content(limits.tool_output_tokens, self._count, turn_budget),
                 })
+            self._remember(state, outcomes)
             if skipped or tool_calls_used >= limits.max_tool_calls:
                 break
             stop = tracker.update([(outcome.name, self._progress(outcome)) for outcome in outcomes])
@@ -287,12 +289,16 @@ class AgentRunner:
         message = state.input.message.text
         history = [
             {"role": item.role, "content": item.content}
-            for item in conversation.history[-self._limits.history_messages:]
-        ] if self._limits.history_messages else []
+            for item in recent_turns(conversation.history, self._limits.history_turns)
+        ]
+        facts: SessionFacts | None = conversation.state.facts
+        if facts is not None and facts.owner is not None and facts.owner != state.principal.acting_user_id:
+            facts = None                 # phiên đổi nhân viên: không dùng định danh của người trước
         system = build_system_prompt(
             state.request_context.received_at,
             conversation.state.language or guess_reply_language(message),
             specs,
+            session_state=render_session_state(facts, self._count) if facts is not None else None,
         )
         return [
             {"role": "system", "content": system},
@@ -522,6 +528,21 @@ class AgentRunner:
             return "error"
         return spec.progress_of(outcome.output)
 
+    def _remember(self, state: RunState, outcomes: Sequence[ToolOutcome]) -> None:
+        """Định danh từ output thành công, theo thứ tự call (state_update gộp vào facts L2)."""
+        assert state.agent is not None
+        for outcome in outcomes:
+            spec = self._registry.get(outcome.name)
+            if not outcome.ok or outcome.output is None or spec is None or spec.remember is None:
+                continue
+            try:
+                memory = spec.remember(outcome.output)
+            except Exception:            # facts là phụ: lỗi trích không được làm hỏng lượt
+                logger.exception("agent tool memory failed tool=%s", outcome.name)
+                continue
+            if memory is not None:
+                state.agent.memory = [*state.agent.memory, memory]
+
     @staticmethod
     def _finish(state: RunState, reason: FinalReason) -> None:
         assert state.agent is not None
@@ -592,6 +613,16 @@ class _ProgressTracker:
             if stop is None and self._failed_streak[name] >= self.PLATEAU_STEPS:
                 stop = "plateau"
         return stop
+
+
+def recent_turns(history: Sequence[Any], turns: int) -> list[Any]:
+    """`turns` lượt gần nhất (tin user cùng câu trả lời của nó), không tách câu hỏi khỏi câu trả lời."""
+    if turns <= 0:
+        return []
+    starts = [index for index, item in enumerate(history) if item.role == "user"]
+    if len(starts) <= turns:
+        return list(history)
+    return list(history[starts[-turns]:])
 
 
 def _set_error_detail(target: Any, outcome: ToolOutcome) -> None:

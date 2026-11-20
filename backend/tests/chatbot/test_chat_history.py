@@ -55,7 +55,7 @@ class FakeHistoryRepository:
     async def session_exists(self, session_id):
         return session_id in self.existing
 
-    async def list_for_context(self, session_id):
+    async def list_for_context(self, session_id, limit=None):
         return []
 
     async def create(self, **data):

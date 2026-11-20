@@ -21,6 +21,7 @@ from app.core.tracing import current_span
 from app.modules.chatbot.extraction.registry import REGISTRY
 from app.modules.chatbot.extraction.validate_registry import display_name, models_in_text
 from app.modules.chatbot.schemas.default import SystemModel
+from app.modules.chatbot.schemas.system import SessionLookup, ToolMemory
 from app.modules.chatbot.schemas.system import (
     AgentRun,
     AgentToolPlan,
@@ -267,6 +268,7 @@ def build_product_docs_tool(pipeline: RetrievalPipeline, timeout_s: float = 20.0
         # Tin nhắn nhắc model trong registry: câu trả lời phải dựa trên nguồn của lượt (Đợt 1 gói D).
         requires_call=lambda message: bool(models_in_text(message)),
         progress=docs_progress,
+        remember=docs_memory,
     )
 
 
@@ -277,6 +279,14 @@ def docs_progress(output: ProductDocsAskOutput) -> Progress:
     if output.status == "no_docs":
         return "empty"
     return "ok"
+
+
+def docs_memory(output: ProductDocsAskOutput) -> ToolMemory:
+    """Chỉ tóm tắt lần tra (trạng thái, số nguồn); model của phiên đã nằm ở last_models/active_model."""
+    sources = sum(len(group.sources) for group in output.sources)
+    return ToolMemory(lookup=SessionLookup(
+        tool=PRODUCT_DOCS_TOOL_NAME, summary=f"tài liệu: {output.status}, {sources} nguồn", total=sources,
+    ))
 
 
 def evidence_models(

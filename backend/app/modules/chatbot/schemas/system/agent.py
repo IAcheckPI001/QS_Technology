@@ -5,6 +5,7 @@ from typing import Literal, TypeVar
 from pydantic import Field
 
 from ..default import NonEmptyStr, NonNegInt, SystemModel
+from .facts import ToolMemory
 from .orchestration import ExecutionPlan
 
 SchemaDialect = Literal["openai_strict", "json_schema_basic"]
@@ -98,6 +99,8 @@ class AgentRun(SystemModel):
     # State riêng theo tool, khóa là tên class state (mỗi class thuộc một tool).
     tool_states: dict[str, ToolTurnState] = Field(default_factory=dict)
     final_reason: FinalReason | None = None
+    # Phần output tool để lại cho phiên (facts), theo thứ tự call; state_update gộp vào ConversationState.
+    memory: list[ToolMemory] = Field(default_factory=list)
 
     def add_step(self, step: AgentStep) -> None:
         self.steps = [*self.steps, step]

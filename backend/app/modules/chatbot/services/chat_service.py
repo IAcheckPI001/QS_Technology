@@ -69,7 +69,9 @@ class ChatbotService:
         self._provider = provider
         self._history_repository = history_repository
         self._security_stage = security_stage or SecurityStage()
-        self._context_loader = context_loader or ContextLoader(history_repository)
+        self._context_loader = context_loader or ContextLoader(
+            history_repository, history_turns=settings.context_history_turns,
+        )
         self._prune = prune or Prune(settings.context_token_budget)
         self._analysis_stage = analysis_stage or AnalysisStage(provider)
         self._execution_stage = execution_stage or ExecutionStage()

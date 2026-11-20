@@ -31,7 +31,8 @@ from app.modules.chatbot.reporting.raw.compile import (
 from app.modules.chatbot.reporting.raw.policy import static_column_type, static_relation
 from app.modules.chatbot.reporting.raw.schema import CrmSchemaCache, compact_type
 from app.modules.chatbot.schemas.default import SystemModel
-from app.modules.chatbot.schemas.system import RunState, ToolTurnState
+from app.modules.chatbot.schemas.system import RunState, SessionEntity, SessionLookup, ToolMemory, ToolTurnState
+from app.modules.chatbot.schemas.system.facts import MAX_LIST_ROWS, clip
 from app.modules.chatbot.schemas.system.raw_query import RawQuery
 
 from .base import (
@@ -75,8 +76,8 @@ Quy trình:
 - mode: con số/thống kê → aggregate; danh sách/liệt kê/tìm → list. Cần cả hai thì gọi hai crm_query trong cùng một bước.
 - Join: fk.cột theo relations, chỉ đi từ bảng có khoá ngoại sang bảng đích. Thông tin ở bảng con (referenced_by, vd user_roles) thì lấy bảng con làm dataset. Cần tên người/vật tư/khách trong kết quả: chọn hoặc nhóm thẳng cột tên qua join (vd dimensions [assigned_sales_id.username], select [material_id.name]), không lấy UUID rồi gọi thêm query để tra tên.
 - Có username hoặc mã: lọc thẳng qua join trong cùng query (vd assigned_sales_id.username eq "<username>", user_id.username eq ...), không tra id trước. KHÔNG BAO GIỜ đặt tên người, tên khách hay mã vào cột uuid.
-- Username, mã, UUID chỉ dùng NGUYÊN VĂN từ kết quả tool trong lượt này hoặc chữ nhân viên gõ; không tự suy từ họ tên hay câu trả lời trước, không tự thêm/bỏ phần sau @. Chưa có thì tra user_profiles trước.
-- Bản ghi đã nhắc ở lượt trước (vd "tin nhắn 1", "phiếu đó") mà lượt này chưa có UUID: KHÔNG hỏi nhân viên UUID. Lọc lại bằng cột chữ đã thấy trong câu trả lời trước (title, content, code, tên): trên chính bảng đó, hoặc từ bảng con qua quan hệ (vd message_id.content contains "<đoạn chữ>"). tool_invalid_args vì đặt chữ vào cột uuid cũng sửa theo cách này rồi gọi lại.
+- Username, mã, UUID chỉ dùng NGUYÊN VĂN từ kết quả tool trong lượt này, <session_state> hoặc chữ nhân viên gõ; không tự suy từ họ tên hay câu trả lời trước, không tự thêm/bỏ phần sau @. Chưa có thì tra user_profiles trước.
+- Bản ghi đã nhắc ở lượt trước (vd "tin nhắn 1", "phiếu đó"): có trong <session_state> thì lọc thẳng bằng id đó; không có thì KHÔNG hỏi nhân viên UUID. Lọc lại bằng cột chữ đã thấy trong câu trả lời trước (title, content, code, tên): trên chính bảng đó, hoặc từ bảng con qua quan hệ (vd message_id.content contains "<đoạn chữ>"). tool_invalid_args vì đặt chữ vào cột uuid cũng sửa theo cách này rồi gọi lại.
 - Chỉ có TÊN nhân viên (vd "nhân viên Hiếu"): lượt 1 tra user_profiles (select user_id, user_id.username, user_id.is_active, last_name, first_name; filter first_name contains tên đó); đọc kết quả rồi lượt 2 lọc bảng chính bằng cột trỏ tới auth_users, eq user_id vừa nhận. Không gọi song song, không viết giá trị giữ chỗ. Trùng tên: hỏi hiện tại thì bỏ người is_active false, còn nhiều thì hỏi lại (kèm họ tên, username); 0 người: nói không tìm thấy.
 - contains không phân biệt hoa thường nhưng PHÂN BIỆT dấu tiếng Việt: giữ đúng chữ người dùng gõ; 0 kết quả với chữ không dấu thì gợi ý gõ có dấu.
 - Giá trị trạng thái/loại/vai trò: lấy từ crm_schema (cột:kiểu=a|b|c, known_values, note), so cả giá trị và nhãn; KHÔNG tự dịch hay đoán mã. Không khớp mục nào thì nói không có (kèm danh sách), không trả lời "0". Chưa biết giá trị: aggregate dimensions=[cột], metrics=[count] để xem.
@@ -206,6 +207,55 @@ def query_progress(output: QueryOutput) -> Progress:
         if len(active) > 1:
             return "ambiguous"
     return "ok"
+
+
+# facts (Đợt 1 gói A): chỉ các cột này được ghi vào phiên. Không bao giờ ghi SĐT, email khách, địa chỉ,
+# nội dung, ghi chú (danh sách cho phép, không phải danh sách chặn).
+_LABEL_COLUMNS = ("full_name", "title", "name", "code")
+_KEY_COLUMNS = {"username": ("username", "user_id.username"), "code": ("code",)}
+_PERSON_TABLES = {"user_profiles", "auth_users"}
+_CUSTOMER_TABLES = {"customers"}
+
+
+def _row_entity(dataset: str, row: dict[str, Any], ordinal: int | None) -> SessionEntity | None:
+    if dataset == "user_profiles":
+        record_id, kind, table = row.get("user_id"), "person", "auth_users"
+    else:
+        kind = "person" if dataset in _PERSON_TABLES else "customer" if dataset in _CUSTOMER_TABLES else "record"
+        record_id, table = row.get("id"), dataset
+    keys = {
+        key: clip(value)
+        for key, columns in _KEY_COLUMNS.items()
+        # username chỉ là định danh của chính dòng khi bảng là người (bảng khác: username của người join tới)
+        if (key != "username" or kind == "person")
+        and (value := next((row[column] for column in columns if row.get(column)), None))
+    }
+    if not record_id and not keys:
+        return None
+    names = [str(row[column]) for column in ("last_name", "first_name") if row.get(column)]
+    label = " ".join(names) or next((str(row[column]) for column in _LABEL_COLUMNS if row.get(column)), "")
+    return SessionEntity(
+        kind=kind, table=table, id=str(record_id) if record_id else None, keys=keys,
+        label=clip(label), ordinal=ordinal, source_tool=CRM_QUERY_TOOL_NAME,
+    )
+
+
+def query_memory(output: QueryOutput) -> ToolMemory:
+    """Định danh của các dòng đầu danh sách (kèm vị trí) và tóm tắt lần tra; thống kê chỉ có tóm tắt."""
+    applied = output.applied
+    columns = [" ".join(item.split(" ", 2)[:2]) for item in applied.filters]   # bỏ giá trị filter
+    summary = f"{applied.dataset} {applied.mode}" + (f" lọc {', '.join(columns)}" if columns else "")
+    entities: list[SessionEntity] = []
+    if applied.mode == "list":
+        for index, row in enumerate(output.rows[:MAX_LIST_ROWS], start=1):
+            if (entity := _row_entity(applied.dataset, row, index)) is not None:
+                entities.append(entity)
+    total = output.total if output.total is not None else output.returned
+    return ToolMemory(
+        entities=entities,
+        lookup=SessionLookup(tool=CRM_QUERY_TOOL_NAME, summary=clip(summary, 200), total=total),
+        is_list=applied.mode == "list",
+    )
 
 
 def build_crm_query_tool(
@@ -340,6 +390,7 @@ def build_crm_query_tool(
         timeout_s=timeout_s,
         on_invalid_args=on_invalid_args,
         progress=query_progress,
+        remember=query_memory,
     )
 
 

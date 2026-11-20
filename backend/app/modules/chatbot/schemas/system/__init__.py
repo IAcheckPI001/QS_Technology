@@ -35,6 +35,7 @@ from .run_context import (
     QueryInfo, RetrievalScope, RewriteInfo, RewriteMethod, RunContext, 
     MAX_LAST_MODELS,ConversationState, Mode, PendingClarification
 )
+from .facts import SessionEntity, SessionFacts, SessionLookup, ToolMemory
 from .agent import (
     AgentRun,
     AgentStep,
@@ -76,6 +77,7 @@ __all__ = [
     "TaskKind", "TaskStatus",
     "AgentRun", "AgentStep", "AgentToolPlan", "AssistantTurn", "LLMCapabilities",
     "SchemaDialect", "TokenUsage", "ToolCallRequest", "ToolChoice", "ToolTurnState", "FinalReason",
+    "SessionEntity", "SessionFacts", "SessionLookup", "ToolMemory",
     "CatalogConditions", "CatalogMatch", "CatalogModel", "CatalogNextAction",
 ]
  
