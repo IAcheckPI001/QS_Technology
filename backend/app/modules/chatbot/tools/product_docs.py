@@ -44,7 +44,8 @@ PRODUCT_DOCS_DESCRIPTION = (
     "tìm model theo tiêu chí, so sánh model, lắp đặt/đấu dây, vận hành, cấu hình tham số, xử lý "
     "lỗi/alarm, thông tin công ty. Dùng cho mọi thông tin về sản phẩm. "
     "`question` phải tự đủ nghĩa (không dùng 'nó', 'model đó') và ghi rõ mã model nếu đã biết "
-    "(vd F86, 6AV); mỗi lần gọi một câu hỏi. `based_on_sources`: chỉ dùng khi model trong "
+    "(vd F86, 6AV); mỗi lần gọi một câu hỏi. So sánh nhiều model: MỘT lần gọi, question nêu đủ các "
+    "model (vd 'So sánh F86 và F54'); tool tự tra riêng từng model. `based_on_sources`: chỉ dùng khi model trong "
     "question được chọn từ nguồn của lần gọi trước (xem hướng dẫn của tool)."
 )
 
@@ -58,6 +59,12 @@ PRODUCT_DOCS_GUIDE = """Output.status:
 - out_of_scope: nói ngắn rằng ngoài phạm vi tài liệu. failed: tra cứu lỗi.
 - task_results[].status = awaiting_models: ý đó cần model là kết quả tìm ở cùng lần gọi; gọi lại riêng cho từng model theo next_action.
 - Lỗi model_not_evidenced: không tự chọn model; hỏi lại nhân viên hoặc làm theo next_action.
+
+So sánh model (khác nhau, giống nhau, nên chọn model nào):
+- Gọi tool MỘT lần cho cả câu so sánh; không gọi thêm riêng từng model nếu kết quả đã có nguồn của các model đó.
+- Trình bày theo thuộc tính (trục, giao tiếp điều khiển, I/O, kích thước, màn hình, tính năng…): mỗi thuộc tính ghi giá trị của từng model kèm [S#].
+- Chỉ nói "khác" khi CẢ HAI giá trị có trong nguồn và khác nhau; giá trị giống thì ghi "giống nhau"; thuộc tính chỉ có nguồn cho một model thì ghi "chưa có thông tin" cho model kia. Không kết luận "nhiều hơn/tốt hơn" khi không có nguồn nói vậy.
+- Đọc kỹ bảng chọn model (selection table): ✓/✗/(Option) của từng cột là dữ liệu so sánh chính.
 
 Câu hỏi nhiều bước (tìm model theo tiêu chí, rồi hỏi tiếp về model đó): tìm trước, đọc kết quả, rồi mới hỏi tiếp.
 - Đếm và chọn model theo catalog_match.models (dữ liệu sản phẩm), không theo văn bản nguồn. Làm đúng catalog_match.next_action:
@@ -254,6 +261,8 @@ def build_product_docs_tool(pipeline: RetrievalPipeline, timeout_s: float = 20.0
         read_only=True,
         concurrency_safe=True,
         timeout_s=timeout_s,
+        # Tin nhắn nhắc model trong registry: câu trả lời phải dựa trên nguồn của lượt (Đợt 1 gói D).
+        requires_call=lambda message: bool(models_in_text(message)),
     )
 
 

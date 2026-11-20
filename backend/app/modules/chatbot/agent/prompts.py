@@ -33,6 +33,13 @@ Trả lời bằng ngôn ngữ nhân viên đang dùng, ngắn gọn, đúng tr�
 </answer_rules>"""
 
 
+# Runner chèn khi bỏ một câu trả lời không qua tool cho câu hỏi cần nguồn (Đợt 1 gói D).
+FORCE_TOOL_NOTE = (
+    "Câu trả lời vừa rồi không dựa trên kết quả tool của lượt này nên đã bị bỏ. Thông tin nghiệp vụ "
+    "phải lấy qua tool kể cả khi lịch sử hội thoại đã có câu trả lời: gọi tool phù hợp ngay bây giờ."
+)
+
+
 class GuidedTool(Protocol):
     name: str
     guide: str

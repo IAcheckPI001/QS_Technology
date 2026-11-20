@@ -8,7 +8,7 @@ from ..default import NonEmptyStr, NonNegInt, SystemModel
 from .orchestration import ExecutionPlan
 
 SchemaDialect = Literal["openai_strict", "json_schema_basic"]
-ToolChoice = Literal["auto", "none"]
+ToolChoice = Literal["auto", "none", "required"]
 
 
 class LLMCapabilities(SystemModel):

@@ -68,6 +68,8 @@ class RetrieverConfig:
     max_context_parents: int = 5
     min_similarity: float = 0.25
     spec_boost: float = 0.005
+    # So sánh nhiều model: hạn mức chunk (và nhóm ngữ cảnh) cho MỖI model, thay vì chia top-k chung.
+    compare_per_model: int = 3
 
     @classmethod
     def from_settings(cls, settings: "Settings") -> "RetrieverConfig":
@@ -79,6 +81,7 @@ class RetrieverConfig:
             max_context_parents=settings.retrieval_max_context_parents,
             min_similarity=settings.retrieval_min_similarity,
             spec_boost=settings.retrieval_spec_boost,
+            compare_per_model=settings.retrieval_compare_per_model,
         )
 
 
@@ -88,6 +91,11 @@ class _SearchRun:
     models: list[str] | None
     matches: list[ChunkMatch]
     latency_ms: int
+
+
+def _is_comparison(runs: list["_SearchRun"]) -> bool:
+    """Các lần tra cứu là so sánh, mỗi model một lần (`_search_targets` tách theo model)."""
+    return len(runs) > 1 and all(run.request.product_scope_mode == "comparison" for run in runs)
 
 
 class Retriever:
@@ -125,8 +133,9 @@ class Retriever:
                 ranked = self._merge(fallback_runs)
                 used_fallback = True
 
-            kept = ranked[: self._config.final_chunk_top_k]
-            hits = await self._expand_parents(kept)
+            top_k, max_groups = self._limits(runs)
+            kept = ranked[:top_k]
+            hits = await self._expand_parents(kept, max_groups)
             search_span.set(
                 searches=len(runs),
                 relevant=len(ranked),
@@ -200,6 +209,17 @@ class Retriever:
             latency_ms=int((perf_counter() - started) * 1000),
         )
 
+    def _limits(self, runs: list[_SearchRun]) -> tuple[int, int]:
+        """(số chunk giữ, số nhóm ngữ cảnh tối đa). So sánh n model: mỗi model `compare_per_model`
+        (kết quả đã xen kẽ theo model ở `_merge`), không ít hơn giới hạn thường."""
+        if _is_comparison(runs):
+            quota = self._config.compare_per_model * len(runs)
+            return (
+                max(self._config.final_chunk_top_k, quota),
+                max(self._config.max_context_parents, quota),
+            )
+        return self._config.final_chunk_top_k, self._config.max_context_parents
+
     def _relevant(self, match: ChunkMatch) -> bool:
         return match.vector_score >= self._config.min_similarity
 
@@ -218,9 +238,7 @@ class Retriever:
             )
             for run in runs
         ]
-        if len(runs) > 1 and all(
-            run.request.product_scope_mode == "comparison" for run in runs
-        ):
+        if _is_comparison(runs):
             ordered: list[ChunkMatch] = []
             for position in range(max((len(items) for items in per_run), default=0)):
                 ordered.extend(items[position] for items in per_run if position < len(items))
@@ -245,12 +263,13 @@ class Retriever:
             merged.append(match)
         return merged
 
-    async def _expand_parents(self, kept: list[ChunkMatch]) -> list[ChunkHit]:
+    async def _expand_parents(self, kept: list[ChunkMatch], max_groups: int | None = None) -> list[ChunkHit]:
         """Gom chunk con theo chunk cha, giữ thứ tự xếp hạng của chunk con tốt nhất."""
+        limit = max_groups if max_groups is not None else self._config.max_context_parents
         groups: dict[int, list[ChunkMatch]] = {}
         for match in kept:
             context_id = match.parent_id if match.parent_id is not None else match.id
-            if context_id not in groups and len(groups) >= self._config.max_context_parents:
+            if context_id not in groups and len(groups) >= limit:
                 continue
             groups.setdefault(context_id, []).append(match)
 

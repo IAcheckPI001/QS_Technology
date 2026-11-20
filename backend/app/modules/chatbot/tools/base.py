@@ -92,6 +92,9 @@ class ToolSpec:
     timeout_s: float = 20.0
     required_scope: str | None = None   # chưa dùng: điểm gắn phân quyền theo role/scope
     on_invalid_args: InvalidArgsHook | None = None   # gọi khi argument không parse/validate được
+    # Tin nhắn của người dùng mà tool này phải được gọi trước khi trả lời (vd nhắc mã model):
+    # lượt trả lời không gọi tool nào thì runner chạy lại một bước, bắt buộc gọi tool.
+    requires_call: Callable[[str], bool] | None = None
 
     @property
     def deduplicates(self) -> bool:

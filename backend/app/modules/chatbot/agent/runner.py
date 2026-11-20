@@ -50,7 +50,7 @@ from app.util.normalize import guess_reply_language
 from app.util.token_counter import count_tokens
 
 from .deadline import Deadline
-from .prompts import build_system_prompt
+from .prompts import FORCE_TOOL_NOTE, build_system_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -179,18 +179,32 @@ class AgentRunner:
         tool_calls_used = 0
         completed: dict[str, ToolOutcome] = {}   # call key -> outcome thành công trong lượt
         calls_per_tool: Counter[str] = Counter()
+        tool_choice: ToolChoice = "auto"
+        forced = False
         while step < limits.max_steps:
             step += 1
             timeout = deadline.budget(limits.llm_timeout_s, limits.final_reserve_s)
             if timeout < MIN_CALL_BUDGET_S:
                 break
             try:
-                turn = await self._complete(state, messages, tools, "auto", timeout, step)
+                turn = await self._complete(state, messages, tools, tool_choice, timeout, step)
             except TimeoutError:
                 break
+            tool_choice = "auto"   # chỉ ép một bước, như reset_tool_choice của Agents SDK
             if not turn.tool_calls:
                 if turn.content and turn.content.strip():
-                    return self._drop_unknown_citations(state, turn.content)
+                    answer = self._drop_unknown_citations(state, turn.content)
+                    if not forced and step < limits.max_steps and self._needs_sources(state, specs):
+                        # Câu nghiệp vụ trả lời không qua tool (từ trí nhớ/lịch sử): bỏ câu trả lời,
+                        # chạy lại một bước bắt buộc gọi tool (Đợt 1 gói D, 2026-11-20).
+                        forced = True
+                        state.agent.invalid_citations = []
+                        set_root(forced_tool_call=True)
+                        logger.info("agent answer without tools discarded step=%d: forcing a tool call", step)
+                        messages.append({"role": "system", "content": FORCE_TOOL_NOTE})
+                        tool_choice = "required"
+                        continue
+                    return answer
                 break  # rỗng: thử lại một lần ở bước cuối với tool_choice="none"
 
             # Content đi kèm tool call là suy nghĩ trung gian: không gửi cho người dùng,
@@ -473,6 +487,17 @@ class AgentRunner:
             step, outcome.name, status or ("ok" if outcome.ok else outcome.error_code),
             outcome.latency_ms, (outcome.error_detail or "-")[:300],
         )
+
+    def _needs_sources(self, state: RunState, specs: Sequence[ToolSpec]) -> bool:
+        """Lượt chưa gọi tool nào mà câu trả lời cần nguồn: LLM trích nguồn không có trong lượt,
+        hoặc một tool khai báo `requires_call` cho tin nhắn này (vd nhắc mã model)."""
+        assert state.agent is not None
+        if any(step.kind == "tool" for step in state.agent.steps):
+            return False
+        if state.agent.invalid_citations:
+            return True
+        message = state.input.message.text
+        return any(spec.requires_call is not None and spec.requires_call(message) for spec in specs)
 
     def _drop_unknown_citations(self, state: RunState, answer: str) -> str:
         """Bỏ [S#] không phải nguồn đã trả cho agent trong lượt (LLM bịa hoặc nhớ nhầm)."""

@@ -261,7 +261,7 @@ def test_comparison_searches_each_model_and_interleaves():
         ("product_catalog", (), ("F86",)): [_match(1, fused=0.09), _match(2, fused=0.08)],
         ("product_catalog", (), ("F54",)): [_match(3, fused=0.02), _match(4, fused=0.01)],
     })
-    retriever = _retriever(repository, final_chunk_top_k=2)
+    retriever = _retriever(repository, final_chunk_top_k=2, compare_per_model=1)
 
     result = asyncio.run(retriever.search([
         _request(domain="product_catalog", scopes=(), models=("F86", "F54"), mode="comparison"),
@@ -269,6 +269,33 @@ def test_comparison_searches_each_model_and_interleaves():
 
     assert [call["models"] for call in repository.calls] == [["F86"], ["F54"]]
     assert [hit.chunk_id for hit in result.hits] == ["1", "3"]
+
+
+def test_comparison_gives_each_model_its_own_quota():
+    """Đợt 1 gói E: model có điểm thấp vẫn được đủ hạn mức, không bị model kia chiếm top-k chung."""
+    repository = FakeRepository({
+        ("product_catalog", (), ("F86",)): [_match(i, fused=0.09 - i / 1000) for i in range(1, 5)],
+        ("product_catalog", (), ("F54",)): [_match(i, fused=0.02 - i / 1000) for i in range(11, 15)],
+    })
+    retriever = _retriever(repository, final_chunk_top_k=2, max_context_parents=2, compare_per_model=3)
+
+    result = asyncio.run(retriever.search([
+        _request(domain="product_catalog", scopes=(), models=("F86", "F54"), mode="comparison"),
+    ]))
+
+    ids = [hit.chunk_id for hit in result.hits]
+    assert ids == ["1", "11", "2", "12", "3", "13"]
+
+
+def test_non_comparison_keeps_global_top_k():
+    repository = FakeRepository({
+        ("product_catalog", (), ("F86",)): [_match(i, fused=0.09 - i / 1000) for i in range(1, 5)],
+    })
+    retriever = _retriever(repository, final_chunk_top_k=2, compare_per_model=3)
+
+    result = asyncio.run(retriever.search([_request(domain="product_catalog", scopes=(), models=("F86",))]))
+
+    assert [hit.chunk_id for hit in result.hits] == ["1", "2"]
 
 
 def test_retrieval_error_marks_task_failed():
