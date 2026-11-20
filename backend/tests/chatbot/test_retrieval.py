@@ -287,6 +287,24 @@ def test_comparison_gives_each_model_its_own_quota():
     assert ids == ["1", "11", "2", "12", "3", "13"]
 
 
+def test_comparison_keeps_each_models_own_chunks_before_shared_tables():
+    """Kiểm thật 2026-11-20: bảng chọn model (khớp cả hai model, điểm cao) chiếm hết hạn mức nên
+    thiếu chunk tổng quan có số trục. Chunk chung giờ có hạn mức riêng, sau chunk riêng của từng model."""
+    table_a, table_b, table_c = _match(90, fused=0.2), _match(91, fused=0.19), _match(92, fused=0.18)
+    repository = FakeRepository({
+        ("product_catalog", (), ("F86",)): [table_a, table_b, table_c, _match(1, fused=0.05), _match(2, fused=0.04)],
+        ("product_catalog", (), ("F54",)): [table_a, table_b, table_c, _match(11, fused=0.03)],
+    })
+    retriever = _retriever(repository, compare_per_model=2, compare_shared=1)
+
+    result = asyncio.run(retriever.search([
+        _request(domain="product_catalog", scopes=(), models=("F86", "F54"), mode="comparison"),
+    ]))
+
+    # Riêng: F86 2 chunk, F54 1 chunk (thiếu 1 suất) → chung: 1 + 1 suất chưa dùng = 2 bảng.
+    assert [hit.chunk_id for hit in result.hits] == ["1", "11", "2", "90", "91"]
+
+
 def test_non_comparison_keeps_global_top_k():
     repository = FakeRepository({
         ("product_catalog", (), ("F86",)): [_match(i, fused=0.09 - i / 1000) for i in range(1, 5)],

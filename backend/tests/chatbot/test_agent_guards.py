@@ -191,7 +191,9 @@ def test_product_docs_requires_a_call_when_a_registry_model_is_mentioned():
 
     from app.modules.chatbot.tools.product_docs import PRODUCT_DOCS_DESCRIPTION, PRODUCT_DOCS_GUIDE
     assert "MỘT lần gọi" in PRODUCT_DOCS_DESCRIPTION
-    assert "Chỉ nói \"khác\" khi CẢ HAI giá trị có trong nguồn" in PRODUCT_DOCS_GUIDE
+    assert "chỉ gồm thuộc tính mà CẢ HAI giá trị có trong nguồn" in PRODUCT_DOCS_GUIDE
+    assert "[S#] NGAY SAU giá trị đó" in PRODUCT_DOCS_GUIDE
+    assert "không tự thêm" in PRODUCT_DOCS_GUIDE
 
 
 def test_final_step_answer_is_also_checked():

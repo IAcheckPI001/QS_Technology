@@ -62,8 +62,9 @@ PRODUCT_DOCS_GUIDE = """Output.status:
 
 So sánh model (khác nhau, giống nhau, nên chọn model nào):
 - Gọi tool MỘT lần cho cả câu so sánh; không gọi thêm riêng từng model nếu kết quả đã có nguồn của các model đó.
-- Trình bày theo thuộc tính (trục, giao tiếp điều khiển, I/O, kích thước, màn hình, tính năng…): mỗi thuộc tính ghi giá trị của từng model kèm [S#].
-- Chỉ nói "khác" khi CẢ HAI giá trị có trong nguồn và khác nhau; giá trị giống thì ghi "giống nhau"; thuộc tính chỉ có nguồn cho một model thì ghi "chưa có thông tin" cho model kia. Không kết luận "nhiều hơn/tốt hơn" khi không có nguồn nói vậy.
+- Trình bày theo thuộc tính, mở đầu bằng số trục, giao tiếp điều khiển, kích thước, màn hình, I/O rồi tới tính năng: mỗi thuộc tính ghi giá trị của từng model và [S#] NGAY SAU giá trị đó (không gom nguồn ở cuối câu trả lời).
+- Hai phần tách biệt: "Khác nhau" chỉ gồm thuộc tính mà CẢ HAI giá trị có trong nguồn và khác nhau; "Giống nhau" gồm thuộc tính có cùng giá trị. Thuộc tính chỉ có nguồn cho một model thì ghi "chưa có thông tin" cho model kia. Không kết luận "nhiều hơn/tốt hơn" khi không có nguồn nói vậy.
+- Giữ nguyên số và đơn vị như nguồn; nguồn không ghi đơn vị thì không tự thêm.
 - Đọc kỹ bảng chọn model (selection table): ✓/✗/(Option) của từng cột là dữ liệu so sánh chính.
 
 Câu hỏi nhiều bước (tìm model theo tiêu chí, rồi hỏi tiếp về model đó): tìm trước, đọc kết quả, rồi mới hỏi tiếp.

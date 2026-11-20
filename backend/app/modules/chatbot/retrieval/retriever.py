@@ -68,8 +68,10 @@ class RetrieverConfig:
     max_context_parents: int = 5
     min_similarity: float = 0.25
     spec_boost: float = 0.005
-    # So sánh nhiều model: hạn mức chunk (và nhóm ngữ cảnh) cho MỖI model, thay vì chia top-k chung.
+    # So sánh nhiều model: số chunk RIÊNG của mỗi model, và số chunk chung (khớp nhiều model, vd bảng
+    # chọn model) giữ thêm; thay cho top-k chung.
     compare_per_model: int = 3
+    compare_shared: int = 2
 
     @classmethod
     def from_settings(cls, settings: "Settings") -> "RetrieverConfig":
@@ -82,6 +84,7 @@ class RetrieverConfig:
             min_similarity=settings.retrieval_min_similarity,
             spec_boost=settings.retrieval_spec_boost,
             compare_per_model=settings.retrieval_compare_per_model,
+            compare_shared=settings.retrieval_compare_shared,
         )
 
 
@@ -125,17 +128,22 @@ class Retriever:
             embedding = (await self._embedder.embed([query.query]))[0]
 
             runs = await self._search_targets(targets, embedding)
+            ranked_runs = runs
             ranked = self._merge(runs)
             used_fallback = False
             if not ranked and fallback_targets:
                 fallback_runs = await self._search_targets(fallback_targets, embedding)
                 runs.extend(fallback_runs)
+                ranked_runs = fallback_runs
                 ranked = self._merge(fallback_runs)
                 used_fallback = True
 
-            top_k, max_groups = self._limits(runs)
-            kept = ranked[:top_k]
-            hits = await self._expand_parents(kept, max_groups)
+            if _is_comparison(ranked_runs):
+                kept = self._select_comparison(ranked_runs)
+                hits = await self._expand_parents(kept, max(len(kept), 1))
+            else:
+                kept = ranked[: self._config.final_chunk_top_k]
+                hits = await self._expand_parents(kept)
             search_span.set(
                 searches=len(runs),
                 relevant=len(ranked),
@@ -209,16 +217,44 @@ class Retriever:
             latency_ms=int((perf_counter() - started) * 1000),
         )
 
-    def _limits(self, runs: list[_SearchRun]) -> tuple[int, int]:
-        """(số chunk giữ, số nhóm ngữ cảnh tối đa). So sánh n model: mỗi model `compare_per_model`
-        (kết quả đã xen kẽ theo model ở `_merge`), không ít hơn giới hạn thường."""
-        if _is_comparison(runs):
-            quota = self._config.compare_per_model * len(runs)
-            return (
-                max(self._config.final_chunk_top_k, quota),
-                max(self._config.max_context_parents, quota),
+    def _select_comparison(self, runs: list[_SearchRun]) -> list[ChunkMatch]:
+        """Chunk giữ lại khi so sánh n model (mỗi run là một model).
+
+        Chunk khớp ở từ hai run trở lên là chunk chung (vd bảng chọn model nhiều cột): chúng hay có
+        điểm cao ở mọi run và chiếm hết hạn mức, đẩy chunk riêng của từng model (tổng quan, thông số)
+        ra ngoài (kiểm thật 2026-11-20: thiếu số trục). Vì vậy mỗi model có `compare_per_model` chunk
+        RIÊNG, xen kẽ theo model; chunk chung có hạn mức riêng `compare_shared`, cộng thêm phần hạn
+        mức riêng chưa dùng.
+        """
+        per_run = [
+            sorted(
+                (match for match in run.matches if self._relevant(match)),
+                key=lambda match: match.fused_score,
+                reverse=True,
             )
-        return self._config.final_chunk_top_k, self._config.max_context_parents
+            for run in runs
+        ]
+        seen_in: dict[int, int] = {}
+        for items in per_run:
+            for match_id in {match.id for match in items}:
+                seen_in[match_id] = seen_in.get(match_id, 0) + 1
+        own = [[match for match in items if seen_in[match.id] == 1] for items in per_run]
+        shared_best: dict[int, ChunkMatch] = {}
+        for items in per_run:
+            for match in items:
+                if seen_in[match.id] > 1 and (
+                    match.id not in shared_best or match.fused_score > shared_best[match.id].fused_score
+                ):
+                    shared_best[match.id] = match
+        shared = sorted(shared_best.values(), key=lambda match: match.fused_score, reverse=True)
+
+        quota = self._config.compare_per_model
+        kept: list[ChunkMatch] = []
+        for position in range(quota):
+            kept.extend(items[position] for items in own if position < len(items))
+        unused = quota * len(runs) - len(kept)
+        kept.extend(shared[: self._config.compare_shared + unused])
+        return kept
 
     def _relevant(self, match: ChunkMatch) -> bool:
         return match.vector_score >= self._config.min_similarity
