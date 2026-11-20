@@ -64,6 +64,7 @@ Cập nhật: 2026-11-20
    `usage.cached_input_tokens`, `model` trong history.
 2. Toma chạy lại eval (`run_crm_agent_eval.py`) sau đợt dọn và luật username; đặt `AGENT_MODEL`.
 3. Đợt 1 theo [kế hoạch 2026-11-20](../../reports/crm_agent_dot1_plan_2026-11-20.md) (đã duyệt Q1–Q5):
-   gói E+D xong ở mức code + test (nhánh `claude/dot1-e-d`, chưa merge) → Toma kiểm 5 câu so sánh, câu
-   lặp lại, `run_retrieval_eval.py`; tiếp theo C1–C3, A, B, C4.
+   gói E+D đã merge (`5685901`) và kiểm thật 2026-11-20: so sánh 1 lần gọi, token giảm 63%, nhưng thiếu
+   số trục (chunk tổng quan không vào top) và chưa trích nguồn theo thuộc tính → chỉnh hạn mức/guide;
+   Toma chạy `run_retrieval_eval.py`; tiếp theo C1–C3, A, B, C4.
 4. Chốt r1; gửi CRM: `timezone`, mô tả `is_current`, dump schema mới.

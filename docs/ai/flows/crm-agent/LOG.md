@@ -7,6 +7,23 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Kiểm thật gói E+D: so sánh một lần gọi, token giảm 63%, còn thiếu số trục · loại: kiểm chứng
+
+- Dữ liệu: phiên `fd5e7814…`, backend local chạy `5685901`, đọc qua `/history`, `/trace`, `/retrieval`.
+- "F86 khác F54 thế nào?" (gpt-4.1-mini): 1 lần `product_docs_ask` (trước 3), 8.324 token vào (trước
+  22.804), 0,00267 USD. Đối chiếu toàn văn 6 chunk: mọi ý đúng nguồn (EtherCAT, spindle 2/1, Look-Ahead
+  500/250, I/O, tuổi dao, màn hình). **Thiếu số trục 6/4 và kích thước**: 6 chunk là bảng chọn model và
+  trang thông số, không có chunk tổng quan "BỘ ĐIỀU KHIỂN n AXIS" của từng model.
+- "So sánh F86 và F10T": 1 lần gọi, 10.530 token; nội dung đúng nguồn, trừ đơn vị "µs" của Block
+  Processing Time (bảng không ghi đơn vị) và mục "Khác biệt" lẫn thuộc tính giống nhau.
+- Cả hai câu chỉ ghi [S1]…[S6] ở cuối, chưa trích theo từng thuộc tính như guide yêu cầu.
+- "F54 có bao nhiêu trục" (gpt-4o-mini, câu lặp lại): gọi tool ngay bước 1, đúng "4 trục" [S2][S3];
+  đường ép gọi tool (`forced_tool_call`) chưa phát sinh nên chưa kiểm thật được.
+- Một lượt lỗi 401 `invalid_api_key` lúc khởi động lại backend (cấu hình khóa), lượt gửi lại thành công.
+- Kết luận theo kế hoạch: G4 đạt một phần (1 lần gọi, không kết luận sai; thiếu số trục), G5 đạt, G2 đạt
+  trên mẫu này. Mở tiếp: thử `RETRIEVAL_COMPARE_PER_MODEL=4` hoặc ưu tiên chunk tổng quan khi so sánh;
+  guide: trích nguồn theo thuộc tính, không thêm đơn vị không có trong nguồn.
+
 ## 2026-11-20 · Đợt 1 gói E+D: câu so sánh gọi một lần, bắt buộc tra nguồn · loại: thay đổi
 
 - Vấn đề: P5 (câu "F86 khác F54" gọi tool 3 lần, 22,8k token, kết luận sai bù rơ/PLC/ATC) và lượt
