@@ -7,6 +7,21 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Kiểm thật bản sửa so sánh (`f8fc979`): đủ số trục, nhưng chạy gpt-4o-mini · loại: kiểm chứng
+
+- Dữ liệu: phiên `fd5e7814…`, 2 lượt 05:38–05:39 UTC; **`AGENT_MODEL` vẫn là gpt-4o-mini** (đặt khi kiểm G2),
+  không phải model mục tiêu gpt-4.1-mini.
+- Chọn chunk đúng thiết kế: lần so sánh trả 8 nguồn, có chunk tổng quan "6 AXIS"/"4 AXIS" của từng model.
+- "F86 khác F54": đủ số trục 6/4, kích thước, màn hình, I/O, [S#] sau từng giá trị. Nhưng agent gọi
+  `product_docs_ask` 4 lần trong 3 bước (2 lần bị từ chối `based_on_sources` dùng S# của lượt trước, rồi
+  so sánh + tra riêng F54): 19.051 token vào, 0,002931 USD, 24,5 s. Thiếu spindle 2/1, quản lý tuổi dao,
+  đa trục tùy chọn (có trong chunk); không tách "Khác nhau"/"Giống nhau".
+- "So sánh F86 và F10T": 1 lần gọi, 11.774 token, 0,001589 USD, 8,2 s; đúng nguồn, hết "µs", [S#] theo giá
+  trị. Sai một suy luận: "F86 có kích thước tổng thể lớn hơn" (326×185×30 so với 254×195×40: F86 dài hơn,
+  hẹp hơn, mỏng hơn). Thiếu "cảm ứng" của F10T; không tách "Khác nhau"/"Giống nhau".
+- Mở tiếp: kiểm lại với `AGENT_MODEL=gpt-4.1-mini`; guide cấm suy luận so sánh tổng hợp (lớn/nhỏ hơn) từ
+  nhiều số đo; cân nhắc chặn bằng code lần tra riêng một model đã có trong lần so sánh cùng lượt.
+
 ## 2026-11-20 · Câu so sánh: chunk riêng của từng model không còn bị bảng chung đẩy ra · loại: thay đổi
 
 - Vấn đề: kiểm thật (mục cùng ngày bên dưới) thiếu số trục/kích thước F86–F54: chunk chung (bảng chọn
