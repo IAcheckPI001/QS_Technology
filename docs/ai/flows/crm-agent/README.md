@@ -27,9 +27,9 @@ nghiệm**. Phần chung của lượt chat (service key, session, lease, ghi hi
 ChatbotService (security → session/lease → context → prune: chat-platform)
  └─ AgentRunner.run (agent/runner.py)
      ├─ chờ slot (AGENT_MAX_CONCURRENT_RUNS), Deadline(AGENT_TURN_TIMEOUT_S)
-     ├─ lặp ≤ AGENT_MAX_STEPS: provider.chat_complete_tools(tool_choice="auto")
+     ├─ lặp ≤ AGENT_MAX_STEPS: provider.chat_complete_tools(tool_choice="auto"), hết giờ/429/5xx thử lại 1 lần
      │    ├─ ToolRegistry.invoke → tool (song song ≤ AGENT_PARALLEL_TOOLS khi read_only + concurrency_safe)
-     │    └─ message tool kèm turn_budget; dừng sớm theo ToolSpec.progress và ngân sách
+     │    └─ message tool kèm turn_budget; dừng sớm theo ToolSpec.progress; lỗi repairable_errors mà LLM trả lời ngay → bắt sửa 1 lần
      ├─ bước cuối tool_choice="none" (hết bước/lượt tool/giờ, dừng sớm: kèm khung đã xác minh / chưa lấy được / hỏi lại; rỗng lần đầu)
      └─ bỏ [S#] không thuộc nguồn của lượt → một SSE delta → history completed
 ```

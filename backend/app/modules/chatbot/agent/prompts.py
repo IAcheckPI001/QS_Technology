@@ -41,6 +41,14 @@ FORCE_TOOL_NOTE = (
 )
 
 
+# Runner chèn khi LLM trả lời ngay sau lỗi argument sửa được mà chưa gọi lại tool (LC-4).
+REPAIR_NOTE = (
+    "Lần gọi {tools} vừa lỗi do argument (detail của lỗi đã nêu chỗ sai và cột/giá trị gần đúng) nhưng câu "
+    "trả lời chưa sửa. Sửa argument theo detail và gọi lại tool đó ngay. Không hỏi nhân viên về tên cột, "
+    "UUID hay cú pháp query."
+)
+
+
 # Runner chèn trước bước chốt khi dừng vòng lặp sớm (Đợt 1 gói C), theo `final_reason`.
 _FINAL_REASONS = {
     "limit": "Lượt đã hết số bước, số lần gọi tool hoặc thời gian.",

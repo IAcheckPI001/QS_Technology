@@ -10,13 +10,29 @@ from app.modules.chatbot.schemas.system import (
 )
 
 
+class ProviderTransientError(RuntimeError):
+    """Lỗi tạm thời của provider (429, 5xx, mất kết nối): gọi lại có thể thành công.
+
+    Provider tự đổi lỗi SDK sang lỗi này để runner thử lại mà không biết SDK cụ thể. Hết giờ
+    vẫn là `TimeoutError`. `status_code`/`code` được tracing ghi lên span (`http_status`).
+    """
+
+    def __init__(self, reason: str, *, status_code: int | None = None, code: str | None = None) -> None:
+        super().__init__(reason)
+        self.reason = reason
+        self.status_code = status_code
+        self.code = code
+
+
 @runtime_checkable
 class ToolCallingProvider(Protocol):
     """Provider điều khiển vòng lặp agent.
 
     Mỗi implementation tự khai báo `capabilities`; startup từ chối bật agent khi
-    capability không đủ, thay vì để lỗi xuất hiện giữa lượt chat. Timeout do
-    người gọi áp (deadline chung của lượt), provider không tự đặt.
+    capability không đủ, thay vì để lỗi xuất hiện giữa lượt chat. Deadline chung của lượt do
+    người gọi áp; provider được đặt timeout mỗi request ngắn hơn một chút (không tự thử lại),
+    để lỗi hết giờ mang theo giai đoạn (kết nối hay chờ phản hồi) thay vì chỉ bị huỷ.
+    Lỗi tạm thời trả `TimeoutError` hoặc `ProviderTransientError`; runner quyết định thử lại.
     """
 
     kind: ModelProvider

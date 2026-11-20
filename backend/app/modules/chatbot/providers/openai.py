@@ -11,6 +11,7 @@ from app.modules.chatbot.schemas.system import (
     ToolCallRequest,
     ToolChoice,
 )
+from app.modules.chatbot.providers.base import ProviderTransientError
 from app.util.parse_json import parse_json_object
 from app.util.token_counter import count_tokens
 
@@ -103,6 +104,39 @@ def _prompt_tokens(messages: list[dict[str, Any]], model: str) -> Callable[[], i
     return estimate
 
 
+_TIMEOUT_PHASES = {"ConnectTimeout": "connect", "ReadTimeout": "read", "WriteTimeout": "write", "PoolTimeout": "pool"}
+
+
+def _timeout_phase(error: BaseException) -> str:
+    """Giai đoạn hết giờ theo exception httpx gốc: connect (chưa tới OpenAI), read (chờ phản hồi)."""
+    cause = error.__cause__ or error.__context__
+    while cause is not None:
+        phase = _TIMEOUT_PHASES.get(type(cause).__name__)
+        if phase:
+            return phase
+        cause = cause.__cause__ or cause.__context__
+    return "unknown"
+
+
+def _error_code(error: APIStatusError) -> str | None:
+    code = getattr(error, "code", None)
+    return code if isinstance(code, str) else None
+
+
+def _set_provider_headers(target: Span, headers: Any) -> None:
+    """Request id và thời gian OpenAI tự xử lý (openai-processing-ms): so với latency để thấy phần
+    chậm nằm ở OpenAI hay ở mạng/hàng đợi. Không phải dữ liệu nhạy cảm."""
+    request_id = headers.get("x-request-id")
+    processing = headers.get("openai-processing-ms")
+    attributes: dict[str, Any] = {}
+    if request_id:
+        attributes["provider_request_id"] = str(request_id)[:64]
+    if processing and str(processing).isdigit():
+        attributes["provider_processing_ms"] = int(processing)
+    if attributes:
+        target.set(**attributes)
+
+
 class OpenAIProvider:
     kind = ModelProvider.OPENAI
 
@@ -113,9 +147,15 @@ class OpenAIProvider:
         embedding_model: str = "text-embedding-3-small",
         *,
         reasoning_effort: str | None = None,
+        tool_call_timeout_s: float | None = None,
     ) -> None:
-        """reasoning_effort: chỉ gửi khi model là model suy luận (vd low, medium)."""
+        """reasoning_effort: chỉ gửi khi model là model suy luận (vd low, medium).
+
+        tool_call_timeout_s: timeout mỗi request của `chat_complete_tools`, không để SDK tự thử lại
+        (runner thử lại). None = mặc định SDK (600 s, tự thử lại 2 lần, không thấy được trong trace).
+        """
         self._client = AsyncOpenAI(api_key=api_key)
+        self._tool_call_timeout_s = tool_call_timeout_s
         self._model = model
         self._embedding_model = embedding_model
         self._reasoning = is_reasoning_model(model)
@@ -233,15 +273,39 @@ class OpenAIProvider:
             if tool_choice == "auto":
                 options["parallel_tool_calls"] = parallel_tool_calls
         # Span `llm.chat_tools` do runner mở và đang là span hiện tại.
-        with _metered("llm", self._model, current_span(), _prompt_tokens(messages, self._model)) as meter:
-            resp = await self._client.chat.completions.create(
-                model=self._model,
-                messages=messages,
-                stream=False,
-                **self._generation_options(max_tokens),
-                **options,
-            )
-            usage = meter.record(resp.usage) or TokenUsage()
+        target = current_span()
+        client = (
+            self._client.with_options(timeout=self._tool_call_timeout_s, max_retries=0)
+            if self._tool_call_timeout_s else self._client
+        )
+        completions = client.chat.completions
+        raw_api = getattr(completions, "with_raw_response", None)
+        request = {
+            "model": self._model, "messages": messages, "stream": False,
+            **self._generation_options(max_tokens), **options,
+        }
+        try:
+            with _metered("llm", self._model, target, _prompt_tokens(messages, self._model)) as meter:
+                if raw_api is not None:
+                    raw = await raw_api.create(**request)
+                    _set_provider_headers(target, raw.headers)
+                    resp = raw.parse()
+                else:
+                    resp = await completions.create(**request)
+                usage = meter.record(resp.usage) or TokenUsage()
+        except APITimeoutError as error:
+            # Kết nối (mạng, DNS, TLS) hay chờ phản hồi (OpenAI chưa trả): phân biệt nguồn của LC-2.
+            target.set(timeout_phase=_timeout_phase(error))
+            raise TimeoutError("OpenAI request timed out") from error
+        except APIStatusError as error:
+            target.set(provider_request_id=error.request_id)
+            if error.status_code == 429 or error.status_code >= 500:
+                raise ProviderTransientError(
+                    f"http_{error.status_code}", status_code=error.status_code, code=_error_code(error),
+                ) from error
+            raise
+        except APIConnectionError as error:
+            raise ProviderTransientError("connection") from error
         if not resp.choices:
             raise RuntimeError("OpenAI returned no completion choices.")
         choice = resp.choices[0]

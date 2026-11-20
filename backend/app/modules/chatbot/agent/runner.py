@@ -32,7 +32,7 @@ from typing import Any
 
 from app.core.config import Settings
 from app.core.tracing import NON_ERROR_STATUSES, error_detail_items, set_root, span
-from app.modules.chatbot.providers.base import ToolCallingProvider
+from app.modules.chatbot.providers.base import ProviderTransientError, ToolCallingProvider
 from app.modules.chatbot.schemas.system import (
     AgentRun,
     AgentStep,
@@ -52,7 +52,13 @@ from app.util.normalize import guess_reply_language
 from app.util.token_counter import count_tokens
 
 from .deadline import Deadline
-from .prompts import FORCE_TOOL_NOTE, build_system_prompt, final_step_note, render_session_state
+from .prompts import (
+    FORCE_TOOL_NOTE,
+    REPAIR_NOTE,
+    build_system_prompt,
+    final_step_note,
+    render_session_state,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +151,9 @@ class AgentRunner:
                         answered_without_tools=state.agent.answered_without_tools,
                         invalid_citations=len(state.agent.invalid_citations),
                         final_reason=state.agent.final_reason,
+                        llm_failures=sum(
+                            1 for step in steps if step.kind == "llm" and step.status != "ok"
+                        ),
                     )
                     # Lượt vẫn trả lời được (outcome ok) nhưng tool lỗi: đánh dấu trên root
                     # để lọc/grep được mà không phải đọc từng span.
@@ -189,20 +198,37 @@ class AgentRunner:
         reason: FinalReason = "limit"
         tool_choice: ToolChoice = "auto"
         forced = False
+        repair_forced = False
+        unrepaired: dict[str, str] = {}          # tool -> mã lỗi argument sửa được, chưa gọi lại thành công
         while step < limits.max_steps:
             step += 1
-            timeout = deadline.budget(limits.llm_timeout_s, limits.final_reserve_s)
-            if timeout < MIN_CALL_BUDGET_S:
-                break
             try:
-                turn = await self._complete(state, messages, tools, tool_choice, timeout, step)
-            except TimeoutError:
+                turn = await self._complete_retrying(
+                    state, messages, tools, tool_choice, step, deadline, limits.final_reserve_s,
+                )
+            except (TimeoutError, ProviderTransientError):
                 break
             input_tokens += turn.usage.input_tokens
             tool_choice = "auto"   # chỉ ép một bước, như reset_tool_choice của Agents SDK
             if not turn.tool_calls:
                 if turn.content and turn.content.strip():
                     answer = self._drop_unknown_citations(state, turn.content)
+                    if (
+                        unrepaired and not repair_forced and step < limits.max_steps
+                        and tool_calls_used < limits.max_tool_calls
+                    ):
+                        # Trả lời ngay sau lỗi argument sửa được (LC-4): bỏ câu trả lời, bắt sửa đúng một lần,
+                        # như ModelRetry của Pydantic AI. Lần sau vẫn lỗi thì để bước chốt nói phần chưa lấy được.
+                        repair_forced = True
+                        state.agent.invalid_citations = []
+                        set_root(forced_repair=sorted(unrepaired.values()))
+                        logger.info("agent answer after repairable tool error discarded step=%d", step)
+                        messages.append({
+                            "role": "system",
+                            "content": REPAIR_NOTE.format(tools=", ".join(sorted(unrepaired))),
+                        })
+                        tool_choice = "required"
+                        continue
                     if not forced and step < limits.max_steps and self._needs_sources(state, specs):
                         # Câu nghiệp vụ trả lời không qua tool (từ trí nhớ/lịch sử): bỏ câu trả lời,
                         # chạy lại một bước bắt buộc gọi tool (Đợt 1 gói D, 2026-11-20).
@@ -252,6 +278,7 @@ class AgentRunner:
                     "content": outcome.message_content(limits.tool_output_tokens, self._count, turn_budget),
                 })
             self._remember(state, outcomes)
+            self._track_repairs(outcomes, unrepaired)
             if skipped or tool_calls_used >= limits.max_tool_calls:
                 break
             stop = tracker.update([(outcome.name, self._progress(outcome)) for outcome in outcomes])
@@ -267,13 +294,13 @@ class AgentRunner:
         self._finish(state, reason)
         if (note := final_step_note(reason)) is not None:
             messages.append({"role": "system", "content": note})
-        final_timeout = deadline.budget(limits.llm_timeout_s)
-        if final_timeout < MIN_CALL_BUDGET_S:
-            raise AgentError("agent_timeout", "Agent turn ran out of time.")
         try:
-            final = await self._complete(state, messages, tools, "none", final_timeout, step + 1)
+            final = await self._complete_retrying(state, messages, tools, "none", step + 1, deadline, 0.0)
         except TimeoutError:
             raise AgentError("agent_timeout", "Agent turn ran out of time.") from None
+        except ProviderTransientError as error:
+            # Hết lượt thử: giữ lỗi gốc của provider như trước khi runner tự thử lại.
+            raise (error.__cause__ or error) from None
         if not (final.content and final.content.strip()):
             raise AgentError("agent_empty_answer", "Agent returned no answer.")
         return self._drop_unknown_citations(state, final.content)
@@ -306,6 +333,33 @@ class AgentRunner:
             {"role": "user", "content": message},
         ]
 
+    async def _complete_retrying(
+        self,
+        state: RunState,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]],
+        tool_choice: ToolChoice,
+        step: int,
+        deadline: Deadline,
+        reserve_s: float,
+    ) -> AssistantTurn:
+        """Một bước LLM, thử lại đúng một lần khi hết giờ hoặc lỗi tạm thời của provider (LC-2).
+
+        Lượt kiểm thật 2026-11-20: request treo 20 s thì gửi lại cùng nội dung xong trong 2–5 s.
+        Lần thử lại chỉ chạy khi deadline còn đủ (giữ `reserve_s` cho bước chốt).
+        """
+        for attempt in (1, 2):
+            timeout = deadline.budget(self._limits.llm_timeout_s, reserve_s)
+            if timeout < MIN_CALL_BUDGET_S:
+                raise TimeoutError("agent turn deadline reached")
+            try:
+                return await self._complete(state, messages, tools, tool_choice, timeout, step, attempt)
+            except (TimeoutError, ProviderTransientError):
+                if attempt == 2:
+                    raise
+                logger.info("agent llm step=%d retrying after a transient failure", step)
+        raise AssertionError("unreachable")
+
     async def _complete(
         self,
         state: RunState,
@@ -314,6 +368,7 @@ class AgentRunner:
         tool_choice: ToolChoice,
         timeout_s: float,
         step: int,
+        attempt: int = 1,
     ) -> AssistantTurn:
         assert state.agent is not None
         started_at = perf_counter()
@@ -321,7 +376,7 @@ class AgentRunner:
             with span(
                 "llm.chat_tools", "llm",
                 step=step, tool_choice=tool_choice, model=self._provider.model,
-                messages=len(messages), timeout_s=round(timeout_s, 1),
+                messages=len(messages), timeout_s=round(timeout_s, 1), attempt=attempt,
             ) as llm_span:
                 async with asyncio.timeout(timeout_s):
                     turn = await self._provider.chat_complete_tools(
@@ -343,6 +398,13 @@ class AgentRunner:
                 latency_ms=_elapsed_ms(started_at),
             ))
             logger.warning("agent llm step timed out step=%d tool_choice=%s", step, tool_choice)
+            raise
+        except ProviderTransientError as error:
+            state.agent.add_step(AgentStep(
+                step=step, kind="llm", name=tool_choice, status=f"llm_{error.reason}"[:64],
+                latency_ms=_elapsed_ms(started_at),
+            ))
+            logger.warning("agent llm step failed step=%d reason=%s", step, error.reason)
             raise
         latency_ms = _elapsed_ms(started_at)
         state.agent.add_step(AgentStep(
@@ -527,6 +589,15 @@ class AgentRunner:
         if not outcome.ok or outcome.output is None or spec is None:
             return "error"
         return spec.progress_of(outcome.output)
+
+    def _track_repairs(self, outcomes: Sequence[ToolOutcome], unrepaired: dict[str, str]) -> None:
+        """Tool có lỗi argument sửa được (theo `ToolSpec.repairable_errors`) và chưa gọi lại thành công."""
+        for outcome in outcomes:
+            spec = self._registry.get(outcome.name)
+            if outcome.ok:
+                unrepaired.pop(outcome.name, None)
+            elif spec is not None and outcome.error_code in spec.repairable_errors:
+                unrepaired[outcome.name] = outcome.error_code or ""
 
     def _remember(self, state: RunState, outcomes: Sequence[ToolOutcome]) -> None:
         """Định danh từ output thành công, theo thứ tự call (state_update gộp vào facts L2)."""

@@ -103,6 +103,9 @@ class ToolSpec:
     # Tín hiệu tiến độ của output thành công; None = mọi output thành công là "ok".
     progress: Callable[[Any], Progress] | None = None
 
+    # Mã lỗi nghĩa là "argument sai, sửa được" (như ModelRetry của Pydantic AI): LLM trả lời ngay sau
+    # lỗi này mà chưa gọi lại tool thì runner bắt sửa một lần (LC-4, 2026-11-20).
+    repairable_errors: frozenset[str] = frozenset({"tool_invalid_args"})
     # Định danh output để lại cho phiên (Đợt 1 gói A, facts L2); None = tool không ghi gì.
     remember: Callable[[Any], ToolMemory | None] | None = None
 

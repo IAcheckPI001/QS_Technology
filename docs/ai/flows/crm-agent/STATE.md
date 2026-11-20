@@ -44,8 +44,8 @@ Cập nhật: 2026-11-20
 | D-014 | Hạn mức 2 + 4 hay 3 + 2 chưa chốt | Chờ CMP-1 rồi Toma chốt |
 | P4 | Định danh không kiểm nguồn gốc | Gói B của [kế hoạch Đợt 1](../../reports/crm_agent_dot1_plan_2026-11-20.md); P1–P3 đã có code (A, C1–C3) |
 | LC-1 | `crm_query` tra tên ra nhiều người → dừng hỏi lại; câu "liệt kê nhân viên tên X" không đi tiếp được | Cần đo bằng eval |
-| LC-2 | Gọi gpt-4.1-mini hết giờ 20 s: 4 lượt trong ~1 giờ (2026-11-20 08:16, 09:18, 09:19, 09:20) | Ưu tiên cao: thử lại một lần, ghi request id của provider |
-| LC-4 | LLM không thử lại sau `tool_invalid_args`/`crm_query_invalid`; đoán cột khi chưa đọc `crm_schema` | Câu trả lời rỗng; đề xuất ép thử lại bằng code, kiểm cột trước khi gửi CRM |
+| LC-2 | Gọi gpt-4.1-mini hết giờ 20 s: 4 lượt trong ~1 giờ (2026-11-20) | Có code: thử lại một lần, ghi request id và `timeout_phase` (nhánh `claude/dot1-lc`); chờ kiểm thật |
+| LC-4 | LLM không thử lại sau lỗi cột; đoán cột khi chưa đọc `crm_schema` | Có code: kiểm cột trước CRM kèm gợi ý, bắt sửa một lần (nhánh `claude/dot1-lc`); chờ kiểm thật |
 | LC-5 | "Có thuộc khách hàng" kết luận từ một trang khách bất kỳ; `support_waiting_messages.customer_id` không khoá ngoại | Sai logic; cần hint bảng |
 | LC-6 | "Hộp tin nhắn chờ" lúc 18 tin (mọi tin) lúc 7 (`staff_deleted_at` null) | Cần Toma/CRM chốt nghĩa |
 | LC-3 | Bản ghi nhắc ở lượt trước mất UUID (P1) | Gói A đã giải ở lượt thật; theo dõi thêm |
@@ -69,8 +69,8 @@ Cập nhật: 2026-11-20
 
 ## Bước tiếp theo
 
-1. Agent (chờ Toma duyệt): LC-2 thử lại một lần khi LLM hết giờ; LC-4 ép thử lại sau lỗi tham số và kiểm cột
-   trước khi gửi CRM; LC-5 hint bảng tin nhắn chờ. Toma chốt LC-6.
+1. Toma: merge `claude/dot1-lc`, chạy lại 7 câu CRM; agent đọc trace (`timeout_phase`, `forced_repair`). Sau đó
+   LC-5 (hint bảng tin nhắn chờ); Toma chốt LC-6.
 2. Toma: thêm `AGENT_TURN_INPUT_BUDGET`, `AGENT_HISTORY_TURNS`, `CONTEXT_HISTORY_TURNS` vào `.env.example`; chạy
    `run_crm_agent_eval.py` (G1) và `run_retrieval_eval.py`.
 3. Sau đó: gói B, C4; CMP-1, CMP-2 rồi chốt D-014.

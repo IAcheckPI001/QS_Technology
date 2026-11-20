@@ -7,6 +7,32 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · LLM hết giờ được đo và thử lại; lỗi cột bị chặn trước CRM, kèm gợi ý, và bắt sửa một lần (LC-2, LC-4) · loại: thay đổi
+
+- Vấn đề: lượt thật 2026-11-20 (mục dưới): 4 lần gọi gpt-4.1-mini treo đúng 20 s (gửi lại cùng nội dung xong
+  2–5 s); LLM đoán cột (`customers.name`, `product_ownerships.customer_id`) rồi trả lời ngay, không sửa.
+- Nguồn LC-2: span hết giờ là `llm.chat_tools`, không phải tool CRM; client OpenAI để mặc định SDK (timeout 600 s,
+  tự thử lại 2 lần) nên runner cắt ở 20 s không biết là OpenAI chậm, 429 hay mạng.
+- Thay đổi (Toma duyệt hướng 2026-11-20, tham khảo `ModelRetry` của Pydantic AI, `sql_db_query_checker` của
+  LangChain; không dùng `enum` cột động vì làm mất prompt cache):
+  - LC-2: `OpenAIProvider(tool_call_timeout_s=AGENT_LLM_TIMEOUT_S − 1, max_retries=0)` cho `chat_complete_tools`;
+    span ghi `provider_request_id`, `provider_processing_ms`, `timeout_phase` (connect/read). 429/5xx/mất kết nối →
+    `ProviderTransientError`. Runner thử lại **một lần** mỗi bước (kể cả bước chốt) khi hết giờ hoặc lỗi tạm thời,
+    nếu deadline còn đủ; hết lượt thử ở bước chốt thì ném lỗi gốc như trước.
+  - LC-4 (chính): `crm_query` tải schema sống của bảng gốc nếu chưa cache, `compile_raw(known_columns=…)` báo
+    `tool_invalid_args` khi cột không có, kèm cột gần đúng (`name` → `full_name, company_name`; `customer_id` →
+    `owner_customer_id`) và danh sách cột; không gửi CRM. Chỉ dùng schema sống (index tĩnh có thể lệch); không tự sửa.
+  - LC-4 (lưới an toàn): `ToolSpec.repairable_errors` (mặc định `tool_invalid_args`; `crm_query` thêm
+    `crm_query_invalid`). LLM trả lời ngay sau lỗi đó mà chưa gọi lại thành công → bỏ câu trả lời, chèn `REPAIR_NOTE`,
+    một bước `tool_choice=required`; chỉ một lần mỗi lượt (vẫn lỗi thì C1 dừng `plateau`).
+- File: `providers/{base,openai}.py`, `agent/{runner,prompts}.py`, `tools/{base,crm_query}.py`,
+  `reporting/raw/compile.py`, `core/config.py` (`agent_request_timeout_s`), `main.py`; test mới
+  `test_agent_lc_fixes.py` (13).
+- Kiểm chứng: `pytest tests` → 1164 passed, 14 skipped, 1 failed có sẵn (CSV CRLF). Chưa kiểm trên server thật.
+- Ảnh hưởng contract: thuộc tính trace mới (api_guidelines mục trace); không đổi route, SSE, biến môi trường.
+  Request tool-calling không còn được SDK tự thử lại ngầm (runner thử lại, thấy được trong trace).
+- Chưa kiểm / mở tiếp: chạy lại 7 câu; khi còn hết giờ, tra `provider_request_id` trên OpenAI Dashboard; LC-5, LC-6.
+
 ## 2026-11-20 · Gói A: facts của phiên và lịch sử theo lượt; kiểm thật 7 câu, facts dùng đúng UUID qua lượt · loại: thay đổi, kiểm chứng
 
 - Thay đổi (Toma duyệt thiết kế 2026-11-20: trần 10 dòng/danh sách, nhãn từ cột cho phép, 8 luật chống dùng nhầm):

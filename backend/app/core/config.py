@@ -201,6 +201,12 @@ class Settings(BaseSettings):
         return value
 
     @property
+    def agent_request_timeout_s(self) -> float:
+        """Timeout mỗi request tool-calling tới provider: ngắn hơn AGENT_LLM_TIMEOUT_S 1 s để lỗi hết giờ
+        do SDK báo (kèm giai đoạn connect/read) thay vì bị deadline của runner huỷ ngang."""
+        return max(self.agent_llm_timeout_s - 1.0, 1.0)
+
+    @property
     def effective_agent_model(self) -> str:
         return self.agent_model or self.openai_model
 

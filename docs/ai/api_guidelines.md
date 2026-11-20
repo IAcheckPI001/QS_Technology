@@ -305,7 +305,12 @@ trace mới nhất của phiên. Đọc `public.chat_traces`; chỉ có dữ li�
   `failed_tool_calls` đếm tool call lỗi.
 - Lượt agent trả lời được nhưng có tool lỗi vẫn `outcome="ok"`; root span có thêm
   `tool_errors: ["crm_query:crm_auth_failed", …]` (`{tool}:{mã}`). Root span và span
-  `agent.run` của lượt agent có `final_reason` (như trong snapshot).
+  `agent.run` của lượt agent có `final_reason` (như trong snapshot); `agent.run` có
+  `llm_failures` (số lần gọi LLM lỗi tạm thời); root có `forced_repair: [mã]` khi runner bắt
+  sửa argument. Span `llm.chat_tools` có `attempt` (1, 2 khi thử lại), `provider_request_id`
+  (`x-request-id` của OpenAI), `provider_processing_ms` (thời gian OpenAI tự xử lý) và, khi hết giờ,
+  `timeout_phase` (`connect` = chưa tới OpenAI, `read` = chờ phản hồi). `agent_steps[].status` của
+  bước LLM có thêm `llm_http_429`, `llm_http_5xx`, `llm_connection`.
 - Span `llm`/`embedding`/`http` lỗi có thêm `http_status` (int) và `provider_error_code` (mã định
   danh `[a-z0-9_]{1,64}` của nhà cung cấp, vd `insufficient_quota` = hết credit,
   `rate_limit_exceeded` = gọi quá nhanh) khi exception có thuộc tính `status_code`/`code` (B5 W2,

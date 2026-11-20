@@ -9,7 +9,7 @@ tham số hoá và giới hạn dữ liệu theo token của nhân viên. 400 c�
 
 import json
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from datetime import tzinfo
 from time import perf_counter
 from typing import Any, Literal
@@ -22,6 +22,7 @@ from app.modules.chatbot.reporting.dates import stated_years
 from app.modules.chatbot.reporting.raw.audit import QueryAudit, QueryOutcome, outcome_of_error
 from app.modules.chatbot.reporting.raw.compile import (
     CompiledRaw,
+    KnownColumns,
     RawQueryError,
     compile_raw,
     count_of,
@@ -283,6 +284,11 @@ def build_crm_query_tool(
             return compact_type(live.columns[column])
         return static_column_type(table, column)
 
+    def known_columns(table: str) -> Collection[str] | None:
+        """Chỉ schema sống đã cache: index tĩnh có thể lệch CRM (13 bảng), dùng nó sẽ chặn nhầm cột thật."""
+        live = cache.cached(table)
+        return live.columns.keys() if live is not None else None
+
     def on_invalid_args(arguments_raw: str, detail: str, context: ToolContext) -> None:
         """Argument LLM gửi không validate được (không tới run): vẫn tính một lần thử."""
         attempt = _begin_attempt(context)
@@ -310,12 +316,26 @@ def build_crm_query_tool(
             "attempt": attempt,
             "arguments": arguments.model_dump(mode="json"),
         }
-        try:
-            compiled = compile_raw(
+        years = stated_years(_user_texts(state), state.request_context.received_at, tz)
+
+        def compile_now(columns: KnownColumns | None) -> CompiledRaw:
+            return compile_raw(
                 arguments, now=state.request_context.received_at, tz=tz,
                 relation_target=relation_target, column_type=column_type,
-                stated_years=stated_years(_user_texts(state), state.request_context.received_at, tz),
+                stated_years=years, known_columns=columns,
             )
+
+        try:
+            # Lỗi hình dạng, bảng/cột bị chặn, sai kiểu giá trị: chặn trước, không gọi CRM lần nào.
+            compiled = compile_now(None)
+            # Rồi kiểm tên cột theo schema sống của bảng gốc (cache dùng chung), kể cả khi LLM không
+            # gọi crm_schema hoặc gọi song song (LC-4). Lỗi lấy schema không chặn query: CRM tự kiểm.
+            if cache.cached(arguments.dataset) is None:
+                try:
+                    await cache.table(arguments.dataset, token)
+                except Exception:        # noqa: BLE001
+                    logger.info("crm_query schema prefetch failed dataset=%s", arguments.dataset)
+            compiled = compile_now(known_columns)
         except RawQueryError as error:
             _finish_attempt(context, "rejected")
             logger.info(
@@ -391,6 +411,8 @@ def build_crm_query_tool(
         on_invalid_args=on_invalid_args,
         progress=query_progress,
         remember=query_memory,
+        # 400 của query do LLM dựng (cột/quan hệ sai): sửa được như tool_invalid_args.
+        repairable_errors=frozenset({"tool_invalid_args", "crm_query_invalid"}),
     )
 
 
