@@ -7,6 +7,16 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Kế hoạch Đợt 1: context phiên, điều khiển vòng lặp, nguồn và so sánh · loại: đánh giá
+
+- Vấn đề: P1–P6 ([kế hoạch](../../reports/crm_agent_dot1_plan_2026-11-20.md) mục 1): kết quả tool và
+  định danh không lưu qua lượt; nạp toàn bộ history; chạm trần trả "thử lại sau"; định danh không kiểm
+  nguồn gốc; câu so sánh gọi 3 lần mà sai; ngưỡng chunk cosine 0,25 chưa đo.
+- Đề xuất: 5 gói (A context ba lớp, B kiểm nguồn gốc `warn`→`reject`, C tín hiệu dừng + bước chốt có
+  cấu trúc + fan-out, D bắt buộc tra nguồn, E so sánh theo hạn mức từng model), tiêu chí G1–G6,
+  thứ tự triển khai; tham khảo Agents SDK, Anthropic, LangGraph, OpenAI Cookbook.
+- Chưa kiểm / mở tiếp: chờ Toma duyệt Q1–Q5; Toma chạy eval mốc trước khi bắt đầu.
+
 ## 2026-11-20 · Đợt 0 hoàn tất trên nền B3: model của agent, sổ usage, cached tokens, luật username (E1) · loại: thay đổi
 
 - Vấn đề: sau B3 (D-013, chat-platform LOG 2026-11-18), nhánh chính còn thiếu bốn điểm của Đợt 0:
