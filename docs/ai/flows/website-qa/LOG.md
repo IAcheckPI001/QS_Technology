@@ -8,6 +8,13 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-20 · Câu so sánh: chunk riêng trước chunk chung, cắt cột bảng (D-014, tạm) · loại: thay đổi
+
+- Retriever dùng chung đổi cách chọn chunk khi so sánh: mỗi model 2 chunk riêng, 4 chunk chung (bảng chọn
+  model), và bảng markdown chỉ giữ cột của model được hỏi. Mặc định là quyết định tạm D-014.
+- Chi tiết và kiểm chứng: [crm-agent LOG](../crm-agent/LOG.md) các mục 2026-11-20. Website cần kiểm câu C7
+  (so sánh qua widget) và `run_retrieval_eval.py` trước khi chốt D-014.
+
 ## 2026-11-20 · Câu so sánh: hạn mức chunk theo từng model · loại: thay đổi
 
 - Retriever: chế độ `comparison` giữ `RETRIEVAL_COMPARE_PER_MODEL` (mặc định 3) chunk và nhóm ngữ cảnh

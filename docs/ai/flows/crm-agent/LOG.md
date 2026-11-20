@@ -7,6 +7,24 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · So sánh: cắt cột bảng theo model được hỏi, mặc định 2 + 4 (quyết định tạm D-014) · loại: thay đổi, quyết định
+
+- Vấn đề: kiểm thật 2 + 4 (mục bên dưới): bảng chọn model 4 cột làm LLM ghi giá trị cột F54 cho F86;
+  "Thời gian xử lý block 500/500" xếp vào "Khác nhau"; vẫn bỏ sót dòng của bảng General.
+- Quyết định (Toma, 2026-11-20): làm cả hai (cắt cột + mặc định 2 + 4), **đánh dấu tạm** để kiểm trên các
+  câu sau ([D-014](../../decisions.md); bộ câu C1–C7: [kế hoạch](../../reports/crm_agent_dot1_plan_2026-11-20.md) mục 9).
+- Thay đổi (commit `15c9c6e`, nhánh `claude/dot1-e-d`):
+  - `retrieval/table_columns.py` (mới) `trim_model_columns`: cột có tiêu đề chỉ ra đúng một model của
+    registry (mã/alias, vd ASTRO-10S → 10S) mà không thuộc model được hỏi thì bị bỏ; cột khác giữ; bảng lệch
+    số cột hoặc không có cột của model được hỏi giữ nguyên. `Retriever` chỉ áp khi so sánh.
+  - Mặc định `RETRIEVAL_COMPARE_PER_MODEL=2`, `RETRIEVAL_COMPARE_SHARED=4` (`config.py`, `RetrieverConfig`).
+  - Guide `product_docs_ask`: so từng cặp trước khi xếp "Khác/Giống"; đọc theo tiêu đề cột, đọc hết dòng
+    bảng; không kết luận "lớn/nhỏ/gọn hơn" từ nhiều số đo.
+- File test: `test_retrieval.py` (+4). Kiểm chứng: `pytest tests` → 1117 passed, 14 skipped, 1 failed có sẵn
+  (CSV CRLF). Mức chín: code + test fake.
+- Ảnh hưởng: mặc định retriever so sánh đổi cho cả website (website-qa LOG); D-014 mới.
+- Chưa kiểm / mở tiếp: chạy C1–C7; Toma có thể bỏ hai biến trong `.env` để dùng mặc định mới.
+
 ## 2026-11-20 · Thử so sánh 2 chunk riêng + 4 chunk chung: nguồn đa dạng hơn, lộ lỗi đọc nhầm cột bảng · loại: kiểm chứng
 
 - Dữ liệu: phiên `fd5e7814…`, 05:59 UTC, gpt-4.1-mini, `.env` của Toma đặt `RETRIEVAL_COMPARE_PER_MODEL=2`,

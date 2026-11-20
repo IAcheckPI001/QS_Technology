@@ -37,6 +37,7 @@ Cập nhật: 2026-11-20
 
 | Vấn đề | Ảnh hưởng |
 |---|---|
+| Câu so sánh dùng quyết định **tạm** D-014 (2 chunk riêng + 4 chung, cắt cột bảng): mới kiểm 2 câu | Chạy bộ câu C1–C7 ([kế hoạch](../../reports/crm_agent_dot1_plan_2026-11-20.md) mục 9) rồi chốt hoặc chỉnh |
 | Lượt tài liệu qua agent tốn hơn pipeline khoảng 25% (lượt F54 2026-11-19: 9,9k so với 7,9k token): bước analysis trong `product_docs_ask` tốn ~5,1k token, không được cache | Chi phí, độ trễ; xem E7/E8 |
 | LLM tự suy username (thiếu `@qstcnc.com`): luật trong guide đã thêm (Đợt 0), chưa đo; code chưa chặn giá trị không có nguồn gốc (E2) | Query rỗng, gọi lại tới hết lượt |
 | Chạm giới hạn vẫn có thể trả lời "thử lại sau" (E5) | Gây hiểu nhầm |

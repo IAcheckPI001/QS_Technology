@@ -156,6 +156,24 @@ Kết quả: Toma duyệt cả năm mục theo cột "Đề xuất" (2026-11-20)
 | Q4 | Ngưỡng ban đầu: 3 lượt cho agent, 10 lượt đọc DB, 15k token mỗi lượt, 50% ngân sách, 3 chunk mỗi model khi so sánh | Dùng làm giá trị khởi đầu, chỉnh sau eval |
 | Q5 | Tóm tắt cuộn (L3) và dùng lại nguồn lượt trước để sang Đợt 2 | Đồng ý dời |
 
+## 9. Bộ câu kiểm cho quyết định tạm D-014 (so sánh)
+
+D-014 (2 chunk riêng + 4 chunk chung, cắt cột bảng theo model được hỏi) mới kiểm trên 2 câu. Trước khi
+chốt, chạy bộ câu dưới với `AGENT_MODEL=gpt-4.1-mini`; ghi kết quả vào LOG crm-agent (loại `kiểm chứng`).
+
+| # | Câu | Phải có (đúng nguồn) | Lỗi cần bắt |
+|---|---|---|---|
+| C1 | F86 khác F54 thế nào? | 6/4 trục, EtherCAT, kích thước, màn hình, I/O, spindle 2/1, trục PLC 0 so với 6 (tùy chọn 8), spindle đồng thời 2/4, quản lý tuổi dao | Bỏ sót dòng bảng General; Look-Ahead xếp sai mục |
+| C2 | So sánh F86 và F10T | Màn hình 8 so với 10,4 inch cảm ứng, kích thước từng chiều; trục PLC, spindle đồng thời **giống nhau** | Đọc nhầm cột; "nhỏ gọn hơn" |
+| C3 | F10T và ASTRO-10S khác nhau gì? | Cột ASTRO-10S (trục PLC 14, I/O 16/16, kích thước 254×210×40) | Alias "ASTRO-10S" → 10S không giữ được cột |
+| C4 | So sánh F54, F86 và F10T | 3 model trong một lần gọi, đủ cột của cả 3 | Một model thiếu chunk riêng |
+| C5 | F86 và F86E khác nhau thế nào? | Nói rõ khi tài liệu không có F86E; không gán cột F86 cho F86E | Nhầm model gần tên |
+| C6 | Nên chọn F54 hay F86 cho máy 5 trục? | Dựa trên số trục 4/6, không tự kết luận ngoài nguồn | Khuyến nghị không có nguồn |
+| C7 | (website) So sánh F86 và F54 qua widget | Như C1, qua pipeline website | Lệch giữa website và agent |
+
+Đạt khi: mỗi câu 1 lần `product_docs_ask` (agent), không có giá trị gán sai model, không bỏ sót dòng
+khác biệt của bảng General/Tool Manager/Multi axis khi chunk có trong nguồn, token vào ≤ khoảng 12k.
+
 ## 8. Tham khảo
 
 - OpenAI Agents SDK: [Running agents](https://openai.github.io/openai-agents-python/running_agents/) (`max_turns`, xử lý khi chạm trần), [Agents](https://openai.github.io/openai-agents-python/agents/) (`tool_choice`, `reset_tool_choice`, `tool_use_behavior`).
