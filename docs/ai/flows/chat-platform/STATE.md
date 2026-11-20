@@ -20,7 +20,8 @@ Cập nhật: 2026-11-20
 | Service key theo kênh | có | Chưa có scope theo integration, rate limit theo key, `last_used_at` |
 | Session + ownership khi ghi | có | Xóa hội thoại chưa có |
 | Turn lease | có, test bằng fake | Khóa dòng thật cần kiểm live |
-| Ghi `chat_history` | có | B3 (2026-11-18): token và chi phí thật, giá theo model (`core/pricing.py`); bản ghi cũ là ước tính (`usage.source`). Nhánh `claude/dot0-on-b3` (2026-11-20, chưa merge): đọc từ sổ `Trace.usage` (không mất khi vượt trần span), ước tính lời gọi bị ngắt (`usage.estimated_calls`), `model` của agent ở lượt CRM |
+| Ghi `chat_history` | có | B3 (2026-11-18): token và chi phí thật, giá theo model (`core/pricing.py`); bản ghi cũ là ước tính (`usage.source`). Đợt 0 (2026-11-20, đã merge): đọc từ sổ `Trace.usage` (không mất khi vượt trần span), ước tính lời gọi bị ngắt (`usage.estimated_calls`), `model` của agent ở lượt CRM |
+| Nạp context từ `chat_history` | có | 2026-11-20 (D-015): chỉ `CONTEXT_HISTORY_TURNS` (10) lượt hoàn tất gần nhất; `conversation_state.facts` của lượt agent |
 | Đọc history, retrieval, trace, conversations | có, không xác thực | Giữ nội bộ. B5 (2026-11-18): `sources` theo lượt, `/retrieval?history_id`, nguồn của chunk, mã lỗi nhà cung cấp trong trace; đã kiểm đọc với Supabase thật (hội thoại 95 lượt), chưa có lượt mới ghi nguồn chunk |
 | Danh sách, tìm, số liệu hội thoại (B2) | có | 2026-11-18: bảng tóm tắt `chat_conversations` + trigger, cờ lượt do Python ghi, tìm không dấu mọi lượt, phân trang cursor, `/metrics` và `/{id}` sau cờ `WORKSPACE_CONVERSATION_API_ENABLED`; đã áp SQL, điền cờ, so lệch "Khớp" và gọi API trên Supabase thật. Rủi ro R1–R10: FRONTEND_REQUIREMENTS 19.11 |
 | Tracing giai đoạn 0 | có | Chưa OpenTelemetry, chưa truyền `traceparent` sang CRM/OpenAI, chưa retention, chưa UI |

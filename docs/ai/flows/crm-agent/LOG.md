@@ -7,6 +7,18 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Tổng hợp ngày: Đợt 1 bước 1–3 và LC-2/4/7 đã merge; trần token lượt môi trường kiểm thử 30000 · loại: quyết định, tài liệu
+
+- Quyết định: Toma đặt `AGENT_TURN_INPUT_BUDGET=30000` ở môi trường kiểm thử (`.env.example` của Toma, chưa commit);
+  mặc định code giữ 40000 (`0561487`); tinh chỉnh tiếp theo kết quả kiểm thử (duyệt: Toma, 2026-11-20; căn cứ: lượt
+  CRM 3 bước ~20k, 4 bước ~30k token vào, lần kiểm 09:57).
+- Tổng hợp luồng xử lý hiện tại, 7 quyết định trong ngày, kết quả kiểm thử (so sánh C1–C7; 7 câu CRM 1/7 → 5/7),
+  chi phí và vấn đề mở: [báo cáo 2026-11-20](../../reports/crm_agent_status_2026-11-20.md). Quyết định liên luồng
+  về context phiên ghi ở `decisions.md` (D-015).
+- Viết lại STATE theo trạng thái trên `0561487`; dòng crm-agent trong `current-state.md`; mục ngắn ở chat-platform
+  và website-qa (ContextLoader chỉ đọc 10 lượt gần nhất, `conversation_state.facts`).
+- Chưa kiểm / mở tiếp: chạy lại 7 câu sau LC-7 với trần 30000 khi tunnel CRM hoạt động lại; LC-8, LC-6 chờ Toma.
+
 ## 2026-11-20 · Trần token lượt 40k; bước chốt khi hết lượt gọi không còn nói thiếu dữ liệu (LC-7) · loại: thay đổi
 
 - Vấn đề: lượt thật 09:57 (mục dưới): câu 5, 6 dừng `budget` ở ~21–24k vì trần 15k, và chỉ dẫn bước chốt ("… mà chưa

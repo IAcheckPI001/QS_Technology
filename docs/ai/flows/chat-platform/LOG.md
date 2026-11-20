@@ -7,6 +7,13 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-07 (nguyên văn từ `current-state.md` và `architecture.md`, gồm Finding
 status, API gateway, service key, lease, tracing): [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · ContextLoader chỉ đọc 10 lượt gần nhất; `conversation_state` có thêm `facts` (D-015) · loại: thay đổi
+
+- `HistoryRepository.list_for_context(limit)`: `CONTEXT_HISTORY_TURNS` (mặc định 10) lượt `completed` gần nhất, thứ tự
+  cũ → mới; trước đây đọc cả phiên. `conversation_state` của lượt agent có khoá `facts` (định danh do tool trả); đọc
+  state cũ không có khoá này vẫn đúng, `facts` hỏng bị bỏ riêng. Không cần SQL.
+- Chi tiết: [crm-agent LOG](../crm-agent/LOG.md) mục "Gói A"; quyết định D-015.
+
 ## 2026-11-20 · B3 đọc usage từ sổ của trace, không mất khi vượt trần span · loại: thay đổi
 
 - B3 cộng usage từ span nên span bị bỏ vì vượt `CHAT_TRACE_MAX_SPANS` không được tính, lời gọi hết
