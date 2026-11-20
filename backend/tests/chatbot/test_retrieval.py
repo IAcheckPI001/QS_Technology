@@ -305,6 +305,65 @@ def test_comparison_keeps_each_models_own_chunks_before_shared_tables():
     assert [hit.chunk_id for hit in result.hits] == ["1", "11", "2", "90", "91"]
 
 
+SELECTION_TABLE = "\n".join([
+    "MOTION CONTROLLER",
+    "General",
+    "| Specification | F54 | F86 | F10T | ASTRO-10S |",
+    "|---|---|---|---|---|",
+    "| Max. PLC Axis control | 0 | 6 | 6 | 14 |",
+    "| Max.Spindle Simultaneous Control | 2 | 4 | 4 | 4 |",
+])
+
+
+def test_comparison_trims_selection_tables_to_compared_models():
+    """Kiểm thật 2026-11-20: cột F54 bị đọc thành giá trị của F86 khi so F86–F10T."""
+    table = _match(90, fused=0.2).model_copy(update={"content": SELECTION_TABLE})
+    repository = FakeRepository({
+        ("product_catalog", (), ("F86",)): [table, _match(1, fused=0.05)],
+        ("product_catalog", (), ("F10T",)): [table, _match(11, fused=0.04)],
+    })
+
+    result = asyncio.run(_retriever(repository).search([
+        _request(domain="product_catalog", scopes=(), models=("F86", "F10T"), mode="comparison"),
+    ]))
+
+    content = next(hit.content for hit in result.hits if hit.chunk_id == "90")
+    assert "| Specification | F86 | F10T |" in content
+    assert "| Max. PLC Axis control | 6 | 6 |" in content
+    assert "F54" not in content and "ASTRO" not in content
+    assert content.startswith("MOTION CONTROLLER\nGeneral")
+
+
+def test_non_comparison_keeps_tables_untouched():
+    table = _match(90, fused=0.2).model_copy(update={"content": SELECTION_TABLE})
+    repository = FakeRepository({("product_catalog", (), ("F86",)): [table]})
+
+    result = asyncio.run(_retriever(repository).search([_request(domain="product_catalog", scopes=(), models=("F86",))]))
+
+    assert result.hits[0].content == SELECTION_TABLE
+
+
+def test_trim_model_columns_keeps_non_model_columns_and_odd_tables():
+    from app.modules.chatbot.extraction.validate_registry import models_in_text
+    from app.modules.chatbot.retrieval.table_columns import trim_model_columns
+
+    with_unit = "| Item | Unit | F54 | F86 |\n|---|---|---|---|\n| Voltage | V | 24 | 24 |"
+    assert trim_model_columns(with_unit, {"F86"}, models_in_text) == (
+        "| Item | Unit | F86 |\n| --- | --- | --- |\n| Voltage | V | 24 |"
+    )
+    # Bảng không có cột của model được hỏi: giữ nguyên.
+    assert trim_model_columns(with_unit, {"F10T"}, models_in_text) == with_unit
+    # Dòng lệch số cột: không đoán, giữ nguyên.
+    ragged = "| Item | F54 | F86 |\n|---|---|---|\n| A | 1 |"
+    assert trim_model_columns(ragged, {"F86"}, models_in_text) == ragged
+
+
+def test_default_comparison_quota_is_two_own_and_four_shared():
+    from app.modules.chatbot.retrieval import RetrieverConfig
+
+    assert (RetrieverConfig().compare_per_model, RetrieverConfig().compare_shared) == (2, 4)
+
+
 def test_non_comparison_keeps_global_top_k():
     repository = FakeRepository({
         ("product_catalog", (), ("F86",)): [_match(i, fused=0.09 - i / 1000) for i in range(1, 5)],

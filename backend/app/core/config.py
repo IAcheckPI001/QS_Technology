@@ -34,8 +34,9 @@ class Settings(BaseSettings):
     retrieval_spec_boost: float = Field(default=0.005, alias="RETRIEVAL_SPEC_BOOST")
     # So sánh nhiều model (Đợt 1 gói E, 2026-11-20): số chunk riêng của mỗi model, và số chunk chung
     # (khớp nhiều model, vd bảng chọn model) giữ thêm.
-    retrieval_compare_per_model: int = Field(default=3, ge=1, alias="RETRIEVAL_COMPARE_PER_MODEL")
-    retrieval_compare_shared: int = Field(default=2, ge=0, alias="RETRIEVAL_COMPARE_SHARED")
+    # Mặc định 2 + 4 là quyết định TẠM (2026-11-20), kiểm lại trên bộ câu so sánh trong LOG crm-agent.
+    retrieval_compare_per_model: int = Field(default=2, ge=1, alias="RETRIEVAL_COMPARE_PER_MODEL")
+    retrieval_compare_shared: int = Field(default=4, ge=0, alias="RETRIEVAL_COMPARE_SHARED")
     # D-009: chat chỉ đọc chunk `review_status = 'approved'` của doc_chunks_v2. Dev/staging đặt false để thử với
     # chunk `draft`; production giữ true (chưa có chunk approved thì chat không tìm thấy tài liệu nào).
     retrieval_approved_only: bool = Field(default=True, alias="RETRIEVAL_APPROVED_ONLY")

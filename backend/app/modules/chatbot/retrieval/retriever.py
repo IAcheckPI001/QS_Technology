@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Protocol, Sequence
 from uuid import uuid4
 
 from app.core.tracing import span
+from app.modules.chatbot.retrieval.table_columns import trim_model_columns
 from app.modules.chatbot.schemas.default import SourceMetadata
 from app.modules.chatbot.schemas.system import (
     Candidate,
@@ -70,8 +71,9 @@ class RetrieverConfig:
     spec_boost: float = 0.005
     # So sánh nhiều model: số chunk RIÊNG của mỗi model, và số chunk chung (khớp nhiều model, vd bảng
     # chọn model) giữ thêm; thay cho top-k chung.
-    compare_per_model: int = 3
-    compare_shared: int = 2
+    # 2 + 4: quyết định tạm 2026-11-20 (kiểm thật 2 câu so sánh), cần kiểm thêm trên các câu sau.
+    compare_per_model: int = 2
+    compare_shared: int = 4
 
     @classmethod
     def from_settings(cls, settings: "Settings") -> "RetrieverConfig":
@@ -111,6 +113,10 @@ class Retriever:
         self._embedder = embedder
         self._repository = repository
         self._config = config or RetrieverConfig()
+        # Tiêu đề cột bảng → model của registry (cắt cột thừa khi so sánh).
+        from app.modules.chatbot.extraction.validate_registry import models_in_text
+
+        self._header_models = models_in_text
 
     async def search(
         self,
@@ -141,6 +147,13 @@ class Retriever:
             if _is_comparison(ranked_runs):
                 kept = self._select_comparison(ranked_runs)
                 hits = await self._expand_parents(kept, max(len(kept), 1))
+                compared = {model for run in ranked_runs for model in run.models or []}
+                hits = [
+                    hit.model_copy(update={"content": trimmed})
+                    if (trimmed := trim_model_columns(hit.content, compared, self._header_models)) != hit.content
+                    else hit
+                    for hit in hits
+                ]
             else:
                 kept = ranked[: self._config.final_chunk_top_k]
                 hits = await self._expand_parents(kept)
