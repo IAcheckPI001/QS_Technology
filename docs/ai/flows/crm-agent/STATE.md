@@ -44,6 +44,8 @@ Cập nhật: 2026-11-20
 | D-014 | Hạn mức 2 + 4 hay 3 + 2 chưa chốt | Chờ CMP-1 rồi Toma chốt |
 | P1, P2, P4 | Không lưu kết quả tool qua lượt; nạp toàn bộ history; định danh không kiểm nguồn gốc | Gói A, B của [kế hoạch Đợt 1](../../reports/crm_agent_dot1_plan_2026-11-20.md); P3 đã có code (C1–C3) |
 | LC-1 | `crm_query` tra tên ra nhiều người → dừng hỏi lại; câu "liệt kê nhân viên tên X" không đi tiếp được | Cần đo bằng eval |
+| LC-2 | Hai lần gọi LLM liên tiếp hết giờ 20 s (lượt 2026-11-20 08:16) → `agent_error`, không có câu trả lời | Theo dõi; lặp thì tăng timeout hoặc thử lại |
+| LC-3 | Bản ghi nhắc ở lượt trước mất UUID (P1): LLM hỏi nhân viên UUID | Luật trong guide (2026-11-20); gốc là Gói A |
 | – | Lượt tài liệu qua agent tốn hơn pipeline ~3 lần ở câu so sánh (0,0023–0,0035 so với 0,0009–0,0011 USD) | Chi phí; analysis không cache được |
 | r1 | "Khách được hỗ trợ" của phiếu: `customer_organization_id` hay `product_item_id.customer_id` | Cần Toma/CRM chốt |
 | – | `update_agent_conversation_state` không ghi `language`, mang theo `pending` cũ; `Prune` đếm token theo model chung | Lệch nhỏ |
@@ -53,6 +55,8 @@ Cập nhật: 2026-11-20
 
 ## Kết quả kiểm gần nhất
 
+- 2026-11-20, lượt CRM thật sau C1–C3 (phiên `8de1e4b1…`, đối chiếu Reporting API): 5/7 lượt đúng; sai do mất
+  UUID qua lượt (LC-3) và hết giờ LLM (LC-2). `final_reason` ghi đúng (`answered`, `budget`, `limit`).
 - 2026-11-20, bộ câu so sánh C1–C7 (phiên `8de1e4b1…`, `97fa9b85…`, backend `14196d6`, hạn mức 3 + 2):
   1 lần gọi tool mỗi lượt agent, 9,7k–11,8k token vào; cắt cột đúng ở cả 7 câu; C2, C3 đủ khác biệt.
 - 2026-11-20, nhánh `claude/dot1-c`, `pytest tests` (worktree): 1133 passed, 14 skipped, 1 failed có sẵn

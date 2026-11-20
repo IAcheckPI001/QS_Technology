@@ -1095,3 +1095,11 @@ def test_tools_convert_for_openai_strict():
     schema_tool = next(tool for tool in tools if tool["function"]["name"] == "crm_schema")
     assert "enum" not in schema_tool["function"]["parameters"]["properties"]["tables"]["items"]
     assert "Hỗ trợ khách (phiếu hỗ trợ): support_cases" in schema_tool["function"]["description"]
+
+def test_guide_tells_to_refind_records_by_text_instead_of_asking_for_uuid():
+    # Lượt thật 2026-11-20 08:12: LLM đặt nội dung tin nhắn vào message_id (uuid), bị chặn, rồi hỏi
+    # nhân viên UUID thay vì lọc qua quan hệ bằng cột chữ.
+    from app.modules.chatbot.tools.crm_query import CRM_QUERY_GUIDE
+
+    assert "KHÔNG hỏi nhân viên UUID" in CRM_QUERY_GUIDE
+    assert "message_id.content contains" in CRM_QUERY_GUIDE

@@ -7,6 +7,29 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Lượt CRM thật sau C1–C3: mất UUID qua lượt và hết giờ LLM; thêm luật tìm lại bản ghi bằng cột chữ · loại: kiểm chứng, thay đổi
+
+- Dữ liệu: phiên `8de1e4b1…` 07:56–08:16 UTC, `CRM_REPORT_ENABLED=true`, gpt-4.1-mini, backend `4a636b2`. Đối chiếu
+  bằng Reporting API của CRM dev (chỉ đọc, token của Toma). Không ghi nội dung tin nhắn, tên hay email vào LOG.
+- Đúng với CRM: đếm ticket, khách của một sale (lượt đó dừng `final_reason=budget`: 4 lần gọi, 2 `crm_schema`
+  song song, chưa trả `ok` trước nửa trần), chia theo `customer_type`, đếm và liệt kê 7 tin nhắn chờ.
+- Sai 1, "có ai phản hồi câu 1 chưa?" (08:12): CRM có **1 phản hồi** của nhân viên (19/11), tin đã `handled`.
+  Agent đặt nội dung tin nhắn vào `message_id` (uuid) → `tool_invalid_args` (detail gợi ý lọc cột chữ qua quan hệ),
+  không thử lại, hỏi nhân viên UUID. Nguồn: (a) P1: lượt 08:02 có `select id` nhưng câu trả lời không in id,
+  lượt sau không còn UUID; (b) LLM bỏ qua gợi ý trong lỗi. Query đúng chỉ một lần:
+  `support_waiting_message_replies`, filter `message_id.content contains "<đoạn chữ>"`.
+- Sai 2, "ai nhắn câu hỏi đó, có thuộc khách hàng công ty không?" (08:16): hai lần gọi LLM (bước 1 `auto`, bước chốt
+  `none`) cùng hết giờ 20 s → `agent_timeout`, history `error`, không gọi tool; usage ước tính (~3,6k token vào mỗi
+  lần, bình thường). Nguồn: độ trễ nhà cung cấp hoặc mạng (không có log server để phân biệt). Đáp án đúng trên
+  CRM: người gửi là tài khoản khách; tin gắn với máy F54 thuộc khách loại `official`. Câu này cần 3–4 query vì
+  `created_by`/`customer_id` của tin nhắn không có khoá ngoại.
+- Thay đổi: guide `crm_query` thêm luật: bản ghi đã nhắc ở lượt trước mà chưa có UUID thì không hỏi nhân viên UUID,
+  lọc lại bằng cột chữ (trên bảng đó hoặc qua quan hệ từ bảng con); `tool_invalid_args` vì đặt chữ vào cột uuid
+  sửa theo cách này. Test: `test_crm_query_tool.py` (1 test).
+- Kiểm chứng: `pytest tests` → 1134 passed, 14 skipped, 1 failed có sẵn (`test_f86_baseline`, CSV CRLF).
+- Chưa kiểm / mở tiếp: hỏi lại hai câu trên; Gói A (L2 `facts` lưu id bản ghi tool đã trả) mới giải gốc P1;
+  (LC-2) hết giờ LLM: theo dõi, nếu lặp thì tăng `AGENT_LLM_TIMEOUT_S` hoặc thử lại một lần khi bước đầu hết giờ.
+
 ## 2026-11-20 · Vòng lặp agent dừng sớm theo tín hiệu tool, báo ngân sách, bước chốt có khung (Đợt 1 C1–C3) · loại: thay đổi
 
 - Vấn đề: P3 của [kế hoạch Đợt 1](../../reports/crm_agent_dot1_plan_2026-11-20.md): vòng lặp chỉ dừng theo số bước,
