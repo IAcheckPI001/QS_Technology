@@ -7,6 +7,16 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Duyệt kế hoạch Đợt 1 (Q1–Q5) · loại: quyết định
+
+- Quyết định (duyệt: Toma, 2026-11-20; căn cứ: [kế hoạch](../../reports/crm_agent_dot1_plan_2026-11-20.md) mục 7):
+  - Q1 thứ tự: E + D → C1–C3 → A → B → C4 → đo ngưỡng chunk;
+  - Q2 lưu username/id nhân viên, id khách trong `conversation_state.facts`, chỉ từ output tool, TTL 10 lượt;
+  - Q3 kiểm nguồn gốc bắt đầu `CRM_QUERY_PROVENANCE=warn`, 1–2 tuần sau chuyển `reject`;
+  - Q4 ngưỡng khởi đầu: 3 lượt agent, 10 lượt đọc DB, 15k token/lượt, 50% ngân sách, 3 chunk/model khi so sánh;
+  - Q5 tóm tắt cuộn và dùng lại nguồn lượt trước dời sang Đợt 2.
+- Mở tiếp: Toma chạy eval mốc trước khi merge Đợt 1.
+
 ## 2026-11-20 · Kế hoạch Đợt 1: context phiên, điều khiển vòng lặp, nguồn và so sánh · loại: đánh giá
 
 - Vấn đề: P1–P6 ([kế hoạch](../../reports/crm_agent_dot1_plan_2026-11-20.md) mục 1): kết quả tool và

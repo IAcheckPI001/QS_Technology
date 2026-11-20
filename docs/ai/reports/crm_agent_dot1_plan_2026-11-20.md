@@ -1,6 +1,6 @@
 # Kế hoạch Đợt 1 crm-agent: context phiên, điều khiển vòng lặp, nguồn và so sánh (2026-11-20)
 
-Trạng thái: **chờ Toma duyệt** (mục 7). Chưa sửa code.
+Trạng thái: **Toma duyệt Q1–Q5 theo đề xuất (2026-11-20)**. Đang làm bước 1 (Gói E + D).
 
 - Nền: `feature/deploy_ai_service` `8261a79`, đã gồm Đợt 0.
 - Nguồn đề xuất: [báo cáo thảo luận 2026-11-16](crm_agent_architecture_discussion_2026-11-16.md)
@@ -144,6 +144,8 @@ Mỗi bước:
 | Đổi retriever so sánh làm lệch kết quả website | Chạy `run_retrieval_eval.py` trước khi merge |
 
 ## 7. Quyết định cần Toma duyệt
+
+Kết quả: Toma duyệt cả năm mục theo cột "Đề xuất" (2026-11-20).
 
 | # | Câu hỏi | Đề xuất |
 |---|---|---|
