@@ -8,6 +8,14 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-20 · Câu so sánh: hạn mức chunk theo từng model · loại: thay đổi
+
+- Retriever: chế độ `comparison` giữ `RETRIEVAL_COMPARE_PER_MODEL` (mặc định 3) chunk và nhóm ngữ cảnh
+  cho mỗi model, thay top-k chung 6 → 5 nhóm (2 model: 6 nhóm; 3 model: 9). Áp cho cả pipeline website.
+- Lý do và chi tiết: [crm-agent LOG](../crm-agent/LOG.md) mục 2026-11-20 (Đợt 1 gói E+D).
+- Kiểm chứng: `pytest tests` → 1112 passed (test retriever mới). Chưa chạy `run_retrieval_eval.py`
+  (cần OpenAI + DB): Toma chạy `dual_source`, `routing_intent` trước khi merge.
+
 ## 2026-11-19 · Lượt kiểm thử v2 chưa tới bước tra cứu; đính chính current-state (B-1) · loại: sự cố, kiểm chứng
 
 - Vấn đề: hai lượt kiểm thử sau khi merge PR #3 đều không chạy tra cứu. Lượt 10:12 (kênh crm): server

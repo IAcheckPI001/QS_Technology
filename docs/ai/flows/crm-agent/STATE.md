@@ -63,6 +63,7 @@ Cập nhật: 2026-11-20
 1. Toma review và merge nhánh `claude/dot0-on-b3`; khởi động lại backend, gửi một lượt CRM và kiểm
    `usage.cached_input_tokens`, `model` trong history.
 2. Toma chạy lại eval (`run_crm_agent_eval.py`) sau đợt dọn và luật username; đặt `AGENT_MODEL`.
-3. Đợt 1 theo [kế hoạch 2026-11-20](../../reports/crm_agent_dot1_plan_2026-11-20.md) (chờ Toma duyệt
-   Q1–Q5): context phiên ba lớp, kiểm nguồn gốc, điều khiển vòng lặp + hỏi lại, bắt buộc tra nguồn, so sánh.
+3. Đợt 1 theo [kế hoạch 2026-11-20](../../reports/crm_agent_dot1_plan_2026-11-20.md) (đã duyệt Q1–Q5):
+   gói E+D xong ở mức code + test (nhánh `claude/dot1-e-d`, chưa merge) → Toma kiểm 5 câu so sánh, câu
+   lặp lại, `run_retrieval_eval.py`; tiếp theo C1–C3, A, B, C4.
 4. Chốt r1; gửi CRM: `timezone`, mô tả `is_current`, dump schema mới.

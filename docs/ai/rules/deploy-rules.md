@@ -47,6 +47,7 @@ phải quy trình đang chạy.
 | `AGENT_REASONING_EFFORT` | không | rỗng | Chỉ cho model suy luận (`gpt-5…`, `o3…`): `none`/`minimal`/`low`/`medium`/`high` tuỳ model |
 | `AGENT_MAX_COMPLETION_TOKENS` | không | 1200 | Token đầu ra mỗi bước LLM của agent; model suy luận tính cả token suy nghĩ, đặt khoảng 4000 |
 | `CRM_QUERY_AUDIT_LOG` | không | `false` | Khi bật, log server (logger `app.crm_query.audit`) chứa giá trị filter và query gửi CRM, có thể là PII. Chỉ bật có thời hạn để đánh giá query, và giới hạn người được xem log |
+| `RETRIEVAL_COMPARE_PER_MODEL` | không | `3` | Câu so sánh nhiều model: số chunk và nhóm ngữ cảnh cho mỗi model (thay top-k chung). Áp cho cả website và `product_docs_ask` (Đợt 1 gói E, 2026-11-20) |
 | `LEARNING_API_ENABLED` | không | `false` | Route chưa có xác thực; bật cần `OLLAMA_BASE_URL`, `OLLAMA_MODEL` |
 | `WORKSPACE_CONVERSATION_API_ENABLED` | không | `false` | Mount `GET /chatbot/conversations/metrics` và `/chatbot/conversations/{id}` (B2, chưa có xác thực). Bật cần áp `chat_conversations.sql` (bảng SQL mục 7); tham số B2 của `/chatbot/conversations` không phụ thuộc cờ này nhưng cũng cần bảng đó |
 | `CHAT_TRACE_PERSIST` | không | `false` | Bật cần áp `backend/sql/chat_traces.sql` trước; không có retention tự động |

@@ -7,6 +7,28 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-20 · Đợt 1 gói E+D: câu so sánh gọi một lần, bắt buộc tra nguồn · loại: thay đổi
+
+- Vấn đề: P5 (câu "F86 khác F54" gọi tool 3 lần, 22,8k token, kết luận sai bù rơ/PLC/ATC) và lượt
+  "F54 có bao nhiêu trục" (gpt-4o-mini) trả lời từ lịch sử, không có nguồn ([kế hoạch](../../reports/crm_agent_dot1_plan_2026-11-20.md)).
+- Thay đổi (commit `ccc5f5a`, nhánh `claude/dot1-e-d`):
+  - Gói E: retriever giữ `RETRIEVAL_COMPARE_PER_MODEL=3` chunk/nhóm mỗi model khi so sánh; mô tả
+    `product_docs_ask` yêu cầu so sánh gọi MỘT lần; guide thêm khung so sánh theo thuộc tính, chỉ nói
+    "khác" khi cả hai giá trị có nguồn, đọc ✓/✗/(Option) của bảng chọn model.
+  - Gói D: `ToolSpec.requires_call`; `AgentRunner` bỏ câu trả lời không gọi tool nào khi có trích nguồn
+    không hợp lệ hoặc tool khai báo `requires_call` khớp tin nhắn (`product_docs_ask`: nhắc model trong
+    registry), chạy lại một bước `tool_choice="required"` (ép một lần, như `reset_tool_choice`). Root
+    span `forced_tool_call`. `ToolChoice` thêm `required`.
+- File: `retrieval/retriever.py`, `core/config.py`, `tools/{base,product_docs}.py`,
+  `agent/{runner,prompts}.py`, `schemas/system/agent.py`; test `test_retrieval.py` (+2),
+  `test_agent_guards.py` (+3, sửa 1).
+- Kiểm chứng: từ `backend/`, `pytest tests` → 1112 passed, 14 skipped, 1 failed có sẵn (CSV CRLF trong
+  worktree). Mức chín: code + test bằng fake.
+- Ảnh hưởng: biến mới `RETRIEVAL_COMPARE_PER_MODEL` (deploy-rules); hành vi website so sánh đổi (website-qa
+  LOG cùng ngày). Không đổi HTTP/SSE.
+- Chưa kiểm / mở tiếp: chưa merge; Toma kiểm thật G2/G4/G5 (5 câu so sánh, câu lặp lại với gpt-4o-mini) và
+  `run_retrieval_eval.py`; bước tiếp theo C1–C3.
+
 ## 2026-11-20 · Duyệt kế hoạch Đợt 1 (Q1–Q5) · loại: quyết định
 
 - Quyết định (duyệt: Toma, 2026-11-20; căn cứ: [kế hoạch](../../reports/crm_agent_dot1_plan_2026-11-20.md) mục 7):
