@@ -43,7 +43,7 @@ def test_tool_call_then_answer_returns_single_final_chunk():
     second = provider.calls[1].messages
     assert second[-2]["role"] == "assistant"
     assert second[-2]["tool_calls"][0]["id"] == "c1"
-    assert second[-1] == {"role": "tool", "tool_call_id": "c1", "content": '{"text": "hi"}'}
+    assert tool_messages(second[-1:]) == [{"role": "tool", "tool_call_id": "c1", "content": '{"text": "hi"}'}]
     assert [(step.kind, step.name, step.status) for step in state.agent.steps] == [
         ("llm", "auto", "ok"), ("tool", "echo", "ok"), ("llm", "auto", "ok"),
     ]

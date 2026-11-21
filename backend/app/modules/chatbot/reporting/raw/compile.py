@@ -19,13 +19,15 @@ Kiểm tra trước khi gọi CRM (lỗi gom thành một RawQueryError gửi l�
 - mọi đường dẫn qua `policy.check_path` (bảng/cột bị chặn, khoá ngoại không biết);
 - giá trị filter hợp kiểu cột cuối của đường dẫn (`values.check_filter`: uuid, số, bool, giá trị
   hợp lệ, cột ngày chỉ qua date_range).
-Cột/quan hệ có tồn tại hay không do CRM kiểm tra (400 → `crm_query_invalid`).
+Cột có tồn tại không: kiểm theo `known_columns` (schema sống/index tĩnh) khi biết bảng, lỗi kèm cột gần đúng;
+bảng chưa biết thì để CRM kiểm (400 → `crm_query_invalid`).
 Hàm thuần, không gọi API.
 """
 
 import re
-from collections.abc import Sequence
+from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass
+from difflib import get_close_matches
 from datetime import date, datetime, timedelta, tzinfo
 from typing import Any
 
@@ -71,6 +73,52 @@ class RawQueryError(ValueError):
     """Query sai hình dạng hoặc chạm bảng/cột bị chặn; message gửi lại cho LLM."""
 
 
+# Cột của một bảng (schema sống trước, index tĩnh sau); None = chưa biết bảng: không kiểm.
+KnownColumns = Callable[[str], Collection[str] | None]
+_MAX_LISTED_COLUMNS = 40
+
+
+def unknown_column(
+    dataset: str,
+    path: str,
+    relation_target: RelationTarget,
+    column_type: ColumnType,
+    known_columns: KnownColumns,
+) -> str | None:
+    """Lỗi khi một đoạn của `path` không phải cột của bảng đó (LC-4, 2026-11-20: LLM đoán `name`,
+    `customer_id`): chặn trước khi gửi CRM, kèm cột gần đúng và danh sách cột để LLM tự sửa."""
+    table = dataset
+    for position, segment in enumerate(segments := path.split(".")):
+        columns = known_columns(table)
+        if columns is None:
+            return None
+        last = position == len(segments) - 1
+        is_relation = not last and relation_target(table, segment) is not None
+        if segment not in columns and not is_relation and column_kind(table, segment, column_type) != DATE_PART:
+            near = _near_columns(segment, columns)
+            listed = ", ".join(sorted(columns)[:_MAX_LISTED_COLUMNS])
+            hint = f"; closest: {', '.join(near)}" if near else ""
+            return f"{path}: {table} has no column {segment}{hint}; columns of {table}: {listed}"
+        if not last:
+            target = relation_target(table, segment)
+            if target is None:
+                return None              # check_path báo lỗi quan hệ
+            table = target
+    return None
+
+
+def _near_columns(name: str, columns: Collection[str]) -> list[str]:
+    """Cột gần đúng: chứa tên sai hoặc nằm trong nó (name → full_name, customer_id → owner_customer_id),
+    rồi theo độ giống chuỗi. Chỉ gợi ý, không tự sửa: nhiều cột cùng khớp thì đoán sai còn tệ hơn báo lỗi."""
+    lowered = name.lower()
+    contains = [
+        column for column in columns
+        if lowered in column.lower() or (len(column) >= 4 and column.lower() in lowered)
+    ]
+    similar = get_close_matches(name, list(columns), n=3, cutoff=0.6)
+    return list(dict.fromkeys([*sorted(contains, key=len), *similar]))[:4]
+
+
 @dataclass(frozen=True)
 class CompiledRaw:
     mode: QueryMode
@@ -92,6 +140,7 @@ def compile_raw(
     relation_target: RelationTarget = static_relation,
     column_type: ColumnType = static_column_type,
     stated_years: frozenset[int] | None = None,
+    known_columns: KnownColumns | None = None,
 ) -> CompiledRaw:
     """column_type: kiểu gọn của cột (schema sống trước, index tĩnh sau) để kiểm giá trị filter.
 
@@ -186,6 +235,11 @@ def compile_raw(
             ignored.append(f"order_by {item.field} (not among the chosen columns)")
 
     for path in dict.fromkeys(paths):
+        if known_columns is not None and (
+            unknown := unknown_column(query.dataset, path, relation_target, column_type, known_columns)
+        ):
+            errors.append(unknown)
+            continue
         try:
             check_path(query.dataset, path, relation_target)
         except PathError as error:

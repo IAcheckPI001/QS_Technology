@@ -145,12 +145,55 @@ def test_unknown_citations_are_removed_and_recorded():
 
 
 def test_answer_without_tools_is_flagged_and_citations_dropped():
-    provider = ScriptedToolProvider([answer("F86 có 4 trục [S1].")])
+    """Đợt 1 gói D: trích nguồn không có trong lượt nên câu trả lời bị bỏ và runner ép gọi tool một
+    bước; câu trả lời cuối vẫn được lọc citation."""
+    provider = ScriptedToolProvider([
+        answer("F86 có 4 trục [S1]."),
+        calls(_echo("c1", {"text": "F86"})),
+        answer("F86 có 6 trục [S9]."),
+    ])
     state = crm_state("F86 có mấy trục?")
 
-    assert _run(agent_runner(provider, ToolRegistry([echo_tool()])), state) == ["F86 có 4 trục."]
+    assert _run(agent_runner(provider, ToolRegistry([echo_tool()])), state) == ["F86 có 6 trục."]
+    assert [call.tool_choice for call in provider.calls] == ["auto", "required", "auto"]
+    assert provider.calls[1].messages[-1]["role"] == "system"
+    assert not state.agent.answered_without_tools
+    assert state.agent.invalid_citations == ["S9"]
+
+
+def test_answer_without_tools_is_kept_when_no_source_is_needed():
+    provider = ScriptedToolProvider([answer("Chào bạn, tôi có thể giúp gì?")])
+    state = crm_state("Xin chào")
+
+    assert _run(agent_runner(provider, ToolRegistry([echo_tool()])), state) == ["Chào bạn, tôi có thể giúp gì?"]
     assert state.agent.answered_without_tools
-    assert state.agent.invalid_citations == ["S1"]
+    assert len(provider.calls) == 1
+
+
+def test_tool_requiring_message_forces_one_tool_call_only():
+    """`requires_call` khớp tin nhắn: ép một lần; bước ép vẫn không gọi tool thì giữ câu trả lời."""
+    from dataclasses import replace
+
+    spec = replace(echo_tool(), requires_call=lambda message: "F54" in message)
+    provider = ScriptedToolProvider([answer("F54 có 4 trục."), answer("F54 có 4 trục.")])
+    state = crm_state("F54 có bao nhiêu trục")
+
+    assert _run(agent_runner(provider, ToolRegistry([spec])), state) == ["F54 có 4 trục."]
+    assert [call.tool_choice for call in provider.calls] == ["auto", "required"]
+
+
+def test_product_docs_requires_a_call_when_a_registry_model_is_mentioned():
+    from app.modules.chatbot.tools import build_product_docs_tool
+
+    spec = build_product_docs_tool(pipeline=None)  # type: ignore[arg-type]
+    assert spec.requires_call("F54 có bao nhiêu trục")
+    assert not spec.requires_call("Xin chào, bạn là ai?")
+
+    from app.modules.chatbot.tools.product_docs import PRODUCT_DOCS_DESCRIPTION, PRODUCT_DOCS_GUIDE
+    assert "MỘT lần gọi" in PRODUCT_DOCS_DESCRIPTION
+    assert "chỉ gồm thuộc tính mà CẢ HAI giá trị có trong nguồn" in PRODUCT_DOCS_GUIDE
+    assert "[S#] NGAY SAU giá trị đó" in PRODUCT_DOCS_GUIDE
+    assert "không tự thêm" in PRODUCT_DOCS_GUIDE
 
 
 def test_final_step_answer_is_also_checked():

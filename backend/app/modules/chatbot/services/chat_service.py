@@ -73,7 +73,9 @@ class ChatbotService:
         self._provider = provider
         self._history_repository = history_repository
         self._security_stage = security_stage or SecurityStage()
-        self._context_loader = context_loader or ContextLoader(history_repository)
+        self._context_loader = context_loader or ContextLoader(
+            history_repository, history_turns=settings.context_history_turns,
+        )
         self._prune = prune or Prune(settings.context_token_budget)
         self._analysis_stage = analysis_stage or AnalysisStage(provider)
         self._execution_stage = execution_stage or ExecutionStage()
@@ -380,6 +382,7 @@ class ChatbotService:
             snapshot["agent_steps"] = [step.model_dump(mode="json") for step in agent.steps]
             snapshot["answered_without_tools"] = agent.answered_without_tools
             snapshot["invalid_citations"] = list(agent.invalid_citations)
+            snapshot["final_reason"] = agent.final_reason
         return snapshot
 
     async def _record_cancelled(

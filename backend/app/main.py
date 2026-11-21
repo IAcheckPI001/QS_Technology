@@ -54,6 +54,7 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
             api_key=settings.openai_api_key,
             model=settings.openai_model,
             embedding_model=settings.embedding_model,
+            tool_call_timeout_s=settings.agent_request_timeout_s,
         )
         repository = build_doc_repository()
         retriever = build_retriever(provider, repository)
@@ -68,6 +69,7 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
                 model=settings.effective_agent_model,
                 embedding_model=settings.embedding_model,
                 reasoning_effort=settings.agent_reasoning_effort or None,
+                tool_call_timeout_s=settings.agent_request_timeout_s,
             )
         # Provider/tool không đủ điều kiện thì ToolConfigurationError dừng khởi động.
         agent_runner = build_agent_runner(provider, retriever, settings, agent_provider=agent_provider)

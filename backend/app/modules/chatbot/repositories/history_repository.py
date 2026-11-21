@@ -126,17 +126,23 @@ class HistoryRepository:
         self,
         *,
         session_id: UUID,
+        limit: int | None = None,
     ) -> list[ChatHistory]:
-        """Return only successful provider turns for context construction."""
-        result = await self.db.execute(
-            select(ChatHistory)
-            .where(
-                ChatHistory.session_id == session_id,
-                ChatHistory.status == "completed",
-            )
-            .order_by(ChatHistory.created_at, ChatHistory.id)
+        """Return only successful provider turns for context construction, oldest first.
+
+        limit: only the most recent `limit` completed turns (CONTEXT_HISTORY_TURNS); None = whole session.
+        """
+        query = select(ChatHistory).where(
+            ChatHistory.session_id == session_id,
+            ChatHistory.status == "completed",
         )
-        return list(result.scalars().all())
+        if limit is None:
+            result = await self.db.execute(query.order_by(ChatHistory.created_at, ChatHistory.id))
+            return list(result.scalars().all())
+        result = await self.db.execute(
+            query.order_by(ChatHistory.created_at.desc(), ChatHistory.id.desc()).limit(limit)
+        )
+        return list(reversed(result.scalars().all()))
 
     async def create(
         self,

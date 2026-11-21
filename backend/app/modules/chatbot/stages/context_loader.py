@@ -27,8 +27,10 @@ log = logging.getLogger(__name__)
 class ContextLoader:
     name = "context_loader"
 
-    def __init__(self, history_repository: HistoryRepository) -> None:
+    def __init__(self, history_repository: HistoryRepository, history_turns: int | None = None) -> None:
+        """history_turns: chỉ đọc chừng này lượt hoàn tất gần nhất (CONTEXT_HISTORY_TURNS); None = cả phiên."""
         self._history_repository = history_repository
+        self._history_turns = history_turns
 
     @staticmethod
     def resolve_retrieval_scope(request: InboundRequest) -> RetrievalScope:
@@ -47,8 +49,9 @@ class ContextLoader:
 
     async def execute(self, state: RunState) -> RunContext:
         request = state.input
+        limit = {"limit": self._history_turns} if self._history_turns else {}
         histories = await self._history_repository.list_for_context(
-            session_id=UUID(request.session.session_id),
+            session_id=UUID(request.session.session_id), **limit,
         )
         messages: list[ConversationMessage] = []
         for history in histories:

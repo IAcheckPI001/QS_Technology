@@ -43,6 +43,33 @@ tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 - Chưa làm / mở tiếp: giai đoạn B (`publish-assets`, bucket private, ký URL, event SSE `sources`, giao diện); coverage `technical_docs` là
   registry chung nên model chỉ có tài liệu nội bộ không được nhận cho kênh CRM (cần registry theo kênh nếu thật sự cần).
 
+## 2026-11-20 · Website cũng chỉ nạp 10 lượt gần nhất làm context (D-015) · loại: thay đổi
+
+- `ContextLoader` dùng chung: lịch sử của phiên website giới hạn `CONTEXT_HISTORY_TURNS` (10) lượt; `Prune` (2.048 token)
+  vẫn cắt tiếp như cũ, nên câu trả lời không đổi với phiên ngắn. Chi tiết: [chat-platform LOG](../chat-platform/LOG.md).
+
+## 2026-11-20 · C7: so sánh F86–F54 qua widget đúng cột nhưng thiếu nhiều khác biệt · loại: kiểm chứng
+
+- Phiên `97fa9b85…` 07:29 UTC, pipeline gpt-4o-mini, hạn mức 3 + 2: cắt cột bảng đúng; 7.063 token, 0,00085 USD.
+- Câu trả lời chỉ có số trục, màn hình, RTCP, kèm câu "không có tài liệu chi tiết" gây hiểu nhầm: chunk chung lấy
+  bảng Compensation (giống nhau) và Multi axis thay General/Hardware. Chi tiết: [crm-agent LOG](../crm-agent/LOG.md)
+  mục "Bộ câu so sánh C1–C7". Hướng sửa CMP-1 (chọn bảng có dòng khác nhau) áp chung cho website.
+
+## 2026-11-20 · Câu so sánh: chunk riêng trước chunk chung, cắt cột bảng (D-014, tạm) · loại: thay đổi
+
+- Retriever dùng chung đổi cách chọn chunk khi so sánh: mỗi model 2 chunk riêng, 4 chunk chung (bảng chọn
+  model), và bảng markdown chỉ giữ cột của model được hỏi. Mặc định là quyết định tạm D-014.
+- Chi tiết và kiểm chứng: [crm-agent LOG](../crm-agent/LOG.md) các mục 2026-11-20. Website cần kiểm câu C7
+  (so sánh qua widget) và `run_retrieval_eval.py` trước khi chốt D-014.
+
+## 2026-11-20 · Câu so sánh: hạn mức chunk theo từng model · loại: thay đổi
+
+- Retriever: chế độ `comparison` giữ `RETRIEVAL_COMPARE_PER_MODEL` (mặc định 3) chunk và nhóm ngữ cảnh
+  cho mỗi model, thay top-k chung 6 → 5 nhóm (2 model: 6 nhóm; 3 model: 9). Áp cho cả pipeline website.
+- Lý do và chi tiết: [crm-agent LOG](../crm-agent/LOG.md) mục 2026-11-20 (Đợt 1 gói E+D).
+- Kiểm chứng: `pytest tests` → 1112 passed (test retriever mới). Chưa chạy `run_retrieval_eval.py`
+  (cần OpenAI + DB): Toma chạy `dual_source`, `routing_intent` trước khi merge.
+
 ## 2026-11-19 · Lượt kiểm thử v2 chưa tới bước tra cứu; đính chính current-state (B-1) · loại: sự cố, kiểm chứng
 
 - Vấn đề: hai lượt kiểm thử sau khi merge PR #3 đều không chạy tra cứu. Lượt 10:12 (kênh crm): server

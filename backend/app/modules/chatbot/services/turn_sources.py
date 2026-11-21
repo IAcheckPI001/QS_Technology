@@ -164,6 +164,7 @@ def retrieval_view(session_id: UUID, row: Any) -> RetrievalSnapshotResponse:
     snapshot = raw if isinstance(raw, Mapping) else {}
     chunks = [ChunkResult.model_validate(chunk) for chunk in snapshot.get("chunks") or []]
     answered_without_tools = snapshot.get("answered_without_tools")
+    final_reason = snapshot.get("final_reason")
     return RetrievalSnapshotResponse(
         session_id=session_id,
         history_id=row.id,
@@ -181,4 +182,5 @@ def retrieval_view(session_id: UUID, row: Any) -> RetrievalSnapshotResponse:
         agent_steps=_models(AgentStepItem, snapshot.get("agent_steps")),
         answered_without_tools=answered_without_tools if isinstance(answered_without_tools, bool) else None,
         invalid_citations=[str(item) for item in snapshot.get("invalid_citations") or []],
+        final_reason=final_reason if isinstance(final_reason, str) else None,
     )

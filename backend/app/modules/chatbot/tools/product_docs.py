@@ -21,6 +21,7 @@ from app.core.tracing import current_span
 from app.modules.chatbot.extraction.registry import REGISTRY
 from app.modules.chatbot.extraction.validate_registry import display_name, models_in_text
 from app.modules.chatbot.schemas.default import SystemModel
+from app.modules.chatbot.schemas.system import SessionLookup, ToolMemory
 from app.modules.chatbot.schemas.system import (
     AgentRun,
     AgentToolPlan,
@@ -35,7 +36,7 @@ from app.modules.chatbot.stages.answer_composer import serialize_turn
 from app.modules.chatbot.stages.catalog_lookup_stage import AWAITING_MODELS
 from app.modules.chatbot.stages.retrieval_pipeline import RetrievalPipeline
 
-from .base import ToolArgumentError, ToolContext, ToolOutput, ToolRejected, ToolSpec
+from .base import Progress, ToolArgumentError, ToolContext, ToolOutput, ToolRejected, ToolSpec
 
 PRODUCT_DOCS_TOOL_NAME = "product_docs_ask"
 
@@ -44,7 +45,8 @@ PRODUCT_DOCS_DESCRIPTION = (
     "tìm model theo tiêu chí, so sánh model, lắp đặt/đấu dây, vận hành, cấu hình tham số, xử lý "
     "lỗi/alarm, thông tin công ty. Dùng cho mọi thông tin về sản phẩm. "
     "`question` phải tự đủ nghĩa (không dùng 'nó', 'model đó') và ghi rõ mã model nếu đã biết "
-    "(vd F86, 6AV); mỗi lần gọi một câu hỏi. `based_on_sources`: chỉ dùng khi model trong "
+    "(vd F86, 6AV); mỗi lần gọi một câu hỏi. So sánh nhiều model: MỘT lần gọi, question nêu đủ các "
+    "model (vd 'So sánh F86 và F54'); tool tự tra riêng từng model. `based_on_sources`: chỉ dùng khi model trong "
     "question được chọn từ nguồn của lần gọi trước (xem hướng dẫn của tool)."
 )
 
@@ -58,6 +60,15 @@ PRODUCT_DOCS_GUIDE = """Output.status:
 - out_of_scope: nói ngắn rằng ngoài phạm vi tài liệu. failed: tra cứu lỗi.
 - task_results[].status = awaiting_models: ý đó cần model là kết quả tìm ở cùng lần gọi; gọi lại riêng cho từng model theo next_action.
 - Lỗi model_not_evidenced: không tự chọn model; hỏi lại nhân viên hoặc làm theo next_action.
+
+So sánh model (khác nhau, giống nhau, nên chọn model nào):
+- Gọi tool MỘT lần cho cả câu so sánh; không gọi thêm riêng từng model nếu kết quả đã có nguồn của các model đó.
+- Trình bày theo thuộc tính, mở đầu bằng số trục, giao tiếp điều khiển, kích thước, màn hình, I/O rồi tới tính năng: mỗi thuộc tính ghi giá trị của từng model và [S#] NGAY SAU giá trị đó (không gom nguồn ở cuối câu trả lời).
+- Hai phần tách biệt: "Khác nhau" chỉ gồm thuộc tính mà CẢ HAI giá trị có trong nguồn và khác nhau; "Giống nhau" gồm thuộc tính có cùng giá trị. Trước khi xếp, so từng cặp giá trị: bằng nhau thì KHÔNG đưa vào "Khác nhau", khác nhau thì KHÔNG đưa vào "Giống nhau".
+- Bảng có cột theo model: đọc giá trị theo đúng tiêu đề cột của model đó; đọc hết mọi dòng của bảng (vd General: số trục PLC, số spindle đồng thời).
+- Không kết luận "lớn hơn/nhỏ hơn/nhỏ gọn hơn" từ nhiều số đo (dài, rộng, dày): nêu từng chiều. Thuộc tính chỉ có nguồn cho một model thì ghi "chưa có thông tin" cho model kia. Không kết luận "nhiều hơn/tốt hơn" khi không có nguồn nói vậy.
+- Giữ nguyên số và đơn vị như nguồn; nguồn không ghi đơn vị thì không tự thêm.
+- Đọc kỹ bảng chọn model (selection table): ✓/✗/(Option) của từng cột là dữ liệu so sánh chính.
 
 Câu hỏi nhiều bước (tìm model theo tiêu chí, rồi hỏi tiếp về model đó): tìm trước, đọc kết quả, rồi mới hỏi tiếp.
 - Đếm và chọn model theo catalog_match.models (dữ liệu sản phẩm), không theo văn bản nguồn. Làm đúng catalog_match.next_action:
@@ -254,7 +265,28 @@ def build_product_docs_tool(pipeline: RetrievalPipeline, timeout_s: float = 20.0
         read_only=True,
         concurrency_safe=True,
         timeout_s=timeout_s,
+        # Tin nhắn nhắc model trong registry: câu trả lời phải dựa trên nguồn của lượt (Đợt 1 gói D).
+        requires_call=lambda message: bool(models_in_text(message)),
+        progress=docs_progress,
+        remember=docs_memory,
     )
+
+
+def docs_progress(output: ProductDocsAskOutput) -> Progress:
+    """Tín hiệu cho runner: cần nhân viên chọn model → mơ hồ; không có tài liệu → rỗng."""
+    if output.status == "needs_clarification":
+        return "ambiguous"
+    if output.status == "no_docs":
+        return "empty"
+    return "ok"
+
+
+def docs_memory(output: ProductDocsAskOutput) -> ToolMemory:
+    """Chỉ tóm tắt lần tra (trạng thái, số nguồn); model của phiên đã nằm ở last_models/active_model."""
+    sources = sum(len(group.sources) for group in output.sources)
+    return ToolMemory(lookup=SessionLookup(
+        tool=PRODUCT_DOCS_TOOL_NAME, summary=f"tài liệu: {output.status}, {sources} nguồn", total=sources,
+    ))
 
 
 def evidence_models(

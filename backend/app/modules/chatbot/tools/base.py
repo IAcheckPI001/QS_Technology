@@ -3,17 +3,22 @@
 import json
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, TypeVar
+from typing import Any, Literal, TypeVar
 
 from pydantic import BaseModel
 
 from app.modules.chatbot.schemas.default import SystemModel
-from app.modules.chatbot.schemas.system import AgentRun, RunState, ToolTurnState
+from app.modules.chatbot.schemas.system import AgentRun, RunState, ToolMemory, ToolTurnState
 from app.modules.chatbot.stages.execution_stage import SourceAllocator
 
 # Mã lỗi khi call vượt trần riêng của tool trong lượt (runner áp `max_calls_per_turn`, tool có thể
 # áp trần riêng khác); call này không trừ trần chung của lượt.
 TOOL_CALL_LIMIT = "tool_call_limit"
+
+# Tín hiệu tiến độ của một output thành công (Đợt 1 gói C): ok = có dữ liệu dùng được; empty = không
+# có dữ liệu thỏa điều kiện; ambiguous = cần nhân viên chọn/làm rõ trước khi đi tiếp. Runner dùng
+# tín hiệu này để dừng sớm, không cần biết tool làm gì.
+Progress = Literal["ok", "empty", "ambiguous"]
 
 
 class ToolRejected(Exception):
@@ -92,6 +97,20 @@ class ToolSpec:
     timeout_s: float = 20.0
     required_scope: str | None = None   # chưa dùng: điểm gắn phân quyền theo role/scope
     on_invalid_args: InvalidArgsHook | None = None   # gọi khi argument không parse/validate được
+    # Tin nhắn của người dùng mà tool này phải được gọi trước khi trả lời (vd nhắc mã model):
+    # lượt trả lời không gọi tool nào thì runner chạy lại một bước, bắt buộc gọi tool.
+    requires_call: Callable[[str], bool] | None = None
+    # Tín hiệu tiến độ của output thành công; None = mọi output thành công là "ok".
+    progress: Callable[[Any], Progress] | None = None
+
+    # Mã lỗi nghĩa là "argument sai, sửa được" (như ModelRetry của Pydantic AI): LLM trả lời ngay sau
+    # lỗi này mà chưa gọi lại tool thì runner bắt sửa một lần (LC-4, 2026-11-20).
+    repairable_errors: frozenset[str] = frozenset({"tool_invalid_args"})
+    # Định danh output để lại cho phiên (Đợt 1 gói A, facts L2); None = tool không ghi gì.
+    remember: Callable[[Any], ToolMemory | None] | None = None
+
+    def progress_of(self, output: ToolOutput) -> Progress:
+        return self.progress(output) if self.progress is not None else "ok"
 
     @property
     def deduplicates(self) -> bool:
@@ -113,16 +132,28 @@ class ToolOutcome:
     def ok(self) -> bool:
         return self.error_code is None
 
-    def message_content(self, budget_tokens: int, count: Callable[[str], int]) -> str:
-        """Nội dung message role=tool gửi lại cho LLM."""
+    def message_content(
+        self,
+        budget_tokens: int,
+        count: Callable[[str], int],
+        extra: dict[str, Any] | None = None,
+    ) -> str:
+        """Nội dung message role=tool gửi lại cho LLM.
+
+        extra: khoá runner thêm vào (vd ngân sách còn lại của lượt); phần token của nó được trừ
+        khỏi budget trước khi tool cắt output, nên không làm output vượt budget.
+        """
+        extra = extra or {}
         if self.output is None:
             payload: dict[str, Any] = {"error": self.error_code}
             if self.error_detail:
                 payload["detail"] = self.error_detail
-            return _j(payload)
-        text = _j(self.output.to_llm(budget_tokens, count))
+            return _j({**payload, **extra})
+        reserve = count(_j(extra)) if extra else 0
+        payload = self.output.to_llm(budget_tokens - reserve, count)
+        text = _j({**payload, **extra})
         if count(text) > budget_tokens:
-            return _j({"error": "tool_output_too_large"})
+            return _j({"error": "tool_output_too_large", **extra})
         return text
 
 

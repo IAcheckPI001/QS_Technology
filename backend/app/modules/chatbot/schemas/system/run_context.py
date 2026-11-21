@@ -9,6 +9,7 @@ from dataclasses import asdict
 from dataclasses import dataclass
 from pydantic import Field, model_validator, ConfigDict
 
+from .facts import SessionFacts
 from ..default import (
     SystemModel,
     Identifier,
@@ -55,6 +56,8 @@ class ConversationState(_Model):
     clarify_attempts: int = Field(default=0, ge=0)
     miss_streak: int = Field(default=0, ge=0)       # lượt liên tiếp không trả lời được
     ticket_id: str | None = None
+    # Luồng agent (Đợt 1 gói A): định danh do tool trả trong các lượt gần đây.
+    facts: SessionFacts = Field(default_factory=SessionFacts)
 
     def for_llm(self) -> dict:
         data: dict = {}

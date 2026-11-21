@@ -9,7 +9,7 @@ tham số hoá và giới hạn dữ liệu theo token của nhân viên. 400 c�
 
 import json
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from datetime import tzinfo
 from time import perf_counter
 from typing import Any, Literal
@@ -22,6 +22,7 @@ from app.modules.chatbot.reporting.dates import stated_years
 from app.modules.chatbot.reporting.raw.audit import QueryAudit, QueryOutcome, outcome_of_error
 from app.modules.chatbot.reporting.raw.compile import (
     CompiledRaw,
+    KnownColumns,
     RawQueryError,
     compile_raw,
     count_of,
@@ -31,10 +32,19 @@ from app.modules.chatbot.reporting.raw.compile import (
 from app.modules.chatbot.reporting.raw.policy import static_column_type, static_relation
 from app.modules.chatbot.reporting.raw.schema import CrmSchemaCache, compact_type
 from app.modules.chatbot.schemas.default import SystemModel
-from app.modules.chatbot.schemas.system import RunState, ToolTurnState
+from app.modules.chatbot.schemas.system import RunState, SessionEntity, SessionLookup, ToolMemory, ToolTurnState
+from app.modules.chatbot.schemas.system.facts import MAX_LIST_ROWS, clip
 from app.modules.chatbot.schemas.system.raw_query import RawQuery
 
-from .base import TOOL_CALL_LIMIT, ToolArgumentError, ToolContext, ToolOutput, ToolRejected, ToolSpec
+from .base import (
+    TOOL_CALL_LIMIT,
+    Progress,
+    ToolArgumentError,
+    ToolContext,
+    ToolOutput,
+    ToolRejected,
+    ToolSpec,
+)
 from .crm_common import crm_credential, query_all
 
 CRM_QUERY_TOOL_NAME = "crm_query"
@@ -67,7 +77,8 @@ Quy trình:
 - mode: con số/thống kê → aggregate; danh sách/liệt kê/tìm → list. Cần cả hai thì gọi hai crm_query trong cùng một bước.
 - Join: fk.cột theo relations, chỉ đi từ bảng có khoá ngoại sang bảng đích. Thông tin ở bảng con (referenced_by, vd user_roles) thì lấy bảng con làm dataset. Cần tên người/vật tư/khách trong kết quả: chọn hoặc nhóm thẳng cột tên qua join (vd dimensions [assigned_sales_id.username], select [material_id.name]), không lấy UUID rồi gọi thêm query để tra tên.
 - Có username hoặc mã: lọc thẳng qua join trong cùng query (vd assigned_sales_id.username eq "<username>", user_id.username eq ...), không tra id trước. KHÔNG BAO GIỜ đặt tên người, tên khách hay mã vào cột uuid.
-- Username, mã, UUID chỉ dùng NGUYÊN VĂN từ kết quả tool trong lượt này hoặc chữ nhân viên gõ; không tự suy từ họ tên hay câu trả lời trước, không tự thêm/bỏ phần sau @. Chưa có thì tra user_profiles trước.
+- Username, mã, UUID chỉ dùng NGUYÊN VĂN từ kết quả tool trong lượt này, <session_state> hoặc chữ nhân viên gõ; không tự suy từ họ tên hay câu trả lời trước, không tự thêm/bỏ phần sau @. Chưa có thì tra user_profiles trước.
+- Bản ghi đã nhắc ở lượt trước (vd "tin nhắn 1", "phiếu đó"): có trong <session_state> thì lọc thẳng bằng id đó; không có thì KHÔNG hỏi nhân viên UUID. Lọc lại bằng cột chữ đã thấy trong câu trả lời trước (title, content, code, tên): trên chính bảng đó, hoặc từ bảng con qua quan hệ (vd message_id.content contains "<đoạn chữ>"). tool_invalid_args vì đặt chữ vào cột uuid cũng sửa theo cách này rồi gọi lại.
 - Chỉ có TÊN nhân viên (vd "nhân viên Hiếu"): lượt 1 tra user_profiles (select user_id, user_id.username, user_id.is_active, last_name, first_name; filter first_name contains tên đó); đọc kết quả rồi lượt 2 lọc bảng chính bằng cột trỏ tới auth_users, eq user_id vừa nhận. Không gọi song song, không viết giá trị giữ chỗ. Trùng tên: hỏi hiện tại thì bỏ người is_active false, còn nhiều thì hỏi lại (kèm họ tên, username); 0 người: nói không tìm thấy.
 - contains không phân biệt hoa thường nhưng PHÂN BIỆT dấu tiếng Việt: giữ đúng chữ người dùng gõ; 0 kết quả với chữ không dấu thì gợi ý gõ có dấu.
 - Giá trị trạng thái/loại/vai trò: lấy từ crm_schema (cột:kiểu=a|b|c, known_values, note), so cả giá trị và nhãn; KHÔNG tự dịch hay đoán mã. Không khớp mục nào thì nói không có (kèm danh sách), không trả lời "0". Chưa biết giá trị: aggregate dimensions=[cột], metrics=[count] để xem.
@@ -176,6 +187,78 @@ def query_shape(query: RawQuery) -> dict[str, object]:
     }
 
 
+# Tra nhân viên theo tên (guide: "Chỉ có TÊN nhân viên"): cột tên và cột trạng thái tài khoản.
+_PERSON_DATASET = "user_profiles"
+_NAME_COLUMNS = ("first_name", "last_name")
+_ACTIVE_COLUMN = "user_id.is_active"
+
+
+def query_progress(output: QueryOutput) -> Progress:
+    """Tín hiệu cho runner: rỗng khi 0 dòng; mơ hồ khi tra nhân viên theo tên ra hơn một người còn
+    hoạt động (guide yêu cầu hỏi lại). Chỉ đọc metadata và cột trạng thái, không đọc giá trị tên."""
+    if not output.returned:
+        return "empty"
+    applied = output.applied
+    by_name = any(
+        item.split(" ", 2)[:2] in [[column, "contains"] for column in _NAME_COLUMNS]
+        for item in applied.filters
+    )
+    if applied.dataset == _PERSON_DATASET and applied.mode == "list" and by_name:
+        active = [row for row in output.rows if row.get(_ACTIVE_COLUMN) is not False]
+        if len(active) > 1:
+            return "ambiguous"
+    return "ok"
+
+
+# facts (Đợt 1 gói A): chỉ các cột này được ghi vào phiên. Không bao giờ ghi SĐT, email khách, địa chỉ,
+# nội dung, ghi chú (danh sách cho phép, không phải danh sách chặn).
+_LABEL_COLUMNS = ("full_name", "title", "name", "code")
+_KEY_COLUMNS = {"username": ("username", "user_id.username"), "code": ("code",)}
+_PERSON_TABLES = {"user_profiles", "auth_users"}
+_CUSTOMER_TABLES = {"customers"}
+
+
+def _row_entity(dataset: str, row: dict[str, Any], ordinal: int | None) -> SessionEntity | None:
+    if dataset == "user_profiles":
+        record_id, kind, table = row.get("user_id"), "person", "auth_users"
+    else:
+        kind = "person" if dataset in _PERSON_TABLES else "customer" if dataset in _CUSTOMER_TABLES else "record"
+        record_id, table = row.get("id"), dataset
+    keys = {
+        key: clip(value)
+        for key, columns in _KEY_COLUMNS.items()
+        # username chỉ là định danh của chính dòng khi bảng là người (bảng khác: username của người join tới)
+        if (key != "username" or kind == "person")
+        and (value := next((row[column] for column in columns if row.get(column)), None))
+    }
+    if not record_id and not keys:
+        return None
+    names = [str(row[column]) for column in ("last_name", "first_name") if row.get(column)]
+    label = " ".join(names) or next((str(row[column]) for column in _LABEL_COLUMNS if row.get(column)), "")
+    return SessionEntity(
+        kind=kind, table=table, id=str(record_id) if record_id else None, keys=keys,
+        label=clip(label), ordinal=ordinal, source_tool=CRM_QUERY_TOOL_NAME,
+    )
+
+
+def query_memory(output: QueryOutput) -> ToolMemory:
+    """Định danh của các dòng đầu danh sách (kèm vị trí) và tóm tắt lần tra; thống kê chỉ có tóm tắt."""
+    applied = output.applied
+    columns = [" ".join(item.split(" ", 2)[:2]) for item in applied.filters]   # bỏ giá trị filter
+    summary = f"{applied.dataset} {applied.mode}" + (f" lọc {', '.join(columns)}" if columns else "")
+    entities: list[SessionEntity] = []
+    if applied.mode == "list":
+        for index, row in enumerate(output.rows[:MAX_LIST_ROWS], start=1):
+            if (entity := _row_entity(applied.dataset, row, index)) is not None:
+                entities.append(entity)
+    total = output.total if output.total is not None else output.returned
+    return ToolMemory(
+        entities=entities,
+        lookup=SessionLookup(tool=CRM_QUERY_TOOL_NAME, summary=clip(summary, 200), total=total),
+        is_list=applied.mode == "list",
+    )
+
+
 def build_crm_query_tool(
     client: CrmReportClient,
     cache: CrmSchemaCache,
@@ -200,6 +283,11 @@ def build_crm_query_tool(
         if live is not None and column in live.columns:
             return compact_type(live.columns[column])
         return static_column_type(table, column)
+
+    def known_columns(table: str) -> Collection[str] | None:
+        """Chỉ schema sống đã cache: index tĩnh có thể lệch CRM (13 bảng), dùng nó sẽ chặn nhầm cột thật."""
+        live = cache.cached(table)
+        return live.columns.keys() if live is not None else None
 
     def on_invalid_args(arguments_raw: str, detail: str, context: ToolContext) -> None:
         """Argument LLM gửi không validate được (không tới run): vẫn tính một lần thử."""
@@ -228,12 +316,26 @@ def build_crm_query_tool(
             "attempt": attempt,
             "arguments": arguments.model_dump(mode="json"),
         }
-        try:
-            compiled = compile_raw(
+        years = stated_years(_user_texts(state), state.request_context.received_at, tz)
+
+        def compile_now(columns: KnownColumns | None) -> CompiledRaw:
+            return compile_raw(
                 arguments, now=state.request_context.received_at, tz=tz,
                 relation_target=relation_target, column_type=column_type,
-                stated_years=stated_years(_user_texts(state), state.request_context.received_at, tz),
+                stated_years=years, known_columns=columns,
             )
+
+        try:
+            # Lỗi hình dạng, bảng/cột bị chặn, sai kiểu giá trị: chặn trước, không gọi CRM lần nào.
+            compiled = compile_now(None)
+            # Rồi kiểm tên cột theo schema sống của bảng gốc (cache dùng chung), kể cả khi LLM không
+            # gọi crm_schema hoặc gọi song song (LC-4). Lỗi lấy schema không chặn query: CRM tự kiểm.
+            if cache.cached(arguments.dataset) is None:
+                try:
+                    await cache.table(arguments.dataset, token)
+                except Exception:        # noqa: BLE001
+                    logger.info("crm_query schema prefetch failed dataset=%s", arguments.dataset)
+            compiled = compile_now(known_columns)
         except RawQueryError as error:
             _finish_attempt(context, "rejected")
             logger.info(
@@ -307,6 +409,10 @@ def build_crm_query_tool(
         max_calls_per_turn=MAX_QUERY_ATTEMPTS_PER_TURN,
         timeout_s=timeout_s,
         on_invalid_args=on_invalid_args,
+        progress=query_progress,
+        remember=query_memory,
+        # 400 của query do LLM dựng (cột/quan hệ sai): sửa được như tool_invalid_args.
+        repairable_errors=frozenset({"tool_invalid_args", "crm_query_invalid"}),
     )
 
 

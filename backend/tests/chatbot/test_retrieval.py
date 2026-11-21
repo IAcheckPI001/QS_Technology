@@ -263,7 +263,7 @@ def test_comparison_searches_each_model_and_interleaves():
         ("product_catalog", (), ("F86",)): [_match(1, fused=0.09), _match(2, fused=0.08)],
         ("product_catalog", (), ("F54",)): [_match(3, fused=0.02), _match(4, fused=0.01)],
     })
-    retriever = _retriever(repository, final_chunk_top_k=2)
+    retriever = _retriever(repository, final_chunk_top_k=2, compare_per_model=1)
 
     result = asyncio.run(retriever.search([
         _request(domain="product_catalog", scopes=(), models=("F86", "F54"), mode="comparison"),
@@ -271,6 +271,110 @@ def test_comparison_searches_each_model_and_interleaves():
 
     assert [call["models"] for call in repository.calls] == [["F86"], ["F54"]]
     assert [hit.chunk_id for hit in result.hits] == ["1", "3"]
+
+
+def test_comparison_gives_each_model_its_own_quota():
+    """Đợt 1 gói E: model có điểm thấp vẫn được đủ hạn mức, không bị model kia chiếm top-k chung."""
+    repository = FakeRepository({
+        ("product_catalog", (), ("F86",)): [_match(i, fused=0.09 - i / 1000) for i in range(1, 5)],
+        ("product_catalog", (), ("F54",)): [_match(i, fused=0.02 - i / 1000) for i in range(11, 15)],
+    })
+    retriever = _retriever(repository, final_chunk_top_k=2, max_context_parents=2, compare_per_model=3)
+
+    result = asyncio.run(retriever.search([
+        _request(domain="product_catalog", scopes=(), models=("F86", "F54"), mode="comparison"),
+    ]))
+
+    ids = [hit.chunk_id for hit in result.hits]
+    assert ids == ["1", "11", "2", "12", "3", "13"]
+
+
+def test_comparison_keeps_each_models_own_chunks_before_shared_tables():
+    """Kiểm thật 2026-11-20: bảng chọn model (khớp cả hai model, điểm cao) chiếm hết hạn mức nên
+    thiếu chunk tổng quan có số trục. Chunk chung giờ có hạn mức riêng, sau chunk riêng của từng model."""
+    table_a, table_b, table_c = _match(90, fused=0.2), _match(91, fused=0.19), _match(92, fused=0.18)
+    repository = FakeRepository({
+        ("product_catalog", (), ("F86",)): [table_a, table_b, table_c, _match(1, fused=0.05), _match(2, fused=0.04)],
+        ("product_catalog", (), ("F54",)): [table_a, table_b, table_c, _match(11, fused=0.03)],
+    })
+    retriever = _retriever(repository, compare_per_model=2, compare_shared=1)
+
+    result = asyncio.run(retriever.search([
+        _request(domain="product_catalog", scopes=(), models=("F86", "F54"), mode="comparison"),
+    ]))
+
+    # Riêng: F86 2 chunk, F54 1 chunk (thiếu 1 suất) → chung: 1 + 1 suất chưa dùng = 2 bảng.
+    assert [hit.chunk_id for hit in result.hits] == ["1", "11", "2", "90", "91"]
+
+
+SELECTION_TABLE = "\n".join([
+    "MOTION CONTROLLER",
+    "General",
+    "| Specification | F54 | F86 | F10T | ASTRO-10S |",
+    "|---|---|---|---|---|",
+    "| Max. PLC Axis control | 0 | 6 | 6 | 14 |",
+    "| Max.Spindle Simultaneous Control | 2 | 4 | 4 | 4 |",
+])
+
+
+def test_comparison_trims_selection_tables_to_compared_models():
+    """Kiểm thật 2026-11-20: cột F54 bị đọc thành giá trị của F86 khi so F86–F10T."""
+    table = _match(90, fused=0.2).model_copy(update={"content": SELECTION_TABLE})
+    repository = FakeRepository({
+        ("product_catalog", (), ("F86",)): [table, _match(1, fused=0.05)],
+        ("product_catalog", (), ("F10T",)): [table, _match(11, fused=0.04)],
+    })
+
+    result = asyncio.run(_retriever(repository).search([
+        _request(domain="product_catalog", scopes=(), models=("F86", "F10T"), mode="comparison"),
+    ]))
+
+    content = next(hit.content for hit in result.hits if hit.chunk_id == "90")
+    assert "| Specification | F86 | F10T |" in content
+    assert "| Max. PLC Axis control | 6 | 6 |" in content
+    assert "F54" not in content and "ASTRO" not in content
+    assert content.startswith("MOTION CONTROLLER\nGeneral")
+
+
+def test_non_comparison_keeps_tables_untouched():
+    table = _match(90, fused=0.2).model_copy(update={"content": SELECTION_TABLE})
+    repository = FakeRepository({("product_catalog", (), ("F86",)): [table]})
+
+    result = asyncio.run(_retriever(repository).search([_request(domain="product_catalog", scopes=(), models=("F86",))]))
+
+    assert result.hits[0].content == SELECTION_TABLE
+
+
+def test_trim_model_columns_keeps_non_model_columns_and_odd_tables():
+    from app.modules.chatbot.extraction.validate_registry import models_in_text
+    from app.modules.chatbot.retrieval.table_columns import trim_model_columns
+
+    with_unit = "| Item | Unit | F54 | F86 |\n|---|---|---|---|\n| Voltage | V | 24 | 24 |"
+    assert trim_model_columns(with_unit, {"F86"}, models_in_text) == (
+        "| Item | Unit | F86 |\n| --- | --- | --- |\n| Voltage | V | 24 |"
+    )
+    # Bảng không có cột của model được hỏi: giữ nguyên.
+    assert trim_model_columns(with_unit, {"F10T"}, models_in_text) == with_unit
+    # Dòng lệch số cột: không đoán, giữ nguyên.
+    ragged = "| Item | F54 | F86 |\n|---|---|---|\n| A | 1 |"
+    assert trim_model_columns(ragged, {"F86"}, models_in_text) == ragged
+
+
+def test_default_comparison_quota_is_two_own_and_four_shared():
+    from app.modules.chatbot.retrieval import RetrieverConfig
+
+    assert (RetrieverConfig().compare_per_model, RetrieverConfig().compare_shared) == (2, 4)
+
+
+def test_non_comparison_keeps_global_top_k():
+    repository = FakeRepository({
+        ("product_catalog", (), ("F86",)): [_match(i, fused=0.09 - i / 1000) for i in range(1, 5)],
+    })
+    retriever = _retriever(repository, final_chunk_top_k=2, compare_per_model=3)
+
+    result = asyncio.run(retriever.search([_request(domain="product_catalog", scopes=(), models=("F86",))]))
+
+    assert [hit.chunk_id for hit in result.hits] == ["1", "2"]
 
 
 def test_retrieval_error_marks_task_failed():

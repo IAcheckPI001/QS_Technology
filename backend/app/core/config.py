@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     # Cosine similarity tối thiểu để chunk được coi là liên quan; cần đo lại trên dữ liệu thật.
     retrieval_min_similarity: float = Field(default=0.25, alias="RETRIEVAL_MIN_SIMILARITY")
     retrieval_spec_boost: float = Field(default=0.005, alias="RETRIEVAL_SPEC_BOOST")
+    # So sánh nhiều model (Đợt 1 gói E, 2026-11-20): số chunk riêng của mỗi model, và số chunk chung
+    # (khớp nhiều model, vd bảng chọn model) giữ thêm.
+    # Mặc định 2 + 4 là quyết định TẠM (2026-11-20), kiểm lại trên bộ câu so sánh trong LOG crm-agent.
+    retrieval_compare_per_model: int = Field(default=2, ge=1, alias="RETRIEVAL_COMPARE_PER_MODEL")
+    retrieval_compare_shared: int = Field(default=4, ge=0, alias="RETRIEVAL_COMPARE_SHARED")
     # D-009: chat chỉ đọc chunk `review_status = 'approved'` của doc_chunks_v2. Dev/staging đặt false để thử với
     # chunk `draft`; production giữ true (chưa có chunk approved thì chat không tìm thấy tài liệu nào).
     retrieval_approved_only: bool = Field(default=True, alias="RETRIEVAL_APPROVED_ONLY")
@@ -67,7 +72,15 @@ class Settings(BaseSettings):
     agent_tool_output_tokens: int = Field(default=3000, alias="AGENT_TOOL_OUTPUT_TOKENS")
     agent_parallel_tools: int = Field(default=3, alias="AGENT_PARALLEL_TOOLS")
     agent_max_concurrent_runs: int = Field(default=8, alias="AGENT_MAX_CONCURRENT_RUNS")
+    # Không còn dùng từ Đợt 1 gói A (thay bằng AGENT_HISTORY_TURNS); giữ để .env cũ không lỗi.
     agent_history_messages: int = Field(default=6, alias="AGENT_HISTORY_MESSAGES")
+    # Số lượt (hỏi + đáp) gần nhất vòng lặp agent đưa vào prompt; 0 = không đưa lịch sử.
+    agent_history_turns: int = Field(default=3, ge=0, alias="AGENT_HISTORY_TURNS")
+    # Số lượt hoàn tất gần nhất ContextLoader đọc từ DB (dùng chung website và CRM); trước đây đọc cả phiên.
+    context_history_turns: int = Field(default=10, ge=1, alias="CONTEXT_HISTORY_TURNS")
+    # Trần token vào cộng dồn của các bước LLM trong vòng lặp agent (Đợt 1 gói C): vượt thì dừng gọi
+    # tool, chuyển sang bước chốt. 0 = tắt. 40k (2026-11-20, LC-7): một lượt CRM 3 bước đã ~20k (mỗi bước ~6-8k).
+    agent_turn_input_budget: int = Field(default=40000, ge=0, alias="AGENT_TURN_INPUT_BUDGET")
     # Model riêng cho vòng lặp agent (kênh CRM); rỗng = OPENAI_MODEL. Stage phân tích trong tool
     # product_docs_ask và luồng website vẫn dùng OPENAI_MODEL.
     agent_model: str = Field(default="", alias="AGENT_MODEL")
@@ -193,6 +206,12 @@ class Settings(BaseSettings):
         if value and value not in {"none", "minimal", "low", "medium", "high"}:
             raise ValueError("AGENT_REASONING_EFFORT must be one of none, minimal, low, medium, high")
         return value
+
+    @property
+    def agent_request_timeout_s(self) -> float:
+        """Timeout mỗi request tool-calling tới provider: ngắn hơn AGENT_LLM_TIMEOUT_S 1 s để lỗi hết giờ
+        do SDK báo (kèm giai đoạn connect/read) thay vì bị deadline của runner huỷ ngang."""
+        return max(self.agent_llm_timeout_s - 1.0, 1.0)
 
     @property
     def effective_agent_model(self) -> str:
