@@ -35,6 +35,13 @@ class Settings(BaseSettings):
     # D-009: chat chỉ đọc chunk `review_status = 'approved'` của doc_chunks_v2. Dev/staging đặt false để thử với
     # chunk `draft`; production giữ true (chưa có chunk approved thì chat không tìm thấy tài liệu nào).
     retrieval_approved_only: bool = Field(default=True, alias="RETRIEVAL_APPROVED_ONLY")
+    # D-014 giai đoạn B: event SSE `sources` (nguồn đã trích dẫn kèm ảnh) và URL ký cho ảnh trong bucket private.
+    # Mặc định tắt (TR-16); bật cần SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (chỉ ở backend, không gửi cho client).
+    chat_sources_enabled: bool = Field(default=False, alias="CHAT_SOURCES_ENABLED")
+    supabase_url: str = Field(default="", alias="SUPABASE_URL")
+    supabase_service_role_key: str = Field(default="", alias="SUPABASE_SERVICE_ROLE_KEY", repr=False)
+    asset_url_ttl_s: int = Field(default=900, ge=60, le=3600, alias="ASSET_URL_TTL_S")
+    source_images_max: int = Field(default=3, ge=0, le=10, alias="SOURCE_IMAGES_MAX")
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
     gpt4o_mini_input_usd_per_million: float = Field(default=0.15, alias="GPT4O_MINI_INPUT_USD_PER_MILLION")

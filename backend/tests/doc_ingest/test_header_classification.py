@@ -49,7 +49,9 @@ def test_hc03_too_few_rows_falls_back_to_profile_or_review(profile: str, decisio
         assert _t05_steps(run) == ["header flag demoted to data (step c)"]
         assert run.review == []
     else:
-        assert flagged.is_header is True
+        # 2026-11-20 (I-56): không rõ thì giữ làm dòng dữ liệu (chữ không bị bỏ), mục review vẫn chặn chunk
+        assert flagged.is_header is False
+        assert f"header_unsure_kept_as_data:{flagged.row_id}" in run.tables[0].flags
         assert [(r.code, r.blocks, r.target) for r in run.review] == [
             ("header_demotion_unsure", "chunk", f"syn:t001:{flagged.row_id}")]
 
@@ -70,8 +72,8 @@ def test_hc05_shape_majority_threshold(keys: list[str], demoted: bool) -> None:
     rows = [[k, f"Setting {i}", "1"] for i, k in enumerate(keys)]
     run = _continued(rows, [["#0099", "Flagged", "2"]])
     flagged = run.tables[0].rows[-1]
-    assert flagged.is_header is (not demoted)
-    assert bool(run.review) is (not demoted)
+    assert flagged.is_header is False                    # đạt đa số hình dạng → dữ liệu; không → giữ làm dữ liệu (I-56)
+    assert bool(run.review) is (not demoted)             # chỉ trường hợp không rõ mới còn mục review chặn chunk
 
 
 def test_hc06_real_headers_are_never_demoted(f54_run) -> None:

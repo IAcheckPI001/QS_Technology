@@ -40,6 +40,8 @@ CLI `backend/app/modules/doc_ingest/cli.py`, chạy từ thư mục `backend`:
 | `crm-plan` | Đọc cây tài liệu CRM, so với sổ nguồn → `data/crm_sync/<ts>/plan.md` (mới / đổi phiên bản / bất thường / bị gỡ / bỏ qua) | cả hai |
 | `crm-fetch --plan <dir> [--only <doc_id>…]` | Tải PDF mới/đổi phiên bản → `data/crm_sources/<doc_id>/<version>/`, sinh manifest nháp, cập nhật sổ nguồn, in lệnh `run` | cả hai |
 | `crm-status` | Sổ nguồn + run mới nhất của từng tài liệu (chỉ đọc) | cả hai |
+| `quality-report [--crm] [--run-id <id>] [--docs …]` | Thống kê chunk lá theo trạng thái duyệt và nguyên nhân chặn, xuyên tài liệu → `<runs>/_summary/<ts>/` (md, json, `chunks.csv`); chỉ đọc | cả hai |
+| `publish-assets --run-dir <run> [--status all\|approved] [--apply]` | Đẩy ảnh của chunk lên Storage private `doc-assets` (D-014): không ghi đè, sổ sha256 `build/assets_published.json`; không `--apply` chỉ lập kế hoạch; cần `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` trong shell | cả hai |
 
 ```powershell
 ..\.venv-ingest\Scripts\python.exe -m app.modules.doc_ingest.cli run --pdf "<file.pdf>" --pages 11,14,167-171 --doc-id f54 --profile qs_controller
@@ -96,6 +98,7 @@ Module (`backend/app/modules/doc_ingest/`):
 | Báo cáo | `report/html_report.py`, `report/chunks_report.py` | HTML tự chứa từng bước; trang duyệt chunk |
 | Cấu hình | `profile.py`, `profiles/*.yaml`, `schemas/` | Profile `default`, `qs_controller`; schema Pydantic `extra="forbid"` |
 | Spike P-1 | `spike/` | Công cụ đo ban đầu; kết luận ở [parsing_spike.md](../../reports/parsing_spike.md) |
+| Thống kê chất lượng | `report/quality_summary.py` | Trạng thái chunk lá (approved / chờ / fix / bị chặn), nhóm nguyên nhân chặn (OCR, bảng, hụt text V-01), trang V-01 trượt; truy mã chặn về mục review (`blocking_items`) |
 | Nguồn CRM | `sources/crm/` (`crm.yaml`, `crm_sources.lock.json`, `tree`, `diff`, `lock`, `manifest_draft`, `commands`, `client`) | Đồng bộ tài liệu công khai trên CRM: chọn tài liệu, so phiên bản, tải PDF (stdlib `urllib`), manifest nháp |
 
 ## Contract
@@ -171,6 +174,13 @@ phiên bản tool). Mở `report/index.html` và `report/chunks.html` bằng tr�
    hình), gán nhãn ranh giới `{doc}.chunks.json`, team duyệt `chunks.html` và
    `chunk_review.json` (cổng 2b).
 
+## Thống kê chất lượng chunk
+
+`quality-report` đọc file build có sẵn (không chạy lại pipeline). Trạng thái chunk lá, loại trừ nhau: `approved` (theo
+`review_status` của `doc_chunks_v2.jsonl`), `needs_fix`, `stale`, `blocked_defect` (mã chặn không phải OCR),
+`blocked_ocr` (chỉ `ocr_required`: chưa kiểm chứng, không phải lỗi phát hiện), `reviewed_ok` (chờ cổng 2b/2c),
+`pending`. Chunk có `review_blockers` luôn `draft`; chưa có cơ chế gỡ mã chặn (I-53).
+
 ## Nạp tài liệu từ CRM (crm-sync)
 
 Nguồn: `GET https://erp.qstcnc.com/api/v1/public/company-docs/website-tree` (không có `/` cuối). Quy ước
@@ -186,7 +196,5 @@ hết hạn theo ngày → **không lưu**, chỉ dùng lúc tải.
    `manifests/<doc_id>.yaml` (có `source`), sổ nguồn `state=fetched`. Cập nhật phiên bản giữ các trường người
    đã điền (`exclude_*`, `scope_rules`, `note`).
 3. Người kiểm manifest (TODO: `exclude_pages`…), rồi chạy lệnh `run` mà `crm-fetch` in ra (tài liệu `run_only`
-   có `--no-build`). Từ đây theo "Quy trình nạp tài liệu mới" ở trên; làm giàu (enrich) chỉ sau khi duyệt
-   nội dung trích xuất.
-4. Chưa có (giai đoạn 2): nạp vào `doc_chunks_v2` theo sổ nguồn, gỡ phiên bản cũ khi bản mới được duyệt,
-   chạy `crm-plan` theo lịch.
+   có `--no-build`); theo "Quy trình nạp tài liệu mới" ở trên, làm giàu chỉ sau khi duyệt nội dung trích xuất.
+4. Chưa có (giai đoạn 2): nạp `doc_chunks_v2` theo sổ nguồn, gỡ bản cũ khi bản mới được duyệt, `crm-plan` theo lịch.

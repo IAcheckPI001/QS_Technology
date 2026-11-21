@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.core.logging import configure_logging
 from app.modules.chatbot.agent.setup import build_agent_runner
 from app.modules.chatbot.providers.openai import OpenAIProvider
+from app.modules.chatbot.providers.supabase_storage import AssetSigner
 from app.modules.chatbot.extraction.registry import extend_technical_coverage
 from app.modules.chatbot.repositories.doc_chunk_v2_repository import DocChunkV2Repository, MatchV2Options
 from app.modules.chatbot.retrieval import QueryEmbedder, Retriever, RetrieverConfig
@@ -74,6 +75,11 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
             "CRM chat flow: agent (model=%s, tools=%s)",
             agent_runner.model, ", ".join(agent_runner.tool_names),
         )
+    # Dùng chung một client HTTP cho mọi request; đóng khi tắt dịch vụ.
+    asset_signer = AssetSigner.from_settings(settings)
+    if settings.chat_sources_enabled and asset_signer is None:
+        logger.warning("CHAT_SOURCES_ENABLED=true nhưng thiếu SUPABASE_URL hoặc SUPABASE_SERVICE_ROLE_KEY: tắt event sources")
+    application.state.chatbot_asset_signer = asset_signer
     application.state.chatbot_provider = provider
     application.state.chatbot_retriever = retriever
     application.state.chatbot_agent_runner = agent_runner
@@ -96,6 +102,8 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
             await agent_provider.close()
         if privacy_provider is not None:
             await privacy_provider.close()
+        if asset_signer is not None:
+            await asset_signer.close()
 
 def create_app() -> FastAPI:
     app = FastAPI(title="QS Chatbot API", version="0.2.0", lifespan=lifespan)

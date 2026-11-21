@@ -546,12 +546,22 @@ Các event hiện có:
 event: delta
 data: {"text":"..."}
 
+event: sources
+data: {"items":[{"source_id":"S1","title":"...","doc_id":"...","pages":"23","images":[{"url":"https://...","page":23,"printed_page":24}]}]}
+
 event: done
 data: {"request_id":"...", "session_id":"..."}
 
 event: error
 data: {"code":"...", "message":"...", "request_id":"..."}
 ```
+
+`sources` (D-014, 2026-11-21): nguồn mà câu trả lời đã trích dẫn (`[S#]`) kèm ảnh của chunk, **chỉ phát khi
+`CHAT_SOURCES_ENABLED=true`, đủ `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` và câu trả lời có trích dẫn**; nếu có thì
+đến sau mọi `delta` và trước `done`, tối đa một lần. `images[].url` là URL ký của Supabase Storage (bucket private, hết
+hạn sau `ASSET_URL_TTL_S`, mặc định 900 giây), không lưu vào lịch sử; mỗi nguồn tối đa `SOURCE_IMAGES_MAX` ảnh (mặc định
+3), `images` rỗng khi ký lỗi. `pages` là chuỗi ("23" hoặc "23-25"), có thể `null`. Client cũ bỏ qua event lạ nên tương thích
+ngược; widget-backend chuyển tiếp nguyên văn.
 
 Client phải đọc theo SSE framing, nhận nhiều `delta`, chỉ coi request thành
 công khi nhận `done`, và xử lý `error` theo `code`. Các mã lỗi chính:

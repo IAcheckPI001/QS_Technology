@@ -88,6 +88,7 @@ class DraftChunk(StrictModel):
     doc_title: str
     doc_version: str
     lang: str
+    audience: Literal["public", "internal"] = "internal"   # `doc_chunks_v2.audience`; từ manifest
     section_id: str | None = None
     section_path: list[str] = Field(default_factory=list)
     section_title: str

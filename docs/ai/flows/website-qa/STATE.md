@@ -1,6 +1,6 @@
 # Trạng thái luồng website-qa
 
-Cập nhật: 2026-11-19
+Cập nhật: 2026-11-21
 
 Ảnh chụp trạng thái hiện tại. Viết lại khi có thay đổi; lịch sử ở [LOG.md](LOG.md).
 
@@ -10,6 +10,7 @@ Cập nhật: 2026-11-19
 - **Chat đã chuyển hẳn sang `doc_chunks_v2`** (D-009 bước 6, 2026-11-19, nhánh `claude/retrieval-v2-chat`): `main.py` dựng `DocChunkV2Repository(MatchV2Options(approved_only=RETRIEVAL_APPROVED_ONLY))` cho cả luồng website lẫn tool `product_docs_ask`; `DocChunkRepository` đã xoá, bảng cũ `doc_chunks` chỉ giữ để đối chiếu. Coverage `technical_docs` nạp từ DB lúc khởi động.
 - **Cảnh báo:** mọi chunk v2 (F54 296, F86 Installation 23, catalog 37) đang `draft`. `RETRIEVAL_APPROVED_ONLY` mặc định `true` → chat **không tìm thấy tài liệu nào** cho tới khi chunk được duyệt `approved`. Dev/staging đặt `RETRIEVAL_APPROVED_ONLY=false`.
 - Đang làm **R-1**: tối ưu bước phân tích (intent, mô tả, model LLM) và định tuyến tra cứu. Kế hoạch 4 giai đoạn A–D đã duyệt; A và phần code của B đã xong. OpenAI hết credit nên eval routing hiện có thể dùng tạm `100milionseek.top` với `HMS_API_KEY`; chỉ là provider eval, không dùng production.
+- **Đối tượng xem (D-014, 2026-11-21, chưa merge, chưa áp SQL):** website chỉ tra chunk `audience='public'`, kênh CRM cả `internal`; `RetrievalRequest.audiences` do `ExecutionStage` đặt theo kênh, mặc định `public`. **Phải áp `backend/sql/doc_chunks_v2.sql` trên Supabase trước khi deploy.** Prompt trả lời có `<answer_format>` (chưa đo). **Giai đoạn B:** event SSE `sources` (nguồn trích dẫn + ảnh, URL ký, bucket private `doc-assets`) sau cờ `CHAT_SOURCES_ENABLED` mặc định tắt; widget hiện chip nguồn và ảnh. Chưa chạy frontend test/build, chưa thử Supabase thật, chưa đẩy ảnh nào.
 - Production không đổi hành vi trong R-1: mặc định prompt `v1`, mô tả intent `v1`, luật định tuyến `r0`.
 - Handoff là scaffold; chưa gửi nguồn/ảnh qua SSE; số `[S#]` đánh lại mỗi lượt. Thay đổi từ catalog tới R-1 **chưa commit**.
 
@@ -24,7 +25,7 @@ Cập nhật: 2026-11-19
 | Retrieve hybrid | có, mức test | Production và eval cùng `DocChunkV2Repository`: FTS sạch, scope cộng điểm 0,003, chunk cha thật, không rerank, không nhánh mã. Chưa kiểm trên Supabase thật sau khi chuyển |
 | Coverage `technical_docs` | nạp từ DB | `main.load_technical_coverage` → `registry.extend_technical_coverage` (chỉ thêm; lỗi DB giữ registry tĩnh). Eval gọi cùng hàm, tính cả draft |
 | Eval tra cứu + định tuyến | có | `evals/run_retrieval_eval.py` giữ nguyên (`approved_only=False`, đủ biến thể); hỗ trợ OpenAI và `100milionseek` cho routing; 5 bộ câu (2 bộ nháp chờ duyệt). Eval agent (`run_crm_agent_eval`, `compare_agent_models`) dùng cấu hình tra cứu như production |
-| Handoff; SSE nguồn/ảnh; `retrieved_chunk_ids` | scaffold; chưa có; chưa điền | Cột là `UUID[]`, `doc_chunks_v2.id` là `bigint` |
+| Handoff; SSE nguồn/ảnh; `retrieved_chunk_ids` | scaffold; có sau cờ, chưa kiểm thật; chưa điền | Cột là `UUID[]`, `doc_chunks_v2.id` là `bigint` |
 
 ## R-1: tiến độ, quyết định, kết quả
 
@@ -76,4 +77,4 @@ Chưa chạy lại đợt này (không đổi frontend): `npm test` widget-backe
 3. Cổng B: Toma chọn bản luật rồi đổi `ROUTING_VERSION` mặc định (chat đã dùng `doc_chunks_v2`, luật vẫn `r0`).
 4. Giai đoạn C (prompt `v2`), rồi D (so model bằng `--analysis-model`).
 5. Smoke v2: bước khởi động đã kiểm trên Supabase thật (2026-11-19: coverage thêm F54, `approved_only=False`); còn lượt thật có tra cứu — sau khi nạp credit hỏi một câu F54, một câu F86 → trace có `db.match_doc_chunks`, có `[S#]`. Duyệt chunk `approved` trước khi bật production.
-6. Sau R-1: nhánh mã `codes` theo câu hỏi (cần đổi interface repository), SSE nguồn/ảnh, handoff thật (H1), lưu `[S#]` (H6).
+6. D-014: áp SQL `audience`, chạy `publish-assets --apply` cho một tài liệu, bật `CHAT_SOURCES_ENABLED`, smoke lượt thật có ảnh; chạy `npm test/lint/build`. Sau R-1: nhánh mã `codes`, handoff thật (H1), lưu `[S#]` (H6).

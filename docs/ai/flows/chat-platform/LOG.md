@@ -7,6 +7,17 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-07 (nguyên văn từ `current-state.md` và `architecture.md`, gồm Finding
 status, API gateway, service key, lease, tracing): [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-21 · SQL `doc_chunks_v2`: cột `audience`, tham số `p_audiences` (D-014) · loại: thay đổi
+
+- Vấn đề: cần chặn chunk nội bộ khỏi kênh website ở lớp dữ liệu (chi tiết và quyết định: website-qa LOG 2026-11-21, D-014).
+- Quyết định/luật: cột `audience` (check `public|internal`, mặc định `internal`); bảng đã tồn tại thêm cột với mặc định `public` rồi đổi
+  mặc định về `internal` (dòng đã nạp đều là tài liệu công bố); `match_doc_chunks_v2` thêm `p_audiences text[] default array['public']`, lọc ở ba nhánh.
+- File: `backend/sql/doc_chunks_v2.sql`, [deploy-rules.md](../../rules/deploy-rules.md) (hàng SQL số 6).
+- Kiểm chứng: chỉ test phía Python (fake session, kiểm tham số và chuỗi SQL); **SQL chưa chạy trên Supabase**. Kiểm sau khi áp:
+  `select audience, count(*) from doc_chunks_v2 group by 1` phải ra toàn `public` cho dữ liệu hiện có.
+- Ảnh hưởng contract/API/schema/cấu hình: đổi chữ ký hàm SQL; áp SQL trước khi deploy, nếu không retrieval lỗi vì thiếu tham số `p_audiences`.
+- Chưa làm / mở tiếp: áp SQL; giai đoạn B (bucket private, ký URL, SSE `sources`) sẽ đổi `api_guidelines.md`.
+
 ## 2026-11-20 · B3 đọc usage từ sổ của trace, không mất khi vượt trần span · loại: thay đổi
 
 - B3 cộng usage từ span nên span bị bỏ vì vượt `CHAT_TRACE_MAX_SPANS` không được tính, lời gọi hết

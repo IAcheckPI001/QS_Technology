@@ -15,7 +15,8 @@ scope_rules:
 - match: (?i)wiring|connection|install|đấu nối|lắp đặt
   scopes:
   - installation
-storage_bucket: 6ave-docs
+storage_bucket: doc-assets
+audience: public       # đã công bố cho khách ở website (2026-11-21)
 exclude_pages: []
 exclude_sections: []
 exclude_reason: ''

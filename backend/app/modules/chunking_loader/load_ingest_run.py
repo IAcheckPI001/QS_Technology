@@ -37,7 +37,7 @@ ARRAY_COLUMNS = ("scopes", "product_models", "applies_to_models", "control_inter
                  "section_path", "keywords", "codes")
 JSON_COLUMNS = ("assets", "metadata")
 # Cột lấy nguyên từ dòng (thứ tự = thứ tự INSERT); parent_id, embedding, embedding_model do loader thêm.
-COLUMNS = ("doc_id", "doc_version", "doc_title", "doc_type", "lang", "chunk_key", "chunk_index", "chunk_role",
+COLUMNS = ("doc_id", "doc_version", "doc_title", "doc_type", "lang", "audience", "chunk_key", "chunk_index", "chunk_role",
            "chunk_type", "domain", "scopes", "product_models", "applies_to_models", "control_interface",
            "spec_attributes", "section_id", "section_path", "section_title", "page_start", "page_end",
            "printed_page_start", "printed_page_end", "content", "summary_vi", "keywords", "codes", "embed_text",
@@ -78,6 +78,8 @@ def validate_rows(rows: Sequence[dict[str, Any]], models: Sequence[str]) -> list
             errors.append(f"{key}: review_status lạ {r['review_status']}")
         if r["domain"] not in DOMAINS:
             errors.append(f"{key}: domain lạ {r['domain']}")
+        if r["audience"] not in ("public", "internal"):
+            errors.append(f"{key}: audience lạ {r['audience']} (file export trước 2026-11-21 chưa có cột này: build lại)")
         if not set(r["scopes"]) <= set(SCOPES):
             errors.append(f"{key}: scopes ngoài {SCOPES}")
         if (r["domain"] == "technical_docs") != bool(r["scopes"]):
@@ -240,11 +242,11 @@ V1_VERSION = "v1-manual"
 # Chép dòng của bảng cũ `doc_chunks` (chunk viết tay) sang v2: chunk độc lập, `source = manual`, giữ embedding
 # (cùng text-embedding-3-small), `doc_version` = V1_VERSION, khóa `<doc_id>:M<chunk_index>`. Chạy lại không trùng.
 COPY_V1_SQL = f"""
-insert into {TABLE} (doc_id, doc_version, doc_title, doc_type, lang, chunk_key, chunk_index, chunk_role, chunk_type,
-    domain, scopes, product_models, applies_to_models, control_interface, spec_attributes, section_id, section_path,
+insert into {TABLE} (doc_id, doc_version, doc_title, doc_type, lang, audience, chunk_key, chunk_index, chunk_role,
+    chunk_type, domain, scopes, product_models, applies_to_models, control_interface, spec_attributes, section_id, section_path,
     section_title, page_start, page_end, content, summary_vi, keywords, codes, embed_text, embedding,
     embedding_model, token_count, content_hash, assets, metadata, source, review_status, is_active, source_run)
-select c.doc_id, '{V1_VERSION}', coalesce(c.metadata->>'doc_title', c.section_title), c.doc_type, c.lang,
+select c.doc_id, '{V1_VERSION}', coalesce(c.metadata->>'doc_title', c.section_title), c.doc_type, c.lang, 'public',
     c.doc_id || ':' || 'M' || lpad(c.chunk_index::text, 4, '0'), c.chunk_index, 'standalone', c.chunk_type,
     c.domain, c.scopes, c.product_models, '{{}}', c.control_interface, c.spec_attributes, c.section_id,
     c.section_path, c.section_title, c.page_start, c.page_end, c.content, c.summary_vi, c.keywords, '{{}}',

@@ -25,6 +25,7 @@ REVIEW_POLICY: dict[ReviewCode, tuple[bool, Blocks]] = {
     "furniture_unconfirmed": (False, "none"),
     "printed_page_conflict": (False, "none"),
     "text_coverage_gap": (True, "chunk"),
+    "text_duplicate": (False, "none"),     # 2026-11-20 (I-54): lặp vượt ngưỡng chỉ cảnh báo, không chặn chunk
     "table_crosscheck_mismatch": (True, "chunk"),
     "column_type_inconsistent": (True, "chunk"),
     "applicability_note": (True, "fact"),

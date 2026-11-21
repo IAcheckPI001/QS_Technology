@@ -42,6 +42,7 @@ phải quy trình đang chạy.
 | `OPENAI_API_KEY` | có, cho chat | rỗng | Rỗng thì không tạo provider; chat trả `provider_not_configured` |
 | `CORS_ORIGINS` | có, trên production | localhost:5173 | Danh sách cách nhau bằng dấu phẩy |
 | `CRM_CHAT_FLOW` | không | `agent` | `pipeline` để rollback (DR-11). Mặc định `agent` là ngoại lệ tạm thời trong lúc kiểm thử (D-006); xem lại trước production |
+| `CHAT_SOURCES_ENABLED` | không | `false` | Bật event SSE `sources` (nguồn trích dẫn + ảnh, D-014). Cần `SUPABASE_URL` và `SUPABASE_SERVICE_ROLE_KEY` (**bí mật, chỉ ở backend**, không đưa vào widget, log hay manifest); thiếu thì dịch vụ ghi cảnh báo và tắt. Bucket `doc-assets` phải **private** (`publish-assets` từ chối bucket public); `ASSET_URL_TTL_S` (60–3600, mặc định 900), `SOURCE_IMAGES_MAX` (mặc định 3) |
 | `CRM_REPORT_ENABLED` | không | `false` | Bật `crm_schema` + `crm_query` (LLM tự dựng query mọi bảng CRM, D-005); bắt buộc `CRM_API_BASE_URL` và múi giờ IANA hợp lệ; thử nghiệm. Khi bật, dữ liệu nghiệp vụ kể cả liên hệ khách hàng đi tới nhà cung cấp LLM. `CRM_TOOLS`, `CRM_REPORT_MAX_ITEMS` đã bỏ (D-010): còn trong `.env` thì bị bỏ qua, nên xoá khỏi cấu hình môi trường |
 | `AGENT_MODEL` | không | rỗng (= `OPENAI_MODEL`) | Model riêng cho vòng lặp agent kênh CRM; luồng website và stage phân tích giữ `OPENAI_MODEL`. Chọn theo `evals/compare_agent_models.py`. Khi bật tool CRM, đặt `gpt-4.1-mini` (quyết định 2026-11-12: guide `crm_query` được tinh chỉnh cho model này; gpt-4o-mini sai nhiều hơn ở hiểu tham số và ngữ cảnh qua lượt) |
 | `AGENT_REASONING_EFFORT` | không | rỗng | Chỉ cho model suy luận (`gpt-5…`, `o3…`): `none`/`minimal`/`low`/`medium`/`high` tuỳ model |
@@ -68,7 +69,7 @@ Repo chưa có migration tool. Thứ tự cho môi trường mới:
 | 3 | `chat_history_workspace.sql` | Deploy API workspace (`/chatbot/...`) |
 | 4 | `doc_chunks.sql` | Dùng retrieval (`match_doc_chunks`) |
 | 5 | `chat_traces.sql` | Đặt `CHAT_TRACE_PERSIST=true` |
-| 6 | `doc_chunks_v2.sql` | Nạp chunk từ luồng chunking và retrieval v2 (D-009); tạo song song `doc_chunks`, cài `unaccent` vào schema `extensions`. Đã áp 2026-11-13 (Toma, SQL editor); áp lại cùng ngày cho tham số R-2/R-4 của `match_doc_chunks_v2` |
+| 6 | `doc_chunks_v2.sql` | Nạp chunk từ luồng chunking và retrieval v2 (D-009); tạo song song `doc_chunks`, cài `unaccent` vào schema `extensions`. Đã áp 2026-11-13 (Toma, SQL editor); áp lại cùng ngày cho tham số R-2/R-4 của `match_doc_chunks_v2`. **Áp lại 2026-11-21 trước khi deploy code mới (D-014):** thêm cột `audience` (dòng đã nạp thành `public`, dòng mới mặc định `internal`) và tham số `p_audiences` (mặc định chỉ `public`); code mới gọi hàm với `p_audiences` nên chạy trước SQL sẽ lỗi. Kiểm: `select audience, count(*) from doc_chunks_v2 group by 1` |
 | 7 | `chat_conversations.sql` | Chạy code B2 (danh sách/tìm kiếm/số liệu hội thoại của QS AI Workspace). Sau khi áp: `scripts/backfill_history_flags.py` → `select public.rebuild_chat_conversations();` → chạy code → `scripts/check_conversation_summary.py`. Cần `pg_trgm`, `unaccent` trong schema `extensions`. **Sửa hoặc xoá `chat_history` bằng tay thì chạy lại `rebuild_chat_conversations()`** (bảng tóm tắt chỉ tự cập nhật khi INSERT). Rủi ro và cách giảm: FRONTEND_REQUIREMENTS 19.11 |
 | riêng | `migrate_product_models_crm.sql` | Chuyển dữ liệu một lần; chạy từng bước, có bước xem trước |
 

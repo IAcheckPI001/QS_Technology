@@ -10,4 +10,5 @@ product_models: [F86]
 lang: en
 default_scopes: [installation]
 scope_rules: []
-storage_bucket: f86-docs
+storage_bucket: doc-assets
+audience: public       # đã công bố cho khách ở website (2026-11-21)

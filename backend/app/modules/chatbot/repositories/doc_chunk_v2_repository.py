@@ -43,7 +43,8 @@ _MATCH_SQL = text("""
         fts_weight => :fts_weight,
         code_weight => :code_weight,
         p_scope_mode => :scope_mode,
-        scope_boost => :scope_boost
+        scope_boost => :scope_boost,
+        p_audiences => cast(:audiences as text[])
     )
 """)
 
@@ -53,18 +54,23 @@ _FETCH_SQL = text("""
            domain, scopes, control_interface, spec_attributes
     from doc_chunks_v2
     where id = any(cast(:ids as bigint[])) and is_active
+      and audience = any(cast(:audiences as text[]))
       and (not :approved_only or review_status = 'approved')
 """)
 
 # Model có chunk tài liệu kỹ thuật đang hoạt động: coverage `technical_docs` của registry nạp lúc khởi động
-# (`extraction/registry.extend_technical_coverage`), cùng điều kiện approved với lúc tìm.
+# (`extraction/registry.extend_technical_coverage`), cùng điều kiện approved với lúc tìm. Registry dùng chung mọi
+# kênh nên chỉ tính chunk `public`: model chỉ có tài liệu nội bộ không được website coi là "có tài liệu".
 _TECHNICAL_MODELS_SQL = text("""
     select distinct unnest(product_models) as model
     from doc_chunks_v2
-    where is_active and domain = 'technical_docs'
+    where is_active and domain = 'technical_docs' and audience = 'public'
       and (not :approved_only or review_status = 'approved')
     order by model
 """)
+
+# Mặc định hẹp nhất: gọi mà quên truyền thì không lộ chunk nội bộ (`retrieval/audience.py` trả tập theo kênh).
+DEFAULT_AUDIENCES: tuple[str, ...] = ("public",)
 
 
 def _vector_literal(embedding: Sequence[float]) -> str:
@@ -138,6 +144,7 @@ class DocChunkV2Repository:
         fts_k: int,
         rrf_k: int,
         spec_boost: float,
+        audiences: Sequence[str] = DEFAULT_AUDIENCES,
     ) -> list[ChunkMatch]:
         o = self.options
         if o.scope_mode not in ("filter", "boost"):
@@ -167,6 +174,7 @@ class DocChunkV2Repository:
             "code_weight": o.code_weight,
             "scope_mode": o.scope_mode,
             "scope_boost": o.scope_boost,
+            "audiences": list(audiences),
         }
         async with self._session() as session:
             result = await session.execute(_MATCH_SQL, params)
@@ -175,11 +183,16 @@ class DocChunkV2Repository:
             return [ChunkMatch.model_validate({k: v for k, v in _row(row).items() if k in fields})
                     for row in result.mappings()]
 
-    async def fetch_by_ids(self, ids: list[int]) -> list[ChunkRecord]:
+    async def fetch_by_ids(
+        self, ids: list[int], audiences: Sequence[str] = DEFAULT_AUDIENCES,
+    ) -> list[ChunkRecord]:
         if not ids:
             return []
         async with self._session() as session:
-            result = await session.execute(_FETCH_SQL, {"ids": ids, "approved_only": self.options.approved_only})
+            result = await session.execute(
+                _FETCH_SQL,
+                {"ids": ids, "approved_only": self.options.approved_only, "audiences": list(audiences)},
+            )
             fields = ChunkRecord.model_fields
             return [ChunkRecord.model_validate({k: v for k, v in _row(row).items() if k in fields})
                     for row in result.mappings()]

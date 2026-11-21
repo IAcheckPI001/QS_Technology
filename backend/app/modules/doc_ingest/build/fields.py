@@ -444,7 +444,8 @@ class Assembler:
             spec_attributes=self._matches(self.spec_terms, title_text),
             chunk_type=merged.chunk_type,  # type: ignore[arg-type]
             doc_id=self.manifest.doc_id, doc_type=self.manifest.doc_type, doc_title=self.manifest.doc_title,
-            doc_version=self.manifest.doc_version, lang=self.manifest.lang, section_id=sid, section_path=path,
+            doc_version=self.manifest.doc_version, lang=self.manifest.lang, audience=self.manifest.audience,
+            section_id=sid, section_path=path,
             section_title=title, page_start=pages[0], page_end=pages[-1], printed_page_start=printed_start,
             printed_page_end=printed_end, assets=assets, content=content, keywords=keywords, embed_text=embed,
             summary_vi=record.summary_vi if record else None, faq_vi=list(record.faq_vi) if record else [],

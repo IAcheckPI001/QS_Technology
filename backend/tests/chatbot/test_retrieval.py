@@ -41,6 +41,7 @@ class FakeRepository:
         self.parents = {record.id: record for record in parents}
         self.error = error
         self.calls: list[dict] = []
+        self.fetch_audiences: list[list[str]] = []
 
     async def match(self, **kwargs):
         if self.error is not None:
@@ -49,7 +50,8 @@ class FakeRepository:
         key = (kwargs["domain"], tuple(kwargs["scopes"]), tuple(kwargs["models"] or ()))
         return list(self.results.get(key, []))
 
-    async def fetch_by_ids(self, ids):
+    async def fetch_by_ids(self, ids, audiences=("public",)):
+        self.fetch_audiences.append(list(audiences))
         return [self.parents[i] for i in ids if i in self.parents]
 
 

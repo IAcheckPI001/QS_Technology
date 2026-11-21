@@ -15,7 +15,7 @@ MODELS = ["F54", "F86"]
 def _row(key: str, index: int, role: str, parent: str | None = None, **over: Any) -> dict[str, Any]:
     row = {
         "parent_key": parent, "doc_id": "d", "doc_version": "v1", "doc_title": "Doc", "doc_type": "user_guide",
-        "lang": "en", "chunk_key": key, "chunk_index": index, "chunk_role": role, "chunk_type": "procedure",
+        "lang": "en", "audience": "public", "chunk_key": key, "chunk_index": index, "chunk_role": role, "chunk_type": "procedure",
         "domain": "technical_docs", "scopes": ["operation"], "product_models": ["F54"], "applies_to_models": [],
         "control_interface": [], "spec_attributes": [], "section_id": None, "section_path": ["1 A"],
         "section_title": "A", "page_start": 1, "page_end": 1, "printed_page_start": 1, "printed_page_end": 1,
@@ -42,8 +42,11 @@ def test_validate_ok_and_errors() -> None:
     bad.append(_row("d:B0003", 9, "standalone", doc_version="v2"))    # khóa trùng + 2 phiên bản
     errors = L.validate_rows(bad, MODELS)
     text = "\n".join(errors)
+    bad[1] = dict(bad[1], audience="everyone")                        # đối tượng xem ngoài public/internal
+    errors = L.validate_rows(bad, MODELS)
+    text = "\n".join(errors)
     for expected in ("không phải chunk cha", "chunk con không có parent_key", "model ngoài registry ['ASTRO_6AH']",
-                     "review_status lạ", "chunk_key trùng", "một tài liệu + một phiên bản"):
+                     "review_status lạ", "chunk_key trùng", "một tài liệu + một phiên bản", "audience lạ everyone"):
         assert expected in text, expected
     assert L.validate_rows([], MODELS) == ["file không có dòng nào"]
     missing = {k: v for k, v in _row("d:B9", 9, "standalone").items() if k != "codes"}

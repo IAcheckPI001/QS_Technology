@@ -1,6 +1,6 @@
 # Trạng thái chat-platform
 
-Cập nhật: 2026-11-20
+Cập nhật: 2026-11-21
 
 Ảnh chụp trạng thái hiện tại. Viết lại khi có thay đổi; lịch sử ở [LOG.md](LOG.md).
 
@@ -12,6 +12,7 @@ Cập nhật: 2026-11-20
   và `/health/db` vẫn chưa có lần kiểm được ghi lại.
 - Các GET `/chatbot/...` của Support Workspace **chưa có xác thực hay ownership**.
 - `Idempotency-Key` mới được lưu, chưa chống xử lý trùng.
+- SQL `doc_chunks_v2.sql` thêm cột `audience` và tham số `p_audiences` (D-014, 2026-11-21): **áp tay trên Supabase trước khi deploy code mới**, chưa áp.
 
 ## Độ chín từng phần
 

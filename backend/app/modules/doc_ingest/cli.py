@@ -36,6 +36,14 @@ với sổ nguồn, tải PDF mới/đổi phiên bản + sinh manifest nháp; r
     .\\venv\\Scripts\\python.exe -m app.modules.doc_ingest.cli crm-plan
     .\\venv\\Scripts\\python.exe -m app.modules.doc_ingest.cli crm-fetch --plan ..\\data\\crm_sync\\<ts>
 
+`quality-report`: thống kê chunk lá theo trạng thái duyệt (approved / chờ / cần sửa / bị chặn) và nguyên nhân chặn
+(OCR, bảng, hụt text), xuyên tài liệu, chỉ đọc → `<runs-dir>/_summary/<ts>/` (md, json, chunks.csv):
+    .\\venv\\Scripts\\python.exe -m app.modules.doc_ingest.cli quality-report --crm --run-id crm-1.0-a
+
+`publish-assets`: đẩy ảnh của chunk lên Supabase Storage (bucket private `doc-assets`, không ghi đè, sổ sha256 ở
+`build/assets_published.json`). Mặc định chỉ lập kế hoạch; `--apply` cần SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY:
+    .\\venv\\Scripts\\python.exe -m app.modules.doc_ingest.cli publish-assets --run-dir ..\\data\\ingest_runs\\<doc>\\<run>
+
 Docling chỉ được import (qua `parse/docling_runner`) khi cần parse hoặc render PDF.
 """
 
@@ -130,11 +138,94 @@ def _parser() -> argparse.ArgumentParser:
     cf.add_argument("--lock", type=Path)
     cf.add_argument("--sources-dir", type=Path, help="mặc định: <repo>/data/crm_sources")
     cf.add_argument("--manifests-dir", type=Path, help="mặc định: doc_ingest/manifests")
+    qr = sub.add_parser("quality-report", help="thống kê chunk theo trạng thái duyệt và nguyên nhân chặn, xuyên tài liệu "
+                                               "(chỉ đọc) → <runs-dir>/_summary/<ts>/ md, json, csv")
+    qr.add_argument("--runs-dir", type=Path, default=DEFAULT_OUT, help="mặc định: <repo>/data/ingest_runs")
+    qr.add_argument("--run-id", help="chỉ lấy run có tên này của mỗi tài liệu; bỏ trống = run build mới nhất")
+    qr.add_argument("--docs", nargs="+", help="chỉ các thư mục tài liệu này (tên thư mục trong runs-dir)")
+    qr.add_argument("--crm", action="store_true", help="chỉ các tài liệu có trong sổ nguồn CRM (crm_sources.lock.json)")
+    qr.add_argument("--out", type=Path, help="mặc định: <runs-dir>/_summary/<thời điểm>")
+    pa = sub.add_parser("publish-assets", help="đẩy ảnh của chunk lên Supabase Storage private (D-014); "
+                                               "mặc định chỉ lập kế hoạch, --apply mới gọi mạng")
+    pa.add_argument("--run-dir", type=Path, required=True)
+    pa.add_argument("--status", choices=["all", "approved"], default="all",
+                    help="all = cả chunk draft (thử nghiệm); approved = chỉ chunk đã duyệt")
+    pa.add_argument("--apply", action="store_true",
+                    help="thực sự upload; cần SUPABASE_URL và SUPABASE_SERVICE_ROLE_KEY trong môi trường")
     cs = sub.add_parser("crm-status", help="sổ nguồn CRM + run mới nhất của từng tài liệu (chỉ đọc)")
     cs.add_argument("--config", type=Path)
     cs.add_argument("--lock", type=Path)
     cs.add_argument("--runs-dir", type=Path, default=DEFAULT_OUT)
     return parser
+
+
+def cmd_quality_report(args: argparse.Namespace) -> int:
+    from app.modules.doc_ingest.report.quality_summary import (
+        console_table, select_runs, summarize, write_outputs,
+    )
+
+    docs = args.docs
+    if args.crm:
+        from app.modules.doc_ingest.sources.crm import config as cfg
+        from app.modules.doc_ingest.sources.crm.lock import load_lock
+
+        config = cfg.load_config()
+        lock = load_lock(cfg.LOCK_FILE, config.api_url)
+        docs = [*(docs or []), *(e.doc_id for e in lock.documents if e.mode == "build")]
+    if not args.runs_dir.is_dir():
+        print(f"Không có thư mục run: {args.runs_dir}")
+        return 2
+    runs = select_runs(args.runs_dir, args.run_id, docs)
+    if not runs:
+        print("Không có run nào có build/chunks.jsonl khớp bộ lọc.")
+        return 2
+    summary = summarize(runs, args.runs_dir, args.run_id)
+    out = args.out or args.runs_dir / "_summary" / datetime.now().strftime("%Y%m%d-%H%M%S")
+    paths = write_outputs(summary, out)
+    print(console_table(summary))
+    print(f"Báo cáo: {paths['md']}\nChi tiết từng chunk: {paths['csv']}")
+    bad = sum(len(d.attribution_mismatch) for d in summary.documents)
+    if bad:
+        print(f"CẢNH BÁO: {bad} chunk có mã chặn không truy được về mục review (xem báo cáo).")
+    return 0
+
+
+def cmd_publish_assets(args: argparse.Namespace) -> int:
+    """Đẩy ảnh của run lên Storage private. Không `--apply`: chỉ lập kế hoạch, không gọi mạng."""
+    import os
+
+    from app.modules.doc_ingest.publish.assets import PublishError, StorageClient, plan_assets, publish
+
+    try:
+        plan = plan_assets(args.run_dir, args.status)
+    except PublishError as error:
+        print(error)
+        return 2
+    buckets = sorted({e.bucket for e in plan.entries})
+    megabytes = sum(e.size for e in plan.entries) / 1e6
+    print(f"Kế hoạch ({args.status}): {len(plan.entries)} ảnh, {megabytes:.1f} MB, bucket {', '.join(buckets) or '-'}; "
+          f"bỏ {plan.skipped_status} ảnh của chunk chưa duyệt; {len(plan.problems)} vấn đề")
+    for problem in plan.problems[:10]:
+        print(f"  ! {problem}")
+    if len(plan.problems) > 10:
+        print(f"  ! … và {len(plan.problems) - 10} vấn đề khác")
+    if not args.apply:
+        print("Chưa đẩy gì (thiếu --apply).")
+        return 1 if plan.problems else 0
+    if plan.problems:
+        print("Dừng: còn ảnh chưa render. Sửa rồi chạy lại (hoặc chạy cho chunk đã duyệt bằng --status approved).")
+        return 1
+    url, key = os.environ.get("SUPABASE_URL", ""), os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    if not url or not key:
+        print("Thiếu biến môi trường SUPABASE_URL hoặc SUPABASE_SERVICE_ROLE_KEY (đặt trong shell, không ghi vào file).")
+        return 2
+    try:
+        counts = publish(args.run_dir, plan, StorageClient(url, key))
+    except PublishError as error:
+        print(f"Lỗi: {error}")
+        return 2
+    print(f"Xong: {counts}. Sổ: {args.run_dir / 'build' / 'assets_published.json'}")
+    return 0
 
 
 def _crm(args: argparse.Namespace):
@@ -515,6 +606,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Báo cáo: {cmd_curated_build(args)}")
     elif args.command in ("crm-plan", "crm-fetch", "crm-status"):
         return cmd_crm(args)
+    elif args.command == "quality-report":
+        return cmd_quality_report(args)
+    elif args.command == "publish-assets":
+        return cmd_publish_assets(args)
     return 0
 
 

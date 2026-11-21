@@ -8,6 +8,41 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-21 · Event SSE `sources`: nguồn trích dẫn kèm ảnh có URL ký (D-014, giai đoạn B) · loại: thay đổi
+
+- Vấn đề: ảnh của chunk chỉ là metadata `bucket/path`; chat không trả ảnh, người dùng không thấy hình trong khung chat.
+- Quyết định/luật (Toma 2026-11-21, D-014): ảnh trong bucket private `doc-assets`; backend ký URL ngắn hạn theo lượt; model không sinh URL, backend
+  đính ảnh của chunk mà câu trả lời trích dẫn (`[S#]`). Event `sources` sau mọi `delta`, trước `done`; sau cờ `CHAT_SOURCES_ENABLED` (mặc định tắt).
+  Ảnh thừa hưởng điều kiện của chunk (cờ `RETRIEVAL_APPROVED_ONLY` quyết định có trả chunk draft và ảnh của nó).
+- File: `providers/supabase_storage.py` (`AssetSigner`, httpx, ký theo lô một lần mỗi bucket, lỗi chỉ ghi loại lỗi), `sources.py` (`cited_source_ids`,
+  `build_sources`), `services/chat_service.py` (`turn_sources`), `routers/sse.py`, `dependencies.py`, `main.py`, `core/config.py` (5 biến mới);
+  `src/services/chatbot.service.js` (`onSources`), `src/chatbot/SourceList.jsx`, `Chatbot.jsx`, `Chatbot.module.css`; test `tests/chatbot/test_sources.py`.
+- Kiểm chứng: `pytest tests` (venv chính) → 1140 passed, 14 skipped, 1 failed có sẵn (CRLF CSV baseline); event `sources` kiểm qua luồng agent thật với signer giả.
+  **Chưa chạy:** `npm test`, `npm run lint`, `npm run build` (worktree không có `node_modules`); chưa xem giao diện trên trình duyệt; chưa ký URL với Supabase thật.
+- Ảnh hưởng contract/API/schema/cấu hình: thêm event SSE `sources` ([api_guidelines.md](../../api_guidelines.md)); biến `CHAT_SOURCES_ENABLED`, `SUPABASE_URL`,
+  `SUPABASE_SERVICE_ROLE_KEY` (bí mật), `ASSET_URL_TTL_S`, `SOURCE_IMAGES_MAX` ([deploy-rules.md](../../rules/deploy-rules.md)); client cũ bỏ qua event lạ.
+- Chưa làm / mở tiếp: ảnh lấy từ `ChunkHit.assets` (chunk cha khi mở rộng) nên nếu hình nằm ở chunk con mà chunk cha không có thì chưa hiện (cần kiểm trên dữ liệu thật);
+  màn lịch sử của Workspace chưa hiển thị nguồn/ảnh (URL hết hạn nên cần ký lại khi tải lịch sử); đo `<answer_format>`; widget-backend chưa có test riêng cho event `sources` (chạy `npm test` khi có `node_modules`).
+
+## 2026-11-21 · Đối tượng xem `audience` ở retrieval và prompt định dạng câu trả lời (D-014, giai đoạn A) · loại: quyết định, thay đổi
+
+- Vấn đề: chuẩn bị tài liệu nội bộ chỉ cho CRM. `doc_chunks_v2`/`match_doc_chunks_v2` không có bộ lọc đối tượng xem và
+  `Retriever` không biết kênh (một retriever dùng chung website và agent CRM): nạp chunk nội bộ sẽ lộ ra website.
+- Quyết định/luật (Toma 2026-11-21): `audience` `public|internal`, mặc định `internal`; website tra `public`, CRM tra cả hai
+  (D-014). Ảnh sẽ ở bucket private + URL ký (giai đoạn B, chưa làm). Prompt trả lời thêm `<answer_format>` (danh sách đánh số cho quy trình,
+  bảng cho thông số/cổng, cảnh báo ở đầu); chưa đo chất lượng, chưa đổi `PROMPT_VERSION`.
+- File: `backend/sql/doc_chunks_v2.sql` (cột `audience`, tham số `p_audiences` mặc định `public`, lọc cả ba nhánh),
+  `retrieval/audience.py` (kênh → tập), `schemas/system/retrieval.py` (`RetrievalRequest.audiences`), `orchestration/handlers.py`,
+  `stages/execution_stage.py` (lấy kênh từ `state.request_context`), `retrieval/retriever.py` (giao các target cho `fetch_by_ids`),
+  `repositories/doc_chunk_v2_repository.py` (truyền `audiences`, coverage chỉ tính chunk public), `prompts/answer.py`;
+  test mới `tests/chatbot/test_retrieval_audience.py`, sửa các fake repository.
+- Kiểm chứng: `pytest tests` → 1129 passed, 14 skipped, 1 failed có sẵn (CRLF CSV baseline); `pytest tests\doc_ingest` (venv ingest) → 413 passed,
+  cùng 1 lỗi có sẵn. Chưa áp SQL trên Supabase, chưa smoke lượt thật.
+- Ảnh hưởng contract/API/schema/cấu hình: đổi SQL và chữ ký hàm `match_doc_chunks_v2` (thêm tham số cuối có mặc định); repository
+  `match`/`fetch_by_ids` thêm tham số `audiences` (mặc định `public`); không đổi route hay SSE. **Áp SQL trước khi deploy code.**
+- Chưa làm / mở tiếp: giai đoạn B (`publish-assets`, bucket private, ký URL, event SSE `sources`, giao diện); coverage `technical_docs` là
+  registry chung nên model chỉ có tài liệu nội bộ không được nhận cho kênh CRM (cần registry theo kênh nếu thật sự cần).
+
 ## 2026-11-19 · Lượt kiểm thử v2 chưa tới bước tra cứu; đính chính current-state (B-1) · loại: sự cố, kiểm chứng
 
 - Vấn đề: hai lượt kiểm thử sau khi merge PR #3 đều không chạy tra cứu. Lượt 10:12 (kênh crm): server

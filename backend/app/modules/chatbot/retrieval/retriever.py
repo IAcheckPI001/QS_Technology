@@ -54,9 +54,10 @@ class ChunkSearchRepository(Protocol):
         fts_k: int,
         rrf_k: int,
         spec_boost: float,
+        audiences: Sequence[str],
     ) -> list[ChunkMatch]: ...
 
-    async def fetch_by_ids(self, ids: list[int]) -> list[ChunkRecord]: ...
+    async def fetch_by_ids(self, ids: list[int], audiences: Sequence[str]) -> list[ChunkRecord]: ...
 
 
 @dataclass(frozen=True)
@@ -126,7 +127,9 @@ class Retriever:
                 used_fallback = True
 
             kept = ranked[: self._config.final_chunk_top_k]
-            hits = await self._expand_parents(kept)
+            # Mọi target của một sub-query cùng kênh; lấy giao để một target lệch không mở rộng quyền xem.
+            audiences = sorted(set.intersection(*(set(target.audiences) for target in targets)))
+            hits = await self._expand_parents(kept, audiences)
             search_span.set(
                 searches=len(runs),
                 relevant=len(ranked),
@@ -191,6 +194,7 @@ class Retriever:
                 fts_k=self._config.fts_candidate_k,
                 rrf_k=self._config.rrf_k,
                 spec_boost=self._config.spec_boost,
+                audiences=request.audiences,
             )
             match_span.set(rows=len(matches))
         return _SearchRun(
@@ -245,7 +249,7 @@ class Retriever:
             merged.append(match)
         return merged
 
-    async def _expand_parents(self, kept: list[ChunkMatch]) -> list[ChunkHit]:
+    async def _expand_parents(self, kept: list[ChunkMatch], audiences: Sequence[str]) -> list[ChunkHit]:
         """Gom chunk con theo chunk cha, giữ thứ tự xếp hạng của chunk con tốt nhất."""
         groups: dict[int, list[ChunkMatch]] = {}
         for match in kept:
@@ -262,7 +266,7 @@ class Retriever:
         with span("db.fetch_chunks", "db", ids=len(fetch_ids)):
             records = {
                 record.id: record
-                for record in await self._repository.fetch_by_ids(fetch_ids)
+                for record in await self._repository.fetch_by_ids(fetch_ids, audiences)
             }
 
         hits: list[ChunkHit] = []

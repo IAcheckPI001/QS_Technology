@@ -11,6 +11,7 @@ import pypdfium2 as pdfium
 
 from app.modules.doc_ingest.geometry import BBox
 from app.modules.doc_ingest.parse.pdf_probe import count_path_objects, image_objects, page_label
+from app.modules.doc_ingest.s0 import hash_code_counts
 
 _BAD = {"�"}
 
@@ -25,7 +26,10 @@ def measure_pages(pdf_path: Path, pages: list[int]) -> list[dict[str, object]]:
         visible = [c for c in text if not c.isspace()]
         bad = sum(1 for c in visible if c in _BAD or (ord(c) < 32))
         area = sum((b.x1 - b.x0) * (b.y1 - b.y0) for b in image_objects(page, height))
+        hash_codes, hash_damaged = hash_code_counts(text)
         out.append({
+            "hash_codes": hash_codes,
+            "hash_damaged": hash_damaged,
             "page": page_no,
             "text_chars": len(visible),
             "bad_char_ratio": round(bad / len(visible), 4) if visible else 0.0,

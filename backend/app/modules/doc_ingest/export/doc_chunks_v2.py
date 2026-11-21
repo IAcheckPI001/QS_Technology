@@ -112,7 +112,7 @@ def to_row(chunk: DraftChunk, ctx: ApprovalContext, source_run: str | None = Non
     return {
         "parent_key": chunk.parent_key,
         "doc_id": chunk.doc_id, "doc_version": chunk.doc_version, "doc_title": chunk.doc_title,
-        "doc_type": chunk.doc_type, "lang": chunk.lang,
+        "doc_type": chunk.doc_type, "lang": chunk.lang, "audience": chunk.audience,
         "chunk_key": chunk.chunk_key, "chunk_index": chunk.chunk_index, "chunk_role": chunk.chunk_role,
         "chunk_type": chunk.chunk_type,
         "domain": chunk.domain, "scopes": list(chunk.scopes), "product_models": list(chunk.product_models),

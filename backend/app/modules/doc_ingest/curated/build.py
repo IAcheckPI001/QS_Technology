@@ -332,6 +332,7 @@ def build_chunks(products: Sequence[ProductSheet], matrix: SelectionMatrix, doc_
             control_interface=list(d.interfaces),
             spec_attributes=list(d.attributes), chunk_type=d.chunk_type,  # type: ignore[arg-type]
             doc_id=DOC_ID, doc_type=DOC_TYPE, doc_title=DOC_TITLE, doc_version=doc_version, lang=LANG,
+            audience="public",   # catalog công ty đã công bố cho khách
             section_path=list(d.section_path), section_title=" › ".join(d.section_path[1:]) or d.section_path[0],
             page_start=min(d.pages), page_end=max(d.pages), content=d.content, keywords=keywords,
             embed_text=embed, token_count=tokens,

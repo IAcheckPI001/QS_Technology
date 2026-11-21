@@ -447,7 +447,7 @@ def test_general_turn_retrieves_with_injected_retriever():
             self.calls.append(kwargs)
             return []
 
-        async def fetch_by_ids(self, ids):
+        async def fetch_by_ids(self, ids, audiences=("public",)):
             return []
 
     chunks = Chunks()

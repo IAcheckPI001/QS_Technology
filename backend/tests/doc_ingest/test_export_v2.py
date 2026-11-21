@@ -31,6 +31,27 @@ def _section(tmp_path: Path):
     return build(doc, tmp_path)
 
 
+def test_audience_defaults_to_internal_and_reaches_the_row(tmp_path: Path) -> None:
+    """Quên gán thì tài liệu không lộ ra website: chunk không có audience trong manifest xuất `internal`."""
+    result = _section(tmp_path)
+    assert {c.audience for c in result.chunks} == {"internal"}
+    rows, errors = export_rows(result.chunks, FINAL, "syn/eval-a")
+    assert errors == [] and {r["audience"] for r in rows} == {"internal"}
+    public = [c.model_copy(update={"audience": "public"}) for c in result.chunks]
+    assert {r["audience"] for r in export_rows(public, FINAL, "syn/eval-a")[0]} == {"public"}
+
+
+def test_all_committed_manifests_are_public() -> None:
+    """Mọi tài liệu đã nạp/đang nạp hiện là tài liệu công bố; tài liệu nội bộ sau này phải đặt `internal` rõ ràng."""
+    from app.modules.doc_ingest.manifest import MANIFESTS_DIR, load_manifest
+    from app.modules.doc_ingest.schemas.manifest import DocManifest
+
+    manifests = {p.name: load_manifest(p) for p in sorted(MANIFESTS_DIR.glob("*.yaml"))}
+    assert len(manifests) >= 13
+    assert {name: m.audience for name, m in manifests.items() if m.audience != "public"} == {}
+    assert DocManifest.model_fields["audience"].default == "internal"
+
+
 def test_normalize_code() -> None:
     assert normalize_code("#0008") == "#8"
     assert normalize_code("#12010") == "#12010"
@@ -100,8 +121,8 @@ def test_export_v2_rows_match_table(tmp_path: Path) -> None:
     result = _section(tmp_path)
     rows, errors = export_rows(result.chunks, FINAL, "syn/eval-a")
     assert errors == []
-    expected = {"parent_key", "doc_id", "doc_version", "doc_title", "doc_type", "lang", "chunk_key", "chunk_index",
-                "chunk_role", "chunk_type", "domain", "scopes", "product_models", "applies_to_models",
+    expected = {"parent_key", "doc_id", "doc_version", "doc_title", "doc_type", "lang", "audience", "chunk_key",
+                "chunk_index", "chunk_role", "chunk_type", "domain", "scopes", "product_models", "applies_to_models",
                 "control_interface", "spec_attributes", "section_id", "section_path", "section_title",
                 "page_start", "page_end", "printed_page_start", "printed_page_end", "content", "summary_vi",
                 "keywords", "codes", "embed_text", "token_count", "content_hash", "assets", "metadata", "source",

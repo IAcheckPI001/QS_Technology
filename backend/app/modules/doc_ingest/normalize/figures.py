@@ -164,8 +164,41 @@ def release_text_frames(items: Sequence[RawItem], text_pages: set[int], profile:
         return lines >= profile.thresholds.frame_text_min_ratio * len(body)
 
     frames = frozenset(pid for pid in children if is_frame(pid))
+
+    def side_column(pid: str) -> list[RawItem]:
+        """I-59: picture mà Docling vẽ phủ cả cột chữ bên cạnh ảnh chụp màn hình (6AH, 6AVE trang 80/87: cột "Memo"
+        có "Step 1:", "Select parameter type …"). Con của picture chia được thành hai cụm theo trục x, ngăn bởi một
+        dải trắng ≥ `figure_column_gap` không con nào chạm tới; cụm phải là chữ thủ tục (≥ `figure_column_min_sentences`
+        con là nhãn bước hoặc câu ≥ `frame_sentence_words` từ, và đa số là dòng ≥ 2 từ) còn cụm trái là đám mảnh nhãn
+        của ảnh (đa số ≤ 2 từ) → cụm phải trả về văn bản thân. Không áp dụng cho picture đã là khung chữ."""
+        kids = [k for k in children[pid] if k.bbox is not None]
+        if pid in frames or len(kids) < 6:
+            return []
+        gap = profile.thresholds.figure_column_gap
+        ordered = sorted(kids, key=lambda k: k.bbox.x0)  # type: ignore[union-attr]
+        reach, cut = ordered[0].bbox.x1, None  # type: ignore[union-attr]
+        for k in ordered[1:]:
+            if k.bbox.x0 - reach >= gap:  # type: ignore[union-attr]
+                cut = k.bbox.x0  # type: ignore[union-attr]
+                break
+            reach = max(reach, k.bbox.x1)  # type: ignore[union-attr]
+        if cut is None:
+            return []
+        right = [k for k in kids if k.bbox.x0 >= cut]  # type: ignore[union-attr]
+        left = [k for k in kids if k.bbox.x1 <= cut]  # type: ignore[union-attr]
+        body = [k for k in right if k.label != "caption" and not frame_label(k)]
+        sentences = sum(1 for k in body if evidence(k))
+        if sentences < profile.thresholds.figure_column_min_sentences or not left:
+            return []
+        if sum(1 for k in body if len(k.text.split()) >= 2) < profile.thresholds.frame_text_min_ratio * len(body):
+            return []
+        if sum(1 for k in left if len(k.text.split()) <= 2) < profile.thresholds.frame_text_min_ratio * len(left):
+            return []
+        return [k for k in right if not frame_label(k)]
+
+    column_released = {k.element_id for pid in children for k in side_column(pid)}
     run = FrameRun(items=[], frames=frames)
-    released = {k.element_id for pid in frames for k in children[pid] if not frame_label(k)}
+    released = {k.element_id for pid in frames for k in children[pid] if not frame_label(k)} | column_released
     for item in items:
         if item.element_id in frames:
             run.flags[item.element_id] = ["text_frame"]
@@ -174,6 +207,8 @@ def release_text_frames(items: Sequence[RawItem], text_pages: set[int], profile:
                                             if k.element_id in released]})
         elif item.element_id in released:
             run.flags[item.element_id] = ["frame_text_released"]
+            if item.element_id in column_released:
+                run.flags[item.element_id].append("figure_column_released")
             rec.add_log("T-20", item.element_id, f"text of frame {item.parent_id} returned to body",
                         target=item.parent_id, before={"parent": item.parent_id, "label": item.label},
                         after={"parent": None, "label": "text" if item.label == "caption" else item.label})

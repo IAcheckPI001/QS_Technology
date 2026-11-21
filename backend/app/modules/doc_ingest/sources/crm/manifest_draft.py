@@ -24,7 +24,10 @@ def draft_manifest(config: CrmConfig, *, doc_id: str, name: str, model: str, doc
         "doc_version": source.version, "product_models": [model], "lang": language,
         "default_scopes": list(rule.default_scopes),
         "scope_rules": [r.model_dump() for r in rule.scope_rules],
-        "storage_bucket": f"{model.lower()}-docs",
+        # Một bucket private cho mọi tài liệu (D-014); đường dẫn đã có `doc_id` nên không trùng giữa tài liệu.
+        "storage_bucket": "doc-assets",
+        # Cây `public/company-docs/website-tree` là tài liệu đã công bố; tài liệu nội bộ (sau này) phải đặt `internal`.
+        "audience": "public",
         "note": f"Sinh từ CRM {source.synced_at}; cần người kiểm exclude_pages (bìa, lời cảm ơn) và scope_rules",
         "source": source.model_dump(mode="json"),
     }

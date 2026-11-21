@@ -6,6 +6,88 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 
 Các mục tới 2026-11-09: [LOG-archive-2026-11-09.md](LOG-archive-2026-11-09.md).
 
+## 2026-11-21 · `publish-assets` và bucket Storage chung `doc-assets` (D-014, giai đoạn B) · loại: thay đổi
+
+- Vấn đề: ảnh chunk chỉ nằm local trong `normalized/images/`; `doc_chunks_v2.assets` chỉ có metadata `bucket/path`, chưa có luồng nào upload ảnh.
+- Quyết định/luật (Toma 2026-11-21): một bucket **private** `doc-assets` cho mọi tài liệu (thay `<model>-docs`), đường dẫn giữ `<doc_id>/<element>.png`;
+  upload **không ghi đè** (`x-upsert: false`); đường dẫn đã đẩy với nội dung khác thì dừng, đổi `doc_version`; bucket public bị từ chối; mặc định chỉ lập kế hoạch,
+  `--apply` mới gọi mạng; khóa service role chỉ từ biến môi trường, không vào sổ hay log. Không đổi định dạng ảnh (không thêm dependency để nén WebP).
+- File: `publish/assets.py` (kế hoạch, `StorageClient` stdlib, sổ `build/assets_published.json`), `cli.py` (`publish-assets`), 13 `manifests/*.yaml` và
+  `sources/crm/manifest_draft.py` (`storage_bucket: doc-assets`); test `test_publish_assets.py` (8 test, giả Storage).
+- Kiểm chứng: `pytest tests\doc_ingest` (venv ingest) → 421 passed, 1 failed có sẵn (CRLF CSV baseline). **Chưa chạy `--apply` với Supabase thật** (không có khóa trong phiên này).
+- Ảnh hưởng contract/API/schema/cấu hình: manifest cũ đổi `storage_bucket`; **run đã build trước ngày này còn ghi bucket cũ trong `chunks.jsonl`, phải build lại** trước khi đẩy ảnh.
+- Chưa làm / mở tiếp: các run `crm-1.1-t0` re-normalize không kèm `--pdf` nên **không có ảnh** (`asset_missing` ở mọi chunk có hình): dùng `run --raw-dir … --pdf …` để render;
+  ảnh chunk thật nặng (khoảng 290 MB cho 10 tài liệu CRM, mỗi ảnh khoảng 0,16 MB; riêng catalog 654 MB) nên cân nhắc nén ở bước sau; dọn ảnh mồ côi trên Storage khi gỡ phiên bản.
+
+## 2026-11-21 · Manifest `audience` và cột `audience` trong `doc_chunks_v2.jsonl` (D-014) · loại: thay đổi
+
+- Vấn đề: chat cần phân biệt tài liệu công bố và tài liệu chỉ cho CRM (xem website-qa LOG 2026-11-21); chunk xuất ra chưa mang thông tin này.
+- Quyết định/luật (Toma 2026-11-21): `DocManifest.audience` `public|internal`, mặc định `internal`; chunk và dòng export mang `audience`;
+  13 manifest hiện có và manifest nháp sinh từ cây công khai của CRM đặt `public`; chunk catalog biên soạn (`curated`) đặt `public`.
+- File: `schemas/{manifest,chunk}.py`, `build/fields.py`, `export/doc_chunks_v2.py`, `curated/build.py`, `sources/crm/manifest_draft.py`,
+  13 file `manifests/*.yaml`, `chunking_loader/load_ingest_run.py` (cột mới, kiểm giá trị, bản chép v1 là `public`); test
+  `test_export_v2.py`, `test_load_ingest_run.py`.
+- Kiểm chứng: `pytest tests\doc_ingest` (venv ingest) → 413 passed, 1 failed có sẵn (CRLF CSV baseline).
+- Ảnh hưởng contract/API/schema/cấu hình: thêm cột `audience` vào C2 (dòng export); **file `doc_chunks_v2.jsonl` đã export trước ngày này không có cột
+  này nên loader từ chối** (build lại hoặc thêm cột). Chưa cập nhật `p2_chunk_contract.md` (chỉ ghi ở đây).
+- Chưa làm / mở tiếp: `publish-assets` (đẩy ảnh lên bucket private, ghi sổ sha256) thuộc giai đoạn B; nạp lại 3 tài liệu thử cần cột `audience` đã áp trên DB.
+
+## 2026-11-20 · Bậc 0: sửa luật không tốn API (I-55, I-59, I-54, I-56 nhẹ) và chạy lại 10 tài liệu · loại: thay đổi, kiểm chứng
+
+- Vấn đề: nhóm lỗi I-54/I-55/I-56/I-59 (log kiểm duyệt bên dưới) do luật pipeline, sửa được bằng luật xác định, không cần model.
+- Quyết định/luật (Toma duyệt "áp dụng bậc 0", 2026-11-20; đổi luật T-05 bước d, V-01 và S0 theo đó, chưa cập nhật p1 contract):
+  S0 coi text layer `poor` (ép OCR) khi ≥ 5 mã `#` có ≥ 30% thiếu chữ số (I-55); T-20 mở rộng: cột chữ cạnh ảnh chụp màn hình trên
+  trang OCR trả về thân (cờ `figure_column_released`, I-59); V-01 chuẩn hoá token (chỉ số trên `1 st`, U+FFFE, chấm dẫn mục lục) và
+  lặp vượt ngưỡng chỉ là `text_duplicate` không chặn khi độ phủ đủ (I-54); header không rõ giữ làm dòng dữ liệu (không bỏ chữ), mục review
+  `header_demotion_unsure` vẫn chặn chunk (I-56 nhẹ).
+- File: `s0.py`, `parse/profile_probe.py`, `normalize/{figures,tables,recorder}.py`, `validate/coverage.py`, `schemas/{profile,run,normalized}.py`;
+  test mới `test_tier0_rules.py`, sửa `test_coverage.py`, `test_header_classification.py`.
+- Kiểm chứng: `pytest tests\doc_ingest` → 398 passed, 14 skipped, 1 failed có sẵn (CRLF CSV baseline). Chuẩn hoá lại 10 tài liệu từ raw
+  cũ (run `crm-1.1-t0`) và `quality-report --crm`: chặn do lỗi **61 → 54**; mục `text_coverage_gap` **17 → 1** trang (6AVE Installation);
+  6AH phục hồi Step 1–2 thủ tục 3.8.1 (có trong `chunks.html`); chunk lá 739 → 749. 0 approved vẫn như cũ.
+- Ảnh hưởng contract/API/schema/cấu hình: thêm mã review `text_duplicate` (không chặn) và 4 ngưỡng `Thresholds`; không đổi SQL hay export v2.
+- Chưa làm / mở tiếp: 10iV vẫn dùng raw cũ, tr.107–110 chưa ép OCR (Docling parse lại đang chạy, mới tr.20/759; cần cho I-55 ở chunk); I-57, I-58, I-56
+  đầy đủ (hàng ANT, CN7+8+9), I-60 chưa sửa; chưa có CQ-14 (mã `#` hỏng), hạng rủi ro, gold set, `page-agree`; 604 chunk chỉ chặn vì OCR chưa được giải (I-53);
+  chưa cập nhật p1/p2 contract.
+
+## 2026-11-20 · Kiểm duyệt 61 chunk lỗi bằng đối chiếu PDF: nhóm lỗi và giải pháp (I-55…I-60; đính chính I-54) · loại: đánh giá, kiểm chứng
+
+- Vấn đề: 653/739 chunk lá của 10 run CRM bị chặn; chưa rõ nguyên nhân gốc từng nhóm, nội dung chunk có đúng so với PDF không, và giải pháp.
+- Quyết định/luật (Toma yêu cầu, 2026-11-20): đối chiếu từng nhóm với PDF gốc; verdict chỉ **đề xuất**, chưa ghi `chunk_review.json`; sửa luật pipeline
+  chờ Toma duyệt (thứ tự đề xuất I-55 → I-59 → I-54 → I-57 → I-58 → I-56 → I-60).
+- File: [p4_crm_chunk_review_2026-11-20.md](../../reports/p4_crm_chunk_review_2026-11-20.md) (nhóm lỗi, nguyên nhân, giải pháp, 21 chunk `can_sua`); sinh
+  `data/ingest_runs/_summary/chunk_review_proposed.csv` (61 chunk, không commit); STATE.
+- Kiểm chứng: 16/61 chunk tôi đối chiếu trực tiếp (ảnh vùng, text layer), 27 chunk do 2 agent độc lập (tôi kiểm lại F54 `B0085`, F86 `B0007` bằng text layer: đúng),
+  18 chunk suy theo nhóm (cùng hash nội dung); OCR lấy mẫu 24 chunk bởi agent thứ ba (tôi kiểm lại thủ tục 3.8.1 trong `elements.jsonl`: đúng). Thử nghiệm I-55:
+  `run --ocr force` tr.107–110 của 10iV (run `10iv-probe/probe-ocr-force`): mã `#` đủ ≥ 3 chữ số 223/223 (text layer gốc 2/137). Phụ lục tham số: 23 chunk
+  `ambiguous_continuation` = 13 nội dung khác nhau, 5 bản chung hash.
+- Ảnh hưởng contract/API/schema/cấu hình: không (chưa sửa luật nào).
+- Phát hiện: I-55 text layer 10iV hỏng; I-56 bảng cổng gán sai hàng, mất hàng ANT; I-57 ảnh màn hình thành bảng; I-58 chữ trong ảnh trên trang text layer bị mất; I-59 ảnh nuốt
+  chữ thủ tục (6AH, 6AVE mất Step 1–2); I-60 chunk hình gộp 9 trang. **Đính chính I-54:** mục `quality-report` bên dưới ghi "10iV tr.26–31 số đo y hệt chưa giải thích" và
+  coi V-01 là suy luận chưa kiểm; nay đã giải thích: cùng một mẫu sơ đồ servo cho mỗi trục, token thiếu là nhãn hình, mục lục, chỉ số trên, ký tự hỏng; V-01 còn bỏ sót lỗi thật.
+- Chưa kiểm / mở tiếp: 18 chunk chưa xem ảnh riêng; chưa xem ảnh cả 17 trang V-01; OCR mới là mẫu 24/khoảng 600 chunk; chưa sửa luật; quyết I-53 và chính sách nhãn hình
+  vào `content` (chờ Toma). Run thăm dò và PDF nằm trong `data/` của worktree (gitignored).
+
+## 2026-11-20 · `quality-report`: thống kê chunk theo trạng thái duyệt và nguyên nhân chặn (I-53, I-54) · loại: thay đổi, đánh giá
+
+- Vấn đề: 739 chunk lá của 10 run CRM đều "bị chặn" hoặc chờ, không biết chunk nào cần xử lý trước; không có số liệu
+  xuyên tài liệu về chunk đã duyệt, chờ duyệt, rủi ro; không truy được mã chặn về mục review.
+- Quyết định/luật (Toma yêu cầu làm báo cáo, 2026-11-20): báo cáo chỉ đọc, không đổi hành vi duyệt hay xuất bản;
+  tách "chỉ bị chặn vì OCR" (chưa kiểm chứng) khỏi "lỗi phát hiện" (bảng, hụt text); hạng rủi ro và chính sách duyệt
+  mẫu **chưa làm**, chờ Toma duyệt và backtest bằng `f54/eval-c` (42 chunk fix).
+- File: `report/quality_summary.py` (trạng thái chunk, nhóm nguyên nhân, `blocking_items`, V-01 trượt, md/json/csv),
+  `cli.py` (`quality-report`), test `test_quality_summary.py` (8 test).
+- Kiểm chứng: `pytest tests\doc_ingest` (venv ingest) → 404 passed, 1 failed có sẵn (CRLF CSV baseline); `pytest tests`
+  (venv chính) → 1115 passed, 14 skipped, cùng 1 lỗi có sẵn; `check_ai_docs` đạt. Chạy thật `quality-report --crm
+  --run-id crm-1.0-a`: 739 lá = 592 chặn chỉ vì OCR + 61 chặn do lỗi + 86 chờ duyệt, 0 approved; mọi mã chặn truy
+  được về mục review (0 lệch).
+- Ảnh hưởng contract/API/schema/cấu hình: không (chỉ thêm lệnh đọc).
+- Phát hiện: I-53 — chưa có cơ chế gỡ mã chặn (`review_status` luôn `draft` khi có `review_blockers`), nên chunk OCR
+  không thể `approved`; I-54 — V-01: 15/17 trang trượt chỉ vì lặp > 10% (độ phủ ≥ 91,6%), nhiều trang text layer hỏng
+  (U+FFFE) hoặc là mục lục; 10iV tr.26–31 số đo y hệt chưa giải thích.
+- Chưa kiểm / mở tiếp: I-54 mới là suy luận từ số đo, chưa mở từng trang; hạng rủi ro R0–R3, duyệt mẫu, đối chiếu bản
+  VI/EN; chọn cơ chế cho I-53 (chờ Toma); báo cáo sinh trong `data/ingest_runs/_summary/` (gitignored).
+
 ## 2026-11-19 · crm-sync giai đoạn 1: lấy tài liệu từ CRM, chunk có vị trí trong PDF (I-51, I-52) · loại: thay đổi, quyết định, triển khai
 
 - Vấn đề: PDF đưa tay, `doc_id`/`doc_version` gõ tay; kho tài liệu công khai của CRM không đồng bộ với kho tri thức;

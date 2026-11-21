@@ -85,6 +85,9 @@ create table if not exists public.doc_chunks_v2 (
   assets             jsonb  not null default '[]',
   metadata           jsonb  not null default '{}',
   -- vận hành
+  -- Đối tượng xem (2026-11-21): website chỉ tìm chunk 'public'; kênh CRM tìm cả 'internal'. Mặc định 'internal' để
+  -- tài liệu mới không lộ ra website khi quên gán. Xem mục 2b cho bảng đã tồn tại.
+  audience           text   not null default 'internal' check (audience in ('public', 'internal')),
   source             text   not null check (source in ('builder', 'manual')),
   review_status      text   not null default 'draft' check (review_status in ('draft', 'approved')),
   is_active          boolean not null default true,
@@ -100,6 +103,21 @@ create table if not exists public.doc_chunks_v2 (
   constraint doc_chunks_v2_leaf_embedding check (chunk_role = 'parent' or embedding is not null),
   constraint doc_chunks_v2_embedding_model check (embedding is null or embedding_model is not null)
 );
+
+-- 2b. Cột audience cho bảng đã tồn tại (2026-11-21) -------------------------------
+-- Các dòng đã nạp trước thời điểm này đều là tài liệu đã công bố ở website → thêm cột với mặc định 'public' (dòng cũ
+-- thành public), rồi đổi mặc định về 'internal' cho dòng nạp sau. Chạy lại an toàn: không đổi dòng nào đã có.
+-- Kiểm trước/sau: select audience, count(*) from public.doc_chunks_v2 group by 1;
+alter table public.doc_chunks_v2
+  add column if not exists audience text not null default 'public';
+alter table public.doc_chunks_v2 alter column audience set default 'internal';
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'doc_chunks_v2_audience_check') then
+    alter table public.doc_chunks_v2
+      add constraint doc_chunks_v2_audience_check check (audience in ('public', 'internal'));
+  end if;
+end $$;
 
 -- 3. Index --------------------------------------------------------------------
 -- Dòng embedding null (chunk cha) không vào HNSW.
@@ -133,6 +151,9 @@ drop function if exists public.match_doc_chunks_v2(
 drop function if exists public.match_doc_chunks_v2(
   vector, text, text, text[], text[], text[], text[], text[], text[],
   int, int, int, int, float8, float8, boolean, boolean, boolean, float8, float8, float8, text, float8);
+drop function if exists public.match_doc_chunks_v2(
+  vector, text, text, text[], text[], text[], text[], text[], text[],
+  int, int, int, int, float8, float8, boolean, boolean, boolean, float8, float8, float8, text, float8, text[]);
 
 create function public.match_doc_chunks_v2(
   query_embedding     vector(1536),
@@ -157,7 +178,9 @@ create function public.match_doc_chunks_v2(
   fts_weight          float8  default 1,
   code_weight         float8  default 1,
   p_scope_mode        text    default 'filter',
-  scope_boost         float8  default 0
+  scope_boost         float8  default 0,
+  -- Đối tượng xem được phép (2026-11-21). Mặc định chỉ 'public' để quên truyền thì không lộ chunk nội bộ.
+  p_audiences         text[]  default array['public']
 )
 returns table (
   id                 bigint,
@@ -207,6 +230,7 @@ as $$
     from public.doc_chunks_v2 c
     where c.embedding is not null
       and c.is_active
+      and c.audience = any (p_audiences)
       and c.domain = p_domain
       and (not p_approved_only or c.review_status = 'approved')
       and (p_include_parents or c.chunk_role <> 'parent')
@@ -233,6 +257,7 @@ as $$
     where q.tsq is not null
       and ((not p_unaccent and c.fts @@ q.tsq) or (p_unaccent and c.fts_unaccent @@ q.tsq))
       and c.is_active
+      and c.audience = any (p_audiences)
       and c.domain = p_domain
       and (not p_approved_only or c.review_status = 'approved')
       and (p_include_parents or c.chunk_role <> 'parent')
@@ -251,6 +276,7 @@ as $$
     where coalesce(cardinality(p_codes), 0) > 0
       and c.codes && p_codes
       and c.is_active
+      and c.audience = any (p_audiences)
       and c.domain = p_domain
       and (not p_approved_only or c.review_status = 'approved')
       and (p_include_parents or c.chunk_role <> 'parent')

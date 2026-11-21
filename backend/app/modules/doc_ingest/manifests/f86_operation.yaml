@@ -10,5 +10,6 @@ lang: en
 default_scopes: [operation]
 scope_rules:
   - {match: '(?i)wiring|connection|install', scopes: [installation]}
-storage_bucket: f86-docs
+storage_bucket: doc-assets
+audience: public       # đã công bố cho khách ở website (2026-11-21)
 note: run hiện có chưa đủ trang (BL-13); toàn bộ OCR

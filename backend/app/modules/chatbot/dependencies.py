@@ -65,6 +65,9 @@ def get_chatbot_service(
         execution_stage=ExecutionStage(retriever=retriever),
         # Chỉ có khi CRM_CHAT_FLOW=agent; dùng chung một runner để giới hạn số lượt đồng thời.
         agent_runner=getattr(request.app.state, "chatbot_agent_runner", None),
+        # None khi CHAT_SOURCES_ENABLED tắt hoặc thiếu SUPABASE_*: không có event `sources`.
+        asset_signer=getattr(request.app.state, "chatbot_asset_signer", None),
+        source_images_max=settings.source_images_max,
     )
 
 

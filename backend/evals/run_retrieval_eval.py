@@ -452,8 +452,8 @@ class RecordingRepository:
         self.matches.extend(rows)
         return rows
 
-    async def fetch_by_ids(self, ids: list[int]) -> list[Any]:
-        return await self.inner.fetch_by_ids(ids)
+    async def fetch_by_ids(self, ids: list[int], audiences: Any = ("public",)) -> list[Any]:
+        return await self.inner.fetch_by_ids(ids, audiences)
 
 
 async def load_index() -> tuple[dict[int, ChunkInfo], list[str]]:

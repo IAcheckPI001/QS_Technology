@@ -172,7 +172,7 @@ def test_fetch_downloads_writes_manifest_and_lock(tmp_path: Path) -> None:
     assert manifest.doc_type == "installation_manual" and manifest.product_models == ["F54"]
     assert manifest.lang == "en" and manifest.doc_version == "1.0" and manifest.source is not None
     assert manifest.source.crm_id == lock.by_crm_id()[manifest.source.crm_id].crm_id
-    assert manifest.storage_bucket == "f54-docs" and manifest.run_doc_ids == ["f54-installation-en"]
+    assert manifest.storage_bucket == "doc-assets" and manifest.run_doc_ids == ["f54-installation-en"]
     op = load_manifest(manifests / "f86-operation-en.yaml")
     assert op.doc_type == "user_guide" and op.default_scopes == ["operation"] and op.scope_rules
     assert not (manifests / "qs-catalogue.yaml").exists()            # run_only: không sinh manifest

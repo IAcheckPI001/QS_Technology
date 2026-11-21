@@ -38,6 +38,12 @@ class Thresholds(StrictModel):
     watermark_cover_min: float = 0.9  # T-10: tỷ lệ diện tích picture nằm trong bitmap lặp
     duplicate_iou_min: float = 0.9   # T-19: hai phần tử hình cùng trang IoU ≥ → cùng một ảnh
     list_indent_min: float = 18.0    # T-08: thụt sâu hơn mục trước ≥ (pt) → con, không cần glyph
+    # I-55 (2026-11-20, duyệt: Toma): S0 coi text layer là hỏng khi mã `#` thiếu chữ số (font nhúng mất glyph)
+    text_integrity_min_codes: int = 5      # cần ít nhất ngần này token `#` trên trang mới xét
+    text_integrity_damage_max: float = 0.3  # tỷ lệ token `#` có < 3 chữ số vượt ngưỡng này → trang `poor`
+    # I-59: Docling nhận cả cột chữ bên cạnh ảnh chụp màn hình làm con của picture → T-20 trả cột đó về văn bản thân
+    figure_column_gap: float = 24.0        # khoảng trắng dọc tối thiểu (pt) giữa cột trong ảnh và cột chữ
+    figure_column_min_sentences: int = 2   # cột chữ cần ≥ ngần này câu/nhãn bước mới được trả về thân
 
 
 class Vocabulary(StrictModel):

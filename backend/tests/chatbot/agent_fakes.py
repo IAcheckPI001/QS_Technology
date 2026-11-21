@@ -169,7 +169,7 @@ class FakeChunks:
         key = (kwargs["domain"], tuple(kwargs["models"] or ()))
         return list(self.results.get(key, []))
 
-    async def fetch_by_ids(self, ids):
+    async def fetch_by_ids(self, ids, audiences=("public",)):
         return []
 
 

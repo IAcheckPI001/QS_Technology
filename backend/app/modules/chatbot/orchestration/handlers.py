@@ -7,8 +7,10 @@ scheduler marks it `handler_not_configured`.
 """
 
 import logging
+from collections.abc import Sequence
 
 from app.modules.chatbot.retrieval import Retriever
+from app.modules.chatbot.retrieval.audience import DEFAULT_AUDIENCES
 from app.modules.chatbot.schemas.system import (
     Analysis,
     ExecutionTask,
@@ -31,8 +33,11 @@ logger = logging.getLogger(__name__)
 def build_retrieval_requests(
     task_id: str,
     sub_query: SubQueryAnalysis,
+    audiences: Sequence[str] = DEFAULT_AUDIENCES,
 ) -> tuple[list[RetrievalRequest], list[RetrievalRequest]]:
-    """Map a sub-query's retrieval plan to (targets, fallback targets) requests."""
+    """Map a sub-query's retrieval plan to (targets, fallback targets) requests.
+
+    `audiences`: đối tượng xem được phép theo kênh; mặc định hẹp nhất (chỉ `public`)."""
     plan = sub_query.retrieval_scope
     if plan is None:
         raise ValueError(f"sub-query {sub_query.id} has no retrieval scope")
@@ -53,6 +58,7 @@ def build_retrieval_requests(
             spec_attributes=sub_query.entities.spec_attributes,
             queries=[query],
             boost=target.boost,
+            audiences=list(audiences),
         )
 
     return (
@@ -64,6 +70,7 @@ def build_retrieval_requests(
 def build_task_handlers(
     analysis: Analysis,
     retriever: Retriever | None = None,
+    audiences: Sequence[str] = DEFAULT_AUDIENCES,
 ) -> dict[str, TaskHandler]:
     sub_queries = {sub_query.id: sub_query for sub_query in analysis.sub_queries}
 
@@ -98,7 +105,7 @@ def build_task_handlers(
         assert retriever is not None
         sub_query = sub_query_for(task)
         try:
-            targets, fallback_targets = build_retrieval_requests(task.task_id, sub_query)
+            targets, fallback_targets = build_retrieval_requests(task.task_id, sub_query, audiences)
             result = await retriever.search(targets, fallback_targets)
         except Exception:
             logger.exception("retrieval failed for task %s", task.task_id)

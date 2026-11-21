@@ -43,6 +43,9 @@ class DocManifest(StrictModel):
     default_scopes: list[Scope] = Field(min_length=1)
     scope_rules: list[ScopeRule] = Field(default_factory=list)
     storage_bucket: str
+    # Đối tượng xem (2026-11-21): `public` = đã công bố cho khách ở website (chat website và CRM đều tìm được);
+    # `internal` = chỉ kênh CRM. Mặc định `internal` để tài liệu mới không lộ ra website khi quên gán.
+    audience: Literal["public", "internal"] = "internal"
     # Loại khỏi chunk (2026-11-13): trang (`pdf_page_index`) hoặc mục (tiền tố tiêu đề một cấp trong `section_path`)
     # không có nội dung kỹ thuật (bìa, lời cảm ơn, lịch sử phiên bản…). Phần tử bị loại tính vào độ phủ với lý do
     # `manifest_excluded`; `exclude_reason` ghi vì sao (người duyệt đọc).

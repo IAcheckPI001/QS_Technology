@@ -24,6 +24,8 @@ from app.modules.chatbot.clarification import (
 from app.modules.chatbot.orchestration import select_direct_response_code
 from app.modules.chatbot.prompts.direct_responses import get_direct_response
 from app.modules.chatbot.providers.handoff import DisabledHandoffProvider, HandoffProvider
+from app.modules.chatbot.providers.supabase_storage import AssetSigner
+from app.modules.chatbot.sources import SourceItem, build_sources
 from app.modules.chatbot.schemas.default import ChannelType
 from app.modules.chatbot.schemas.system import (
     ConversationState,
@@ -65,6 +67,8 @@ class ChatbotService:
         clarification_stage: ClarificationResumeStage | None = None,
         handoff_provider: HandoffProvider | None = None,
         agent_runner: "AgentRunner | None" = None,
+        asset_signer: AssetSigner | None = None,
+        source_images_max: int = 3,
     ) -> None:
         self._provider = provider
         self._history_repository = history_repository
@@ -83,6 +87,11 @@ class ChatbotService:
         )
         # Chỉ được inject khi CRM_CHAT_FLOW=agent; không có thì CRM chạy pipeline cũ.
         self._agent_runner = agent_runner
+        # Nguồn đã trích dẫn kèm ảnh của lượt; router phát thành event SSE `sources` sau khi hết `delta`.
+        # Rỗng khi tính năng tắt (không có signer) hoặc không có trích dẫn.
+        self._asset_signer = asset_signer
+        self._source_images_max = source_images_max
+        self.turn_sources: list[SourceItem] = []
 
     async def stream_reply(
         self,
@@ -243,6 +252,7 @@ class ChatbotService:
                 raise
 
             answer = "".join(answer_parts)
+            await self._collect_sources(state, answer)
             set_root(history_status="completed")
             with span("history.write", "db", history_status="completed"):
                 await self._history_repository.create(
@@ -272,6 +282,29 @@ class ChatbotService:
                     started_at=started_at,
                 )
             raise
+
+    async def _collect_sources(self, state: RunState, answer: str) -> None:
+        """Dựng `turn_sources` từ chunk được trích dẫn. Lỗi ở đây không được làm hỏng câu trả lời đã stream."""
+        self.turn_sources = []
+        if self._asset_signer is None:
+            return
+        try:
+            hits = [
+                hit
+                for _, plan in _executed_plans(state)
+                for task in plan.tasks
+                if task.result is not None and task.result.retrieval is not None
+                for result in task.result.retrieval.results
+                for hit in result.hits
+            ]
+            with span("sources.build", "internal") as sources_span:
+                self.turn_sources = await build_sources(
+                    _unique_hits(hits), answer, self._asset_signer, max_images=self._source_images_max)
+                sources_span.set(sources=len(self.turn_sources),
+                                 images=sum(len(item.images) for item in self.turn_sources))
+        except Exception:
+            logger.exception("building sources failed session_id=%s", state.input.session.session_id)
+            self.turn_sources = []
 
     def _retrieval_snapshot(self, state: RunState) -> dict:
         """Chunk đã chọn của lượt này, xếp theo score giảm dần cho màn Kết quả chunk."""
