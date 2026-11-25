@@ -46,6 +46,23 @@ export function noneReason(turnStatus) {
   return S.conv.src.reason[turnStatus] || S.conv.src.reason.completed;
 }
 
+/** Trang của đoạn: nhãn in trên trang nếu có, không thì số trang PDF ("12" hoặc "12–13"). */
+export function chunkPages(chunk) {
+  if (!chunk) return '';
+  // page_label lấy từ chữ in trên trang PDF, có khi kèm chữ "page"/"trang" ("page 65").
+  const label = String(chunk.page_label || '').replace(/^\s*(page|trang|tr\.|p\.)\s*/i, '').trim();
+  if (label) return label;
+  if (chunk.page_start == null) return '';
+  return chunk.page_end && chunk.page_end !== chunk.page_start ? `${chunk.page_start}–${chunk.page_end}` : String(chunk.page_start);
+}
+
+/** Chữ gợi ý khi di chuột lên huy hiệu trích dẫn: "Tên tài liệu · tr. 12", không có đoạn thì mã nguồn. */
+export function citationTitle(id, chunk) {
+  if (!chunk) return S.conv.src.citeHint(id);
+  const pages = chunkPages(chunk);
+  return [chunk.doc_title || chunk.section_title || chunk.doc_id || id, pages && S.conv.src.page(pages)].filter(Boolean).join(' · ');
+}
+
 /** Mã nguồn (S1, S2…) được câu trả lời trích dẫn. */
 export function citedSources(answer) {
   return new Set((String(answer || '').match(/\[S\d+\]/g) || []).map((tag) => tag.slice(1, -1)));

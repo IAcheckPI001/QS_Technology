@@ -2,10 +2,15 @@
 // chủ đề, nguồn, nội dung 3 dòng + xem đầy đủ), chi tiết kỹ thuật của lần tra cứu.
 // Nguồn tài liệu và mục chỉ có sau W1/B5 (FRONTEND_REQUIREMENTS 19.8); chưa có thì không hiện dòng nguồn.
 
-import { useState } from 'react';
+// Nội dung đoạn hiện dạng Markdown (bảng, danh sách). Bấm huy hiệu trích dẫn ở câu trả lời: `focus`
+// ({ id: 'S1', n }) mở và cuộn tới đoạn có source_id đó; n đổi mỗi lần bấm để bấm lại vẫn cuộn.
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Markdown from '../../../components/Markdown.jsx';
 import { Badge } from '../../components/ui.jsx';
 import { S } from '../../strings.vi.js';
 import { formatDuration, formatScore } from '../../utils/format.js';
+import { chunkPages } from './sources.js';
 import styles from './detail.module.css';
 
 function topicLabel(scopes = []) {
@@ -13,14 +18,30 @@ function topicLabel(scopes = []) {
 }
 
 function sourceLine(chunk) {
-  const parts = [chunk.doc_title || chunk.doc_id, (chunk.section_path || []).join(' › ') || chunk.section_title].filter(Boolean);
+  const pages = chunkPages(chunk);
+  const parts = [
+    chunk.doc_title || chunk.doc_id,
+    (chunk.section_path || []).join(' › ') || chunk.section_title,
+    pages && S.conv.src.page(pages),
+  ].filter(Boolean);
   return parts.join(' · ');
 }
 
-export default function RetrievalDocs({ snapshot, cited = new Set() }) {
+export default function RetrievalDocs({ snapshot, cited = new Set(), focus = null }) {
   const [open, setOpen] = useState({});
   const [techOpen, setTechOpen] = useState(false);
-  const chunks = snapshot.chunks || [];
+  const focusRef = useRef(null);
+  const chunks = useMemo(() => snapshot.chunks || [], [snapshot.chunks]);
+
+  useEffect(() => {
+    if (!focus) return;
+    const target = chunks.find((chunk) => chunk.source_id === focus.id);
+    if (!target) return;
+    setOpen((prev) => ({ ...prev, [target.chunk_id || target.rank]: true }));
+    // Chờ đoạn mở ra rồi mới cuộn.
+    requestAnimationFrame(() => focusRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' }));
+    focusRef.current?.focus({ preventScroll: true });
+  }, [focus, chunks]);
   const status = snapshot.retrieval_status;
   const top = chunks.length ? Math.max(...chunks.map((chunk) => chunk.score ?? 0)) : null;
 
@@ -47,8 +68,16 @@ export default function RetrievalDocs({ snapshot, cited = new Set() }) {
         const source = sourceLine(chunk);
         const topic = topicLabel(chunk.scopes);
         const width = `${Math.round(Math.min(Math.max(chunk.score ?? 0, 0), 1) * 100)}%`;
+        const focused = Boolean(focus && chunk.source_id === focus.id);
         return (
-          <article key={key} className={styles.chunk} aria-label={`#${chunk.rank}`}>
+          <article
+            key={key}
+            ref={focused ? focusRef : undefined}
+            className={focused ? `${styles.chunk} ${styles.chunkFocus}` : styles.chunk}
+            aria-label={chunk.source_id ? `#${chunk.rank} · ${chunk.source_id}` : `#${chunk.rank}`}
+            data-source-id={chunk.source_id || undefined}
+            tabIndex={focused ? -1 : undefined}
+          >
             <div className={styles.chunkHead}>
               <strong>#{chunk.rank}</strong>
               <span className={styles.score}>
@@ -59,7 +88,7 @@ export default function RetrievalDocs({ snapshot, cited = new Set() }) {
               {chunk.source_id && cited.has(chunk.source_id) && <Badge tone="brand">{S.conv.src.cited(chunk.source_id)}</Badge>}
             </div>
             {source && <span className={styles.chunkSource}>{source}</span>}
-            <div className={expanded ? styles.chunkBody : `${styles.chunkBody} ${styles.clamp}`}>{chunk.content}</div>
+            <Markdown text={chunk.content} className={expanded ? styles.chunkBody : `${styles.chunkBody} ${styles.clamp}`} />
             <button type="button" className={styles.link} aria-expanded={expanded} onClick={() => setOpen((prev) => ({ ...prev, [key]: !expanded }))}>
               {expanded ? S.conv.docsLess : S.conv.docsMore}
             </button>

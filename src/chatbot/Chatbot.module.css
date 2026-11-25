@@ -191,13 +191,37 @@
 }
 
 .sourceChip {
-    display: inline-block;
-    margin-right: 6px;
-    padding: 0 6px;
-    border-radius: 8px;
-    font-weight: 600;
-    color: #1f5f8b;
-    background: #e6f1f8;
+    margin: 0 6px 0 0;
+    vertical-align: 0;
+}
+
+/* Chú thích của huy hiệu [S1]: gắn vào body, toạ độ do SourceList.jsx tính (đáy chú thích ở trên huy hiệu). */
+.citeTip {
+    position: fixed;
+    z-index: 10000;
+    width: max-content;
+    padding: 6px 9px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    line-height: 1.4;
+    font-weight: 500;
+    color: #fff;
+    background: #243744;
+    box-shadow: 0 4px 14px rgba(20, 35, 45, 0.18);
+    transform: translate(-50%, -100%);
+    pointer-events: none;
+    overflow-wrap: normal;
+}
+
+/* Bảng trong câu trả lời: bong bóng dùng hết bề ngang khung chat để bảng đủ chỗ. */
+.assistantMessage:has(table) {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.assistantMessage table {
+    font-size: 13.5px;
 }
 
 .sourceImages {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { LoaderCircle, Send, X } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import SourceList from './SourceList.jsx';
+import Markdown from '../components/Markdown.jsx';
+import SourceList, { Citation } from './SourceList.jsx';
 import { useTranslation } from 'react-i18next';
 import { getWidgetHistory, streamChatbotResponse, streamCrmChatbotResponse } from '../services/chatbot.service.js';
 import styles from './Chatbot.module.css';
@@ -168,7 +168,10 @@ function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
                             message.content
                                 ? (
                                     <>
-                                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                                        <Markdown
+                                            text={message.content}
+                                            renderCitation={(id) => <Citation key={id} id={id} sources={message.sources} />}
+                                        />
                                         <SourceList sources={message.sources} />
                                     </>
                                 )

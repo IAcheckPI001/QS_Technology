@@ -1,0 +1,120 @@
+/* Kiểu chữ cho câu trả lời dạng Markdown. Cỡ chữ, màu lấy từ khung chứa; tiêu đề giữ nhỏ
+   (câu trả lời nằm trong bong bóng chat, không phải trang tài liệu). */
+
+.md {
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+}
+
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+
+.md p,
+.md ul,
+.md ol,
+.md blockquote,
+.md pre,
+.md .tableWrap { margin: 0 0 0.65em; }
+
+.md h1,
+.md h2,
+.md h3,
+.md h4,
+.md h5,
+.md h6 {
+  margin: 0.9em 0 0.4em;
+  line-height: 1.35;
+  font-weight: 600;
+}
+.md h1 { font-size: 1.25em; }
+.md h2 { font-size: 1.15em; }
+.md h3 { font-size: 1.07em; }
+.md h4,
+.md h5,
+.md h6 { font-size: 1em; }
+.md h6 { color: var(--md-muted, #5b6372); }
+
+.md ul,
+.md ol { padding-left: 1.4em; }
+.md li { margin: 0.2em 0; }
+.md li > p { margin: 0; }
+.md li > ul,
+.md li > ol { margin: 0.2em 0 0; }
+.md input[type='checkbox'] { margin: 0 0.4em 0 0; vertical-align: -1px; }
+
+.md blockquote {
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid var(--md-rule, #c9ced6);
+  color: var(--md-muted, #5b6372);
+}
+
+.md code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--md-code-bg, rgba(22, 26, 34, 0.07));
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+.md pre {
+  padding: 10px 12px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: var(--md-code-bg, rgba(22, 26, 34, 0.07));
+}
+.md pre code { padding: 0; background: none; font-size: 0.85em; white-space: pre; }
+
+.md a {
+  color: var(--md-link, #5c3810);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.md hr { height: 1px; margin: 0.9em 0; border: 0; background: var(--md-rule, #e3e6eb); }
+
+/* Bảng rộng cuộn ngang trong khung, không làm vỡ bong bóng. */
+.tableWrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--md-rule, #e3e6eb);
+  border-radius: 8px;
+}
+.tableWrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.93em;
+  line-height: 1.45;
+}
+.tableWrap th,
+.tableWrap td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--md-rule, #e3e6eb);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: normal;
+  min-width: 64px;
+}
+.tableWrap th { background: var(--md-code-bg, rgba(22, 26, 34, 0.05)); font-weight: 600; white-space: nowrap; }
+.tableWrap tr:last-child td { border-bottom: 0; }
+
+/* Huy hiệu trích dẫn tròn: [S1] → ①. */
+.cite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  margin: 0 1px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 999px;
+  background: var(--md-cite-bg, #e6e8ec);
+  color: var(--md-cite-text, #3b4250);
+  font: 600 11px/1 Inter, system-ui, sans-serif;
+  vertical-align: 1px;
+  text-decoration: none;
+}
+button.cite { cursor: pointer; }
+button.cite:hover,
+.cite[data-active='true'] { background: var(--md-cite-hover, #d3d7de); color: var(--md-cite-text-strong, #161a22); }
+.cite:focus-visible { outline: 2px solid var(--md-link, #5c3810); outline-offset: 1px; }
