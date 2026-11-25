@@ -83,16 +83,20 @@ Các endpoint chưa có authentication/ownership và chỉ được bật rõ r�
 }
 ```
 
-`channel` là `website` hoặc `crm`.
+`channel` là `website` hoặc `crm`. `model`: model trả lời của lượt; từ 2026-11-20, lượt `/chat/crm`
+chạy agent ghi model của vòng lặp agent (`AGENT_MODEL`, mặc định = `OPENAI_MODEL`).
 
 Token và chi phí (B3, 2026-11-18): lượt ghi từ 2026-11-18 lưu **usage thật** OpenAI trả về
 (cộng mọi lần gọi AI của lượt từ trace) và chi phí theo giá từng model (`core/pricing.py`,
 ghi đè bằng `LLM_PRICES_JSON`): `input_tokens`/`output_tokens`/`total_tokens` là token của lời gọi
 AI (không gồm embedding), `cost_usd` gồm cả embedding. Bản ghi cũ là **ước tính** từ chữ câu hỏi
 và câu trả lời theo giá gpt-4o-mini (thấp hơn thực tế nhiều lần). Mỗi lượt thêm:
-- `usage`: `{source: "trace" | "estimate", llm_calls, cached_input_tokens, embedding_tokens,
-  unpriced_models}`; `null` khi lượt không gọi AI (bị chặn, nhân viên đang xử lý). Chi tiết theo
-  model lưu ở `retrieval_snapshot.usage` (DB);
+- `usage`: `{source: "trace" | "estimate", llm_calls, estimated_calls, cached_input_tokens,
+  embedding_tokens, unpriced_models}`; `null` khi lượt không gọi AI (bị chặn, nhân viên đang xử
+  lý). `estimated_calls` (từ 2026-11-20; bản ghi trước đó `null`): số lời gọi hết giờ, bị huỷ
+  hoặc stream bị ngắt trước khi OpenAI trả usage, token của chúng là ước tính. Usage đọc từ sổ
+  usage của trace nên đủ cả khi trace vượt `CHAT_TRACE_MAX_SPANS`. Chi tiết theo model lưu ở
+  `retrieval_snapshot.usage` (DB);
 - `cost_vnd`: `cost_usd × USD_TO_VND_RATE`.
 
 `sources` (B5, 2026-11-18) tóm tắt nguồn câu trả lời của lượt từ `retrieval_snapshot`
@@ -229,7 +233,8 @@ Lượt không thuộc phiên → `404 history_not_found`; lượt không có sn
   "retrieval_tasks": [{"task_id": "task-retrieve-q1", "status": "completed", "error_code": null, "no_hits": false, "fallback": false}],
   "agent_steps": [],
   "answered_without_tools": null,
-  "invalid_citations": []
+  "invalid_citations": [],
+  "final_reason": null
 }
 ```
 
@@ -250,9 +255,11 @@ Lượt agent (kênh CRM) gộp task của mọi lần gọi tool tra cứu: `ta
 `{tool_call_id}:task-retrieve-qN`, và snapshot trong DB có thêm khóa nội bộ
 `agent_steps: [{step, kind: "llm"|"tool", name, tool_call_id, status,
 latency_ms, finish_reason}]` (`status`: `ok`, `deduplicated` hoặc mã lỗi tool như
-`tool_call_limit`, `model_not_evidenced`), `answered_without_tools: bool` và
-`invalid_citations: [S#]` (không chứa nội dung tin nhắn hay output tool); từ B5 endpoint
-trả các khóa này cùng `retrieval_tasks`.
+`tool_call_limit`, `model_not_evidenced`), `answered_without_tools: bool`,
+`invalid_citations: [S#]` (không chứa nội dung tin nhắn hay output tool) và từ 2026-11-20
+`final_reason` (lý do kết thúc vòng lặp: `answered`, `limit`, `plateau`, `ambiguous`, `budget`,
+`no_answer`; `null` với lượt cũ hoặc không qua agent); từ B5 endpoint trả các khóa này cùng
+`retrieval_tasks`.
 Không gửi `history_id` và phiên không có lượt nào có chunk trả `404 retrieval_not_found`;
 database lỗi trả `503 database_unavailable`.
 
@@ -297,7 +304,13 @@ trace mới nhất của phiên. Đọc `public.chat_traces`; chỉ có dữ li�
   `root_error_spans` chỉ đếm nơi lỗi phát sinh (span lỗi không có span con lỗi);
   `failed_tool_calls` đếm tool call lỗi.
 - Lượt agent trả lời được nhưng có tool lỗi vẫn `outcome="ok"`; root span có thêm
-  `tool_errors: ["crm_query:crm_auth_failed", …]` (`{tool}:{mã}`).
+  `tool_errors: ["crm_query:crm_auth_failed", …]` (`{tool}:{mã}`). Root span và span
+  `agent.run` của lượt agent có `final_reason` (như trong snapshot); `agent.run` có
+  `llm_failures` (số lần gọi LLM lỗi tạm thời); root có `forced_repair: [mã]` khi runner bắt
+  sửa argument. Span `llm.chat_tools` có `attempt` (1, 2 khi thử lại), `provider_request_id`
+  (`x-request-id` của OpenAI), `provider_processing_ms` (thời gian OpenAI tự xử lý) và, khi hết giờ,
+  `timeout_phase` (`connect` = chưa tới OpenAI, `read` = chờ phản hồi). `agent_steps[].status` của
+  bước LLM có thêm `llm_http_429`, `llm_http_5xx`, `llm_connection`.
 - Span `llm`/`embedding`/`http` lỗi có thêm `http_status` (int) và `provider_error_code` (mã định
   danh `[a-z0-9_]{1,64}` của nhà cung cấp, vd `insufficient_quota` = hết credit,
   `rate_limit_exceeded` = gọi quá nhanh) khi exception có thuộc tính `status_code`/`code` (B5 W2,
@@ -542,12 +555,22 @@ Các event hiện có:
 event: delta
 data: {"text":"..."}
 
+event: sources
+data: {"items":[{"source_id":"S1","title":"...","doc_id":"...","pages":"23","images":[{"url":"https://...","page":23,"printed_page":24}]}]}
+
 event: done
 data: {"request_id":"...", "session_id":"..."}
 
 event: error
 data: {"code":"...", "message":"...", "request_id":"..."}
 ```
+
+`sources` (D-014, 2026-11-21): nguồn mà câu trả lời đã trích dẫn (`[S#]`) kèm ảnh của chunk, **chỉ phát khi
+`CHAT_SOURCES_ENABLED=true`, đủ `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` và câu trả lời có trích dẫn**; nếu có thì
+đến sau mọi `delta` và trước `done`, tối đa một lần. `images[].url` là URL ký của Supabase Storage (bucket private, hết
+hạn sau `ASSET_URL_TTL_S`, mặc định 900 giây), không lưu vào lịch sử; mỗi nguồn tối đa `SOURCE_IMAGES_MAX` ảnh (mặc định
+3), `images` rỗng khi ký lỗi. `pages` là chuỗi ("23" hoặc "23-25"), có thể `null`. Client cũ bỏ qua event lạ nên tương thích
+ngược; widget-backend chuyển tiếp nguyên văn.
 
 Client phải đọc theo SSE framing, nhận nhiều `delta`, chỉ coi request thành
 công khi nhận `done`, và xử lý `error` theo `code`. Các mã lỗi chính:

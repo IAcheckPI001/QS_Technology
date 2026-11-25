@@ -7,6 +7,7 @@ dung bị nhân đôi mà không cần biết nguyên nhân. Đến khi có `Nor
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from typing import Any
@@ -19,15 +20,29 @@ from app.modules.doc_ingest.schemas.profile import Profile
 
 _STRIP = "".join(chr(c) for c in range(0x21, 0x30)) + ":;<=>?@[\\]^_`{|}~“”‘’…·•▪–—"
 _SAMPLE = 20
+# I-54 (2026-11-20): chuẩn hoá để V-01 không báo động giả. Chỉ số trên tách rời ("1 st") dính lại như text layer ("1st");
+# ký tự U+FFFE (font nhúng không có Unicode) bỏ khỏi token; dòng mục lục có chấm dẫn không phải chữ thân (T-16 xếp là
+# `toc`, không vào chunk) nên không tính vào mẫu số.
+_ORDINAL = re.compile(r"(?<=\d)\s+(st|nd|rd|th)\b", re.IGNORECASE)
+_LEADER = re.compile(r"\.{4,}|…{2,}")
+GARBLED = "￾"
 
 
 def tokens(text: str) -> list[str]:
+    text = _ORDINAL.sub(r"\1", text.replace(GARBLED, ""))
     out = []
     for raw in text.split():
         token = raw.strip(_STRIP).casefold()
         if token:
             out.append(token)
     return out
+
+
+def reference_tokens(word: str) -> list[str]:
+    """Token của một từ trong text layer dùng làm mẫu số. Từ có U+FFFE (không tin cậy) hoặc dòng chấm dẫn mục lục bỏ."""
+    if GARBLED in word or _LEADER.search(word):
+        return []
+    return tokens(word)
 
 
 def _inside(box: Mapping[str, float], areas: Sequence[BBox]) -> bool:
@@ -60,7 +75,7 @@ def text_coverage(doc_id: str, words_by_page: Mapping[int, Sequence[Mapping[str,
         page_tokens: Counter[str] = Counter()
         for word in words_by_page[page]:
             if not _inside(word["bbox"], furniture):
-                page_tokens.update(tokens(word["text"]))
+                page_tokens.update(reference_tokens(word["text"]))
         kept_tokens = _kept_tokens([i for i in kept if i.page == page])
         total, kept_total = sum(page_tokens.values()), sum(kept_tokens.values())
         if total == 0:
@@ -73,10 +88,13 @@ def text_coverage(doc_id: str, words_by_page: Mapping[int, Sequence[Mapping[str,
         coverage = covered / total
         dup_ratio = duplicate / kept_total if kept_total else 0.0
         missing = sorted((page_tokens - kept_tokens).elements())
-        passed = coverage >= th.text_coverage_min and dup_ratio <= th.text_duplicate_max
+        # Chỉ độ phủ thấp mới chặn chunk (nội dung thật bị rơi). Lặp vượt ngưỡng chỉ cảnh báo: 15/17 trang CRM trượt
+        # chỉ vì lặp mà độ phủ ≥ 91,6%, do token chỉ số trên, ký tự hỏng, nhãn hình (I-54).
+        passed = coverage >= th.text_coverage_min
+        duplicate_over = dup_ratio > th.text_duplicate_max
         detail: dict[str, object] = {"page_tokens": total, "kept_tokens": kept_total,
                                      "duplicate_ratio": round(dup_ratio, 4),
-                                     "duplicate_max": th.text_duplicate_max,
+                                     "duplicate_max": th.text_duplicate_max, "duplicate_over": duplicate_over,
                                      "missing_sample": missing[:_SAMPLE], "missing_count": len(missing)}
         results.append(ValidationResult(check_id="V-01", target=target, score=round(coverage, 4),
                                         threshold=th.text_coverage_min, passed=passed, detail=detail))
@@ -85,4 +103,9 @@ def text_coverage(doc_id: str, words_by_page: Mapping[int, Sequence[Mapping[str,
                            f"coverage {coverage:.1%} (min {th.text_coverage_min:.0%}), duplicate {dup_ratio:.1%} "
                            f"(max {th.text_duplicate_max:.0%}); missing e.g. {missing[:8]}",
                            target=target, suggested_action="find the dropped or duplicated content on this page")
+        elif duplicate_over:
+            rec.add_review(target, "text_duplicate",
+                           f"duplicate {dup_ratio:.1%} (max {th.text_duplicate_max:.0%}) with coverage {coverage:.1%}; "
+                           f"extra tokens e.g. {sorted((kept_tokens - page_tokens).elements())[:8]}",
+                           target=target, suggested_action="check whether content is repeated or only tokenized differently")
     return results

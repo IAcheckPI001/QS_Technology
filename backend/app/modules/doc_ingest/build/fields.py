@@ -9,9 +9,9 @@ from collections.abc import Callable, Iterable, Sequence
 from app.modules.doc_ingest.build.chunker import VISUAL, ChunkPlan, Unit, estimate_tokens
 from app.modules.doc_ingest.build.loader import RunInput, enrichment_key
 from app.modules.doc_ingest.enrich.checks import missing_codes
-from app.modules.doc_ingest.schemas.chunk import ChunkAsset, DraftChunk, EnrichmentRecord, FigureLabel
+from app.modules.doc_ingest.schemas.chunk import ChunkAsset, ChunkLocation, DraftChunk, EnrichmentRecord, FigureLabel
 from app.modules.doc_ingest.schemas.manifest import SCOPE_ORDER, DocManifest, Scope
-from app.modules.doc_ingest.schemas.normalized import ApplicabilityCandidate, NormalizedElement
+from app.modules.doc_ingest.schemas.normalized import ApplicabilityCandidate, Box, NormalizedElement
 from app.modules.doc_ingest.schemas.profile import Profile
 from app.modules.doc_ingest.technical_refs.params import ParamRef
 
@@ -269,6 +269,39 @@ class Assembler:
         by_page.update({p: v for p, v in self.run.report.printed_pages.items() if p in pages and v})
         return by_page.get(pages[0]), by_page.get(pages[-1])
 
+    def _locations(self, unit: Unit) -> list[ChunkLocation]:
+        """Vùng của chunk trên từng trang: hợp bbox các phần tử; với bảng, hợp bbox ô của các dòng thuộc chunk
+        (không có `row_ids` → bbox các đoạn bảng). Phần tử không có bbox bị bỏ qua."""
+        boxes: dict[int, list[Box]] = {}
+        for e in unit.elements:
+            if e.bbox is not None:
+                boxes.setdefault(e.pdf_page_index, []).append(e.bbox)
+        table = unit.table
+        if table is not None:
+            wanted = set(unit.row_ids)
+            if wanted:
+                for row in table.rows:
+                    if row.row_id in wanted and 0 <= row.segment < len(table.segments):
+                        page = table.segments[row.segment].pdf_page_index
+                        boxes.setdefault(page, []).extend(c.bbox for c in row.cells if c.bbox is not None)
+            else:
+                for segment in table.segments:
+                    boxes.setdefault(segment.pdf_page_index, []).append(segment.bbox)
+        printed = {e.pdf_page_index: e.printed_page.value for e in unit.elements if e.printed_page.value}
+        printed.update({p: v for p, v in self.run.report.printed_pages.items() if v})
+        out: list[ChunkLocation] = []
+        for page in sorted(boxes):
+            items = boxes[page]
+            if not items:
+                continue
+            width, height = self.run.page_sizes.get(page, (None, None))
+            out.append(ChunkLocation(
+                page=page, printed_page=printed.get(page),
+                bbox=Box(x0=round(min(b.x0 for b in items), 2), y0=round(min(b.y0 for b in items), 2),
+                         x1=round(max(b.x1 for b in items), 2), y1=round(max(b.y1 for b in items), 2)),
+                page_width=width, page_height=height))
+        return out
+
     def _extraction(self, pages: Sequence[int]) -> str:
         if self.run.report.s0 is None:
             return "unknown"
@@ -411,7 +444,8 @@ class Assembler:
             spec_attributes=self._matches(self.spec_terms, title_text),
             chunk_type=merged.chunk_type,  # type: ignore[arg-type]
             doc_id=self.manifest.doc_id, doc_type=self.manifest.doc_type, doc_title=self.manifest.doc_title,
-            doc_version=self.manifest.doc_version, lang=self.manifest.lang, section_id=sid, section_path=path,
+            doc_version=self.manifest.doc_version, lang=self.manifest.lang, audience=self.manifest.audience,
+            section_id=sid, section_path=path,
             section_title=title, page_start=pages[0], page_end=pages[-1], printed_page_start=printed_start,
             printed_page_end=printed_end, assets=assets, content=content, keywords=keywords, embed_text=embed,
             summary_vi=record.summary_vi if record else None, faq_vi=list(record.faq_vi) if record else [],
@@ -426,6 +460,7 @@ class Assembler:
             figure_labels=labels, review_blockers=blockers, review_notes=notes,
             flags=self._flags([*merged.flags, *enrich_flags], content, extraction, missing, truncated and leaf,
                               over_budget),
+            locations=self._locations(merged), source_ref=self.manifest.source,
         )
 
     def assemble(self, plan: ChunkPlan) -> list[DraftChunk]:

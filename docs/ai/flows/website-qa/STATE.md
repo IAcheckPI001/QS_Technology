@@ -1,14 +1,16 @@
 # Trạng thái luồng website-qa
 
-Cập nhật: 2026-11-16
+Cập nhật: 2026-11-21
 
 Ảnh chụp trạng thái hiện tại. Viết lại khi có thay đổi; lịch sử ở [LOG.md](LOG.md).
 
 ## Tóm tắt
 
 - Chạy trọn luồng: security → context → làm rõ → analysis → retrieve → stream câu trả lời.
-- **Chat production vẫn dùng bảng cũ `doc_chunks`.** Bảng mới `doc_chunks_v2` (F54 296 chunk, F86 Installation 23, catalog 37; đều `draft`) mới chỉ công cụ eval dùng; tích hợp vào chat ("bước 6") chưa làm.
+- **Chat đã chuyển hẳn sang `doc_chunks_v2`** (D-009 bước 6, 2026-11-19, nhánh `claude/retrieval-v2-chat`): `main.py` dựng `DocChunkV2Repository(MatchV2Options(approved_only=RETRIEVAL_APPROVED_ONLY))` cho cả luồng website lẫn tool `product_docs_ask`; `DocChunkRepository` đã xoá, bảng cũ `doc_chunks` chỉ giữ để đối chiếu. Coverage `technical_docs` nạp từ DB lúc khởi động.
+- **Cảnh báo:** mọi chunk v2 (F54 296, F86 Installation 23, catalog 37) đang `draft`. `RETRIEVAL_APPROVED_ONLY` mặc định `true` → chat **không tìm thấy tài liệu nào** cho tới khi chunk được duyệt `approved`. Dev/staging đặt `RETRIEVAL_APPROVED_ONLY=false`.
 - Đang làm **R-1**: tối ưu bước phân tích (intent, mô tả, model LLM) và định tuyến tra cứu. Kế hoạch 4 giai đoạn A–D đã duyệt; A và phần code của B đã xong. OpenAI hết credit nên eval routing hiện có thể dùng tạm `100milionseek.top` với `HMS_API_KEY`; chỉ là provider eval, không dùng production.
+- **Đối tượng xem (D-014, 2026-11-21, chưa merge, chưa áp SQL):** website chỉ tra chunk `audience='public'`, kênh CRM cả `internal`; `RetrievalRequest.audiences` do `ExecutionStage` đặt theo kênh, mặc định `public`. **Phải áp `backend/sql/doc_chunks_v2.sql` trên Supabase trước khi deploy.** Prompt trả lời có `<answer_format>` (chưa đo). **Giai đoạn B:** event SSE `sources` (nguồn trích dẫn + ảnh, URL ký, bucket private `doc-assets`) sau cờ `CHAT_SOURCES_ENABLED` mặc định tắt; widget hiện chip nguồn và ảnh. Chưa chạy frontend test/build, chưa thử Supabase thật, chưa đẩy ảnh nào.
 - Production không đổi hành vi trong R-1: mặc định prompt `v1`, mô tả intent `v1`, luật định tuyến `r0`.
 - Handoff là scaffold; chưa gửi nguồn/ảnh qua SSE; số `[S#]` đánh lại mỗi lượt. Thay đổi từ catalog tới R-1 **chưa commit**.
 
@@ -20,9 +22,10 @@ Cập nhật: 2026-11-16
 | Vòng làm rõ | có | Sub-query có cụm lạ bị giữ lại, không tra cứu (lỗi D26, xem R-1) |
 | Analysis đa ngôn ngữ | có | Prompt và mô tả intent có phiên bản (`v1`); câu cố định chỉ có `vi`, `en` |
 | Luật định tuyến bằng code | có, chỉ eval | `r0` (production) = không luật; `r1`, `r2`, RT-3b chờ đo và duyệt |
-| Retrieve hybrid | có, mức test | Production: bảng cũ, không rerank. Repository v2 (eval): FTS sạch, scope cộng điểm 0,003 |
-| Eval tra cứu + định tuyến | có | `evals/run_retrieval_eval.py`; hỗ trợ OpenAI và `100milionseek` cho routing; 5 bộ câu (2 bộ nháp chờ duyệt) |
-| Handoff; SSE nguồn/ảnh; `retrieved_chunk_ids` | scaffold; chưa có; chưa điền | Cột là `UUID[]`, `doc_chunks.id` là `bigint` |
+| Retrieve hybrid | có, mức test | Production và eval cùng `DocChunkV2Repository`: FTS sạch, scope cộng điểm 0,003, chunk cha thật, không rerank, không nhánh mã. Chưa kiểm trên Supabase thật sau khi chuyển |
+| Coverage `technical_docs` | nạp từ DB | `main.load_technical_coverage` → `registry.extend_technical_coverage` (chỉ thêm; lỗi DB giữ registry tĩnh). Eval gọi cùng hàm, tính cả draft |
+| Eval tra cứu + định tuyến | có | `evals/run_retrieval_eval.py` giữ nguyên (`approved_only=False`, đủ biến thể); hỗ trợ OpenAI và `100milionseek` cho routing; 5 bộ câu (2 bộ nháp chờ duyệt). Eval agent (`run_crm_agent_eval`, `compare_agent_models`) dùng cấu hình tra cứu như production |
+| Handoff; SSE nguồn/ảnh; `retrieved_chunk_ids` | scaffold; có sau cờ, chưa kiểm thật; chưa điền | Cột là `UUID[]`, `doc_chunks_v2.id` là `bigint` |
 
 ## R-1: tiến độ, quyết định, kết quả
 
@@ -43,7 +46,7 @@ Kết quả đo (prompt `v1`, luật `r0`, gpt-4.1-mini, 3 lần mỗi câu; th�
 | Bộ câu | Đúng cả ba web1 / web2 | Ổn định | Ghi chú |
 |---|---|---|---|
 | 40 câu (`20261114-154614-baseline-v1-r0-diverse40`) | 0,867 / 0,867 | 0,925 / 0,95 | Nhiễu giữa các lần 2,5–5 điểm %; web2 scope 0,003: recall@5 0,853, MRR 0,798. Ước tính có luật (không gọi LLM, chưa phải số đo): domain đúng 0,90 → 1,0 |
-| 120 câu nháp (`20261114-155459-draft-v1-r0-routing120`) | 0,936 / 0,942 | 0,975 / 0,983 | Nhóm tên board/phụ kiện 0,29 / 0,71 |
+| 120 câu nháp ([báo cáo](../../reports/website_qa_routing_eval_v1_r0_2026-11-14.md); `20261114-155459-draft-v1-r0-routing120`) | 0,936 / 0,942 | 0,975 / 0,983 | Nhóm phụ kiện 0,29 / 0,71; routing-only, split=all |
 | 14 câu, catalog 20, hai nguồn 19 | **chưa có** | — | Dừng vì hết credit |
 
 ## Vấn đề mở
@@ -54,16 +57,16 @@ Kết quả đo (prompt `v1`, luật `r0`, gpt-4.1-mini, 3 lần mỗi câu; th�
 | R-1 | Bước phân tích chọn sai intent → sai nguồn; còn nguyên ở production (`r0`): (a) câu có mã hoặc hỏi "là gì"/"cài ở đâu"/"công thức" bị xếp `lookup.product_info` → chỉ tìm catalog (D21, D30, Q8, Q9, R004, R008, R022); (b) câu thông số có câu trả lời ở manual chỉ tìm catalog (D01, Q12, D39); (c) tên board/phụ kiện/thiết bị hãng khác bị coi là model lạ → **không tra cứu** (D26, R107–R114); (d) vận hành ↔ xử lý sự cố (D06), phụ kiện ↔ công ty (R104). Luật `r1`/`r2` nhắm (a)–(c), chưa đo |
 | R-1a/b/c | (a) Hai nguồn định nghĩa intent lệch nhau: `desc` (registry) và `<intent_rules>` (quy tắc 4 đòi "CÁC BƯỚC") → sửa ở giai đoạn C. (b) Chọn RT-3 (danh sách `non_model_terms`, nháp: 08_RLTR, RBT-01) hay RT-3b (cụm lạ không có model gần giống; thăm dò ủng hộ) — chờ Toma. (c) "Đúng cả ba" vẫn tính sai khi intent lệch nhãn dù tìm đúng nguồn → sau RT-1 quyết định theo "domain đúng" + `ngu_canh` |
 | R-2, R-4 | Scope cộng điểm đã áp (khi intent chắc chắn đúng thì lọc cứng vẫn nhỉnh hơn, câu S8). `fts_clean` đã bật ở repository v2, vẫn đo song song `no_fts_clean` |
-| R-3 | `coverage` của registry viết cứng (chỉ F86 có `technical_docs`); eval phải thêm F54 trong bộ nhớ; nạp tài liệu mới phải sửa code |
+| R-3 | Đã xử lý phần `technical_docs` (2026-11-19): coverage nạp từ `doc_chunks_v2` lúc khởi động theo `approved_only`. Còn viết cứng: `product_catalog`, interface lấy từ `capabilities` (tạm cho vài model); model mới nạp chỉ có hiệu lực sau khi khởi động lại dịch vụ |
 | C-1, C-2 | Registry thêm `10S`, `10i` (tên tạm, chờ CRM). Catalog 7 bộ điều khiển đã nạp (37 chunk, draft, chưa gắn hình); câu tiếng Việt vs nhãn tiếng Anh xếp thấp (K09 hạng 3, K10, K19) → `--vi-keywords` **chờ Toma**. Còn thiếu servo, board (trang 22), phụ kiện (trang 23), thông tin công ty (D39 chờ dữ liệu board) |
-| E-05 | Nhánh FTS của `match_doc_chunks` bỏ mọi dòng khi bộ lọc model là mảng rỗng; trên Supabase thật cả hai nhánh trả rỗng với `[]` ([p2_chunk_contract.md](../../reports/p2_chunk_contract.md)) |
-| L-2, L-4 | Supabase thật chưa áp `migrate_product_models_crm.sql` (check `product_models` còn ASTRO_*, `embedding` nullable; [p2_doc_chunks_schema_review.md](../../reports/p2_doc_chunks_schema_review.md) §1); bảng cũ có 0 dòng `technical_docs` dù registry khai báo coverage F86 |
-| D-008 | Chỉ tìm trên chunk con/độc lập ([decisions.md](../../decisions.md)); bảng cũ chưa có cột `chunk_role` + điều kiện trong `match_doc_chunks` |
+| E-05, L-2, L-4, D-008 | Thuộc bảng cũ `doc_chunks`; chat không còn dùng bảng này từ 2026-11-19. `match_doc_chunks_v2` đã sửa lọc model rỗng (E-05) và chỉ tìm trên chunk con/độc lập (D-008) |
+| A-1 | Chưa có quy trình đưa chunk v2 sang `approved` → với cấu hình production mặc định, chat không có tài liệu. Việc của luồng doc-ingest (cổng 2b/2c, verdict) |
 | H1, H6, T-1 | Handoff không tạo ticket; `[S#]` không lưu qua lượt; trace production chưa ghi phiên bản prompt/luật định tuyến (mới có log và `warnings`) |
 | — | Mã model dính chữ tiếng Việt ("F86có") không được nhận; capabilities của F86E, 6AHE, 6AVE, 10iV, 10iVE là tạm |
 
 ## Kết quả kiểm gần nhất
 
+2026-11-19 (chuyển v2, worktree nhánh `claude/retrieval-v2-chat`, `DATABASE_URL` giả): `pytest tests\chatbot tests\api` → 594 passed; `pytest tests` → 1077 passed, 14 skipped, 1 failed (`test_f86_baseline_csv_unchanged`: worktree checkout CSV bằng CRLF do `core.autocrlf=true`, blob trong git đúng hash; không liên quan thay đổi); `check_ai_docs` đạt. Chưa smoke trên Supabase thật.
 2026-11-14, từ `backend/`: `pytest tests` → 1120 passed, 14 skipped; `pytest tests\doc_ingest` (venv ingest) → 376 passed; `scripts\check_ai_docs.py` → đạt.
 Chưa chạy lại đợt này (không đổi frontend): `npm test` widget-backend, `npm run build`, `npm run lint` (số 2026-11-11: 22 pass; build đạt; lint 429 lỗi sẵn có).
 
@@ -71,6 +74,7 @@ Chưa chạy lại đợt này (không đổi frontend): `npm test` widget-backe
 
 1. **Toma:** nạp credit OpenAI; duyệt `evals/retrieval_cases/routing_intent.yaml` và `dual_source.yaml` (nên thêm 20–30 câu `test` theo cách hỏi thật); chọn RT-3 hay RT-3b; quyết `--vi-keywords`.
 2. Khi có credit, từ `backend/`: `evals\run_retrieval_eval.py --cases evals\retrieval_cases\<bộ>.yaml --mode website --repeat 3 --label <nhãn>` cho mốc còn thiếu (`sample_f54_f86`, `catalog_f54_astro`, `dual_source`); rồi thêm `--routing-version r1` / `r2` / `RT-1+RT-2+RT-3b` trên cả 5 bộ (bộ 120 câu dùng `--mode routing`). Biến thể `sb0.003_tb0`, `sb0.003_tb0.005` để chọn `target_boost`. Quyết định theo `ngu_canh`, MRR web2, "domain đúng"; chênh lệch dưới biên nhiễu không tính.
-3. Cổng B: Toma chọn bản luật; đổi `ROUTING_VERSION` mặc định cùng lúc tích hợp `doc_chunks_v2` vào chat.
+3. Cổng B: Toma chọn bản luật rồi đổi `ROUTING_VERSION` mặc định (chat đã dùng `doc_chunks_v2`, luật vẫn `r0`).
 4. Giai đoạn C (prompt `v2`), rồi D (so model bằng `--analysis-model`).
-5. Sau R-1: tích hợp `doc_chunks_v2` vào chat, sửa E-05, SSE nguồn/ảnh, handoff thật (H1), lưu `[S#]` (H6).
+5. Smoke v2: bước khởi động đã kiểm trên Supabase thật (2026-11-19: coverage thêm F54, `approved_only=False`); còn lượt thật có tra cứu — sau khi nạp credit hỏi một câu F54, một câu F86 → trace có `db.match_doc_chunks`, có `[S#]`. Duyệt chunk `approved` trước khi bật production.
+6. D-014: áp SQL `audience`, chạy `publish-assets --apply` cho một tài liệu, bật `CHAT_SOURCES_ENABLED`, smoke lượt thật có ảnh; chạy `npm test/lint/build`. Sau R-1: nhánh mã `codes`, handoff thật (H1), lưu `[S#]` (H6).

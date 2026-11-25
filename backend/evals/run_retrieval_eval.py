@@ -452,8 +452,8 @@ class RecordingRepository:
         self.matches.extend(rows)
         return rows
 
-    async def fetch_by_ids(self, ids: list[int]) -> list[Any]:
-        return await self.inner.fetch_by_ids(ids)
+    async def fetch_by_ids(self, ids: list[int], audiences: Any = ("public",)) -> list[Any]:
+        return await self.inner.fetch_by_ids(ids, audiences)
 
 
 async def load_index() -> tuple[dict[int, ChunkInfo], list[str]]:
@@ -462,14 +462,14 @@ async def load_index() -> tuple[dict[int, ChunkInfo], list[str]]:
     from sqlalchemy import text
 
     from app.db.session import AsyncSessionFactory
+    from app.modules.chatbot.repositories.doc_chunk_v2_repository import DocChunkV2Repository, MatchV2Options
 
     async with AsyncSessionFactory() as session:
         rows = (await session.execute(text(
             "select id, chunk_key, content_hash, section_path, chunk_role, chunk_type, section_title, scopes "
             "from doc_chunks_v2 where is_active"))).fetchall()
-        models = (await session.execute(text(
-            "select distinct unnest(product_models) from doc_chunks_v2 "
-            "where is_active and domain = 'technical_docs'"))).scalars().all()
+    # Cùng truy vấn production dùng lúc khởi động (main.load_technical_coverage), nhưng gồm cả chunk draft.
+    models = await DocChunkV2Repository(MatchV2Options(approved_only=False)).technical_docs_models()
     index = {r[0]: ChunkInfo(r[1], r[2], tuple(r[3]), r[4], r[5], r[6], tuple(r[7] or ())) for r in rows}
     return index, sorted(models)
 
@@ -517,15 +517,11 @@ async def run_core(cases: list[Case], index: dict[int, ChunkInfo], embedder: Cac
 
 
 def _patch_coverage(models: list[str]) -> list[str]:
-    """Thêm coverage technical_docs cho model đã có trong doc_chunks_v2 (chỉ trong tiến trình eval)."""
-    from app.modules.chatbot.extraction.registry import REGISTRY
+    """Thêm coverage technical_docs cho model đã có trong doc_chunks_v2 (trong tiến trình eval). Cùng hàm production
+    gọi lúc khởi động; eval tính cả chunk draft nên có thể thêm nhiều model hơn production (approved_only=true)."""
+    from app.modules.chatbot.extraction.registry import extend_technical_coverage
 
-    technical = REGISTRY["coverage"]["technical_docs"]
-    caps = REGISTRY["capabilities"]["control_interface"]
-    added = [m for m in models if m in caps and m not in technical]
-    for m in added:
-        technical[m] = list(caps[m])
-    return added
+    return extend_technical_coverage(models)
 
 
 def _website_state(question: str, context_model: str | None = None) -> Any:
@@ -803,7 +799,8 @@ def render(cases: list[Case], results: list[CaseResult], meta: dict[str, Any],
              f"- Thời điểm: {meta['at']} · file câu hỏi: `{meta['cases']}` · {len(cases)} câu"
              f" · phần: {meta.get('split') or 'all'} · chế độ: {meta.get('mode') or 'all'}"
              f" · số lần chạy bước phân tích: {meta.get('repeat') or 1}",
-             f"- Bảng/hàm: `doc_chunks_v2` / `match_doc_chunks_v2`, `p_approved_only = false` (chunk draft)",
+             f"- Bảng/hàm: `doc_chunks_v2` / `match_doc_chunks_v2`, `p_approved_only = false` (chunk draft)"
+             f" · chat production: `RETRIEVAL_APPROVED_ONLY={meta.get('production_approved_only')}`",
              f"- Retriever: {meta['retriever']}",
              f"- Prompt phân tích (chế độ website): {_prompt_label(meta.get('analysis_prompt'))}",
              "- Luật định tuyến: " + (
@@ -909,6 +906,7 @@ async def main_async(args: argparse.Namespace) -> Path:
         "at": datetime.now().strftime("%Y-%m-%d %H:%M"), "cases": str(args.cases.relative_to(ROOT)),
         "label": args.label, "mode": args.mode, "split": args.split, "repeat": args.repeat,
         "analysis_model": analysis_model,
+        "production_approved_only": settings.retrieval_approved_only,
         "retriever": (f"vector_k={settings.retrieval_vector_candidate_k}, fts_k={settings.retrieval_fts_candidate_k}, "
                       f"rrf_k={settings.retrieval_rrf_k}, top_k={settings.retrieval_final_chunk_top_k}, "
                       f"min_similarity={settings.retrieval_min_similarity}, embedding={settings.embedding_model}, "

@@ -175,6 +175,48 @@
     padding-left: 20px;
 }
 
+.sourceList {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #e8edf1;
+}
+
+.sourceTitle {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: #5b6b76;
+}
+
+.sourceChip {
+    display: inline-block;
+    margin-right: 6px;
+    padding: 0 6px;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #1f5f8b;
+    background: #e6f1f8;
+}
+
+.sourceImages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.sourceImages img {
+    display: block;
+    width: 112px;
+    height: 84px;
+    object-fit: cover;
+    border: 1px solid #e8edf1;
+    border-radius: 8px;
+    background: #f4f7f9;
+}
+
 .typingIndicator {
     color: #71818c;
     font-style: italic;

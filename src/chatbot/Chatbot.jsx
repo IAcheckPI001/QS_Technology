@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { LoaderCircle, Send, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import SourceList from './SourceList.jsx';
 import { useTranslation } from 'react-i18next';
 import { getWidgetHistory, streamChatbotResponse, streamCrmChatbotResponse } from '../services/chatbot.service.js';
 import styles from './Chatbot.module.css';
@@ -96,6 +97,11 @@ function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
                             : item
                     )));
                 },
+                onSources: (sources) => {
+                    setMessages((current) => current.map((item) => (
+                        item.id === assistantId ? { ...item, sources } : item
+                    )));
+                },
             });
         } catch (error) {
             if (!controller.signal.aborted) {
@@ -160,7 +166,12 @@ function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
                     >
                         {message.role === 'assistant' ? (
                             message.content
-                                ? <ReactMarkdown>{message.content}</ReactMarkdown>
+                                ? (
+                                    <>
+                                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                                        <SourceList sources={message.sources} />
+                                    </>
+                                )
                                 : isSending && <span className={styles.typingIndicator}>{t('chatbot.thinking')}</span>
                         ) : message.content}
                     </article>

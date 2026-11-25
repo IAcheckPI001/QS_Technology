@@ -1,0 +1,30 @@
+# 6AVE - Operation Guide · sinh từ CRM bởi `crm-fetch` (doc_ingest/sources/crm).
+# TODO người kiểm: exclude_pages/exclude_sections (bìa, lời cảm ơn, lịch sử phiên bản), scope_rules, rồi xoá dòng TODO.
+doc_id: 6ave-operation-en
+run_doc_ids:
+- 6ave-operation-en
+doc_type: user_guide
+doc_title: 6AVE - Operation Guide
+doc_version: '1.0'
+product_models:
+- 6AVE
+lang: en
+default_scopes:
+- operation
+scope_rules:
+- match: (?i)wiring|connection|install|đấu nối|lắp đặt
+  scopes:
+  - installation
+storage_bucket: doc-assets
+audience: public       # đã công bố cho khách ở website (2026-11-21)
+exclude_pages: []
+exclude_sections: []
+exclude_reason: ''
+note: Sinh từ CRM 2026-11-19; cần người kiểm exclude_pages (bìa, lời cảm ơn) và scope_rules
+source:
+  system: crm
+  crm_id: 649ac9d6-5f1c-4ed0-b68f-c3c148bc35dd
+  version: '1.0'
+  file_id: 1a1b4e75-2b23-47a7-893c-7d4802fd6be5
+  sha256: eb139b502690c3c0ed3ccc1a434dd7e7dc6288cf82a9d827a9ca4622344ffc9f
+  synced_at: '2026-11-19'

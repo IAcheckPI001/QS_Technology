@@ -4,6 +4,7 @@ from app.modules.chatbot.orchestration import (
     build_task_handlers,
 )
 from app.modules.chatbot.retrieval import Retriever
+from app.modules.chatbot.retrieval.audience import audiences_for
 from app.modules.chatbot.schemas.system import (
     Candidate,
     RetrievalResult,
@@ -42,7 +43,8 @@ class ExecutionStage:
 
         plan = build_execution_plan(state.analysis)
         scheduler = ExecutionScheduler(
-            build_task_handlers(state.analysis, self._retriever),
+            # Chốt chặn đối tượng xem: website chỉ tra chunk public, kênh CRM cả internal.
+            build_task_handlers(state.analysis, self._retriever, audiences_for(state.request_context.channel)),
             max_concurrency=self._max_concurrency,
         )
         state.plan = await scheduler.run(plan)

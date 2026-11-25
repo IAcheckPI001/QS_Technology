@@ -93,6 +93,8 @@ class RetrievalRequest(SystemModel):
     queries: list[RetrievalQuery] = Field(min_length=1)
     # Điểm cộng cho kết quả của lần tra cứu này khi gộp với các target khác (`RetrievalTarget.boost`).
     boost: float = Field(default=0.0, ge=0)
+    # Đối tượng xem được phép (`doc_chunks_v2.audience`), do ExecutionStage đặt theo kênh. Mặc định hẹp nhất.
+    audiences: list[NonEmptyStr] = Field(default_factory=lambda: ["public"], min_length=1)
 
 
 class ChunkAsset(SystemModel):

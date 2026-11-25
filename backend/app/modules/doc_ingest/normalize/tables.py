@@ -229,8 +229,15 @@ class _Builder:
                 self.rec.add_log("T-05", item.element_id, f"header flag demoted to data (step {step})",
                                  target=target, before={"docling_header": True}, after={"is_header": False})
             else:
+                # 2026-11-20 (I-56, duyệt: Toma): hàng do Docling gắn header ở đầu đoạn nối tiếp mà không khớp header
+                # (bước a) hay dạng dữ liệu (b, c) vẫn bị chunker bỏ (chỉ lấy hàng không phải header) → mất chữ im lặng
+                # (6AVE tr.7: hàng ANT). Giữ làm dữ liệu để nội dung còn trong chunk; mục review vẫn chặn chunk.
+                row.is_header = False
+                self.flags.append(f"header_unsure_kept_as_data:{row.row_id}")
+                self.rec.add_log("T-05", item.element_id, "unsure header flag kept as data (step d): text must not be dropped",
+                                 target=target, before={"docling_header": True}, after={"is_header": False})
                 self.rec.add_review(item.element_id, "header_demotion_unsure",
-                                    "header-flagged row matches neither the header nor the data shape",
+                                    "header-flagged row matches neither the header nor the data shape; kept as a data row",
                                     target=target, suggested_action="mark the row as header or data")
         self._commit_segment(item, header_rows, built)
         self.rec.add_log("T-03", item.element_id, "segment continues the logical table from the previous page",

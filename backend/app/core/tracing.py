@@ -127,6 +127,25 @@ class Span:
         }
 
 
+UsageKind = Literal["llm", "embedding"]
+
+
+@dataclass(frozen=True)
+class UsageEntry:
+    """Token của một lời gọi model trong lượt, ghi vào sổ usage của trace (`record_usage`).
+
+    Sổ không chịu trần span (`max_spans`). `estimated`: lời gọi hết giờ/bị huỷ/stream bị ngắt
+    trước khi nhà cung cấp trả usage; token được ước tính vì vẫn có thể bị tính tiền.
+    """
+
+    kind: UsageKind
+    model: str
+    input_tokens: int
+    output_tokens: int = 0
+    cached_input_tokens: int = 0
+    estimated: bool = False
+
+
 def _detached(name: str, kind: SpanKind) -> Span:
     """Span không thuộc trace nào: nhận set()/fail() nhưng không được lưu."""
     return Span(span_id="", parent_id=None, name=name, kind=kind, start_ms=0.0)
@@ -151,6 +170,9 @@ class Trace:
         self.dropped_spans = 0
         self._next_id = 0
         self.spans: list[Span] = []
+        # Sổ usage của mọi lời gọi model trong request (provider ghi qua `record_usage`), kể cả khi
+        # span của lời gọi bị bỏ vì vượt max_spans.
+        self.usage: list[UsageEntry] = []
         self.root = self._new_span(root_name, "server", None)
         self.root.start_ms = 0.0
 
@@ -227,29 +249,40 @@ class Trace:
         }
 
     def usage_by_model(self) -> list[dict[str, object]]:
-        """Usage thật của nhà cung cấp gom theo (loại span, model): số lần gọi và token.
+        """Usage của nhà cung cấp gom theo (loại lời gọi, model): số lần gọi, token, số lần ước tính.
 
-        Đọc thuộc tính `model`, `input_tokens`, `cached_input_tokens`, `output_tokens` mà provider ghi
-        vào span `llm`/`embedding` (B3). Span vượt giới hạn trace (`dropped_spans`) không được tính.
+        Nguồn chính là sổ `self.usage` do provider ghi (`record_usage`): không mất khi span bị bỏ vì
+        vượt `max_spans`, có cả lời gọi hết giờ/bị huỷ (ước tính). Sổ rỗng (provider không ghi sổ, vd
+        provider giả trong test) thì đọc thuộc tính token của span `llm`/`embedding` như B3 ban đầu.
         """
         groups: dict[tuple[str, str], dict[str, object]] = {}
+
+        def add(kind: str, model: object, tokens: tuple[int, int, int], estimated: bool) -> None:
+            key = (kind, model if isinstance(model, str) and model else "unknown")
+            group = groups.setdefault(key, {
+                "kind": key[0], "model": key[1], "calls": 0, "estimated_calls": 0,
+                "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0,
+            })
+            group["calls"] = int(group["calls"]) + 1
+            group["estimated_calls"] = int(group["estimated_calls"]) + int(estimated)
+            for field, value in zip(("input_tokens", "cached_input_tokens", "output_tokens"), tokens):
+                group[field] = int(group[field]) + value
+
+        if self.usage:
+            for entry in self.usage:
+                add(entry.kind, entry.model,
+                    (entry.input_tokens, entry.cached_input_tokens, entry.output_tokens), entry.estimated)
+            return list(groups.values())
 
         def number(span: Span, key: str) -> int:
             value = span.attributes.get(key)
             return int(value) if isinstance(value, int | float) and not isinstance(value, bool) else 0
 
         for span in self.spans:
-            if span.kind not in ("llm", "embedding"):
-                continue
-            model = span.attributes.get("model")
-            key = (span.kind, model if isinstance(model, str) and model else "unknown")
-            group = groups.setdefault(key, {
-                "kind": key[0], "model": key[1], "calls": 0,
-                "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0,
-            })
-            group["calls"] = int(group["calls"]) + 1
-            for field in ("input_tokens", "cached_input_tokens", "output_tokens"):
-                group[field] = int(group[field]) + number(span, field)
+            if span.kind in ("llm", "embedding"):
+                add(span.kind, span.attributes.get("model"), (
+                    number(span, "input_tokens"), number(span, "cached_input_tokens"), number(span, "output_tokens"),
+                ), False)
         return list(groups.values())
 
     def to_dict(self) -> dict[str, object]:
@@ -278,6 +311,13 @@ def current_span() -> Span:
         return span
     trace = _trace_var.get()
     return trace.root if trace is not None else _detached("detached", "internal")
+
+
+def record_usage(entry: UsageEntry) -> None:
+    """Ghi token của một lời gọi model vào sổ usage của trace hiện tại (không có trace thì bỏ qua)."""
+    trace = _trace_var.get()
+    if trace is not None:
+        trace.usage.append(entry)
 
 
 def set_root(**attributes: object) -> None:

@@ -24,6 +24,8 @@ from app.modules.chatbot.clarification import (
 from app.modules.chatbot.orchestration import select_direct_response_code
 from app.modules.chatbot.prompts.direct_responses import get_direct_response
 from app.modules.chatbot.providers.handoff import DisabledHandoffProvider, HandoffProvider
+from app.modules.chatbot.providers.supabase_storage import AssetSigner
+from app.modules.chatbot.sources import SourceItem, build_sources
 from app.modules.chatbot.schemas.default import ChannelType
 from app.modules.chatbot.schemas.system import (
     ConversationState,
@@ -65,11 +67,15 @@ class ChatbotService:
         clarification_stage: ClarificationResumeStage | None = None,
         handoff_provider: HandoffProvider | None = None,
         agent_runner: "AgentRunner | None" = None,
+        asset_signer: AssetSigner | None = None,
+        source_images_max: int = 3,
     ) -> None:
         self._provider = provider
         self._history_repository = history_repository
         self._security_stage = security_stage or SecurityStage()
-        self._context_loader = context_loader or ContextLoader(history_repository)
+        self._context_loader = context_loader or ContextLoader(
+            history_repository, history_turns=settings.context_history_turns,
+        )
         self._prune = prune or Prune(settings.context_token_budget)
         self._analysis_stage = analysis_stage or AnalysisStage(provider)
         self._execution_stage = execution_stage or ExecutionStage()
@@ -83,6 +89,11 @@ class ChatbotService:
         )
         # Chỉ được inject khi CRM_CHAT_FLOW=agent; không có thì CRM chạy pipeline cũ.
         self._agent_runner = agent_runner
+        # Nguồn đã trích dẫn kèm ảnh của lượt; router phát thành event SSE `sources` sau khi hết `delta`.
+        # Rỗng khi tính năng tắt (không có signer) hoặc không có trích dẫn.
+        self._asset_signer = asset_signer
+        self._source_images_max = source_images_max
+        self.turn_sources: list[SourceItem] = []
 
     async def stream_reply(
         self,
@@ -232,7 +243,7 @@ class ChatbotService:
                         query_origin=message,
                         answer=answer or None,
                         status="error",
-                        model=self._provider.model,
+                        model=self._turn_model(state),
                         latency_ms=round((perf_counter() - started_at) * 1000),
                         channel=channel,
                         **turn_ids,
@@ -243,6 +254,7 @@ class ChatbotService:
                 raise
 
             answer = "".join(answer_parts)
+            await self._collect_sources(state, answer)
             set_root(history_status="completed")
             with span("history.write", "db", history_status="completed"):
                 await self._history_repository.create(
@@ -250,7 +262,7 @@ class ChatbotService:
                     query_origin=message,
                     answer=answer,
                     status="completed",
-                    model=self._provider.model,
+                    model=self._turn_model(state),
                     latency_ms=round((perf_counter() - started_at) * 1000),
                     channel=channel,
                     **turn_ids,
@@ -272,6 +284,29 @@ class ChatbotService:
                     started_at=started_at,
                 )
             raise
+
+    async def _collect_sources(self, state: RunState, answer: str) -> None:
+        """Dựng `turn_sources` từ chunk được trích dẫn. Lỗi ở đây không được làm hỏng câu trả lời đã stream."""
+        self.turn_sources = []
+        if self._asset_signer is None:
+            return
+        try:
+            hits = [
+                hit
+                for _, plan in _executed_plans(state)
+                for task in plan.tasks
+                if task.result is not None and task.result.retrieval is not None
+                for result in task.result.retrieval.results
+                for hit in result.hits
+            ]
+            with span("sources.build", "internal") as sources_span:
+                self.turn_sources = await build_sources(
+                    _unique_hits(hits), answer, self._asset_signer, max_images=self._source_images_max)
+                sources_span.set(sources=len(self.turn_sources),
+                                 images=sum(len(item.images) for item in self.turn_sources))
+        except Exception:
+            logger.exception("building sources failed session_id=%s", state.input.session.session_id)
+            self.turn_sources = []
 
     def _retrieval_snapshot(self, state: RunState) -> dict:
         """Chunk đã chọn của lượt này, xếp theo score giảm dần cho màn Kết quả chunk."""
@@ -311,7 +346,7 @@ class ChatbotService:
             # Lỗi tra cứu không ném lên client (LLM trả lời mềm): lưu lại để truy vết.
             "retrieval_status": status,
             "retrieval_tasks": retrieval_tasks,
-            "model": self._provider.model,
+            "model": self._turn_model(state),
             "product_models": list(dict.fromkeys(
                 model
                 for trace in state.retrieval_traces
@@ -347,6 +382,7 @@ class ChatbotService:
             snapshot["agent_steps"] = [step.model_dump(mode="json") for step in agent.steps]
             snapshot["answered_without_tools"] = agent.answered_without_tools
             snapshot["invalid_citations"] = list(agent.invalid_citations)
+            snapshot["final_reason"] = agent.final_reason
         return snapshot
 
     async def _record_cancelled(
@@ -378,7 +414,7 @@ class ChatbotService:
                     session_id=session_id,
                     query_origin=message,
                     answer=answer or None,
-                    model=self._provider.model,
+                    model=self._turn_model(state),
                     latency_ms=round((perf_counter() - started_at) * 1000),
                     channel=channel,
                     **turn_ids,
@@ -387,6 +423,16 @@ class ChatbotService:
                 )
         except Exception:
             logger.exception("failed to record cancelled chat turn session_id=%s", session_id)
+
+    def _turn_model(self, state: RunState | None) -> str:
+        """Model trả lời của lượt: model của vòng lặp agent (AGENT_MODEL) ở lượt CRM chạy agent."""
+        if (
+            self._agent_runner is not None
+            and state is not None
+            and state.request_context.channel is ChannelType.CRM
+        ):
+            return self._agent_runner.model
+        return self._provider.model
 
     def _usage(self, message: str, answer: str) -> TurnUsage:
         """Usage thật của lượt từ trace đang chạy (B3); không có trace thì ước tính như cũ."""

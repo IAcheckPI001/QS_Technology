@@ -1,0 +1,30 @@
+# F10T - Hướng dẫn vận hành · sinh từ CRM bởi `crm-fetch` (doc_ingest/sources/crm).
+# TODO người kiểm: exclude_pages/exclude_sections (bìa, lời cảm ơn, lịch sử phiên bản), scope_rules, rồi xoá dòng TODO.
+doc_id: f10t-operation-vi
+run_doc_ids:
+- f10t-operation-vi
+doc_type: user_guide
+doc_title: F10T - Hướng dẫn vận hành
+doc_version: '1.0'
+product_models:
+- F10T
+lang: vi
+default_scopes:
+- operation
+scope_rules:
+- match: (?i)wiring|connection|install|đấu nối|lắp đặt
+  scopes:
+  - installation
+storage_bucket: doc-assets
+audience: public       # đã công bố cho khách ở website (2026-11-21)
+exclude_pages: []
+exclude_sections: []
+exclude_reason: ''
+note: Sinh từ CRM 2026-11-19; cần người kiểm exclude_pages (bìa, lời cảm ơn) và scope_rules
+source:
+  system: crm
+  crm_id: 71be0f13-5eaf-42ac-b584-3e10a4d0a897
+  version: '1.0'
+  file_id: fb4502a4-192d-4872-bc62-14e860dff0a2
+  sha256: a1323c2acbe9c44d80a1f0c55d65026b2cff5e88d423f29c0233be00b35b3e78
+  synced_at: '2026-11-19'

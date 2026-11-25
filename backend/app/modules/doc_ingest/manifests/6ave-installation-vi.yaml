@@ -1,0 +1,27 @@
+# 6AVE - Hướng dẫn lắp đặt · sinh từ CRM bởi `crm-fetch` (doc_ingest/sources/crm).
+# TODO người kiểm: exclude_pages/exclude_sections (bìa, lời cảm ơn, lịch sử phiên bản), scope_rules, rồi xoá dòng TODO.
+doc_id: 6ave-installation-vi
+run_doc_ids:
+- 6ave-installation-vi
+doc_type: installation_manual
+doc_title: 6AVE - Hướng dẫn lắp đặt
+doc_version: '1.0'
+product_models:
+- 6AVE
+lang: vi
+default_scopes:
+- installation
+scope_rules: []
+storage_bucket: doc-assets
+audience: public       # đã công bố cho khách ở website (2026-11-21)
+exclude_pages: []
+exclude_sections: []
+exclude_reason: ''
+note: Sinh từ CRM 2026-11-19; cần người kiểm exclude_pages (bìa, lời cảm ơn) và scope_rules
+source:
+  system: crm
+  crm_id: a3f2d624-fb21-4ac4-8342-876b3e7f6aa2
+  version: '1.0'
+  file_id: 95220721-5004-4df6-bfbe-b93e53236f43
+  sha256: b6ba02a207f8ac238116015f25aeb1f59734c5eb607aaf6341576cc8815dba03
+  synced_at: '2026-11-19'

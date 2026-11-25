@@ -1,0 +1,27 @@
+# F54 - Installation Guide · sinh từ CRM bởi `crm-fetch` (doc_ingest/sources/crm).
+# TODO người kiểm: exclude_pages/exclude_sections (bìa, lời cảm ơn, lịch sử phiên bản), scope_rules, rồi xoá dòng TODO.
+doc_id: f54-installation-en
+run_doc_ids:
+- f54-installation-en
+doc_type: installation_manual
+doc_title: F54 - Installation Guide
+doc_version: '1.0'
+product_models:
+- F54
+lang: en
+default_scopes:
+- installation
+scope_rules: []
+storage_bucket: doc-assets
+audience: public       # đã công bố cho khách ở website (2026-11-21)
+exclude_pages: []
+exclude_sections: []
+exclude_reason: ''
+note: Sinh từ CRM 2026-11-19; cần người kiểm exclude_pages (bìa, lời cảm ơn) và scope_rules
+source:
+  system: crm
+  crm_id: 4935f0c0-2217-441c-a953-1849fb3bab61
+  version: '1.0'
+  file_id: d746793d-1f31-4336-b65a-b6e3ffe473d9
+  sha256: 85edb56b4c3f950c83c6212b916f29f5bd6abee9f1bf0c5ea014382be3cf58c8
+  synced_at: '2026-11-19'

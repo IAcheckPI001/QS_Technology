@@ -43,6 +43,8 @@ class TurnUsageInfo(BaseModel):
     # estimate: bản ghi cũ, đếm từ chữ câu hỏi/câu trả lời theo giá gpt-4o-mini.
     source: Literal["trace", "estimate"]
     llm_calls: int | None = None
+    # Lời gọi hết giờ/bị huỷ/stream bị ngắt trước khi có usage: token của chúng là ước tính.
+    estimated_calls: int | None = None
     cached_input_tokens: int | None = None
     embedding_tokens: int | None = None
     # Model chưa có giá: chi phí của chúng không được cộng (thiếu).
@@ -207,6 +209,8 @@ class RetrievalSnapshotResponse(BaseModel):
     agent_steps: list[AgentStepItem] = Field(default_factory=list)
     answered_without_tools: bool | None = None
     invalid_citations: list[str] = Field(default_factory=list)
+    # Lượt agent: lý do kết thúc vòng lặp (answered, limit, plateau, ambiguous, budget, no_answer).
+    final_reason: str | None = None
 
 
 class ChatHistoryResponse(BaseModel):

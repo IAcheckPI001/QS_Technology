@@ -1,0 +1,30 @@
+# 6AH - Operation Guide · sinh từ CRM bởi `crm-fetch` (doc_ingest/sources/crm).
+# TODO người kiểm: exclude_pages/exclude_sections (bìa, lời cảm ơn, lịch sử phiên bản), scope_rules, rồi xoá dòng TODO.
+doc_id: 6ah-operation-en
+run_doc_ids:
+- 6ah-operation-en
+doc_type: user_guide
+doc_title: 6AH - Operation Guide
+doc_version: '1.0'
+product_models:
+- 6AH
+lang: en
+default_scopes:
+- operation
+scope_rules:
+- match: (?i)wiring|connection|install|đấu nối|lắp đặt
+  scopes:
+  - installation
+storage_bucket: doc-assets
+audience: public       # đã công bố cho khách ở website (2026-11-21)
+exclude_pages: []
+exclude_sections: []
+exclude_reason: ''
+note: Sinh từ CRM 2026-11-19; cần người kiểm exclude_pages (bìa, lời cảm ơn) và scope_rules
+source:
+  system: crm
+  crm_id: 388829ce-db18-4a38-8d9d-ba31e20b59d7
+  version: '1.0'
+  file_id: 74a3f22f-d900-4872-a7ac-36ac73897494
+  sha256: ad1dc49284a4eb800d0f6c1d0a9abbe5fc9cdcd5e67d0fd2d24faf883928d065
+  synced_at: '2026-11-19'

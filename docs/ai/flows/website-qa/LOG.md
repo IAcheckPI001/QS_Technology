@@ -8,6 +8,106 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-21 · Event SSE `sources`: nguồn trích dẫn kèm ảnh có URL ký (D-014, giai đoạn B) · loại: thay đổi
+
+- Vấn đề: ảnh của chunk chỉ là metadata `bucket/path`; chat không trả ảnh, người dùng không thấy hình trong khung chat.
+- Quyết định/luật (Toma 2026-11-21, D-014): ảnh trong bucket private `doc-assets`; backend ký URL ngắn hạn theo lượt; model không sinh URL, backend
+  đính ảnh của chunk mà câu trả lời trích dẫn (`[S#]`). Event `sources` sau mọi `delta`, trước `done`; sau cờ `CHAT_SOURCES_ENABLED` (mặc định tắt).
+  Ảnh thừa hưởng điều kiện của chunk (cờ `RETRIEVAL_APPROVED_ONLY` quyết định có trả chunk draft và ảnh của nó).
+- File: `providers/supabase_storage.py` (`AssetSigner`, httpx, ký theo lô một lần mỗi bucket, lỗi chỉ ghi loại lỗi), `sources.py` (`cited_source_ids`,
+  `build_sources`), `services/chat_service.py` (`turn_sources`), `routers/sse.py`, `dependencies.py`, `main.py`, `core/config.py` (5 biến mới);
+  `src/services/chatbot.service.js` (`onSources`), `src/chatbot/SourceList.jsx`, `Chatbot.jsx`, `Chatbot.module.css`; test `tests/chatbot/test_sources.py`.
+- Kiểm chứng: `pytest tests` (venv chính) → 1140 passed, 14 skipped, 1 failed có sẵn (CRLF CSV baseline); event `sources` kiểm qua luồng agent thật với signer giả.
+  **Chưa chạy:** `npm test`, `npm run lint`, `npm run build` (worktree không có `node_modules`); chưa xem giao diện trên trình duyệt; chưa ký URL với Supabase thật.
+- Ảnh hưởng contract/API/schema/cấu hình: thêm event SSE `sources` ([api_guidelines.md](../../api_guidelines.md)); biến `CHAT_SOURCES_ENABLED`, `SUPABASE_URL`,
+  `SUPABASE_SERVICE_ROLE_KEY` (bí mật), `ASSET_URL_TTL_S`, `SOURCE_IMAGES_MAX` ([deploy-rules.md](../../rules/deploy-rules.md)); client cũ bỏ qua event lạ.
+- Chưa làm / mở tiếp: ảnh lấy từ `ChunkHit.assets` (chunk cha khi mở rộng) nên nếu hình nằm ở chunk con mà chunk cha không có thì chưa hiện (cần kiểm trên dữ liệu thật);
+  màn lịch sử của Workspace chưa hiển thị nguồn/ảnh (URL hết hạn nên cần ký lại khi tải lịch sử); đo `<answer_format>`; widget-backend chưa có test riêng cho event `sources` (chạy `npm test` khi có `node_modules`).
+
+## 2026-11-21 · Đối tượng xem `audience` ở retrieval và prompt định dạng câu trả lời (D-014, giai đoạn A) · loại: quyết định, thay đổi
+
+- Vấn đề: chuẩn bị tài liệu nội bộ chỉ cho CRM. `doc_chunks_v2`/`match_doc_chunks_v2` không có bộ lọc đối tượng xem và
+  `Retriever` không biết kênh (một retriever dùng chung website và agent CRM): nạp chunk nội bộ sẽ lộ ra website.
+- Quyết định/luật (Toma 2026-11-21): `audience` `public|internal`, mặc định `internal`; website tra `public`, CRM tra cả hai
+  (D-014). Ảnh sẽ ở bucket private + URL ký (giai đoạn B, chưa làm). Prompt trả lời thêm `<answer_format>` (danh sách đánh số cho quy trình,
+  bảng cho thông số/cổng, cảnh báo ở đầu); chưa đo chất lượng, chưa đổi `PROMPT_VERSION`.
+- File: `backend/sql/doc_chunks_v2.sql` (cột `audience`, tham số `p_audiences` mặc định `public`, lọc cả ba nhánh),
+  `retrieval/audience.py` (kênh → tập), `schemas/system/retrieval.py` (`RetrievalRequest.audiences`), `orchestration/handlers.py`,
+  `stages/execution_stage.py` (lấy kênh từ `state.request_context`), `retrieval/retriever.py` (giao các target cho `fetch_by_ids`),
+  `repositories/doc_chunk_v2_repository.py` (truyền `audiences`, coverage chỉ tính chunk public), `prompts/answer.py`;
+  test mới `tests/chatbot/test_retrieval_audience.py`, sửa các fake repository.
+- Kiểm chứng: `pytest tests` → 1129 passed, 14 skipped, 1 failed có sẵn (CRLF CSV baseline); `pytest tests\doc_ingest` (venv ingest) → 413 passed,
+  cùng 1 lỗi có sẵn. Chưa áp SQL trên Supabase, chưa smoke lượt thật.
+- Ảnh hưởng contract/API/schema/cấu hình: đổi SQL và chữ ký hàm `match_doc_chunks_v2` (thêm tham số cuối có mặc định); repository
+  `match`/`fetch_by_ids` thêm tham số `audiences` (mặc định `public`); không đổi route hay SSE. **Áp SQL trước khi deploy code.**
+- Chưa làm / mở tiếp: giai đoạn B (`publish-assets`, bucket private, ký URL, event SSE `sources`, giao diện); coverage `technical_docs` là
+  registry chung nên model chỉ có tài liệu nội bộ không được nhận cho kênh CRM (cần registry theo kênh nếu thật sự cần).
+
+## 2026-11-20 · Website cũng chỉ nạp 10 lượt gần nhất làm context (D-015) · loại: thay đổi
+
+- `ContextLoader` dùng chung: lịch sử của phiên website giới hạn `CONTEXT_HISTORY_TURNS` (10) lượt; `Prune` (2.048 token)
+  vẫn cắt tiếp như cũ, nên câu trả lời không đổi với phiên ngắn. Chi tiết: [chat-platform LOG](../chat-platform/LOG.md).
+
+## 2026-11-20 · C7: so sánh F86–F54 qua widget đúng cột nhưng thiếu nhiều khác biệt · loại: kiểm chứng
+
+- Phiên `97fa9b85…` 07:29 UTC, pipeline gpt-4o-mini, hạn mức 3 + 2: cắt cột bảng đúng; 7.063 token, 0,00085 USD.
+- Câu trả lời chỉ có số trục, màn hình, RTCP, kèm câu "không có tài liệu chi tiết" gây hiểu nhầm: chunk chung lấy
+  bảng Compensation (giống nhau) và Multi axis thay General/Hardware. Chi tiết: [crm-agent LOG](../crm-agent/LOG.md)
+  mục "Bộ câu so sánh C1–C7". Hướng sửa CMP-1 (chọn bảng có dòng khác nhau) áp chung cho website.
+
+## 2026-11-20 · Câu so sánh: chunk riêng trước chunk chung, cắt cột bảng (D-014, tạm) · loại: thay đổi
+
+- Retriever dùng chung đổi cách chọn chunk khi so sánh: mỗi model 2 chunk riêng, 4 chunk chung (bảng chọn
+  model), và bảng markdown chỉ giữ cột của model được hỏi. Mặc định là quyết định tạm D-014.
+- Chi tiết và kiểm chứng: [crm-agent LOG](../crm-agent/LOG.md) các mục 2026-11-20. Website cần kiểm câu C7
+  (so sánh qua widget) và `run_retrieval_eval.py` trước khi chốt D-014.
+
+## 2026-11-20 · Câu so sánh: hạn mức chunk theo từng model · loại: thay đổi
+
+- Retriever: chế độ `comparison` giữ `RETRIEVAL_COMPARE_PER_MODEL` (mặc định 3) chunk và nhóm ngữ cảnh
+  cho mỗi model, thay top-k chung 6 → 5 nhóm (2 model: 6 nhóm; 3 model: 9). Áp cho cả pipeline website.
+- Lý do và chi tiết: [crm-agent LOG](../crm-agent/LOG.md) mục 2026-11-20 (Đợt 1 gói E+D).
+- Kiểm chứng: `pytest tests` → 1112 passed (test retriever mới). Chưa chạy `run_retrieval_eval.py`
+  (cần OpenAI + DB): Toma chạy `dual_source`, `routing_intent` trước khi merge.
+
+## 2026-11-19 · Lượt kiểm thử v2 chưa tới bước tra cứu; đính chính current-state (B-1) · loại: sự cố, kiểm chứng
+
+- Vấn đề: hai lượt kiểm thử sau khi merge PR #3 đều không chạy tra cứu. Lượt 10:12 (kênh crm): server
+  chạy checkout chưa pull (`7599b30`, code cũ). Lượt 10:26 (trace `295fa2aa…`, checkout `d2c907e` có v2):
+  `llm.chat_tools` 429 `credit_balance_exhausted`, agent 0 bước, `retrieval_status=not_applicable`.
+- Kiểm chứng: chạy lại bước khởi động của `main.py` trên Supabase thật, không gọi OpenAI →
+  `DocChunkV2Repository`, `approved_only=False`, model `technical_docs` trong DB: F54, F86; coverage
+  `[F86]` → `[F54, F86]`; `doc_chunks_v2` active: 356 chunk, đều `draft`.
+- Đính chính: mục "Chat chuyển sang doc_chunks_v2" bên dưới quên sửa dòng website-qa trong
+  `current-state.md` (vẫn ghi "chat vẫn dùng bảng cũ"); đã sửa.
+- Chưa kiểm / mở tiếp: tra cứu v2 trong một lượt thật (span `db.match_doc_chunks`, chunk id thuộc
+  `doc_chunks_v2`), chờ nạp credit OpenAI (B-1).
+
+## 2026-11-19 · Chat chuyển sang doc_chunks_v2 (D-009 bước 6) · loại: thay đổi, cấu hình
+
+- Quyết định của Toma: thay hẳn bảng cũ (không có cờ chọn bảng; rollback bằng revert); thêm
+  `RETRIEVAL_APPROVED_ONLY` (mặc định `true`); coverage `technical_docs` nạp từ DB lúc khởi động.
+- `main.py`: `build_doc_repository()` → `DocChunkV2Repository(MatchV2Options(approved_only=...))`, các option khác
+  giữ mặc định production; `load_technical_coverage()` gọi `DocChunkV2Repository.technical_docs_models()` rồi
+  `registry.extend_technical_coverage()`; lỗi DB chỉ ghi cảnh báo. Tool `product_docs_ask` dùng chung retriever.
+- Xoá `repositories/doc_chunk_repository.py`; `_row`, `_vector_literal` chuyển sang repository v2.
+  `backend/sql/doc_chunks.sql` ghi chú không còn được chat dùng.
+- Eval giữ nguyên hành vi: `run_retrieval_eval.py` vẫn `approved_only=False` và đủ biến thể; `_patch_coverage`
+  và truy vấn model dùng chung code với production; báo cáo ghi thêm `RETRIEVAL_APPROVED_ONLY` của production.
+  `run_crm_agent_eval.py`, `compare_agent_models.py` dựng retriever như production.
+- Test mới: `tests/chatbot/test_retrieval_v2_wiring.py`.
+- Chưa làm: smoke trên Supabase thật; chưa có chunk `approved` nên production mặc định không có tài liệu.
+
+## 2026-11-19 · Tổng hợp baseline định tuyến 120 câu `v1/r0` · loại: đánh giá
+
+- Vấn đề: số tổng hợp trong STATE chưa nêu rõ độ phủ từng nhóm, khác biệt intent với route, và hạn chế của chế độ routing.
+- Kết quả: tổng hợp run ngày 14/11 (gpt-4.1-mini, 3 lần, split=all) thành [báo cáo](../../reports/website_qa_routing_eval_v1_r0_2026-11-14.md); tách intent đúng khỏi trường hợp `unknown_product_model` khiến pipeline không tìm.
+- Phát hiện tái lập: artifact có 120 câu/R120 nhưng YAML hiện tại chỉ còn 119 câu, không còn R120.
+- File: báo cáo mới, `STATE.md`.
+- Kiểm chứng: đối chiếu `report.md`, `results.json`, `routing_intent.yaml`; không chạy lại eval.
+- Ảnh hưởng contract/API/schema: không.
+- Mở tiếp: duyệt bộ câu và đồng bộ lại bộ nguồn với artifact; đo split `test` riêng khi chạy lại.
+
 ## 2026-11-16 · Dùng 100milionseek cho eval routing · loại: thay đổi, kiểm thử
 
 - Thêm lựa chọn `--analysis-provider 100milionseek` vào `evals/run_retrieval_eval.py`; provider chỉ được phép

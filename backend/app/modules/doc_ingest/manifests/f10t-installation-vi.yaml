@@ -1,0 +1,27 @@
+# F10T - Hướng dẫn lắp đặt · sinh từ CRM bởi `crm-fetch` (doc_ingest/sources/crm).
+# TODO người kiểm: exclude_pages/exclude_sections (bìa, lời cảm ơn, lịch sử phiên bản), scope_rules, rồi xoá dòng TODO.
+doc_id: f10t-installation-vi
+run_doc_ids:
+- f10t-installation-vi
+doc_type: installation_manual
+doc_title: F10T - Hướng dẫn lắp đặt
+doc_version: '1.0'
+product_models:
+- F10T
+lang: vi
+default_scopes:
+- installation
+scope_rules: []
+storage_bucket: doc-assets
+audience: public       # đã công bố cho khách ở website (2026-11-21)
+exclude_pages: []
+exclude_sections: []
+exclude_reason: ''
+note: Sinh từ CRM 2026-11-19; cần người kiểm exclude_pages (bìa, lời cảm ơn) và scope_rules
+source:
+  system: crm
+  crm_id: be507810-9abf-46f2-9eb5-98d83c003d1d
+  version: '1.0'
+  file_id: 0a5abd32-56da-47b4-a7dd-fc4f311240a1
+  sha256: cb5298de9c1d6d03a61a8d0994aaef2f0849b38f897f1ef1ef88597d69274ecc
+  synced_at: '2026-11-19'

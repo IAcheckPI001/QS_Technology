@@ -70,7 +70,8 @@ Tóm tắt; nguồn chuẩn kèm lý do và cách kiểm: [rules/team-rules.md](
 5. Cập nhật tài liệu: viết lại `STATE.md` của luồng, thêm một mục vào đầu `LOG.md` theo
    mẫu ở [flows/_template/LOG.md](docs/ai/flows/_template/LOG.md); sửa `README.md` khi
    thiết kế đổi. Trạng thái tổng của luồng đổi thì sửa dòng của luồng trong
-   `current-state.md`.
+   `current-state.md`. Hướng dẫn từng bước, danh sách loại mục và ví dụ:
+   [.claude/skills/flow-log/SKILL.md](.claude/skills/flow-log/SKILL.md).
 
 ## Validation
 

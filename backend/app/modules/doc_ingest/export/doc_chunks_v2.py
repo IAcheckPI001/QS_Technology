@@ -105,11 +105,14 @@ def to_row(chunk: DraftChunk, ctx: ApprovalContext, source_run: str | None = Non
         # Trang in không phải số (vd. "iv") vẫn giữ nguyên văn ở đây.
         "printed_page_start": chunk.printed_page_start, "printed_page_end": chunk.printed_page_end,
         "curated_decisions": [d.model_dump(mode="json", exclude_none=True) for d in chunk.curated_decisions],
+        # 2026-11-19: vị trí trong PDF (trang + vùng) và nguồn CRM (id, mã file, version; không có URL đã ký)
+        "locations": [loc.model_dump(mode="json", exclude_none=True) for loc in chunk.locations],
+        "crm": chunk.source_ref.model_dump(mode="json") if chunk.source_ref is not None else None,
     }
     return {
         "parent_key": chunk.parent_key,
         "doc_id": chunk.doc_id, "doc_version": chunk.doc_version, "doc_title": chunk.doc_title,
-        "doc_type": chunk.doc_type, "lang": chunk.lang,
+        "doc_type": chunk.doc_type, "lang": chunk.lang, "audience": chunk.audience,
         "chunk_key": chunk.chunk_key, "chunk_index": chunk.chunk_index, "chunk_role": chunk.chunk_role,
         "chunk_type": chunk.chunk_type,
         "domain": chunk.domain, "scopes": list(chunk.scopes), "product_models": list(chunk.product_models),

@@ -164,6 +164,16 @@ def _review_2c(q: ChunkQuality) -> str:
             "<code>enrichment_verdict</code> ok/fix, <code>enrichment_note</code>, <code>enrichment_severe</code>.</p>")
 
 
+def _locations_text(c: DraftChunk) -> str:
+    """"tr.12 (in 10) [x0,y0 → x1,y1]" cho từng trang; người duyệt mở PDF đúng trang để đối chiếu."""
+    parts = []
+    for loc in c.locations:
+        b = loc.bbox
+        printed = f" (in {loc.printed_page})" if loc.printed_page else ""
+        parts.append(f"tr.{loc.page}{printed} [{b.x0:.0f},{b.y0:.0f} → {b.x1:.0f},{b.y1:.0f}]")
+    return "; ".join(parts) or "—"
+
+
 def _card(c: DraftChunk, sample: dict[str, str] | None = None) -> str:
     role = c.chunk_role
     badges = "".join(f"<span class='badge'>{_e(x)}</span>" for x in
@@ -189,7 +199,8 @@ def _card(c: DraftChunk, sample: dict[str, str] | None = None) -> str:
         body = f"<details><summary>Content cha (nối các con)</summary>{body}</details>"
     extra = (f"<details><summary>embed_text, nhãn hình, element</summary><pre>{_e(c.embed_text)}</pre>"
              f"<p class='muted'>Nhãn hình: {_e(', '.join(f'{x.text} ({x.source})' for x in c.figure_labels) or '—')}</p>"
-             f"<p class='muted'>element_ids: {_e(', '.join(c.element_ids))}</p></details>")
+             f"<p class='muted'>element_ids: {_e(', '.join(c.element_ids))}</p>"
+             f"<p class='muted'>Vị trí: {_e(_locations_text(c))}</p></details>")
     return (f"<div class='card {role}' id='{_e(c.chunk_key.split(':')[-1])}' data-type='{_e(c.chunk_type)}' "
             f"data-role='{role}' data-flags='{_e(' '.join(c.flags + c.review_blockers + (['mau_2c'] if marks else [])))}' "
             f"data-ps='{c.page_start}' "

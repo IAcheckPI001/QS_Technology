@@ -19,6 +19,19 @@ class ScopeRule(StrictModel):
     scopes: list[Scope] = Field(min_length=1)
 
 
+class CrmSource(StrictModel):
+    """Nguồn tài liệu trên CRM (2026-11-19, crm-sync): khóa `crm_id` là `id` của tài liệu trong cây
+    `company-docs/website-tree`; `file_id` là mã file trong `file_url` (đổi khi upload file mới).
+    Không chứa URL đã ký (`exp`, `sig` hết hạn theo ngày)."""
+
+    system: Literal["crm"] = "crm"
+    crm_id: str
+    version: str
+    file_id: str
+    sha256: str
+    synced_at: str                               # YYYY-MM-DD
+
+
 class DocManifest(StrictModel):
     doc_id: str                                  # theo quy ước CSV: {model}_{loại}_{phiên bản}
     run_doc_ids: list[str] = Field(default_factory=list)   # `--doc-id` của các lần chạy ingest ứng với tài liệu này
@@ -30,6 +43,9 @@ class DocManifest(StrictModel):
     default_scopes: list[Scope] = Field(min_length=1)
     scope_rules: list[ScopeRule] = Field(default_factory=list)
     storage_bucket: str
+    # Đối tượng xem (2026-11-21): `public` = đã công bố cho khách ở website (chat website và CRM đều tìm được);
+    # `internal` = chỉ kênh CRM. Mặc định `internal` để tài liệu mới không lộ ra website khi quên gán.
+    audience: Literal["public", "internal"] = "internal"
     # Loại khỏi chunk (2026-11-13): trang (`pdf_page_index`) hoặc mục (tiền tố tiêu đề một cấp trong `section_path`)
     # không có nội dung kỹ thuật (bìa, lời cảm ơn, lịch sử phiên bản…). Phần tử bị loại tính vào độ phủ với lý do
     # `manifest_excluded`; `exclude_reason` ghi vì sao (người duyệt đọc).
@@ -37,6 +53,7 @@ class DocManifest(StrictModel):
     exclude_sections: list[str] = Field(default_factory=list)
     exclude_reason: str = ""
     note: str = ""
+    source: CrmSource | None = None              # None = PDF đưa vào tay (manifest cũ)
 
     @field_validator("doc_id")
     @classmethod

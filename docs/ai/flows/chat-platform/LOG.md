@@ -7,6 +7,33 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-07 (nguyên văn từ `current-state.md` và `architecture.md`, gồm Finding
 status, API gateway, service key, lease, tracing): [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-21 · SQL `doc_chunks_v2`: cột `audience`, tham số `p_audiences` (D-014) · loại: thay đổi
+
+- Vấn đề: cần chặn chunk nội bộ khỏi kênh website ở lớp dữ liệu (chi tiết và quyết định: website-qa LOG 2026-11-21, D-014).
+- Quyết định/luật: cột `audience` (check `public|internal`, mặc định `internal`); bảng đã tồn tại thêm cột với mặc định `public` rồi đổi
+  mặc định về `internal` (dòng đã nạp đều là tài liệu công bố); `match_doc_chunks_v2` thêm `p_audiences text[] default array['public']`, lọc ở ba nhánh.
+- File: `backend/sql/doc_chunks_v2.sql`, [deploy-rules.md](../../rules/deploy-rules.md) (hàng SQL số 6).
+- Kiểm chứng: chỉ test phía Python (fake session, kiểm tham số và chuỗi SQL); **SQL chưa chạy trên Supabase**. Kiểm sau khi áp:
+  `select audience, count(*) from doc_chunks_v2 group by 1` phải ra toàn `public` cho dữ liệu hiện có.
+- Ảnh hưởng contract/API/schema/cấu hình: đổi chữ ký hàm SQL; áp SQL trước khi deploy, nếu không retrieval lỗi vì thiếu tham số `p_audiences`.
+- Chưa làm / mở tiếp: áp SQL; giai đoạn B (bucket private, ký URL, SSE `sources`) sẽ đổi `api_guidelines.md`.
+
+## 2026-11-20 · ContextLoader chỉ đọc 10 lượt gần nhất; `conversation_state` có thêm `facts` (D-015) · loại: thay đổi
+
+- `HistoryRepository.list_for_context(limit)`: `CONTEXT_HISTORY_TURNS` (mặc định 10) lượt `completed` gần nhất, thứ tự
+  cũ → mới; trước đây đọc cả phiên. `conversation_state` của lượt agent có khoá `facts` (định danh do tool trả); đọc
+  state cũ không có khoá này vẫn đúng, `facts` hỏng bị bỏ riêng. Không cần SQL.
+- Chi tiết: [crm-agent LOG](../crm-agent/LOG.md) mục "Gói A"; quyết định D-015.
+
+## 2026-11-20 · B3 đọc usage từ sổ của trace, không mất khi vượt trần span · loại: thay đổi
+
+- B3 cộng usage từ span nên span bị bỏ vì vượt `CHAT_TRACE_MAX_SPANS` không được tính, lời gọi hết
+  giờ/bị huỷ không ghi gì. Nay `OpenAIProvider` ghi `Trace.usage` cho mọi lời gọi; `usage_by_model`
+  đọc sổ (rỗng thì đọc span như cũ); lời gọi bị ngắt ghi ước tính, đếm ở `usage.estimated_calls`
+  (snapshot và `/history`). History ghi `AGENT_MODEL` ở lượt CRM chạy agent.
+- Chi tiết, file, kiểm chứng: [crm-agent LOG](../crm-agent/LOG.md) mục 2026-11-20 (Đợt 0).
+- Kiểm chứng: `pytest tests` → 1107 passed, 14 skipped, 1 failed có sẵn (CSV CRLF). Chưa merge.
+
 ## 2026-11-18 · B2: bảng tóm tắt hội thoại, tìm không dấu, phân trang (Q29, Q30) · loại: thay đổi
 
 - Vấn đề: danh sách hội thoại chạy window function trên toàn `chat_history` và đọc JSON mỗi request

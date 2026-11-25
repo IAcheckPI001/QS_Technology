@@ -49,4 +49,13 @@ Không nhắc tới task_id, status hay tên kỹ thuật nội bộ.
 - Mỗi câu chứa thông tin kỹ thuật phải kết thúc bằng [Sx]; câu không có nguồn thì bỏ.
 - Không thêm câu mời chào ở cuối câu trả lời kỹ thuật.
 </answer_style>
+
+<answer_format>
+Trình bày bằng Markdown gọn, chọn theo loại câu hỏi; không dùng tiêu đề lớn (#), không in đậm cả đoạn.
+- Quy trình/các bước: danh sách đánh số, mỗi bước một câu hành động, mã nguồn [Sx] ở cuối bước.
+- Thông số, so sánh nhiều model hoặc nhiều mục: bảng Markdown ngắn (cột đầu là tên mục), dưới 8 dòng; nhiều hơn thì nhóm lại.
+- Đấu dây, chân, cổng: bảng hai hoặc ba cột (chân/cổng, chức năng, ghi chú) đúng như nguồn.
+- Cảnh báo an toàn có trong nguồn: một dòng riêng in đậm ở đầu câu trả lời.
+- Câu hỏi đơn giản: một hai câu văn xuôi, không dựng bảng hay danh sách.
+</answer_format>
 """

@@ -1,8 +1,9 @@
 """Usage và chi phí thật của một lượt chat (B3, FRONTEND_REQUIREMENTS M2/Q4).
 
-Cộng usage do OpenAI trả về của mọi lần gọi AI và embedding trong lượt (đọc từ trace đang chạy,
-`Trace.usage_by_model`), đổi ra USD theo giá từng model (`core/pricing.py`). Không có trace thì
-giữ cách ước tính cũ từ chữ câu hỏi/câu trả lời, ghi rõ `source = "estimate"`.
+Cộng usage do OpenAI trả về của mọi lần gọi AI và embedding trong lượt (sổ usage của trace đang
+chạy, `Trace.usage_by_model`: không mất khi span bị bỏ vì vượt trần; lời gọi hết giờ/bị huỷ được
+ước tính và đếm ở `estimated_calls`), đổi ra USD theo giá từng model (`core/pricing.py`). Không có
+trace thì giữ cách ước tính cũ từ chữ câu hỏi/câu trả lời, ghi rõ `source = "estimate"`.
 
 Ghi vào `chat_history`:
 - cột `input_tokens` / `output_tokens` (và `total_tokens` tính từ hai cột này): token của lời gọi AI,
@@ -28,6 +29,8 @@ class TurnUsage:
     cached_input_tokens: int = 0
     embedding_tokens: int = 0
     llm_calls: int = 0
+    # Lời gọi (AI hoặc embedding) hết giờ/bị huỷ/stream ngắt trước khi có usage: token là ước tính.
+    estimated_calls: int = 0
     cost_usd: float = 0.0
     by_model: list[dict] = field(default_factory=list)
     # Model gặp trong lượt nhưng chưa có giá: chi phí của chúng không được cộng.
@@ -46,6 +49,7 @@ class TurnUsage:
         return {
             "source": self.source,
             "llm_calls": self.llm_calls,
+            "estimated_calls": self.estimated_calls,
             "input_tokens": self.input_tokens,
             "cached_input_tokens": self.cached_input_tokens,
             "output_tokens": self.output_tokens,
@@ -57,8 +61,8 @@ class TurnUsage:
 
 
 def usage_from_trace(trace: Trace, overrides: dict[str, ModelPrice] | None = None) -> TurnUsage:
-    """Usage thật của lượt từ các span `llm`/`embedding` của trace."""
-    totals = {"input": 0, "cached": 0, "output": 0, "embedding": 0, "calls": 0}
+    """Usage thật của lượt từ sổ usage của trace (`Trace.usage_by_model`)."""
+    totals = {"input": 0, "cached": 0, "output": 0, "embedding": 0, "calls": 0, "estimated": 0}
     cost = 0.0
     by_model: list[dict] = []
     unpriced: list[str] = []
@@ -72,6 +76,7 @@ def usage_from_trace(trace: Trace, overrides: dict[str, ModelPrice] | None = Non
         if price is None and (input_tokens or output):
             unpriced.append(model)
         cost += item_cost or 0.0
+        totals["estimated"] += int(group.get("estimated_calls", 0))
         if kind == "embedding":
             totals["embedding"] += input_tokens
         else:
@@ -81,6 +86,7 @@ def usage_from_trace(trace: Trace, overrides: dict[str, ModelPrice] | None = Non
             totals["calls"] += int(group["calls"])
         by_model.append({
             "kind": kind, "model": model, "calls": int(group["calls"]),
+            "estimated_calls": int(group.get("estimated_calls", 0)),
             "input_tokens": input_tokens, "cached_input_tokens": cached, "output_tokens": output,
             "cost_usd": None if item_cost is None else round(item_cost, 8),
         })
@@ -91,6 +97,7 @@ def usage_from_trace(trace: Trace, overrides: dict[str, ModelPrice] | None = Non
         cached_input_tokens=totals["cached"],
         embedding_tokens=totals["embedding"],
         llm_calls=totals["calls"],
+        estimated_calls=totals["estimated"],
         cost_usd=cost,
         by_model=by_model,
         unpriced_models=sorted(set(unpriced)),

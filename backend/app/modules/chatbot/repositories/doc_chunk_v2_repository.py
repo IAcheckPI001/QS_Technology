@@ -1,20 +1,21 @@
 """Truy vấn bảng `doc_chunks_v2` qua `match_doc_chunks_v2` (D-009, `backend/sql/doc_chunks_v2.sql`).
 
-Cùng giao diện `ChunkSearchRepository` với `DocChunkRepository` để `Retriever` dùng được không đổi; tham số riêng
-của v2 (mã, loại chunk, cờ biến thể) nằm trong `MatchV2Options` của repository. Hiện chỉ công cụ đánh giá dùng
-(`evals/run_retrieval_eval.py`); retriever của dịch vụ chat vẫn dùng bảng cũ cho tới bước chuyển (D-009).
+Retriever của dịch vụ chat (luồng website và tool `product_docs_ask` của agent) dùng repository này với
+`MatchV2Options(approved_only=settings.retrieval_approved_only)` (bước 6 của D-009). Công cụ đánh giá
+(`evals/run_retrieval_eval.py`) dùng cùng repository với các biến thể của `MatchV2Options` và
+`approved_only=False`. Giao diện `ChunkSearchRepository` không đổi nên `Retriever` dùng được nguyên vẹn.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+import json
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.chatbot.repositories.doc_chunk_repository import _row, _vector_literal
 from app.modules.chatbot.retrieval.fts_query import clean_fts_query
 from app.modules.chatbot.schemas.system import ChunkMatch, ChunkRecord
 
@@ -42,7 +43,8 @@ _MATCH_SQL = text("""
         fts_weight => :fts_weight,
         code_weight => :code_weight,
         p_scope_mode => :scope_mode,
-        scope_boost => :scope_boost
+        scope_boost => :scope_boost,
+        p_audiences => cast(:audiences as text[])
     )
 """)
 
@@ -52,13 +54,40 @@ _FETCH_SQL = text("""
            domain, scopes, control_interface, spec_attributes
     from doc_chunks_v2
     where id = any(cast(:ids as bigint[])) and is_active
+      and audience = any(cast(:audiences as text[]))
       and (not :approved_only or review_status = 'approved')
 """)
+
+# Model có chunk tài liệu kỹ thuật đang hoạt động: coverage `technical_docs` của registry nạp lúc khởi động
+# (`extraction/registry.extend_technical_coverage`), cùng điều kiện approved với lúc tìm. Registry dùng chung mọi
+# kênh nên chỉ tính chunk `public`: model chỉ có tài liệu nội bộ không được website coi là "có tài liệu".
+_TECHNICAL_MODELS_SQL = text("""
+    select distinct unnest(product_models) as model
+    from doc_chunks_v2
+    where is_active and domain = 'technical_docs' and audience = 'public'
+      and (not :approved_only or review_status = 'approved')
+    order by model
+""")
+
+# Mặc định hẹp nhất: gọi mà quên truyền thì không lộ chunk nội bộ (`retrieval/audience.py` trả tập theo kênh).
+DEFAULT_AUDIENCES: tuple[str, ...] = ("public",)
+
+
+def _vector_literal(embedding: Sequence[float]) -> str:
+    return "[" + ",".join(repr(float(value)) for value in embedding) + "]"
+
+
+def _row(row: Mapping[str, Any]) -> dict[str, Any]:
+    data = dict(row)
+    # text() không gắn kiểu cột nên jsonb có thể về dạng chuỗi tùy driver.
+    if isinstance(data.get("assets"), str):
+        data["assets"] = json.loads(data["assets"])
+    return data
 
 
 @dataclass(frozen=True)
 class MatchV2Options:
-    """Tham số riêng của `match_doc_chunks_v2`. Mặc định = hành vi production dự kiến (chỉ chunk approved, không
+    """Tham số riêng của `match_doc_chunks_v2`. Mặc định = hành vi production (chỉ chunk approved, không
     tìm cha, không nhánh mã, không bỏ dấu, không cộng điểm loại, **làm sạch câu FTS**, **scope cộng điểm 0,003**).
 
     Toma 2026-11-13: bật `fts_clean` (eval 14 câu: MRR core 0,643 → 0,861, không câu nào tụt) nhưng tiếp tục đo song
@@ -115,6 +144,7 @@ class DocChunkV2Repository:
         fts_k: int,
         rrf_k: int,
         spec_boost: float,
+        audiences: Sequence[str] = DEFAULT_AUDIENCES,
     ) -> list[ChunkMatch]:
         o = self.options
         if o.scope_mode not in ("filter", "boost"):
@@ -144,6 +174,7 @@ class DocChunkV2Repository:
             "code_weight": o.code_weight,
             "scope_mode": o.scope_mode,
             "scope_boost": o.scope_boost,
+            "audiences": list(audiences),
         }
         async with self._session() as session:
             result = await session.execute(_MATCH_SQL, params)
@@ -152,11 +183,22 @@ class DocChunkV2Repository:
             return [ChunkMatch.model_validate({k: v for k, v in _row(row).items() if k in fields})
                     for row in result.mappings()]
 
-    async def fetch_by_ids(self, ids: list[int]) -> list[ChunkRecord]:
+    async def fetch_by_ids(
+        self, ids: list[int], audiences: Sequence[str] = DEFAULT_AUDIENCES,
+    ) -> list[ChunkRecord]:
         if not ids:
             return []
         async with self._session() as session:
-            result = await session.execute(_FETCH_SQL, {"ids": ids, "approved_only": self.options.approved_only})
+            result = await session.execute(
+                _FETCH_SQL,
+                {"ids": ids, "approved_only": self.options.approved_only, "audiences": list(audiences)},
+            )
             fields = ChunkRecord.model_fields
             return [ChunkRecord.model_validate({k: v for k, v in _row(row).items() if k in fields})
                     for row in result.mappings()]
+
+    async def technical_docs_models(self) -> list[str]:
+        """Model có chunk `technical_docs` đang hoạt động, theo cùng `approved_only` của repository."""
+        async with self._session() as session:
+            result = await session.execute(_TECHNICAL_MODELS_SQL, {"approved_only": self.options.approved_only})
+            return [row["model"] for row in result.mappings()]

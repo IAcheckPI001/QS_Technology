@@ -1,0 +1,48 @@
+# Cấu hình crm-sync (2026-11-19, duyệt: Toma). Dữ liệu, không viết cứng trong code.
+# Cây tài liệu công khai của CRM; KHÔNG có "/" ở cuối (có "/" → 404).
+api_url: https://erp.qstcnc.com/api/v1/public/company-docs/website-tree
+base_url: https://erp.qstcnc.com
+user_agent: qs-doc-ingest/crm-sync
+timeout_s: 60
+profile: qs_controller
+# Mỗi (model, loại tài liệu) chỉ lấy một bản, theo thứ tự ngôn ngữ này.
+language_priority: [en, vi]
+
+branches:
+  # build: run (Docling + chuẩn hoá) rồi build (chunk); version dạng "1.0" là tín hiệu đổi phiên bản chính.
+  - name: Bộ điều khiển
+    mode: build
+    require_version: true
+  # run_only: chỉ `run --no-build` để kiểm nội dung trích xuất (brochure chưa đi được build: doc_type,
+  # product_models bắt buộc, I-47…I-50). So thay đổi bằng mã file.
+  - name: Catalogue & Hồ sơ
+    mode: run_only
+    require_version: false
+
+# Model lấy theo tiền tố tên tài liệu ("F54 - Installation Guide" → F54), đối chiếu tên thư mục CRM.
+# Model phải có trong profiles/registry_snapshot.json.
+models:
+  - {prefix: "10iV", model: "10iV", folder: "Astro 10i"}
+  - {prefix: "6AH", model: "6AH", folder: "Astro 6AH"}
+  - {prefix: "6AVE", model: "6AVE", folder: "Astro 6AV"}
+  - {prefix: "F10T", model: "F10T", folder: "F10T"}
+  - {prefix: "F86", model: "F86", folder: "F86"}
+  - {prefix: "F54", model: "F54", folder: "F54"}
+
+# document_type của CRM → manifest.
+document_types:
+  installation:
+    slug: installation
+    doc_type: installation_manual
+    default_scopes: [installation]
+  operation:
+    slug: operation
+    doc_type: user_guide
+    default_scopes: [operation]
+    scope_rules:
+      - {match: '(?i)wiring|connection|install|đấu nối|lắp đặt', scopes: [installation]}
+
+# Tài liệu run_only không có model: doc_id đặt theo tên.
+run_only_doc_ids:
+  "Catalogue sản phẩm": qs-catalogue
+  "Hồ sơ công ty": qs-company-profile

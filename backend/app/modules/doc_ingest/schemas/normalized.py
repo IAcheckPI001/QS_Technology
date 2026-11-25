@@ -26,6 +26,7 @@ ReviewCode = Literal[
     "furniture_unconfirmed",
     "printed_page_conflict",
     "text_coverage_gap",
+    "text_duplicate",
     "table_crosscheck_mismatch",
     "column_type_inconsistent",
     "applicability_note",

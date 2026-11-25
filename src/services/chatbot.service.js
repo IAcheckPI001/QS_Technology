@@ -86,7 +86,7 @@ export const getWidgetHistory = async ({ signal } = {}) => {
 
 // POST requires fetch (EventSource only supports GET). The backend uses SSE framing.
 // Session hết hạn được widget-backend tự mở lại; trình duyệt không giữ session_id.
-const streamSse = async (path, body, { signal, onChunk } = {}) => {
+const streamSse = async (path, body, { signal, onChunk, onSources } = {}) => {
     const response = await fetch(`${WIDGET_API_URL}${path}`, {
         method: 'POST',
         credentials: 'include',
@@ -127,6 +127,8 @@ const streamSse = async (path, body, { signal, onChunk } = {}) => {
         try {
             const payload = JSON.parse(rawData);
             if (eventName === 'delta' && typeof payload.text === 'string') onChunk?.(payload.text);
+            // D-014: nguồn đã trích dẫn kèm ảnh (URL ký ngắn hạn); client cũ bỏ qua event này.
+            if (eventName === 'sources' && Array.isArray(payload.items)) onSources?.(payload.items);
             if (eventName === 'done') receivedDone = true;
             if (eventName === 'error') throw new ChatStreamError(payload.message || 'Chat service failed.', payload.code);
         } catch (error) {

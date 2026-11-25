@@ -162,7 +162,7 @@ class StoringHistoryRepository:
     async def session_exists(self, session_id):
         return bool(self.rows)
 
-    async def list_for_context(self, session_id):
+    async def list_for_context(self, session_id, limit=None):
         return [row for row in self.rows if row.status == "completed"]
 
     async def create(self, **data):
@@ -447,7 +447,7 @@ def test_general_turn_retrieves_with_injected_retriever():
             self.calls.append(kwargs)
             return []
 
-        async def fetch_by_ids(self, ids):
+        async def fetch_by_ids(self, ids, audiences=("public",)):
             return []
 
     chunks = Chunks()

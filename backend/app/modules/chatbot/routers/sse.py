@@ -146,6 +146,10 @@ def stream_chat(
                             trace.root.set(first_delta_ms=round(trace.duration_ms))
                         trace.root.set(deltas=deltas)
                     yield sse_event("delta", {"text": chunk})
+            # D-014 giai đoạn B: nguồn đã trích dẫn kèm ảnh (URL ký), chỉ khi tính năng bật và có trích dẫn.
+            sources = getattr(service, "turn_sources", None)
+            if sources:
+                yield sse_event("sources", {"items": [item.model_dump(mode="json") for item in sources]})
             set_outcome(request, "ok")
             yield sse_event("done", {"request_id": request_id, "session_id": session_id})
         except SecurityBlockedError as error:

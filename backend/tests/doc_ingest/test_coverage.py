@@ -129,8 +129,22 @@ def test_v01_detects_duplicated_content() -> None:
     page = SynPage(1).text("text", "Connect the sensor wire", 100).text("text", "Connect the sensor wire", 120)
     result = run_normalization([page.to_doc()], "syn", DEFAULT, {1: _words(("Connect the sensor wire", 100))})
     check = result.validation[0]
-    assert check.score == 1.0 and check.passed is False and check.detail["duplicate_ratio"] == 0.5
-    assert _codes(result) == ["text_coverage_gap"]
+    # 2026-11-20 (I-54): lặp vượt ngưỡng chỉ là cảnh báo không chặn chunk; độ phủ vẫn đủ nên V-01 đạt
+    assert check.score == 1.0 and check.passed is True and check.detail["duplicate_ratio"] == 0.5
+    assert check.detail["duplicate_over"] is True
+    assert _codes(result) == ["text_duplicate"]
+    [item] = result.tables.review
+    assert (item.blocking, item.blocks) == (False, "none")
+
+
+def test_v01_duplicate_plus_missing_text_is_still_blocking() -> None:
+    """Lặp không được che lỗi mất chữ: trang vừa thiếu nội dung vừa lặp vẫn là `text_coverage_gap` chặn chunk."""
+    page = SynPage(1).text("text", "Connect the sensor wire", 100).text("text", "Connect the sensor wire", 120)
+    words = _words(("Connect the sensor wire", 100), ("Tighten the terminal screw firmly now", 140))
+    result = run_normalization([page.to_doc()], "syn", DEFAULT, {1: words})
+    check = result.validation[0]
+    assert check.passed is False and check.detail["missing_count"] > 0
+    assert [(r.code, r.blocks) for r in result.tables.review] == [("text_coverage_gap", "chunk")]
 
 
 def test_v01_ignores_words_inside_furniture() -> None:

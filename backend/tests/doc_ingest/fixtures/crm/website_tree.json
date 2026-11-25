@@ -1,0 +1,554 @@
+{
+ "id": "00000000-0000-0000-0000-000000000001",
+ "node_type": "folder",
+ "name": "Website",
+ "sort_order": 1,
+ "children": [
+  {
+   "id": "52b6bef6-bdd4-472a-8c46-268a0a1c93df",
+   "parent_id": "00000000-0000-0000-0000-000000000001",
+   "node_type": "folder",
+   "name": "Catalogue & Hồ sơ",
+   "sort_order": 1,
+   "children": [
+    {
+     "id": "62d09958-d65c-429c-89bb-01bafa151dcb",
+     "parent_id": "52b6bef6-bdd4-472a-8c46-268a0a1c93df",
+     "node_type": "document",
+     "name": "Catalogue sản phẩm",
+     "file_url": "/api/v1/public/company-docs/62d09958-d65c-429c-89bb-01bafa151dcb/files/8ab7f88d-1690-4c25-8a11-8934ef906db0.pdf?exp=1795089600&sig=FAKESIG",
+     "view_pdf_url": "/api/v1/public/company-docs/62d09958-d65c-429c-89bb-01bafa151dcb/view-pdf?exp=1795089600&sig=FAKESIG",
+     "download_pdf_url": "/api/v1/public/company-docs/62d09958-d65c-429c-89bb-01bafa151dcb/download-pdf?exp=1795089600&sig=FAKESIG",
+     "file_size": 2265936,
+     "sort_order": 0,
+     "created_at": "2026-09-18T09:14:23.687725Z",
+     "updated_at": "2026-09-18T09:14:24.335491Z",
+     "status": "released",
+     "document_group_id": "62d09958-d65c-429c-89bb-01bafa151dcb",
+     "root_id": "62d09958-d65c-429c-89bb-01bafa151dcb",
+     "is_current": true,
+     "version": "1"
+    },
+    {
+     "id": "ede8c77d-adea-49df-bc02-7de4b0edd354",
+     "parent_id": "52b6bef6-bdd4-472a-8c46-268a0a1c93df",
+     "node_type": "document",
+     "name": "Hồ sơ công ty",
+     "file_url": "/api/v1/public/company-docs/ede8c77d-adea-49df-bc02-7de4b0edd354/files/da0f0f8d-a9f6-45c1-a74f-f725d967ff48.pdf?exp=1795089600&sig=FAKESIG",
+     "view_pdf_url": "/api/v1/public/company-docs/ede8c77d-adea-49df-bc02-7de4b0edd354/view-pdf?exp=1795089600&sig=FAKESIG",
+     "download_pdf_url": "/api/v1/public/company-docs/ede8c77d-adea-49df-bc02-7de4b0edd354/download-pdf?exp=1795089600&sig=FAKESIG",
+     "file_size": 3973466,
+     "sort_order": 0,
+     "created_at": "2026-09-18T09:14:45.284072Z",
+     "updated_at": "2026-09-18T09:14:46.199276Z",
+     "status": "released",
+     "document_group_id": "ede8c77d-adea-49df-bc02-7de4b0edd354",
+     "root_id": "ede8c77d-adea-49df-bc02-7de4b0edd354",
+     "is_current": true,
+     "version": "1"
+    }
+   ],
+   "created_at": "2026-09-17T14:00:11.054694Z",
+   "updated_at": "2026-09-17T14:00:11.054694Z",
+   "document_group_id": "52b6bef6-bdd4-472a-8c46-268a0a1c93df",
+   "root_id": "52b6bef6-bdd4-472a-8c46-268a0a1c93df",
+   "is_current": true,
+   "version": "1"
+  },
+  {
+   "id": "d858aefa-699f-4348-9fd9-250338a2dffe",
+   "parent_id": "00000000-0000-0000-0000-000000000001",
+   "node_type": "folder",
+   "name": "Bộ điều khiển",
+   "sort_order": 2,
+   "children": [
+    {
+     "id": "0169f28c-8124-4ac0-a4c4-4bffa78438eb",
+     "parent_id": "d858aefa-699f-4348-9fd9-250338a2dffe",
+     "node_type": "folder",
+     "name": "Astro 10i",
+     "sort_order": 0,
+     "children": [
+      {
+       "id": "74b89b27-55aa-43d0-8203-a20bbc531522",
+       "parent_id": "0169f28c-8124-4ac0-a4c4-4bffa78438eb",
+       "node_type": "document",
+       "name": "10iV - Operation Guide",
+       "file_url": "/api/v1/public/company-docs/74b89b27-55aa-43d0-8203-a20bbc531522/files/da0b8531-28d0-4e20-b239-ad2059283717.pdf?exp=1795089600&sig=FAKESIG",
+       "view_pdf_url": "/api/v1/public/company-docs/74b89b27-55aa-43d0-8203-a20bbc531522/view-pdf?exp=1795089600&sig=FAKESIG",
+       "download_pdf_url": "/api/v1/public/company-docs/74b89b27-55aa-43d0-8203-a20bbc531522/download-pdf?exp=1795089600&sig=FAKESIG",
+       "file_size": 9686100,
+       "sort_order": 0,
+       "created_at": "2026-10-29T03:53:12.643346Z",
+       "updated_at": "2026-10-29T03:53:13.567667Z",
+       "status": "released",
+       "language": "en",
+       "document_type": "operation",
+       "document_group_id": "74b89b27-55aa-43d0-8203-a20bbc531522",
+       "connection_types": [
+        "Pulse Train",
+        "EtherCAT",
+        "Mechatrolink MII/MIII"
+       ],
+       "root_id": "74b89b27-55aa-43d0-8203-a20bbc531522",
+       "is_current": true,
+       "version": "1.0"
+      }
+     ],
+     "created_at": "2026-10-29T03:52:31.355103Z",
+     "updated_at": "2026-10-29T03:52:31.355103Z",
+     "document_group_id": "0169f28c-8124-4ac0-a4c4-4bffa78438eb",
+     "root_id": "0169f28c-8124-4ac0-a4c4-4bffa78438eb",
+     "is_current": true,
+     "version": "1"
+    },
+    {
+     "id": "93853e98-8013-4204-a73f-ab02af87161e",
+     "parent_id": "d858aefa-699f-4348-9fd9-250338a2dffe",
+     "node_type": "folder",
+     "name": "Astro 6AH",
+     "sort_order": 0,
+     "children": [
+      {
+       "id": "388829ce-db18-4a38-8d9d-ba31e20b59d7",
+       "parent_id": "93853e98-8013-4204-a73f-ab02af87161e",
+       "node_type": "document",
+       "name": "6AH - Operation Guide",
+       "file_url": "/api/v1/public/company-docs/388829ce-db18-4a38-8d9d-ba31e20b59d7/files/74a3f22f-d900-4872-a7ac-36ac73897494.pdf?exp=1795089600&sig=FAKESIG",
+       "view_pdf_url": "/api/v1/public/company-docs/388829ce-db18-4a38-8d9d-ba31e20b59d7/view-pdf?exp=1795089600&sig=FAKESIG",
+       "download_pdf_url": "/api/v1/public/company-docs/388829ce-db18-4a38-8d9d-ba31e20b59d7/download-pdf?exp=1795089600&sig=FAKESIG",
+       "file_size": 9319829,
+       "sort_order": 0,
+       "created_at": "2026-10-29T03:54:06.943471Z",
+       "updated_at": "2026-10-29T07:21:56.336453Z",
+       "status": "released",
+       "language": "en",
+       "document_type": "operation",
+       "document_group_id": "388829ce-db18-4a38-8d9d-ba31e20b59d7",
+       "connection_types": [
+        "Pulse Train",
+        "EtherCAT",
+        "Mechatrolink MII/MIII"
+       ],
+       "root_id": "388829ce-db18-4a38-8d9d-ba31e20b59d7",
+       "is_current": true,
+       "version": "1.0"
+      }
+     ],
+     "created_at": "2026-10-29T03:53:36.86493Z",
+     "updated_at": "2026-10-29T07:21:56.337531Z",
+     "document_group_id": "93853e98-8013-4204-a73f-ab02af87161e",
+     "connection_types": [
+      "Pulse Train",
+      "EtherCAT",
+      "Mechatrolink MII/MIII"
+     ],
+     "root_id": "93853e98-8013-4204-a73f-ab02af87161e",
+     "is_current": true,
+     "version": "1"
+    },
+    {
+     "id": "0427ae19-dc88-4e9d-9dbb-7484954b72b1",
+     "parent_id": "d858aefa-699f-4348-9fd9-250338a2dffe",
+     "node_type": "folder",
+     "name": "Astro 6AV",
+     "sort_order": 0,
+     "children": [
+      {
+       "id": "a3f2d624-fb21-4ac4-8342-876b3e7f6aa2",
+       "parent_id": "0427ae19-dc88-4e9d-9dbb-7484954b72b1",
+       "node_type": "document",
+       "name": "6AVE - Hướng dẫn lắp đặt",
+       "file_url": "/api/v1/public/company-docs/a3f2d624-fb21-4ac4-8342-876b3e7f6aa2/files/95220721-5004-4df6-bfbe-b93e53236f43.pdf?exp=1795089600&sig=FAKESIG",
+       "view_pdf_url": "/api/v1/public/company-docs/a3f2d624-fb21-4ac4-8342-876b3e7f6aa2/view-pdf?exp=1795089600&sig=FAKESIG",
+       "download_pdf_url": "/api/v1/public/company-docs/a3f2d624-fb21-4ac4-8342-876b3e7f6aa2/download-pdf?exp=1795089600&sig=FAKESIG",
+       "file_size": 1509953,
+       "sort_order": 0,
+       "created_at": "2026-10-29T03:54:59.122384Z",
+       "updated_at": "2026-10-29T07:16:05.894426Z",
+       "status": "released",
+       "language": "vi",
+       "document_type": "installation",
+       "document_group_id": "a3f2d624-fb21-4ac4-8342-876b3e7f6aa2",
+       "connection_types": [
+        "Pulse Train",
+        "EtherCAT",
+        "Mechatrolink MII/MIII"
+       ],
+       "root_id": "a3f2d624-fb21-4ac4-8342-876b3e7f6aa2",
+       "is_current": true,
+       "version": "1.0"
+      },
+      {
+       "id": "649ac9d6-5f1c-4ed0-b68f-c3c148bc35dd",
+       "parent_id": "0427ae19-dc88-4e9d-9dbb-7484954b72b1",
+       "node_type": "document",
+       "name": "6AVE - Operation Guide",
+       "file_url": "/api/v1/public/company-docs/649ac9d6-5f1c-4ed0-b68f-c3c148bc35dd/files/1a1b4e75-2b23-47a7-893c-7d4802fd6be5.pdf?exp=1795089600&sig=FAKESIG",
+       "view_pdf_url": "/api/v1/public/company-docs/649ac9d6-5f1c-4ed0-b68f-c3c148bc35dd/view-pdf?exp=1795089600&sig=FAKESIG",
+       "download_pdf_url": "/api/v1/public/company-docs/649ac9d6-5f1c-4ed0-b68f-c3c148bc35dd/download-pdf?exp=1795089600&sig=FAKESIG",
+       "file_size": 9555527,
+       "sort_order": 0,
+       "created_at": "2026-10-29T03:55:41.252611Z",
+       "updated_at": "2026-10-29T04:03:41.877841Z",
+       "status": "released",
+       "language": "en",
+       "document_type": "operation",
+       "document_group_id": "a3f2d624-fb21-4ac4-8342-876b3e7f6aa2",
+       "connection_types": [
+        "Pulse Train",
+        "EtherCAT",
+        "Mechatrolink MII/MIII"
+       ],
+       "root_id": "649ac9d6-5f1c-4ed0-b68f-c3c148bc35dd",
+       "is_current": true,
+       "version": "1.0"
+      }
+     ],
+     "created_at": "2026-10-29T03:54:34.541935Z",
+     "updated_at": "2026-10-29T07:16:05.896392Z",
+     "document_group_id": "0427ae19-dc88-4e9d-9dbb-7484954b72b1",
+     "connection_types": [
+      "Pulse Train",
+      "EtherCAT",
+      "Mechatrolink MII/MIII"
+     ],
+     "root_id": "0427ae19-dc88-4e9d-9dbb-7484954b72b1",
+     "is_current": true,
+     "version": "1"
+    },
+    {
+     "id": "d488d58e-7b0b-43f3-ab2a-40ee3954e957",
+     "parent_id": "d858aefa-699f-4348-9fd9-250338a2dffe",
+     "node_type": "folder",
+     "name": "F10T",
+     "sort_order": 0,
+     "children": [
+      {
+       "id": "c90c13d2-d2c1-457d-879a-ce92e7f94d62",
+       "parent_id": "d488d58e-7b0b-43f3-ab2a-40ee3954e957",
+       "node_type": "document",
+       "name": "F10T - Hướng dẫn lắp đặt",
+       "file_url": "/api/v1/public/company-docs/c90c13d2-d2c1-457d-879a-ce92e7f94d62/files/8c28323c-b477-4dd3-b357-6c689d019c03.pdf?exp=1795089600&sig=FAKESIG",
+       "view_pdf_url": "/api/v1/public/company-docs/c90c13d2-d2c1-457d-879a-ce92e7f94d62/view-pdf?exp=1795089600&sig=FAKESIG",
+       "download_pdf_url": "/api/v1/public/company-docs/c90c13d2-d2c1-457d-879a-ce92e7f94d62/download-pdf?exp=1795089600&sig=FAKESIG",
+       "file_size": 3463694,
+       "sort_order": 0,
+       "created_at": "2026-10-29T03:56:23.118356Z",
+       "updated_at": "2026-10-29T07:18:17.977637Z",
+       "status": "released",
+       "language": "vi",
+       "document_type": "installation",
+       "document_group_id": "c90c13d2-d2c1-457d-879a-ce92e7f94d62",
+       "connection_types": [
+        "Pulse Train",
+        "EtherCAT"
+       ],
+       "root_id": "c90c13d2-d2c1-457d-879a-ce92e7f94d62",
+       "is_current": true,
+       "version": "1.0"
+      },
+      {
+       "id": "71be0f13-5eaf-42ac-b584-3e10a4d0a897",
+       "parent_id": "d488d58e-7b0b-43f3-ab2a-40ee3954e957",
+       "node_type": "document",
+       "name": "F10T - Hướng dẫn vận hành",
+       "file_url": "/api/v1/public/company-docs/71be0f13-5eaf-42ac-b584-3e10a4d0a897/files/fb4502a4-192d-4872-bc62-14e860dff0a2.pdf?exp=1795089600&sig=FAKESIG",
+       "view_pdf_url": "/api/v1/public/company-docs/71be0f13-5eaf-42ac-b584-3e10a4d0a897/view-pdf?exp=1795089600&sig=FAKESIG",
+       "download_pdf_url": "/api/v1/public/company-docs/71be0f13-5eaf-42ac-b584-3e10a4d0a897/download-pdf?exp=1795089600&sig=FAKESIG",
+       "file_size": 9536026,
+       "sort_order": 0,
+       "created_at": "2026-10-29T03:56:48.021618Z",
+       "updated_at": "2026-10-29T03:56:49.699768Z",
+       "status": "released",
+       "language": "vi",
+       "document_type": "operation",
+       "document_group_id": "71be0f13-5eaf-42ac-b584-3e10a4d0a897",
+       "connection_types": [
+        "Pulse Train",
+        "EtherCAT"
+       ],
+       "root_id": "71be0f13-5eaf-42ac-b584-3e10a4d0a897",
+       "is_current": true,
+       "version": "1.0"
+      }
+     ],
+     "created_at": "2026-10-29T03:56:00.824687Z",
+     "updated_at": "2026-10-29T07:18:17.97918Z",
+     "document_group_id": "d488d58e-7b0b-43f3-ab2a-40ee3954e957",
+     "connection_types": [
+      "Pulse Train",
+      "EtherCAT"
+     ],
+     "root_id": "d488d58e-7b0b-43f3-ab2a-40ee3954e957",
+     "is_current": true,
+     "version": "1"
+    },
+    {
+     "id": "c94d757b-2285-4ad8-a54b-a8d6dde01f18",
+     "parent_id": "d858aefa-699f-4348-9fd9-250338a2dffe",
+     "node_type": "folder",
+     "name": "F54",
+     "sort_order": 0,
+     "children": [
+      {
+       "id": "70824a03-6639-45ed-9263-8cec0844dfc7",
+       "parent_id": "c94d757b-2285-4ad8-a54b-a8d6dde01f18",
+       "node_type": "document",
+       "name": "F54 - Hướng dẫn lắp đặt",
+       "file_url": "/api/v1/public/company-docs/70824a03-6639-45ed-9263-8cec0844dfc7/files/b15df480-6b1c-41b9-a897-7fb566d67568.pdf?exp=1795089600&sig=FAKESIG",
+       "view_pdf_url": "/api/v1/public/company-docs/70824a03-6639-45ed-9263-8cec0844dfc7/view-pdf?exp=1795089600&sig=FAKESIG",
+       "download_pdf_url": "/api/v1/public/company-docs/70824a03-6639-45ed-9263-8cec0844dfc7/download-pdf?exp=1795089600&sig=FAKESIG",
+       "file_size": 1326625,
+       "sort_order": 0,
+       "created_at": "2026-10-29T03:57:24.196454Z",
+       "updated_at": "2026-10-29T07:11:27.87402Z",
+       "status": "released",
+       "language": "vi",
+       "document_type": "installation",
+       "document_group_id": "70824a03-6639-45ed-9263-8cec0844dfc7",
+       "connection_types": [
+        "Pulse Train"
+       ],
+       "root_id": "70824a03-6639-45ed-9263-8cec0844dfc7",
+       "is_current": true,
+       "version": "1.0"
+      },
+      {
+       "id": "4935f0c0-2217-441c-a953-1849fb3bab61",
+       "parent_id": "c94d757b-2285-4ad8-a54b-a8d6dde01f18",
+       "node_type": "document",
+       "name": "F54 - Installation Guide",
+       "file_url": "/api/v1/public/company-docs/4935f0c0-2217-441c-a953-1849fb3bab61/files/d746793d-1f31-4336-b65a-b6e3ffe473d9.pdf?exp=1795089600&sig=FAKESIG",
+       "view_pdf_url": "/api/v1/public/company-docs/4935f0c0-2217-441c-a953-1849fb3bab61/view-pdf?exp=1795089600&sig=FAKESIG",
+       "download_pdf_url": "/api/v1/public/company-docs/4935f0c0-2217-441c-a953-1849fb3bab61/download-pdf?exp=1795089600&sig=FAKESIG",
+       "file_size": 1297390,
+       "sort_order": 0,
+       "created_at": "2026-10-29T03:57:45.765795Z",
+       "updated_at": "2026-10-29T03:57:45.964432Z",
+       "status": "released",
+       "language": "en",
+       "document_type": "installation",
+       "document_group_id": "70824a03-6639-45ed-9263-8cec0844dfc7",
+       "connection_types": [
+        "Pulse Train"
+       ],
+       "root_id": "4935f0c0-2217-441c-a953-1849fb3bab61",
+       "is_current": true,
+       "version": "1.0"
+      },
+      {
+       "id": "6be0e54f-56cc-4454-8002-5e8efb59f056",
+       "parent_id": "c94d757b-2285-4ad8-a54b-a8d6dde01f18",
+       "node_type": "document",
+       "name": "F54 - Operation Guide",
+       "file_url": "/api/v1/public/company-docs/6be0e54f-56cc-4454-8002-5e8efb59f056/files/52b53f5d-02e6-4874-8dba-f5cccddf8dff.pdf?exp=1795089600&sig=FAKESIG",
+       "view_pdf_url": "/api/v1/public/company-docs/6be0e54f-56cc-4454-8002-5e8efb59f056/view-pdf?exp=1795089600&sig=FAKESIG",
+       "download_pdf_url": "/api/v1/public/company-docs/6be0e54f-56cc-4454-8002-5e8efb59f056/download-pdf?exp=1795089600&sig=FAKESIG",
+       "file_size": 8332391,
+       "sort_order": 0,
+       "created_at": "2026-10-29T03:58:13.724208Z",
+       "updated_at": "2026-10-29T03:58:14.969372Z",
+       "status": "released",
+       "language": "en",
+       "document_type": "operation",
+       "document_group_id": "6be0e54f-56cc-4454-8002-5e8efb59f056",
+       "connection_types": [
+        "Pulse Train"
+       ],
+       "root_id": "6be0e54f-56cc-4454-8002-5e8efb59f056",
+       "is_current": true,
+       "version": "1.0"
+      }
+     ],
+     "created_at": "2026-10-29T03:57:09.556144Z",
+     "updated_at": "2026-10-29T07:11:27.876007Z",
+     "document_group_id": "c94d757b-2285-4ad8-a54b-a8d6dde01f18",
+     "connection_types": [
+      "Pulse Train"
+     ],
+     "root_id": "c94d757b-2285-4ad8-a54b-a8d6dde01f18",
+     "is_current": true,
+     "version": "1"
+    },
+    {
+     "id": "42703e23-32de-4c9f-8432-3db8532af503",
+     "parent_id": "d858aefa-699f-4348-9fd9-250338a2dffe",
+     "node_type": "folder",
+     "name": "F86",
+     "sort_order": 0,
+     "children": [
+      {
+       "id": "02423ab5-0ef8-4ec4-a92c-f26b46d4d4b9",
+       "parent_id": "42703e23-32de-4c9f-8432-3db8532af503",
+       "node_type": "document",
+       "name": "F86 - Hướng dẫn lắp đặt",
+       "file_url": "/api/v1/public/company-docs/02423ab5-0ef8-4ec4-a92c-f26b46d4d4b9/files/a7da36af-b736-4fa1-9a6c-fad89aa6bb09.pdf?exp=1795089600&sig=FAKESIG",
+       "view_pdf_url": "/api/v1/public/company-docs/02423ab5-0ef8-4ec4-a92c-f26b46d4d4b9/view-pdf?exp=1795089600&sig=FAKESIG",
+       "download_pdf_url": "/api/v1/public/company-docs/02423ab5-0ef8-4ec4-a92c-f26b46d4d4b9/download-pdf?exp=1795089600&sig=FAKESIG",
+       "file_size": 3489141,
+       "sort_order": 0,
+       "created_at": "2026-10-29T03:58:59.996019Z",
+       "updated_at": "2026-10-29T07:22:37.308911Z",
+       "status": "released",
+       "language": "vi",
+       "document_type": "installation",
+       "document_group_id": "02423ab5-0ef8-4ec4-a92c-f26b46d4d4b9",
+       "connection_types": [
+        "Pulse Train",
+        "EtherCAT"
+       ],
+       "root_id": "02423ab5-0ef8-4ec4-a92c-f26b46d4d4b9",
+       "is_current": true,
+       "version": "1.0"
+      },
+      {
+       "id": "5fbbaff1-8961-44c5-b738-df9ffbd7478a",
+       "parent_id": "42703e23-32de-4c9f-8432-3db8532af503",
+       "node_type": "document",
+       "name": "F86 - Hướng dẫn vận hành",
+       "file_url": "/api/v1/public/company-docs/5fbbaff1-8961-44c5-b738-df9ffbd7478a/files/5fffaf34-86b5-4a5a-a89f-fa7c2ee09d0a.pdf?exp=1795089600&sig=FAKESIG",
+       "view_pdf_url": "/api/v1/public/company-docs/5fbbaff1-8961-44c5-b738-df9ffbd7478a/view-pdf?exp=1795089600&sig=FAKESIG",
+       "download_pdf_url": "/api/v1/public/company-docs/5fbbaff1-8961-44c5-b738-df9ffbd7478a/download-pdf?exp=1795089600&sig=FAKESIG",
+       "file_size": 9594638,
+       "sort_order": 0,
+       "created_at": "2026-10-29T03:59:23.74987Z",
+       "updated_at": "2026-10-29T03:59:24.801096Z",
+       "status": "released",
+       "language": "vi",
+       "document_type": "operation",
+       "document_group_id": "5fbbaff1-8961-44c5-b738-df9ffbd7478a",
+       "connection_types": [
+        "Pulse Train",
+        "EtherCAT"
+       ],
+       "root_id": "5fbbaff1-8961-44c5-b738-df9ffbd7478a",
+       "is_current": true,
+       "version": "1.0"
+      },
+      {
+       "id": "7db742e8-494d-43ef-a0ef-e0e22caa9311",
+       "parent_id": "42703e23-32de-4c9f-8432-3db8532af503",
+       "node_type": "document",
+       "name": "F86 - Installation Guide",
+       "file_url": "/api/v1/public/company-docs/7db742e8-494d-43ef-a0ef-e0e22caa9311/files/538be223-a491-45e0-82dd-cdd23a849ed7.pdf?exp=1795089600&sig=FAKESIG",
+       "view_pdf_url": "/api/v1/public/company-docs/7db742e8-494d-43ef-a0ef-e0e22caa9311/view-pdf?exp=1795089600&sig=FAKESIG",
+       "download_pdf_url": "/api/v1/public/company-docs/7db742e8-494d-43ef-a0ef-e0e22caa9311/download-pdf?exp=1795089600&sig=FAKESIG",
+       "file_size": 3459725,
+       "sort_order": 0,
+       "created_at": "2026-10-29T03:59:44.575354Z",
+       "updated_at": "2026-10-29T03:59:45.017387Z",
+       "status": "released",
+       "language": "en",
+       "document_type": "installation",
+       "document_group_id": "02423ab5-0ef8-4ec4-a92c-f26b46d4d4b9",
+       "connection_types": [
+        "Pulse Train",
+        "EtherCAT"
+       ],
+       "root_id": "7db742e8-494d-43ef-a0ef-e0e22caa9311",
+       "is_current": true,
+       "version": "1.0"
+      },
+      {
+       "id": "d8823267-ff95-4b3c-9239-754a559039b8",
+       "parent_id": "42703e23-32de-4c9f-8432-3db8532af503",
+       "node_type": "document",
+       "name": "F86 - Operation Guide",
+       "file_url": "/api/v1/public/company-docs/d8823267-ff95-4b3c-9239-754a559039b8/files/3d3f380f-e951-4189-8134-c5aeda884142.pdf?exp=1795089600&sig=FAKESIG",
+       "view_pdf_url": "/api/v1/public/company-docs/d8823267-ff95-4b3c-9239-754a559039b8/view-pdf?exp=1795089600&sig=FAKESIG",
+       "download_pdf_url": "/api/v1/public/company-docs/d8823267-ff95-4b3c-9239-754a559039b8/download-pdf?exp=1795089600&sig=FAKESIG",
+       "file_size": 8315916,
+       "sort_order": 0,
+       "created_at": "2026-10-29T04:00:04.653898Z",
+       "updated_at": "2026-10-29T04:00:05.662396Z",
+       "status": "released",
+       "language": "en",
+       "document_type": "operation",
+       "document_group_id": "5fbbaff1-8961-44c5-b738-df9ffbd7478a",
+       "connection_types": [
+        "Pulse Train",
+        "EtherCAT"
+       ],
+       "root_id": "d8823267-ff95-4b3c-9239-754a559039b8",
+       "is_current": true,
+       "version": "1.0"
+      }
+     ],
+     "created_at": "2026-10-29T03:58:46.447653Z",
+     "updated_at": "2026-10-29T07:22:37.310947Z",
+     "document_group_id": "42703e23-32de-4c9f-8432-3db8532af503",
+     "connection_types": [
+      "Pulse Train",
+      "EtherCAT"
+     ],
+     "root_id": "42703e23-32de-4c9f-8432-3db8532af503",
+     "is_current": true,
+     "version": "1"
+    }
+   ],
+   "created_at": "2026-09-17T14:00:11.054694Z",
+   "updated_at": "2026-09-17T14:00:11.054694Z",
+   "document_group_id": "d858aefa-699f-4348-9fd9-250338a2dffe",
+   "root_id": "d858aefa-699f-4348-9fd9-250338a2dffe",
+   "is_current": true,
+   "version": "1"
+  },
+  {
+   "id": "f0ef798b-eed9-4b37-8edb-3c3ebaef5a65",
+   "parent_id": "00000000-0000-0000-0000-000000000001",
+   "node_type": "folder",
+   "name": "QS Servo",
+   "sort_order": 3,
+   "children": [
+    {
+     "id": "d796f684-889b-4ba1-968f-ada5ae5b4aec",
+     "parent_id": "f0ef798b-eed9-4b37-8edb-3c3ebaef5a65",
+     "node_type": "folder",
+     "name": "QS SERVO DRIVE",
+     "sort_order": 0,
+     "children": [
+      {
+       "id": "779e6cb9-e6d5-4233-97b4-e27d32b56719",
+       "parent_id": "d796f684-889b-4ba1-968f-ada5ae5b4aec",
+       "node_type": "document",
+       "name": "Savch_SDV3-E Servo Drive ESI File",
+       "file_url": "/api/v1/public/company-docs/779e6cb9-e6d5-4233-97b4-e27d32b56719/files/137b1568-0059-4884-bbb2-34dca0daa9b0.rar?exp=1795089600&sig=FAKESIG",
+       "view_pdf_url": "/api/v1/public/company-docs/779e6cb9-e6d5-4233-97b4-e27d32b56719/view-pdf?exp=1795089600&sig=FAKESIG",
+       "download_pdf_url": "/api/v1/public/company-docs/779e6cb9-e6d5-4233-97b4-e27d32b56719/download-pdf?exp=1795089600&sig=FAKESIG",
+       "file_size": 7023,
+       "sort_order": 0,
+       "created_at": "2026-09-19T01:18:18.003937Z",
+       "updated_at": "2026-11-17T07:21:21.410011Z",
+       "status": "released",
+       "language": "en",
+       "document_type": "certificate",
+       "document_group_id": "779e6cb9-e6d5-4233-97b4-e27d32b56719",
+       "root_id": "779e6cb9-e6d5-4233-97b4-e27d32b56719",
+       "is_current": true,
+       "version": "1"
+      }
+     ],
+     "created_at": "2026-09-18T09:10:06.391891Z",
+     "updated_at": "2026-09-18T09:10:06.391891Z",
+     "document_group_id": "d796f684-889b-4ba1-968f-ada5ae5b4aec",
+     "root_id": "d796f684-889b-4ba1-968f-ada5ae5b4aec",
+     "is_current": true,
+     "version": "1"
+    }
+   ],
+   "created_at": "2026-09-17T14:00:11.054694Z",
+   "updated_at": "2026-09-17T14:00:11.054694Z",
+   "document_group_id": "f0ef798b-eed9-4b37-8edb-3c3ebaef5a65",
+   "root_id": "f0ef798b-eed9-4b37-8edb-3c3ebaef5a65",
+   "is_current": true,
+   "version": "1"
+  }
+ ],
+ "created_at": "2026-09-17T14:00:11.016403Z",
+ "updated_at": "2026-09-17T14:00:11.016403Z",
+ "document_group_id": "00000000-0000-0000-0000-000000000001",
+ "root_id": "00000000-0000-0000-0000-000000000001",
+ "is_current": true,
+ "version": "1"
+}

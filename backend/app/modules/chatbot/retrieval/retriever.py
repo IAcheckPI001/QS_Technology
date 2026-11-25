@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Protocol, Sequence
 from uuid import uuid4
 
 from app.core.tracing import span
+from app.modules.chatbot.retrieval.table_columns import trim_model_columns
 from app.modules.chatbot.schemas.default import SourceMetadata
 from app.modules.chatbot.schemas.system import (
     Candidate,
@@ -54,9 +55,10 @@ class ChunkSearchRepository(Protocol):
         fts_k: int,
         rrf_k: int,
         spec_boost: float,
+        audiences: Sequence[str],
     ) -> list[ChunkMatch]: ...
 
-    async def fetch_by_ids(self, ids: list[int]) -> list[ChunkRecord]: ...
+    async def fetch_by_ids(self, ids: list[int], audiences: Sequence[str]) -> list[ChunkRecord]: ...
 
 
 @dataclass(frozen=True)
@@ -68,6 +70,11 @@ class RetrieverConfig:
     max_context_parents: int = 5
     min_similarity: float = 0.25
     spec_boost: float = 0.005
+    # So sánh nhiều model: số chunk RIÊNG của mỗi model, và số chunk chung (khớp nhiều model, vd bảng
+    # chọn model) giữ thêm; thay cho top-k chung.
+    # 2 + 4: quyết định tạm 2026-11-20 (kiểm thật 2 câu so sánh), cần kiểm thêm trên các câu sau.
+    compare_per_model: int = 2
+    compare_shared: int = 4
 
     @classmethod
     def from_settings(cls, settings: "Settings") -> "RetrieverConfig":
@@ -79,6 +86,8 @@ class RetrieverConfig:
             max_context_parents=settings.retrieval_max_context_parents,
             min_similarity=settings.retrieval_min_similarity,
             spec_boost=settings.retrieval_spec_boost,
+            compare_per_model=settings.retrieval_compare_per_model,
+            compare_shared=settings.retrieval_compare_shared,
         )
 
 
@@ -88,6 +97,11 @@ class _SearchRun:
     models: list[str] | None
     matches: list[ChunkMatch]
     latency_ms: int
+
+
+def _is_comparison(runs: list["_SearchRun"]) -> bool:
+    """Các lần tra cứu là so sánh, mỗi model một lần (`_search_targets` tách theo model)."""
+    return len(runs) > 1 and all(run.request.product_scope_mode == "comparison" for run in runs)
 
 
 class Retriever:
@@ -100,6 +114,10 @@ class Retriever:
         self._embedder = embedder
         self._repository = repository
         self._config = config or RetrieverConfig()
+        # Tiêu đề cột bảng → model của registry (cắt cột thừa khi so sánh).
+        from app.modules.chatbot.extraction.validate_registry import models_in_text
+
+        self._header_models = models_in_text
 
     async def search(
         self,
@@ -117,16 +135,31 @@ class Retriever:
             embedding = (await self._embedder.embed([query.query]))[0]
 
             runs = await self._search_targets(targets, embedding)
+            ranked_runs = runs
             ranked = self._merge(runs)
             used_fallback = False
             if not ranked and fallback_targets:
                 fallback_runs = await self._search_targets(fallback_targets, embedding)
                 runs.extend(fallback_runs)
+                ranked_runs = fallback_runs
                 ranked = self._merge(fallback_runs)
                 used_fallback = True
 
-            kept = ranked[: self._config.final_chunk_top_k]
-            hits = await self._expand_parents(kept)
+            # Mọi target của một sub-query cùng kênh; lấy giao để một target lệch không mở rộng quyền xem.
+            audiences = sorted(set.intersection(*(set(target.audiences) for target in targets)))
+            if _is_comparison(ranked_runs):
+                kept = self._select_comparison(ranked_runs)
+                hits = await self._expand_parents(kept, audiences, max(len(kept), 1))
+                compared = {model for run in ranked_runs for model in run.models or []}
+                hits = [
+                    hit.model_copy(update={"content": trimmed})
+                    if (trimmed := trim_model_columns(hit.content, compared, self._header_models)) != hit.content
+                    else hit
+                    for hit in hits
+                ]
+            else:
+                kept = ranked[: self._config.final_chunk_top_k]
+                hits = await self._expand_parents(kept, audiences)
             search_span.set(
                 searches=len(runs),
                 relevant=len(ranked),
@@ -191,6 +224,7 @@ class Retriever:
                 fts_k=self._config.fts_candidate_k,
                 rrf_k=self._config.rrf_k,
                 spec_boost=self._config.spec_boost,
+                audiences=request.audiences,
             )
             match_span.set(rows=len(matches))
         return _SearchRun(
@@ -199,6 +233,45 @@ class Retriever:
             matches=matches,
             latency_ms=int((perf_counter() - started) * 1000),
         )
+
+    def _select_comparison(self, runs: list[_SearchRun]) -> list[ChunkMatch]:
+        """Chunk giữ lại khi so sánh n model (mỗi run là một model).
+
+        Chunk khớp ở từ hai run trở lên là chunk chung (vd bảng chọn model nhiều cột): chúng hay có
+        điểm cao ở mọi run và chiếm hết hạn mức, đẩy chunk riêng của từng model (tổng quan, thông số)
+        ra ngoài (kiểm thật 2026-11-20: thiếu số trục). Vì vậy mỗi model có `compare_per_model` chunk
+        RIÊNG, xen kẽ theo model; chunk chung có hạn mức riêng `compare_shared`, cộng thêm phần hạn
+        mức riêng chưa dùng.
+        """
+        per_run = [
+            sorted(
+                (match for match in run.matches if self._relevant(match)),
+                key=lambda match: match.fused_score,
+                reverse=True,
+            )
+            for run in runs
+        ]
+        seen_in: dict[int, int] = {}
+        for items in per_run:
+            for match_id in {match.id for match in items}:
+                seen_in[match_id] = seen_in.get(match_id, 0) + 1
+        own = [[match for match in items if seen_in[match.id] == 1] for items in per_run]
+        shared_best: dict[int, ChunkMatch] = {}
+        for items in per_run:
+            for match in items:
+                if seen_in[match.id] > 1 and (
+                    match.id not in shared_best or match.fused_score > shared_best[match.id].fused_score
+                ):
+                    shared_best[match.id] = match
+        shared = sorted(shared_best.values(), key=lambda match: match.fused_score, reverse=True)
+
+        quota = self._config.compare_per_model
+        kept: list[ChunkMatch] = []
+        for position in range(quota):
+            kept.extend(items[position] for items in own if position < len(items))
+        unused = quota * len(runs) - len(kept)
+        kept.extend(shared[: self._config.compare_shared + unused])
+        return kept
 
     def _relevant(self, match: ChunkMatch) -> bool:
         return match.vector_score >= self._config.min_similarity
@@ -218,9 +291,7 @@ class Retriever:
             )
             for run in runs
         ]
-        if len(runs) > 1 and all(
-            run.request.product_scope_mode == "comparison" for run in runs
-        ):
+        if _is_comparison(runs):
             ordered: list[ChunkMatch] = []
             for position in range(max((len(items) for items in per_run), default=0)):
                 ordered.extend(items[position] for items in per_run if position < len(items))
@@ -245,12 +316,15 @@ class Retriever:
             merged.append(match)
         return merged
 
-    async def _expand_parents(self, kept: list[ChunkMatch]) -> list[ChunkHit]:
+    async def _expand_parents(
+        self, kept: list[ChunkMatch], audiences: Sequence[str], max_groups: int | None = None,
+    ) -> list[ChunkHit]:
         """Gom chunk con theo chunk cha, giữ thứ tự xếp hạng của chunk con tốt nhất."""
+        limit = max_groups if max_groups is not None else self._config.max_context_parents
         groups: dict[int, list[ChunkMatch]] = {}
         for match in kept:
             context_id = match.parent_id if match.parent_id is not None else match.id
-            if context_id not in groups and len(groups) >= self._config.max_context_parents:
+            if context_id not in groups and len(groups) >= limit:
                 continue
             groups.setdefault(context_id, []).append(match)
 
@@ -262,7 +336,7 @@ class Retriever:
         with span("db.fetch_chunks", "db", ids=len(fetch_ids)):
             records = {
                 record.id: record
-                for record in await self._repository.fetch_by_ids(fetch_ids)
+                for record in await self._repository.fetch_by_ids(fetch_ids, audiences)
             }
 
         hits: list[ChunkHit] = []
