@@ -1,0 +1,35 @@
+# Bộ vàng v1 (60 câu: dev 35 / test 25) + bộ bẫy cho bước sinh (15 câu) — kế hoạch §9 của
+# docs/ai/reports/website_qa_retrieval_eval_plan_2026-11-25.md. CHƯA có câu nào: nhân viên QS viết và gắn nhãn (GD1).
+# Công cụ: evals/run_retrieval_eval.py (tra cứu, định tuyến), evals/run_generation_eval.py (sinh câu trả lời).
+#
+# Mỗi câu (ngoài các trường của sample_f54_f86.yaml: id, question, domain, models, tags, expected_intent, expected,
+# acceptable, scopes, expected_route, expected_domain, split):
+#   source:        staff (nhân viên QS viết, không xem tài liệu) | real (log thật đã ẩn danh) | legacy (bộ đã có)
+#   facts:         1–4 fact vàng ngắn kiểm được trong câu trả lời: chuỗi con ("220 x 140 x 30", so khớp bỏ khoảng trắng,
+#                  × = x, dấu phẩy thập phân = chấm) hoặc regex bắt đầu bằng "re:" (vd "re:cổng\s+CN1")
+#   expect_abstain: true nếu câu trả lời đúng là "không có trong tài liệu" (không có expected, không có facts)
+#   perturb_of:    id của câu gốc nếu đây là câu biến thể (bỏ dấu, sai chính tả); nhãn đúng giữ như câu gốc
+#   split:         dev (chỉnh luật/prompt/ngưỡng) | test (đóng băng, mỗi ứng viên chạy 1 lần)
+#   tags:          nhóm câu (thong_so, dau_noi, cau_hinh, chon_model, so_sanh, loi, ngoai_pham_vi, mo_ho, gia_handoff, chao_hoi)
+# Câu chỉ chấm định tuyến (không có expected) phải có expected_intent.
+#
+# Ví dụ (xóa khi nhập thật):
+#   - id: G001
+#     question: "Bộ F54 có kích thước bao nhiêu?"
+#     source: staff
+#     split: dev
+#     domain: product_catalog
+#     models: ["F54"]
+#     tags: ["thong_so"]
+#     expected_intent: ["lookup.product_info"]
+#     facts: ["220 x 140 x 30"]
+#     expected:
+#       - {chunk_key: qs_product_catalogue:B0642, content_hash: <sha256>, section_path: ["MOTION CONTROLLER", "QS F54"]}
+#   - id: G002
+#     question: "Giá bộ F54 bao nhiêu?"
+#     source: staff
+#     split: dev
+#     tags: ["gia_handoff"]
+#     expect_abstain: true
+#     expected_intent: ["handoff.human"]
+cases: []

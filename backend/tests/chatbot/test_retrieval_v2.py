@@ -162,6 +162,31 @@ def test_eval_scoring(tmp_path: Path) -> None:
     assert set(by_tag) == {"dau_day", "tu_khoa"} and by_tag["dau_day"]["n"] == 1 and by_tag["dau_day"]["mrr"] == 0.5
 
 
+def test_eval_gold_fields_and_context_precision(tmp_path: Path) -> None:
+    import pytest
+
+    ev = _eval_module()
+    f = tmp_path / "g.yaml"
+    f.write_text(
+        "cases:\n"
+        "  - id: G1\n    question: q\n    source: staff\n    facts: ['220 x 140', 're:CN1']\n    perturb_of: G0\n"
+        "    expected:\n      - {chunk_key: d:B1, content_hash: h1, section_path: [A]}\n"
+        "  - id: G2\n    question: gia?\n    source: real\n    expect_abstain: true\n    expected_intent: [handoff.human]\n",
+        encoding="utf-8")
+    g1, g2 = ev.load_cases(f)
+    assert (g1.source, g1.facts, g1.perturb_of, g1.expect_abstain) == ("staff", ("220 x 140", "re:CN1"), "G0", False)
+    assert g2.expect_abstain and g2.source == "real"
+    index = {1: ev.ChunkInfo("d:B1", "h1", ("A",), "child", "t", "S1"), 3: ev.ChunkInfo("d:B3", "h3", ("B",), "child", "t", "S3")}
+    r = ev.score_case(g1, "base", [ev.Candidate(3, 0.7, 0.05, True), ev.Candidate(1, 0.5, 0.03, True)], {1, 3}, index)
+    assert (r.context_total, r.context_gold) == (2, 1) and r.top[0]["chunk_id"] == 3
+    empty = ev.score_case(g1, "base", [], set(), index)
+    assert ev.summarize_context([r, empty]) == {"ctx_precision": 0.5, "nhieu": 1.0, "ctx_chunks": 2.0}
+    bad = tmp_path / "b.yaml"
+    bad.write_text("cases:\n  - id: B\n    question: q\n    source: x\n    expected_intent: [a]\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="source"):
+        ev.load_cases(bad)
+
+
 def test_eval_routing(tmp_path: Path) -> None:
     from types import SimpleNamespace as NS
 

@@ -141,6 +141,12 @@ class Case:
     route_override: str | None = None     # route mong đợi cố định (handoff, chitchat…); None = theo luật model
     domain_override: str | None = None    # domain mong đợi của định tuyến (vd product_catalog); None = `domain`
     split: str = "dev"                    # dev = dùng để sửa luật/prompt; test = chỉ để đo
+    # Bộ vàng v1 (kế hoạch §9): nguồn câu hỏi, fact vàng (chuỗi hoặc `re:<mẫu>`), câu gốc của câu biến thể,
+    # câu mà câu trả lời đúng là "không có trong tài liệu".
+    source: str = "legacy"
+    facts: tuple[str, ...] = ()
+    perturb_of: str | None = None
+    expect_abstain: bool = False
 
     @property
     def gold(self) -> frozenset[GoldKey]:
@@ -172,6 +178,7 @@ def _gold(items: list[dict[str, Any]] | None) -> frozenset[GoldKey]:
 
 
 SPLITS = ("dev", "test")
+SOURCES = ("staff", "real", "legacy")      # nguồn câu hỏi: nhân viên QS viết mới, log thật ẩn danh, bộ đã có
 
 
 def _domains(value: str | list[str] | None) -> str | None:
@@ -192,13 +199,19 @@ def load_cases(path: Path, only: list[str] | None = None, split: str | None = No
                   expected_intents=tuple(c.get("expected_intent") or ()),
                   scopes=tuple(c.get("scopes") or ()),
                   route_override=c.get("expected_route"), domain_override=_domains(c.get("expected_domain")),
-                  split=c.get("split", "dev"))
+                  split=c.get("split", "dev"), source=c.get("source", "legacy"),
+                  facts=tuple(str(f) for f in c.get("facts") or ()), perturb_of=c.get("perturb_of"),
+                  expect_abstain=bool(c.get("expect_abstain", False)))
              for c in data["cases"]]
     seen: set[str] = set()
     for c in cases:
         if c.id in seen:
             raise ValueError(f"{c.id}: trùng id")
         seen.add(c.id)
+        if c.source not in SOURCES:
+            raise ValueError(f"{c.id}: source phải là một trong {SOURCES}")
+        if c.expect_abstain and c.facts:
+            raise ValueError(f"{c.id}: câu expect_abstain không có fact vàng")
         if c.split not in SPLITS:
             raise ValueError(f"{c.id}: split phải là một trong {SPLITS}")
         if c.routing_only and not c.expected_intents:
@@ -251,6 +264,8 @@ class CaseResult:
     note: str = ""
     expected_scopes: list[str] = field(default_factory=list)   # scope hiện tại của các chunk mong đợi
     run: int = 1                       # lần chạy bước phân tích (--repeat); core luôn 1
+    context_total: int = 0             # số chunk con đưa vào ngữ cảnh LLM (`hits[].matched_chunk_ids`)
+    context_gold: int = 0              # trong đó số chunk đúng (mong đợi hoặc chấp nhận)
 
 
 def score_case(case: Case, variant: str, candidates: list[Candidate], hit_ids: set[int],
@@ -278,7 +293,7 @@ def score_case(case: Case, variant: str, candidates: list[Candidate], hit_ids: s
         info = index.get(cand.chunk_id)
         mark = "MONG_DOI" if info and info.gold_key in case.expected else (
             "CHAP_NHAN" if info and info.gold_key in case.acceptable else "")
-        top.append({"rank": pos, "chunk": info.short if info else str(cand.chunk_id),
+        top.append({"rank": pos, "chunk_id": cand.chunk_id, "chunk": info.short if info else str(cand.chunk_id),
                     "role": info.chunk_role if info else "", "type": info.chunk_type if info else "",
                     "section": info.section_title[:60] if info else "", "vector": round(cand.vector, 3),
                     "fused": round(cand.fused, 4), "r_vec": cand.ranks[0], "r_fts": cand.ranks[1],
@@ -287,7 +302,8 @@ def score_case(case: Case, variant: str, candidates: list[Candidate], hit_ids: s
     return CaseResult(case.id, variant, rank_gold, rank_expected, in_context, len(relevant),
                       None if expected_vector is None else round(expected_vector, 3),
                       None if best_wrong is None else round(best_wrong, 3), top,
-                      expected_scopes=expected_scopes)
+                      expected_scopes=expected_scopes, context_total=len(hit_ids),
+                      context_gold=sum(1 for i in hit_ids if index.get(i) and index[i].gold_key in case.gold))
 
 
 @dataclass
@@ -424,6 +440,16 @@ def summarize(results: list[CaseResult]) -> dict[str, float]:
     }
 
 
+def summarize_context(results: list[CaseResult]) -> dict[str, float]:
+    """Chất lượng ngữ cảnh đưa cho LLM (chỉ tính lượt có chunk trong ngữ cảnh): `ctx_precision` = chunk đúng ÷ chunk
+    đưa vào; `nhieu` = số chunk không đúng trung bình mỗi lượt; `ctx_chunks` = số chunk trung bình mỗi lượt."""
+    rows = [r for r in results if r.context_total > 0]
+    n = len(rows) or 1
+    return {"ctx_precision": round(sum(r.context_gold / r.context_total for r in rows) / n, 3),
+            "nhieu": round(sum(r.context_total - r.context_gold for r in rows) / n, 2),
+            "ctx_chunks": round(sum(r.context_total for r in rows) / n, 2)}
+
+
 # ----------------------------------------------------------------------------- chạy trên DB thật
 class CachedEmbedder:
     """Embed mỗi câu hỏi một lần cho mọi biến thể."""
@@ -501,7 +527,7 @@ async def run_core(cases: list[Case], index: dict[int, ChunkInfo], embedder: Cac
             repo = RecordingRepository(DocChunkV2Repository(_options(spec, codes)))
             retriever = Retriever(embedder, repo, config)
             request = RetrievalRequest(
-                task_id=f"eval-{case.id}", domain=case.domain, scopes=list(case.scopes),
+                task_id=f"eval-{case.id}", domain=case.domain, scopes=list(case.scopes), audiences=["public"],
                 model_filter=list(case.models) or None,
                 queries=[RetrievalQuery(sub_query_id=case.id, query=case.question, answer_mode="full")])
             result = await retriever.search([request])
@@ -818,10 +844,32 @@ def render(cases: list[Case], results: list[CaseResult], meta: dict[str, Any],
              "`scope_filter` = scope lọc cứng (`base` của các báo cáo trước 2026-11-14); `no_fts_clean` = tắt làm sạch "
              "(R-4); `scope_boost*`/`scope_none` = mức cộng điểm scope khác; `sb0.003_tb*` = điểm cộng cho target "
              "chính của luật định tuyến (chỉ khác khi `--routing-version` bật luật).", "",
-             "| Biến thể | recall@1 | recall@5 | MRR | mong_doi@1 | ngu_canh |", "|---|---|---|---|---|---|"]
+             "Đối tượng xem: `public` (kênh website). `ctx_precision` = chunk đúng ÷ chunk đưa vào ngữ cảnh LLM; "
+             "`nhieu` = số chunk không đúng mỗi lượt; `ctx_chunks` = số chunk mỗi lượt. "
+             f"Số biến thể đã đo trong lần chạy này: {meta.get('variants_tried', len(variants))} "
+             "(càng thử nhiều, biến thể tốt nhất càng dễ chỉ là may mắn).", "",
+             "| Biến thể | recall@1 | recall@5 | MRR | mong_doi@1 | ngu_canh | ctx_precision | nhieu | ctx_chunks |",
+             "|---|---|---|---|---|---|---|---|---|"]
     for v in variants:
-        s = summarize([r for r in results if r.variant == v])
-        lines.append(f"| {v} | {s['recall@1']} | {s['recall@5']} | {s['mrr']} | {s['mong_doi@1']} | {s['ngu_canh']} |")
+        rows = [r for r in results if r.variant == v]
+        s, c = summarize(rows), summarize_context(rows)
+        lines.append(f"| {v} | {s['recall@1']} | {s['recall@5']} | {s['mrr']} | {s['mong_doi@1']} | {s['ngu_canh']} | "
+                     f"{c['ctx_precision']} | {c['nhieu']} | {c['ctx_chunks']} |")
+    by_source = {c.id: c.source for c in cases}
+    source_variants = [v for v in TAG_VARIANTS if v in variants]
+    if source_variants and len(set(by_source.values())) > 1:
+        lines += ["", "## Theo nguồn câu hỏi: recall@5 / MRR / ctx_precision", "",
+                  "| Nguồn | n | " + " | ".join(source_variants) + " |", "|---|---|" + "---|" * len(source_variants)]
+        for src in SOURCES:
+            ids = {i for i, s in by_source.items() if s == src}
+            cells, n = [], 0
+            for v in source_variants:
+                rows = [r for r in results if r.variant == v and r.case_id in ids]
+                n = max(n, len({r.case_id for r in rows}))
+                s, c = summarize(rows), summarize_context(rows)
+                cells.append(f"{s['recall@5']} / {s['mrr']} / {c['ctx_precision']}" if rows else "")
+            if n:
+                lines.append(f"| {src} | {n} | " + " | ".join(cells) + " |")
     tag_variants = [v for v in TAG_VARIANTS if v in variants]
     if tag_variants:
         lines += ["", "## Theo loại câu (tag): recall@5 / MRR", "",
@@ -942,6 +990,7 @@ async def main_async(args: argparse.Namespace) -> Path:
     finally:
         await provider.close()
         await engine.dispose()
+    meta["variants_tried"] = len({r.variant for r in results})
     out = OUTPUT / (datetime.now().strftime("%Y%m%d-%H%M%S") + (f"-{args.label}" if args.label else ""))
     out.mkdir(parents=True, exist_ok=True)
     (out / "report.md").write_text(render(cases, results, meta, routing), encoding="utf-8")
