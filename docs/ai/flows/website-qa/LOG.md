@@ -30,8 +30,8 @@ tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
   `ChangeLanguage.jsx`; build đạt. Preview 5174 với luồng SSE giả có độ trễ: bước chạy → ✓ + chip → thu gọn "Đã xử lý 4
   bước · 8,9 giây" → mở lại đủ chi tiết. Nút micro hiện (Chrome).
 - Chưa kiểm / mở tiếp: backend phát `status` (Toma); backend nhận ảnh + model đọc ảnh, thời hạn lưu ảnh, kênh nào bật (Toma);
-  chưa thử micro thật (cần quyền micro), chưa xem nút ảnh trên trình duyệt (cờ tắt); dòng hoạt động không lưu khi tải lại.
-  Chưa commit.
+  chưa thử micro thật (cần quyền micro); dòng hoạt động không lưu khi tải lại. Nút ảnh đã xem trên preview với cờ bật
+  (cấu hình `frontend-worktree-images`). Commit `05cb1ea`.
 
 ## 2026-11-25 · Mock dòng hoạt động AI của widget (WU-17 đợt 3A) · loại: quyết định, tài liệu
 
@@ -41,6 +41,30 @@ tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 - Mock: canvas version 81, bảng W1 (website: đang chạy tương tác, đã trả lời thu gọn/mở, không thấy tài liệu, tiếng Anh
   so sánh 2 model) và W2 (CRM: tự sửa truy vấn, đã trả lời, lỗi quyền CRM + tra tài liệu).
 - Chưa chốt: hiện tên dữ liệu nghiệp vụ CRM đã đọc; kênh website đủ bước hay 3 bước. Chưa có code.
+## 2026-11-25 · GD0 kế hoạch đánh giá: công cụ đo bước sinh, ngữ cảnh, bộ vàng · loại: thay đổi, đánh giá
+
+- Vấn đề: chưa đo được chunk đúng/nhiễu trong ngữ cảnh và chất lượng bước sinh (bịa, nhầm, thiếu dù có trích nguồn). Quyết định (Toma 2026-11-25): kế hoạch
+  tối thiểu không LLM-judge ([báo cáo](../../reports/website_qa_retrieval_eval_plan_2026-11-25.md) §9), bắt đầu GD0.
+- Thay đổi (chỉ công cụ đánh giá, không đổi hành vi production): `evals/run_retrieval_eval.py` thêm trường câu `source`, `facts`, `perturb_of`,
+  `expect_abstain`, chỉ số `ctx_precision`/`nhieu`/`ctx_chunks`, bảng theo nguồn câu, `chunk_id` trong chi tiết, `audiences=["public"]` ở chế độ `core`,
+  số biến thể đã đo; `evals/run_generation_eval.py` (chế độ `oracle` = chunk đúng, `real` = tra cứu như production; xuất `results.json`, `report.md`,
+  `grading.csv`); `evals/gen_checks.py` (fact vàng, số/mã không có trong ngữ cảnh, `[S#]` hợp lệ, câu trích sai chỗ, nhận "không biết"); `evals/grading.py`
+  (bảng chấm CSV, mã lỗi, ghép oracle↔real để tách lỗi sinh và lỗi ngữ cảnh); `scripts/export_chat_log.py` (xuất câu thật ẩn danh); `evals/retrieval_cases/gold_v1.yaml`
+  (khung rỗng). Test mới: `test_gen_checks.py`, `test_gen_eval.py`, `test_export_chat_log.py`, thêm vào `test_retrieval_v2.py`.
+- Phát hiện: nhãn chunk của các bộ câu cũ đã lệch DB sau khi nạp lại tài liệu (chunk `expected` khớp: `sample_f54_f86` 0/24, `diverse_40` 3/84, `scope_f54` 0/23,
+  `dual_source` 8/25; `catalog_f54_astro` 24/24) → số đo 14/11 trên các bộ này không tái lập; "30% câu legacy" của bộ vàng phải gắn nhãn lại, chỉ `catalog_f54_astro` dùng được ngay.
+- Kiểm chứng: 3 bộ test mới + `test_retrieval_v2.py` đạt; `pytest tests\chatbot tests\api` → 700 đạt, 1 lỗi `test_sources::test_asset_signer_is_off…` (có sẵn: test đọc `.env`
+  cục bộ; nạp `test_retrieval_v2` làm `load_dotenv` ghi đè môi trường; chưa kiểm trên checkout sạch). Smoke thật (DB + `gpt-4o-mini`, vài cent): `catalog_f54_astro` K01, K02 và
+  `sample_f54_f86` Q1 chạy đủ oracle/real; Q1 nhãn cũ lệch nên oracle không có chunk.
+- Ảnh hưởng contract/API/schema: không. Mở tiếp: GD1 (QS viết và gắn nhãn 60 câu + 15 câu bẫy); `gen_checks` có thể báo nhầm (chưa đo tỉ lệ báo nhầm trên bộ thật);
+  `.gitignore` đã thêm `data/generation_eval/` và `data/gold_candidates/` (chứa câu hỏi thật).
+
+## 2026-11-25 · Đối chiếu STATE với eval tra cứu và kết quả đo gần nhất · loại: tài liệu, đánh giá
+
+- Đối chiếu `evals/run_retrieval_eval.py` và `data/retrieval_eval/`; không chạy lại eval, không đổi code.
+- Bổ sung vào STATE kết quả chưa được ghi: 2026-11-16, 48 câu `split=test`, luật `r2`, deepseek (100milionseek), 1 lần: đúng cả ba 0,542 (web1) / 0,5 (web2), intent 0,917 / 0,958, 1 lỗi phân tích; chưa có đối chứng `r0` cùng model nên chưa kết luận. Các run 11-16 khác là thử công cụ 1 câu.
+- Ghi rõ: chưa có số đo sau khi chuyển v2 (11-19) và thêm `audience` (11-21); eval vẫn `approved_only=False`.
+- Mở tiếp: chạy `r0` và `r2` cùng model, `--repeat 3`; eval chưa lọc `audience`.
 
 ## 2026-11-25 · Widget giữ nguồn và ảnh sau khi tải lại (WU-17 đợt 2) · loại: thay đổi
 

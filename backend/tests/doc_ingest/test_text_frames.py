@@ -128,13 +128,12 @@ def test_frame_with_title_and_only_step_caption_is_a_frame() -> None:
     assert "frame_text_released" not in other.flags
 
 
-def test_ocr_page_or_missing_s0_does_not_release() -> None:
-    for s0 in (_s0(115, ocr=True), None):
-        result = _run(s0)
-        [step] = _all(result, "Step 1:")
-        assert step.normalized_type == "figure_text"
-        assert all("text_frame" not in p.flags for p in _pictures(result))
-        assert not [e for e in result.normalized or [] if "frame_text_released" in e.flags]
+def test_missing_s0_does_not_release() -> None:
+    result = _run(None)
+    [step] = _all(result, "Step 1:")
+    assert step.normalized_type == "figure_text"
+    assert all("text_frame" not in p.flags for p in _pictures(result))
+    assert not [e for e in result.normalized or [] if "frame_text_released" in e.flags]
 
 
 def _loose_page() -> SynPage:

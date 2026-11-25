@@ -49,6 +49,7 @@ class RawItem:
     parent_id: str | None = None      # element_id của picture/table chứa phần tử này
     parent_label: str | None = None
     marker: str = ""                  # list_item: marker Docling (không đáng tin, T-08 ưu tiên glyph)
+    frame_released: bool = False      # T-20b: chữ của khung trên trang OCR được trả về thân (không tính vào lề trái)
 
     @property
     def is_furniture(self) -> bool:

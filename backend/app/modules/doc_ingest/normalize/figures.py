@@ -39,6 +39,8 @@ _TIE = 1.0             # T-11: hai ứng viên chênh khoảng cách ≤ (pt) �
 _FRAME_KEEP = frozenset({"picture", "table", "chart"})
 # T-20: nhãn Docling của dòng nhãn khung nằm ngoài picture.
 _FRAME_LABEL_SOURCES = frozenset({"text", "section_header"})
+# T-20b: dung sai x0 (pt) khi gom con của picture vào cột của nhãn bước trên trang OCR.
+_COLUMN_TOL = 12.0
 
 
 def _bbox(raw: Mapping[str, Any]) -> BBox:
@@ -72,7 +74,7 @@ def text_margin(items: Sequence[RawItem]) -> float | None:
     body; None khi chưa đủ `_MARGIN_MIN_LINES` dòng (F54: 85 pt, 399 dòng; F86 OCR: 35 pt)."""
     counts = Counter(round(i.bbox.x0) for i in items
                      if i.bbox is not None and i.parent_id is None and not i.is_furniture
-                     and i.label in ("text", "section_header", "list_item"))
+                     and not i.frame_released and i.label in ("text", "section_header", "list_item"))
     if not counts:
         return None
     x0, count = counts.most_common(1)[0]
@@ -114,7 +116,7 @@ class FrameRun:
 
 
 def release_text_frames(items: Sequence[RawItem], text_pages: set[int], profile: Profile,
-                        rec: Recorder) -> FrameRun:
+                        rec: Recorder, ocr_pages: set[int] | frozenset[int] = frozenset()) -> FrameRun:
     """T-20 khung chữ (I-36): trên trang có text layer, Docling có thể nhận cả một khung/cột hướng
     dẫn là picture, làm chữ thật của tài liệu thành chữ trong hình. Picture có con (không phải
     caption) là nhãn bước (`chunking.step_patterns`) hoặc câu ≥ `frame_sentence_words` từ, và ≥
@@ -124,7 +126,8 @@ def release_text_frames(items: Sequence[RawItem], text_pages: set[int], profile:
       bằng chứng và vẫn là chữ trong hình: nó lặp ở mỗi khung và cắt chuỗi bước;
     - caption bắt đầu bằng từ khóa caption giữ là caption của hình (T-11); caption khác ("Step 2: …")
       là chữ bước (C2 §6) → trả về `text`, không bị kéo lên cạnh hình.
-    Trang OCR không áp dụng: chữ OCR trên sơ đồ là mảnh nhãn (I-23)."""
+    Trang OCR: chữ OCR trên sơ đồ là mảnh nhãn (I-23), nên chỉ coi là khung khi có con là nhãn bước (T-20b, cờ
+    `text_frame_ocr`); câu dài không có nhãn bước không đủ."""
     step = [re.compile(p) for p in profile.chunking.step_patterns]
     labels = [re.compile(p) for p in profile.frame_label_patterns]
     min_words = profile.thresholds.frame_sentence_words
@@ -139,9 +142,12 @@ def release_text_frames(items: Sequence[RawItem], text_pages: set[int], profile:
     def frame_label(item: RawItem) -> bool:
         return any(p.fullmatch(" ".join(item.text.split())) for p in labels)
 
-    def evidence(item: RawItem) -> bool:
+    def is_step(item: RawItem) -> bool:
         text = " ".join(item.text.split())
-        return any(p.match(text) for p in step) or len(text.split()) >= min_words
+        return any(p.match(text) for p in step)
+
+    def evidence(item: RawItem) -> bool:
+        return is_step(item) or len(" ".join(item.text.split()).split()) >= min_words
 
     models = [re.compile(p) for p in profile.frame_model_patterns]
 
@@ -149,31 +155,48 @@ def release_text_frames(items: Sequence[RawItem], text_pages: set[int], profile:
         text = " ".join(item.text.split())
         return frame_label(item) and not any(p.fullmatch(text) for p in models)
 
+    def step_column(pid: str) -> list[RawItem]:
+        """T-20b: con của picture trên trang OCR nằm trong cột của nhãn bước (x0 ≥ x0 nhỏ nhất của nhãn bước − dung sai).
+        Một picture phủ cả ảnh chụp màn hình (bên trái) lẫn cột "Memo" (bên phải) chỉ trả cột bước (F54 trang 78)."""
+        kids = [k for k in children[pid] if k.bbox is not None]
+        steps = [k.bbox.x0 for k in kids if is_step(k)]  # type: ignore[union-attr]
+        if not steps:
+            return []
+        left = min(steps) - _COLUMN_TOL
+        return [k for k in kids if k.bbox.x0 >= left]  # type: ignore[union-attr]
+
+    def is_ocr(pid: str) -> bool:
+        return pages.get(pid) in ocr_pages and pages.get(pid) not in text_pages
+
+    def frame_children(pid: str) -> list[RawItem]:
+        return step_column(pid) if is_ocr(pid) else children[pid]
+
     def is_frame(pid: str) -> bool:
         # Bằng chứng chỉ từ chữ không phải caption: caption bước của ảnh chụp màn hình thường đã nằm cạnh
         # hình đúng thứ tự (F54 trang 95). Sơ đồ có nhiều mảnh nhãn ("(", ")") không phải khung dù có một
         # heading bị nuốt (F54 trang 50): đa số chữ phải là dòng ≥ 2 từ.
-        body = [k for k in children[pid] if k.label != "caption" and not frame_label(k)]
-        if not body and any(frame_title(k) for k in children[pid]):
+        kids = frame_children(pid)
+        body = [k for k in kids if k.label != "caption" and not frame_label(k)]
+        if not body and any(frame_title(k) for k in kids):
             # Khung có tiêu đề khung ("Instructions") mà chữ thân chỉ còn là caption bước (I-44, F54 trang 153:
             # "Instructions" + "Model: …" + caption "Step 3: …") → caption là bằng chứng.
-            body = [k for k in children[pid] if k.label == "caption"]
-        if pages.get(pid) not in text_pages or not any(evidence(k) for k in body):
+            body = [k for k in kids if k.label == "caption"]
+        if pages.get(pid) in text_pages:
+            if not any(evidence(k) for k in body):
+                return False
+        elif not is_ocr(pid) or not any(is_step(k) for k in body) or column_split(pid) is not None:
+            # T-20b (I-59, Giai đoạn 1 kế hoạch fix 2026-11-25): trang OCR (S0 biết là OCR) chỉ nhận khung có nhãn bước
+            # ("Step 1:"): câu dài trong hình OCR vẫn là mảnh nhãn (I-23), còn nhãn bước là bằng chứng chữ thủ tục.
+            # Không có thông tin S0 về trang thì không áp dụng; picture đã thuộc `side_column` (I-59 cũ) giữ nguyên.
             return False
         lines = sum(1 for k in body if len(k.text.split()) >= 2)
         return lines >= profile.thresholds.frame_text_min_ratio * len(body)
 
-    frames = frozenset(pid for pid in children if is_frame(pid))
-
-    def side_column(pid: str) -> list[RawItem]:
-        """I-59: picture mà Docling vẽ phủ cả cột chữ bên cạnh ảnh chụp màn hình (6AH, 6AVE trang 80/87: cột "Memo"
-        có "Step 1:", "Select parameter type …"). Con của picture chia được thành hai cụm theo trục x, ngăn bởi một
-        dải trắng ≥ `figure_column_gap` không con nào chạm tới; cụm phải là chữ thủ tục (≥ `figure_column_min_sentences`
-        con là nhãn bước hoặc câu ≥ `frame_sentence_words` từ, và đa số là dòng ≥ 2 từ) còn cụm trái là đám mảnh nhãn
-        của ảnh (đa số ≤ 2 từ) → cụm phải trả về văn bản thân. Không áp dụng cho picture đã là khung chữ."""
+    def column_split(pid: str) -> list[RawItem] | None:
+        """Cụm phải của `side_column` khi picture thỏa điều kiện của luật I-59 cũ; None nếu không."""
         kids = [k for k in children[pid] if k.bbox is not None]
-        if pid in frames or len(kids) < 6:
-            return []
+        if len(kids) < 6:
+            return None
         gap = profile.thresholds.figure_column_gap
         ordered = sorted(kids, key=lambda k: k.bbox.x0)  # type: ignore[union-attr]
         reach, cut = ordered[0].bbox.x1, None  # type: ignore[union-attr]
@@ -183,25 +206,39 @@ def release_text_frames(items: Sequence[RawItem], text_pages: set[int], profile:
                 break
             reach = max(reach, k.bbox.x1)  # type: ignore[union-attr]
         if cut is None:
-            return []
+            return None
         right = [k for k in kids if k.bbox.x0 >= cut]  # type: ignore[union-attr]
         left = [k for k in kids if k.bbox.x1 <= cut]  # type: ignore[union-attr]
         body = [k for k in right if k.label != "caption" and not frame_label(k)]
         sentences = sum(1 for k in body if evidence(k))
         if sentences < profile.thresholds.figure_column_min_sentences or not left:
-            return []
+            return None
         if sum(1 for k in body if len(k.text.split()) >= 2) < profile.thresholds.frame_text_min_ratio * len(body):
-            return []
+            return None
         if sum(1 for k in left if len(k.text.split()) <= 2) < profile.thresholds.frame_text_min_ratio * len(left):
-            return []
+            return None
         return [k for k in right if not frame_label(k)]
+
+    frames = frozenset(pid for pid in children if is_frame(pid))
+
+    def side_column(pid: str) -> list[RawItem]:
+        """I-59: picture mà Docling vẽ phủ cả cột chữ bên cạnh ảnh chụp màn hình (6AH, 6AVE trang 80/87: cột "Memo"
+        có "Step 1:", "Select parameter type …"). Con của picture chia được thành hai cụm theo trục x, ngăn bởi một
+        dải trắng ≥ `figure_column_gap` không con nào chạm tới; cụm phải là chữ thủ tục (≥ `figure_column_min_sentences`
+        con là nhãn bước hoặc câu ≥ `frame_sentence_words` từ, và đa số là dòng ≥ 2 từ) còn cụm trái là đám mảnh nhãn
+        của ảnh (đa số ≤ 2 từ) → cụm phải trả về văn bản thân. Không áp dụng cho picture đã là khung chữ."""
+        if pid in frames:
+            return []
+        return column_split(pid) or []
 
     column_released = {k.element_id for pid in children for k in side_column(pid)}
     run = FrameRun(items=[], frames=frames)
-    released = {k.element_id for pid in frames for k in children[pid] if not frame_label(k)} | column_released
+    ocr_released = {k.element_id for pid in frames if is_ocr(pid) for k in frame_children(pid) if not frame_label(k)}
+    released = ({k.element_id for pid in frames if not is_ocr(pid) for k in children[pid] if not frame_label(k)}
+                | ocr_released | column_released)
     for item in items:
         if item.element_id in frames:
-            run.flags[item.element_id] = ["text_frame"]
+            run.flags[item.element_id] = ["text_frame", "text_frame_ocr"] if is_ocr(item.element_id) else ["text_frame"]
             rec.add_log("T-20", item.element_id, "text frame: text children returned to body",
                         after={"released": [k.element_id for k in children[item.element_id]
                                             if k.element_id in released]})
@@ -213,7 +250,8 @@ def release_text_frames(items: Sequence[RawItem], text_pages: set[int], profile:
                         target=item.parent_id, before={"parent": item.parent_id, "label": item.label},
                         after={"parent": None, "label": "text" if item.label == "caption" else item.label})
             item = dataclasses.replace(item, parent_id=None, parent_label=None,
-                                       label="text" if item.label == "caption" else item.label)
+                                       label="text" if item.label == "caption" else item.label,
+                                       frame_released=item.element_id in ocr_released)
         run.items.append(item)
     _attach_loose_frame_labels(run, text_pages, profile, rec)
     return run
