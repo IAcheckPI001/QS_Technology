@@ -1,0 +1,96 @@
+﻿# Lớp vá ô: F86 Installation Guide (CRM id 7db742e8…, version 1.0), bảng cổng PORT/PINS/DESCRIPTION.
+# Chân và mô tả của CN2, CN3, CN4 lệch hàng ở chỗ nối trang 6–7; chân X57 của CN16 bị gán sang CN17 (tr.11).
+# Đối chiếu với ảnh trang PDF 7 và 11 (2026-11-25, Claude); đã xác nhận theo chỉ thị của Toma 2026-11-25 (status verified).
+schema_version: 1
+doc_id: f86-installation-en
+patches:
+  - patch_id: F86I-P01
+    page: 7
+    row_key: CN2
+    column: 1
+    find: "- D+ - D-"
+    replace: "- D+ - D- - FG"
+    reason: "CN2 mất chân FG (bị gán vào CN3)"
+    evidence: "PDF tr.7: CN2 gồm D+, D-, FG"
+    status: verified
+    verified_by: "Toma (chỉ thị xác nhận 2026-11-25; đối chiếu ảnh trang bởi Claude)"
+  - patch_id: F86I-P02
+    page: 7
+    row_key: CN2
+    column: 2
+    find: "Included: - D+ : Differential non-reversible signal"
+    replace: "Included: - D+ : Differential non-reversible signal - D- : Reverse differential signal - FG : Connect to shield wire"
+    reason: "mô tả D- và FG của CN2 bị ghi vào ô mô tả CN3"
+    evidence: "PDF tr.7: ô mô tả CN2 liệt kê D+, D-, FG"
+    status: verified
+    verified_by: "Toma (chỉ thị xác nhận 2026-11-25; đối chiếu ảnh trang bởi Claude)"
+  - patch_id: F86I-P03
+    page: 7
+    row_key: CN3
+    column: 1
+    find: "- FG - D7-"
+    replace: "- D7-"
+    reason: "FG thuộc CN2, CN3 bắt đầu từ D7-"
+    evidence: "PDF tr.7: CN3 gồm D7-, D7+, P7-, P7+, GND, DA.V, GND, DA.I"
+    status: verified
+    verified_by: "Toma (chỉ thị xác nhận 2026-11-25; đối chiếu ảnh trang bởi Claude)"
+  - patch_id: F86I-P04
+    page: 7
+    row_key: CN3
+    column: 2
+    find: "- D- : Reverse differential signal - FG : Connect to shield wire Included:"
+    replace: "Included:"
+    reason: "dòng D- và FG là của CN2 (đã chuyển bởi F86I-P02)"
+    evidence: "PDF tr.7: ô mô tả CN3 bắt đầu bằng 'Included: (P7-) và (P7+) is a pair…'"
+    status: verified
+    verified_by: "Toma (chỉ thị xác nhận 2026-11-25; đối chiếu ảnh trang bởi Claude)"
+  - patch_id: F86I-P05
+    page: 7
+    row_key: CN3
+    column: 2
+    find: "spindle with current"
+    replace: "spindle with current range : 420mA"
+    reason: "câu của DA.I bị cắt, phần 'range : 420mA' nằm ở ô CN4"
+    evidence: "PDF tr.7: 'DA.I Control ANALOG spindle with current range : 420mA' thuộc CN3"
+    status: verified
+    verified_by: "Toma (chỉ thị xác nhận 2026-11-25; đối chiếu ảnh trang bởi Claude)"
+  - patch_id: F86I-P06
+    page: 7
+    row_key: CN4
+    column: 2
+    find: "range : 420mA Connect to Handwheel:"
+    replace: "Connect to Handwheel:"
+    reason: "'range : 420mA' là của CN3 (đã chuyển bởi F86I-P05)"
+    evidence: "PDF tr.7: ô mô tả CN4 bắt đầu bằng 'Connect to Handwheel:'"
+    status: verified
+    verified_by: "Toma (chỉ thị xác nhận 2026-11-25; đối chiếu ảnh trang bởi Claude)"
+  - patch_id: F86I-P07
+    page: 11
+    row_key: CN16
+    column: 1
+    find: "- - C.X2"
+    replace: "- C.X2"
+    reason: "dấu '-' thừa đầu danh sách chân CN16"
+    evidence: "PDF tr.11: danh sách chân CN16 bắt đầu bằng C.X2"
+    status: verified
+    verified_by: "Toma (chỉ thị xác nhận 2026-11-25; đối chiếu ảnh trang bởi Claude)"
+  - patch_id: F86I-P08
+    page: 11
+    row_key: CN16
+    column: 1
+    find: "- X55 - X56"
+    replace: "- X55 - X56 - X57"
+    reason: "CN16 mất chân cuối X57 (bị gán vào CN17)"
+    evidence: "PDF tr.11: CN16 gồm C.X2, X50…X53, C.X3, X54…X57"
+    status: verified
+    verified_by: "Toma (chỉ thị xác nhận 2026-11-25; đối chiếu ảnh trang bởi Claude)"
+  - patch_id: F86I-P09
+    page: 11
+    row_key: CN17
+    column: 1
+    find: "- X57 - C.X4"
+    replace: "- C.X4"
+    reason: "X57 thuộc CN16, CN17 bắt đầu từ C.X4"
+    evidence: "PDF tr.11: CN17 gồm C.X4, X60…X63, C.X5, X64…X67"
+    status: verified
+    verified_by: "Toma (chỉ thị xác nhận 2026-11-25; đối chiếu ảnh trang bởi Claude)"

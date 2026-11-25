@@ -274,8 +274,24 @@ class _Builder:
                 if not is_continuation:
                     prev = row
                     continue
-                span, prev_span = spans[row.row_id], spans[prev.row_id] if prev else None
+                span, prev_span = spans[row.row_id], spans.get(prev.row_id) if prev else None
                 target = f"{self.table_id}:{row.row_id}"
+                carry = self._carry_target(seg_index, row, seg_rows) if (prev is None or prev.is_header) else None
+                if carry is not None:
+                    # T-15b (2026-11-25, dry-run): hàng đầu trang có ô khoá rỗng là phần nối tiếp của hàng cuối trang trước
+                    for cell, into in zip(row.cells, carry.cells):
+                        if not cell.text.strip():
+                            continue
+                        into.text = f"{into.text} {cell.text}".strip()
+                        if cell.raw_cell_ref:
+                            into.merged_cell_refs.append(cell.raw_cell_ref)
+                    carry.merged_row_ids.append(row.row_id)
+                    self.rows.remove(row)
+                    self.rec.add_log("T-15b", segment.element_id,
+                                     "page-top row with empty key cell merged into the last row of the previous page",
+                                     target=target, after={"merged_into": carry.row_id})
+                    prev = carry
+                    continue
                 if (prev is None or prev.is_header or span is None or prev_span is None
                         or span[0] - prev_span[1] > factor * median_height):
                     self.rec.add_review(segment.element_id, "orphan_row",
@@ -294,6 +310,28 @@ class _Builder:
                 spans[prev.row_id] = (prev_span[0], max(prev_span[1], span[1]))
                 self.rec.add_log("T-15", segment.element_id, "row with empty key cell merged into the row above",
                                  target=target, after={"merged_into": prev.row_id})
+
+    def _carry_target(self, seg_index: int, row: Row, seg_rows: Sequence[Row]) -> Row | None:
+        """T-15b: hàng cuối (có ô khoá) của trang liền trước mà `row` nối tiếp, hoặc None. Điều kiện hẹp: `row` là
+        hàng dữ liệu đầu tiên của đoạn, đoạn trước nằm ở trang liền kề, hàng đích có ô khoá không rỗng."""
+        if seg_index == 0:
+            return None
+        if self.segments[seg_index].pdf_page_index != self.segments[seg_index - 1].pdf_page_index + 1:
+            return None
+        first_data = next((r for r in seg_rows if not r.is_header and not r.repeated_header), None)
+        if first_data is None or first_data.row_id != row.row_id:
+            return None
+        target = next((r for r in reversed(self.rows) if r.segment == seg_index - 1
+                       and not r.is_header and not r.repeated_header), None)
+        if target is None or not target.cells[0].text.strip():
+            return None
+        # Chữ nối tiếp của một ô bị cắt qua trang bắt đầu giữa câu hoặc bằng gạch đầu dòng, không bằng chữ hoa. Hàng
+        # chú giải mới có ô khoá là biểu tượng ảnh (rỗng, vd. bảng phím 10iV: "Tool magazine run in …") bắt đầu bằng
+        # chữ hoa và không được gộp (dry-run 2026-11-25: gộp nhầm một hàng).
+        lead = next((c.text.strip() for c in row.cells if c.text.strip()), "")
+        if not lead or lead[0].isupper():
+            return None
+        return target
 
     # ---------------------------------------------------------------- T-12, T-13
     def annotate_cells(self) -> None:

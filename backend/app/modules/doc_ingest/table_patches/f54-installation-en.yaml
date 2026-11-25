@@ -1,0 +1,46 @@
+﻿# Lớp vá ô: F54 Installation Guide (CRM id 4935f0c0…, version 1.0), bảng cổng PORT/PINS/DESCRIPTION.
+# Lỗi X47, Y40, CY0 đã có sẵn trong raw Docling (cell CN7 chứa "...CX2 X47", cell CN4 chứa "Y40 CY0 FG D- D+"),
+# không phải do bước chuẩn hoá. Đối chiếu với ảnh trang PDF 9 (2026-11-25, Claude); đã xác nhận theo chỉ thị của Toma 2026-11-25 (status verified).
+schema_version: 1
+doc_id: f54-installation-en
+patches:
+  - patch_id: F54I-P01
+    page: 9
+    row_key: CN7
+    column: 1
+    find: "- CX2 X47"
+    replace: "- CX2"
+    reason: "X47 thuộc CN6, không thuộc CN7"
+    evidence: "PDF tr.9: CN7 gồm X57…X50, CX3, CX2 (10 chân); X47 là chân đầu của CN6"
+    status: verified
+    verified_by: "Toma (chỉ thị xác nhận 2026-11-25; đối chiếu ảnh trang bởi Claude)"
+  - patch_id: F54I-P02
+    page: 9
+    row_key: CN6
+    column: 1
+    find: "- - X46"
+    replace: "- X47 - X46"
+    reason: "CN6 mất chân đầu X47 và có dấu '-' thừa"
+    evidence: "PDF tr.9: CN6 gồm X47, X46, X45, X44, CX1, X43, X42, X41, X40, CX0"
+    status: verified
+    verified_by: "Toma (chỉ thị xác nhận 2026-11-25; đối chiếu ảnh trang bởi Claude)"
+  - patch_id: F54I-P03
+    page: 9
+    row_key: CN5
+    column: 1
+    find: "- Y41"
+    replace: "- Y41 - Y40 - CY0"
+    reason: "Y40 và CY0 thuộc CN5, không thuộc CN4"
+    evidence: "PDF tr.9: CN5 gồm Y55, Y44, Y43, Y42, Y41, Y40, CY0"
+    status: verified
+    verified_by: "Toma (chỉ thị xác nhận 2026-11-25; đối chiếu ảnh trang bởi Claude)"
+  - patch_id: F54I-P04
+    page: 9
+    row_key: CN4
+    column: 1
+    find: "- Y40 - CY0 - FG"
+    replace: "- FG"
+    reason: "CN4 chỉ có FG, D-, D+"
+    evidence: "PDF tr.9: CN4 gồm FG, D-, D+"
+    status: verified
+    verified_by: "Toma (chỉ thị xác nhận 2026-11-25; đối chiếu ảnh trang bởi Claude)"

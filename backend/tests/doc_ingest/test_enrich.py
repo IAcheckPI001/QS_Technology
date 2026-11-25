@@ -1,4 +1,4 @@
-"""Bước 3 (làm giàu tiếng Việt): client giả, không gọi API."""
+﻿"""Bước 3 (làm giàu tiếng Việt): client giả, không gọi API."""
 
 from __future__ import annotations
 
@@ -136,7 +136,7 @@ def test_runner_requires_gate_resumes_and_skips_parents(tmp_path: Path) -> None:
     assert (stats.input_tokens, stats.output_tokens) == (700 * (len(leaves) - 1), 250 * (len(leaves) - 1))
     stored = load_enrichment(run_dir)
     assert set(stored) == {enrichment_key(c.content_hash, c.section_path) for c in leaves[1:]}
-    assert all(r.prompt_version == "v4" and r.model == "fake-model" for r in stored.values())
+    assert all(r.prompt_version == "v5" and r.model == "fake-model" for r in stored.values())
     # chạy lại: chỉ còn chunk lỗi
     again = runner.pending_leaves(runner.load_chunks(run_dir), run_dir)
     assert [c.chunk_key for c in again] == [leaves[0].chunk_key]
@@ -207,7 +207,7 @@ def test_gate_2c_sample_verdicts_expire_and_approval(tmp_path: Path) -> None:
 
     plain = _build(_doc(), tmp_path).chunks
     leaves = [c for c in plain if c.chunk_role != "parent"]
-    records = {enrichment_key(c.content_hash, c.section_path): _record(c).model_copy(update={"prompt_version": "v4"})
+    records = {enrichment_key(c.content_hash, c.section_path): _record(c).model_copy(update={"prompt_version": "v5"})
                for c in leaves}
     first = enrichment_key(leaves[0].content_hash, leaves[0].section_path)
     records[first] = records[first].model_copy(update={"checks": ["faq_meta"]})
@@ -227,14 +227,14 @@ def test_gate_2c_sample_verdicts_expire_and_approval(tmp_path: Path) -> None:
     marked = next(e for e in review.reviews if e.enrichment_verdict == "ok")
     marked.enrichment_verdict, marked.enrichment_severe = "fix", True
     assert rv.gate_2c(True, rv.sample_counts(plain, review, records)) is False      # lỗi nặng → không đạt
-    newer = {k: r.model_copy(update={"prompt_version": "v5"}) for k, r in records.items()}
+    newer = {k: r.model_copy(update={"prompt_version": "v6"}) for k, r in records.items()}
     assert rv.sample_counts(plain, review, newer).sample == 0                      # phiên bản đổi → verdict hết hạn
     approved = _build(_doc(), tmp_path, records)
     run = approved.run
-    run.approval = EnrichmentApproval(version="v4", approved_at="2026-11-13", reviewer="toma", sample=2, sample_ok=2)
+    run.approval = EnrichmentApproval(version="v5", approved_at="2026-11-13", reviewer="toma", sample=2, sample_ok=2)
     rebuilt = build_chunks(run, MANIFEST, load_profile("qs_controller"))
     assert {c.enrichment_status for c in rebuilt.chunks if c.chunk_role != "parent"} == {"approved"}
-    assert enrichment_summary(rebuilt.chunks, review, run).approved_version == "v4"
+    assert enrichment_summary(rebuilt.chunks, review, run).approved_version == "v5"
 
 
 def test_meta_questions_dropped_and_kept_terms_checked() -> None:

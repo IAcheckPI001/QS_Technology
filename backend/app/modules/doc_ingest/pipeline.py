@@ -25,8 +25,10 @@ from app.modules.doc_ingest.normalize.text_refs import TextRefRun, annotate_text
 from app.modules.doc_ingest.normalize.pages import decide_furniture, printed_pages
 from app.modules.doc_ingest.normalize.recorder import Recorder
 from app.modules.doc_ingest.normalize.sections import assign_sections, fix_figures_above_heading
+from app.modules.doc_ingest.normalize.table_patches import apply_patches
 from app.modules.doc_ingest.normalize.tables import TableRun, build_logical_tables
 from app.modules.doc_ingest.profile import profile_hash
+from app.modules.doc_ingest.table_patch_io import load_patches
 from app.modules.doc_ingest.review.approval import content_hash, table_unit_payload
 from app.modules.doc_ingest.schemas.normalized import (
     ImageInfo, LogicalTable, NormalizedElement, PrintedPage, ValidationResult,
@@ -169,6 +171,7 @@ def run_normalization(docs: list[dict[str, Any]], doc_id: str, profile: Profile,
     figures = decide_figures(items, objects, profile, rec)
     items = figures.items
     tables = build_logical_tables(items, doc_id, profile, rec, figures.screenshots)
+    apply_patches(tables.tables, load_patches(doc_id), rec)      # T-21: lớp vá ô thủ công (nếu có file cho doc_id)
     not_flow = frozenset(k for k, v in figures.kinds.items() if v == "watermark_candidate") | frozenset(figures.duplicates)
     lists = decide_lists(items, profile, rec, not_flow)
     refs = annotate_text(items, lists, profile, rec, not_flow)
