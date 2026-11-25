@@ -63,6 +63,36 @@ export function citationTitle(id, chunk) {
   return [chunk.doc_title || chunk.section_title || chunk.doc_id || id, pages && S.conv.src.page(pages)].filter(Boolean).join(' · ');
 }
 
+// Bước lỗi lưu trong lượt (`error.stage`, WU-17 đợt 2) → span của trace để dùng chung tên bước với màn Diễn biến.
+const STAGE_SPAN = {
+  context: 'stage.context_load',
+  analysis: 'stage.analysis',
+  retrieval: 'stage.execution',
+  compose: 'stage.compose',
+  agent: 'agent.run',
+};
+
+/** Tên bước lỗi dễ hiểu ("Phân tích câu hỏi"); không biết bước thì "không rõ bước". */
+export function errorStepLabel(stage) {
+  return S.trace.spans[STAGE_SPAN[stage]] || S.conv.src.errorUnknownStep;
+}
+
+/**
+ * Nội dung hộp lỗi từ lỗi đã lưu trong lượt: { title, body, code } hoặc null khi lượt không lưu lỗi.
+ * Câu chữ giống màn Diễn biến (describeTrace) để hai nơi nói cùng một nguyên nhân.
+ */
+export function describeTurnError(error) {
+  if (!error) return null;
+  const provider = error.provider_code
+    ? S.trace.provider[error.provider_code] || S.trace.providerUnknown(error.provider_code)
+    : '';
+  return {
+    title: S.trace.failedAt(errorStepLabel(error.stage)),
+    body: [provider, S.trace.failedBody].filter(Boolean).join(' '),
+    code: error.provider_code || error.code || null,
+  };
+}
+
 /** Mã nguồn (S1, S2…) được câu trả lời trích dẫn. */
 export function citedSources(answer) {
   return new Set((String(answer || '').match(/\[S\d+\]/g) || []).map((tag) => tag.slice(1, -1)));

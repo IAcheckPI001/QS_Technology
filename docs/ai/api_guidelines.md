@@ -122,6 +122,17 @@ cả phiên) và `has_trace` (có dòng `chat_traces`). Query tùy chọn `limit
 trang, kèm `next_cursor` tới các lượt cũ hơn (`null` khi đã tới lượt đầu). Cursor sai →
 `422 invalid_cursor`. Không gửi `limit` thì trả hết như cũ (`next_cursor: null`).
 
+WU-17 đợt 2 (2026-11-25), mỗi lượt thêm (chỉ thêm khoá, client cũ bỏ qua):
+- `error`: `{stage, code, provider_code, http_status}` của lượt `status=error` ghi từ 2026-11-25 (`null` với lượt
+  khác hoặc bản ghi cũ). `stage`: `context` | `analysis` | `retrieval` | `compose` | `agent` | `null`; `code`: mã
+  nghiệp vụ (vd. `analysis_failed`) hoặc tên lớp lỗi dạng snake; `provider_code`: mã nhà cung cấp AI
+  (`invalid_api_key`, `insufficient_quota`…). Chỉ định danh, không có message (`services/turn_errors.py`).
+- `cited_sources`: nguồn câu trả lời đã trích dẫn, cùng dạng `items` của event SSE `sources`, dựng lại từ snapshot;
+  `images[].url` được **ký mới mỗi lần đọc** (TTL `ASSET_URL_TTL_S`), một lần gọi Storage cho cả trang. Cờ
+  `CHAT_SOURCES_ENABLED` tắt: vẫn có tiêu đề/trang, `images: []`. Lượt ghi trước 2026-11-25 không lưu tham chiếu ảnh
+  nên không có ảnh; lượt ghi trước 2026-11-18 không có `source_id` nên `cited_sources: []`. widget-backend chuyển
+  tiếp nguyên văn (`/api/chat/history`).
+
 ### `GET /chatbot/conversations`
 
 **Đường B2** (2026-11-18, FRONTEND_REQUIREMENTS 19.4): dùng khi gửi một trong `limit`, `cursor`,
@@ -225,7 +236,9 @@ Lượt không thuộc phiên → `404 history_not_found`; lượt không có sn
       "page_end": 26,
       "page_label": "page 4 - 26",
       "chunk_id": "…", "doc_id": "f86_installation_v01", "section_title": "…",
-      "section_path": ["2 Installation", "2.6 Wiring"], "source_id": "S1"
+      "section_path": ["2 Installation", "2.6 Wiring"], "source_id": "S1",
+      "similarity": 0.742,
+      "images": [{"url": "https://…/storage/v1/object/sign/doc-assets/…?token=…", "page": 7, "printed_page": 7}]
     }
   ],
   "turn_status": "completed",
@@ -234,9 +247,16 @@ Lượt không thuộc phiên → `404 history_not_found`; lượt không có sn
   "agent_steps": [],
   "answered_without_tools": null,
   "invalid_citations": [],
-  "final_reason": null
+  "final_reason": null,
+  "error": null
 }
 ```
+
+WU-17 đợt 2 (2026-11-25): `chunks[].similarity` là độ giống cosine (0–1) của chunk con khớp tốt nhất, giao diện hiện
+×10 (thang tuyệt đối, Toma chốt 2026-11-25); `score` vẫn là điểm xếp hạng gộp (RRF ~0,03), không dùng làm độ khớp.
+`chunks[].images` là ảnh của đoạn, URL ký mới mỗi lần đọc (tối đa `SOURCE_IMAGES_MAX`, chỉ khi cờ
+`CHAT_SOURCES_ENABLED` bật). `error` giống `/history`. Lượt ghi trước 2026-11-25: `similarity: null`, `images: []`.
+Snapshot chỉ lưu tham chiếu ảnh (`assets: [{bucket, path, page, printed_page}]`), không lưu URL.
 
 Chunk xếp theo `score` giảm dần; từ 2026-11-18 đoạn trùng giữa các lần tra cứu của cùng lượt được
 gộp theo `chunk_id` (giữ điểm cao nhất). `chunk_id`, `doc_id`, `section_title`, `section_path`,
@@ -559,7 +579,7 @@ event: sources
 data: {"items":[{"source_id":"S1","title":"...","doc_id":"...","pages":"23","images":[{"url":"https://...","page":23,"printed_page":24}]}]}
 
 event: done
-data: {"request_id":"...", "session_id":"..."}
+data: {"request_id":"...", "session_id":"...", "history_id":"..."}
 
 event: error
 data: {"code":"...", "message":"...", "request_id":"..."}
@@ -571,6 +591,10 @@ data: {"code":"...", "message":"...", "request_id":"..."}
 hạn sau `ASSET_URL_TTL_S`, mặc định 900 giây), không lưu vào lịch sử; mỗi nguồn tối đa `SOURCE_IMAGES_MAX` ảnh (mặc định
 3), `images` rỗng khi ký lỗi. `pages` là chuỗi ("23" hoặc "23-25"), có thể `null`. Client cũ bỏ qua event lạ nên tương thích
 ngược; widget-backend chuyển tiếp nguyên văn.
+
+`done.history_id` (WU-17 đợt 2, 2026-11-25): mã lượt vừa ghi (= `message.message_id` của request, = `id` của lượt
+trong `/history`), để client mở đúng lượt ở Workspace (`/conversations/{session_id}?turn={history_id}`). Chỉ thêm
+khoá; widget-backend chỉ gỡ `session_id`, giữ `history_id`.
 
 Client phải đọc theo SSE framing, nhận nhiều `delta`, chỉ coi request thành
 công khi nhận `done`, và xử lý `error` theo `code`. Các mã lỗi chính:

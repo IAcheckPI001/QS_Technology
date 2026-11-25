@@ -8,6 +8,13 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-25 · Widget giữ nguồn và ảnh sau khi tải lại (WU-17 đợt 2) · loại: thay đổi
+
+- Widget khôi phục `cited_sources` của từng lượt từ `/api/chat/history` (backend ký ảnh mới mỗi lần đọc; chi tiết
+  chat-platform LOG cùng ngày), nên huy hiệu có lại "tiêu đề · trang" và ảnh sau khi tải lại. `retriever.py` gắn
+  `ChunkHit.similarity` (cosine, chỉ thêm trường; không đổi xếp hạng). File: `src/chatbot/Chatbot.jsx`.
+- Kiểm chứng: `npm test` 97 đạt; `pytest tests\chatbot tests\api` đạt. Chưa kiểm với Supabase thật. Chưa commit.
+
 ## 2026-11-25 · Widget hiện bảng Markdown và huy hiệu trích dẫn tròn có chú thích (WU-17 đợt 1) · loại: thay đổi
 
 - Vấn đề: prompt trả lời (`prompts/answer.py`) yêu cầu bảng cho thông số/đấu dây nhưng widget dùng `react-markdown`

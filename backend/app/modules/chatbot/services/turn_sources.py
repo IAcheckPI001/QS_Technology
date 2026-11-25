@@ -17,6 +17,7 @@ from app.modules.chatbot.schemas.history import (
     RetrievalSnapshotResponse,
     RetrievalTask,
     ToolUsage,
+    TurnError,
     TurnSources,
     TurnUsageInfo,
 )
@@ -123,6 +124,17 @@ def usage_info(row: Any) -> TurnUsageInfo | None:
     return None
 
 
+def turn_error_info(snapshot: Any) -> TurnError | None:
+    """Lỗi đã lưu của lượt (snapshot["error"], WU-17 đợt 2); sai dạng hoặc không có → None."""
+    raw = snapshot.get("error") if isinstance(snapshot, Mapping) else None
+    if not isinstance(raw, Mapping):
+        return None
+    try:
+        return TurnError.model_validate(raw)
+    except ValueError:
+        return None
+
+
 def history_item(
     row: Any,
     usd_to_vnd_rate: float,
@@ -143,6 +155,7 @@ def history_item(
         "answered_at": item.created_at,
         "turn_number": turn_number,
         "has_trace": has_trace,
+        "error": turn_error_info(getattr(row, "retrieval_snapshot", None)),
     })
 
 
@@ -183,4 +196,5 @@ def retrieval_view(session_id: UUID, row: Any) -> RetrievalSnapshotResponse:
         answered_without_tools=answered_without_tools if isinstance(answered_without_tools, bool) else None,
         invalid_citations=[str(item) for item in snapshot.get("invalid_citations") or []],
         final_reason=final_reason if isinstance(final_reason, str) else None,
+        error=turn_error_info(raw),
     )

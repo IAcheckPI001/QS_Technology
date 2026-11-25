@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Markdown from '../../../components/Markdown.jsx';
 import { Badge } from '../../components/ui.jsx';
 import { S } from '../../strings.vi.js';
-import { formatDuration, formatScore } from '../../utils/format.js';
+import { formatDuration, formatScore, formatSimilarity } from '../../utils/format.js';
 import { chunkPages } from './sources.js';
 import styles from './detail.module.css';
 
@@ -43,7 +43,9 @@ export default function RetrievalDocs({ snapshot, cited = new Set(), focus = nul
     focusRef.current?.focus({ preventScroll: true });
   }, [focus, chunks]);
   const status = snapshot.retrieval_status;
-  const top = chunks.length ? Math.max(...chunks.map((chunk) => chunk.score ?? 0)) : null;
+  // Độ khớp thang 10 từ độ giống cosine (WU-11, WU-17 đợt 2); lượt cũ không lưu `similarity` thì không hiện điểm.
+  const similarities = chunks.map((chunk) => chunk.similarity).filter((value) => typeof value === 'number');
+  const top = similarities.length ? Math.max(...similarities) : null;
 
   return (
     <div className={styles.docs}>
@@ -58,7 +60,7 @@ export default function RetrievalDocs({ snapshot, cited = new Set(), focus = nul
         </div>
         <div className={styles.docStat}>
           <span>{S.conv.docsTop}</span>
-          <strong>{formatScore(top)}</strong>
+          <strong>{formatSimilarity(top)}</strong>
         </div>
       </div>
 
@@ -67,7 +69,9 @@ export default function RetrievalDocs({ snapshot, cited = new Set(), focus = nul
         const expanded = Boolean(open[key]);
         const source = sourceLine(chunk);
         const topic = topicLabel(chunk.scopes);
-        const width = `${Math.round(Math.min(Math.max(chunk.score ?? 0, 0), 1) * 100)}%`;
+        const hasScore = typeof chunk.similarity === 'number';
+        const width = `${Math.round(Math.min(Math.max(chunk.similarity ?? 0, 0), 1) * 100)}%`;
+        const images = (chunk.images || []).filter((image) => typeof image.url === 'string' && image.url.startsWith('https://'));
         const focused = Boolean(focus && chunk.source_id === focus.id);
         return (
           <article
@@ -80,15 +84,29 @@ export default function RetrievalDocs({ snapshot, cited = new Set(), focus = nul
           >
             <div className={styles.chunkHead}>
               <strong>#{chunk.rank}</strong>
-              <span className={styles.score}>
-                {S.conv.docsScore} <b>{formatScore(chunk.score)}</b>
-                <span className={styles.meter} aria-hidden="true"><span style={{ width }} /></span>
-              </span>
+              {hasScore && (
+                <span className={styles.score} title={S.conv.docsRankScore(formatScore(chunk.score))}>
+                  {S.conv.docsScore} <b>{formatSimilarity(chunk.similarity)}</b>
+                  <span className={styles.meter} aria-hidden="true"><span style={{ width }} /></span>
+                </span>
+              )}
               {topic && <Badge>{topic}</Badge>}
               {chunk.source_id && cited.has(chunk.source_id) && <Badge tone="brand">{S.conv.src.cited(chunk.source_id)}</Badge>}
             </div>
             {source && <span className={styles.chunkSource}>{source}</span>}
             <Markdown text={chunk.content} className={expanded ? styles.chunkBody : `${styles.chunkBody} ${styles.clamp}`} />
+            {images.length > 0 && (
+              <div className={styles.chunkImages}>
+                {images.map((image) => {
+                  const alt = S.conv.src.imageAlt(chunk.section_title || chunk.doc_id || '', image.printed_page ?? image.page);
+                  return (
+                    <a key={image.url} href={image.url} target="_blank" rel="noopener noreferrer" aria-label={alt}>
+                      <img src={image.url} alt={alt} loading="lazy" referrerPolicy="no-referrer" />
+                    </a>
+                  );
+                })}
+              </div>
+            )}
             <button type="button" className={styles.link} aria-expanded={expanded} onClick={() => setOpen((prev) => ({ ...prev, [key]: !expanded }))}>
               {expanded ? S.conv.docsLess : S.conv.docsMore}
             </button>

@@ -2,18 +2,24 @@
 
 import asyncio
 import json
-from uuid import UUID
+from datetime import UTC, datetime
+from types import SimpleNamespace
+from uuid import UUID, uuid4
 
 import httpx
 from starlette.requests import Request
 
 from app.core.config import Settings
+from app.modules.chatbot.analysis.analyzer import AnalysisError
 from app.modules.chatbot.providers.supabase_storage import AssetSigner
 from app.modules.chatbot.routers.sse import stream_chat
 from app.modules.chatbot.schemas.default import ChannelType
+from app.modules.chatbot.schemas.history import ChatHistoryItem
 from app.modules.chatbot.schemas.system import ChunkAsset, ChunkHit
 from app.modules.chatbot.services import ChatbotService
-from app.modules.chatbot.sources import build_sources, cited_source_ids
+from app.modules.chatbot.services.turn_errors import turn_error
+from app.modules.chatbot.services.turn_sources import retrieval_view
+from app.modules.chatbot.sources import attach_chunk_images, attach_history_sources, build_sources, cited_source_ids
 from tests.chatbot.agent_fakes import (
     FakeChunks,
     ScriptedToolProvider,
@@ -175,3 +181,100 @@ def test_sse_has_no_sources_event_when_disabled_or_uncited() -> None:
     assert off == ["event: delta", "event: done"]                          # tính năng tắt: giữ nguyên hành vi cũ
     uncited = [e.split("\n", 1)[0] for e in _events(_agent_service(FakeSigner(), "Lắp theo các bước."))]
     assert uncited == ["event: delta", "event: done"]
+
+# --- WU-17 đợt 2: history_id trong done, snapshot lưu độ khớp + tham chiếu ảnh, ký lại ảnh khi đọc ---
+
+
+def _events_and_rows(service: ChatbotService, message_id: str):
+    request = Request({"type": "http", "method": "POST", "path": "/chat/crm", "headers": [], "state": {}})
+    inbound = make_inbound("Hướng dẫn lắp đặt F86", session_id=SESSION_ID, channel=ChannelType.CRM,
+                           message_id=message_id)
+
+    async def collect():
+        response = stream_chat(request, service, inbound, make_service_principal(),
+                               make_request_context(ChannelType.CRM))
+        return [event async for event in response.body_iterator]
+
+    return asyncio.run(collect())
+
+
+def test_done_has_history_id_and_snapshot_keeps_similarity_and_asset_refs_not_urls() -> None:
+    message_id = "00000000-0000-0000-0000-0000000000e1"
+    service = _agent_service(FakeSigner(), "Lắp theo các bước [S1].")
+    events = _events_and_rows(service, message_id)
+    done = json.loads(events[-1].split("data: ", 1)[1])
+    assert done["history_id"] == message_id and done["session_id"] == str(SESSION_ID)
+    [row] = service._history_repository.rows
+    first = row.retrieval_snapshot["chunks"][0]
+    assert first["source_id"] == "S1" and first["similarity"] == 0.7
+    assert first["assets"] == [{"bucket": "doc-assets", "path": "f86/e1.png", "page": 1, "printed_page": 2}]
+    assert "signed.example" not in json.dumps(row.retrieval_snapshot)      # không lưu URL ký
+
+
+def _row(answer_text: str, chunks: list[dict]) -> SimpleNamespace:
+    return SimpleNamespace(id=uuid4(), answer=answer_text, retrieval_snapshot={"chunks": chunks})
+
+
+def _saved_chunk(source_id: str, assets: list[dict] | None = None, **extra) -> dict:
+    return {"rank": 1, "score": 0.03, "content": "x", "source_id": source_id, "section_title": f"Mục {source_id}",
+            "doc_id": "f54_installation", "page_start": 7, "page_end": 8, "assets": assets or [], **extra}
+
+
+def test_attach_history_sources_rebuilds_cited_sources_and_signs_once_for_all_turns() -> None:
+    img = {"bucket": "doc-assets", "path": "f54/p7.png", "page": 7, "printed_page": None}
+    rows = [
+        _row("Đấu dây theo [S2].", [_saved_chunk("S1"), _saved_chunk("S2", [img])]),
+        _row("Không trích dẫn.", [_saved_chunk("S1", [img])]),
+        _row("Lượt cũ [S1].", [{"rank": 1, "score": 0.03, "content": "x"}]),       # trước W1: không có source_id
+    ]
+    items = [ChatHistoryItem(id=r.id, session_id=SESSION_ID, query_origin="q", answer=r.answer, status="completed",
+                             created_at=datetime(2026, 11, 25, tzinfo=UTC), updated_date=datetime(2026, 11, 25, tzinfo=UTC),
+                             channel="website") for r in rows]
+    signer = FakeSigner()
+    out = asyncio.run(attach_history_sources(items, rows, signer, max_images=3))
+    assert len(signer.requested) == 1                                     # một lần ký cho cả trang
+    [source] = out[0].cited_sources
+    assert (source.source_id, source.title, source.pages) == ("S2", "Mục S2", "7-8")
+    assert source.images[0].url == "https://signed.example/f54/p7.png?token=t"
+    assert out[1].cited_sources == [] and out[2].cited_sources == []
+    # Tính năng tắt (không có signer): vẫn có tiêu đề/trang để hiện chú thích, không có ảnh.
+    [plain] = asyncio.run(attach_history_sources(items, rows, None))[0].cited_sources
+    assert plain.images == []
+
+
+def test_retrieval_view_exposes_similarity_error_and_fresh_images() -> None:
+    img = {"bucket": "doc-assets", "path": "f54/p7.png", "page": 7}
+    row = SimpleNamespace(
+        id=uuid4(), query_origin="q", model=None, total_tokens=0, status="completed",
+        retrieval_snapshot={"chunks": [_saved_chunk("S1", [img], similarity=0.74), _saved_chunk("S2")],
+                            "error": {"stage": "analysis", "code": "analysis_failed",
+                                      "provider_code": "invalid_api_key", "http_status": 401}},
+    )
+    view = retrieval_view(SESSION_ID, row)
+    assert view.chunks[0].similarity == 0.74 and view.chunks[1].similarity is None
+    assert view.error is not None and view.error.provider_code == "invalid_api_key"
+    signed = asyncio.run(attach_chunk_images(view, row, FakeSigner()))
+    assert [len(c.images) for c in signed.chunks] == [1, 0]
+    assert asyncio.run(attach_chunk_images(view, row, None)).chunks[0].images == []
+
+
+class _ProviderError(RuntimeError):
+    def __init__(self) -> None:
+        super().__init__("Incorrect API key provided: sk-secret")
+        self.code = "invalid_api_key"
+        self.status_code = 401
+
+
+def test_turn_error_keeps_only_identifiers_from_the_cause_chain() -> None:
+    try:
+        try:
+            raise _ProviderError()
+        except _ProviderError as cause:
+            raise AnalysisError("analysis_failed", "Analysis failed: Incorrect API key sk-secret") from cause
+    except AnalysisError as error:
+        info = turn_error(error)
+    assert info == {"stage": "analysis", "code": "analysis_failed", "provider_code": "invalid_api_key",
+                    "http_status": 401}
+    assert "sk-secret" not in json.dumps(info)
+    assert turn_error(ValueError("boom")) == {"stage": None, "code": "value_error", "provider_code": None,
+                                              "http_status": None}

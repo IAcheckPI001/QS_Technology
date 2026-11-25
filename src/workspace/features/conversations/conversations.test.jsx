@@ -414,6 +414,43 @@ describe('Nguồn câu trả lời theo lượt (B5, Q28)', () => {
   });
 });
 
+describe('Nguồn câu trả lời · đợt 2 (WU-17)', () => {
+  const src = (answer_source, retrieval_status, extra = {}) => ({ answer_source, retrieval_status, chunk_count: 0, tools: [], has_tool_errors: false, ...extra });
+
+  it('độ khớp thang 10 từ similarity, ảnh của đoạn; lượt cũ không có similarity thì ẩn điểm', async () => {
+    conversationsApi.history.mockResolvedValue({ session_id: 's1', messages: [turn(1, { answer: 'Đấu dây [S1].', sources: src('documents', 'ok', { chunk_count: 2 }) })] });
+    conversationsApi.retrievalForTurn.mockResolvedValue({
+      history_id: 'h1', turn_status: 'completed', retrieval_status: 'ok', sources: src('documents', 'ok', { chunk_count: 2 }),
+      chunks: [
+        { rank: 1, score: 0.031, similarity: 0.742, content: 'Cổng CN1', scopes: [], source_id: 'S1', chunk_id: 'c1', section_title: 'Port', images: [{ url: 'https://p.supabase.co/sign/p7.png?token=t', page: 7, printed_page: 7 }, { url: 'javascript:alert(1)', page: 8 }] },
+        { rank: 2, score: 0.02, content: 'Lượt cũ', scopes: [], chunk_id: 'c2' },
+      ],
+    });
+    renderAt('/conversations/s1');
+    const first = await screen.findByRole('article', { name: '#1 · S1' });
+    expect(within(first).getByText('7,4/10')).toBeTruthy();
+    expect(screen.getAllByText('7,4/10')).toHaveLength(2); // ô "Độ khớp cao nhất" + thẻ đoạn
+    const [img] = within(first).getAllByRole('img');
+    expect(img.getAttribute('src')).toBe('https://p.supabase.co/sign/p7.png?token=t');
+    expect(within(first).getAllByRole('img')).toHaveLength(1); // URL không phải https bị bỏ
+    const old = screen.getByRole('article', { name: '#2' });
+    expect(within(old).queryByText(/\/10/)).toBeNull();
+  });
+
+  it('lượt lỗi có mã lưu sẵn: nhãn "Lỗi ở bước …", khung nguồn nói nguyên nhân không cần trace', async () => {
+    const error = { stage: 'analysis', code: 'analysis_failed', provider_code: 'invalid_api_key', http_status: 401 };
+    conversationsApi.history.mockResolvedValue({ session_id: 's1', messages: [turn(1, { status: 'error', answer: null, has_trace: false, error, sources: src('direct', 'not_applicable') })] });
+    conversationsApi.retrievalForTurn.mockResolvedValue({ history_id: 'h1', turn_status: 'error', retrieval_status: 'not_applicable', sources: src('direct', 'not_applicable'), chunks: [], error });
+    conversationsApi.trace.mockReset();
+    renderAt('/conversations/s1');
+    expect(srcButton(await screen.findByRole('article', { name: 'Lượt 1' })).textContent).toMatch(/^Lỗi ở bước “Phân tích câu hỏi”/);
+    expect(await screen.findByText('Lượt này thất bại ở bước “Phân tích câu hỏi”.')).toBeTruthy();
+    expect(screen.getByText(/không hợp lệ/)).toBeTruthy();
+    expect(screen.getByText('invalid_api_key')).toBeTruthy();
+    expect(conversationsApi.trace).not.toHaveBeenCalled();
+  });
+});
+
 /** Nút nhãn nguồn dưới lượt (không phải huy hiệu trích dẫn trong câu trả lời). */
 function srcButton(article) {
   return within(article).getAllByRole('button').find((button) => !(button.getAttribute('aria-label') || '').startsWith('Nguồn '));

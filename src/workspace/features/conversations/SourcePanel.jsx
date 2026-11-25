@@ -9,7 +9,7 @@ import { conversationsApi } from '../../api/conversations.js';
 import { useResource } from '../../hooks/useResource.js';
 import { S } from '../../strings.vi.js';
 import RetrievalDocs from './RetrievalDocs.jsx';
-import { citedSources, crmCalls, noneReason, sourceKind } from './sources.js';
+import { citedSources, crmCalls, describeTurnError, noneReason, sourceKind } from './sources.js';
 import { analyzeTools } from './toolErrors.js';
 import { describeTrace } from './traceModel.js';
 import styles from './detail.module.css';
@@ -23,8 +23,21 @@ async function traceOrNull(promise) {
   }
 }
 
-/** Hộp lỗi của lượt: nguyên nhân lấy từ trace nếu lượt có lưu; không có thì nói rõ là không biết. */
-function ErrorReason({ sessionId, historyId, hasTrace, traceTo }) {
+/** Hộp lỗi của lượt: dùng lỗi lưu trong lượt (từ 2026-11-25); lượt cũ đọc trace. */
+function ErrorReason({ error, sessionId, historyId, hasTrace, traceTo }) {
+  const stored = describeTurnError(error);
+  if (!stored) return <TraceErrorReason sessionId={sessionId} historyId={historyId} hasTrace={hasTrace} traceTo={traceTo} />;
+  return (
+    <Box tone="danger" title={stored.title}>
+      <span>{stored.body}</span>
+      {stored.code && <span className={`ws-mono ${styles.errCode}`}>{stored.code}</span>}
+      {hasTrace !== false && <Link to={traceTo} className={styles.srcLink}>{S.conv.viewTrace}</Link>}
+    </Box>
+  );
+}
+
+/** Lượt ghi trước khi lưu lỗi: nguyên nhân lấy từ trace nếu lượt có lưu; không có thì nói rõ là không biết. */
+function TraceErrorReason({ sessionId, historyId, hasTrace, traceTo }) {
   const trace = useResource(
     ({ signal }) => (hasTrace === false ? Promise.resolve(null) : traceOrNull(conversationsApi.trace(sessionId, historyId, { signal }))),
     [sessionId, historyId, hasTrace],
@@ -128,7 +141,7 @@ export default function SourcePanel({ data, answer, traceTo, sessionId, hasTrace
         </Box>
       )}
       {(kind === 'none' || kind === null) && data.turn_status === 'error' && (
-        <ErrorReason sessionId={sessionId} historyId={data.history_id} hasTrace={hasTrace} traceTo={traceTo} />
+        <ErrorReason error={data.error} sessionId={sessionId} historyId={data.history_id} hasTrace={hasTrace} traceTo={traceTo} />
       )}
       {(kind === 'none' || kind === null) && data.turn_status !== 'error' && (
         <Box tone="neutral" title={S.conv.src.noneTitle}><span>{noneReason(data.turn_status)}</span></Box>

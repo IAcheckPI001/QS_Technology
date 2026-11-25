@@ -359,6 +359,7 @@ class Retriever:
                 control_interface=record.control_interface,
                 spec_attributes=record.spec_attributes,
                 score=best.fused_score,
+                similarity=round(max(match.vector_score for match in matches), 4),
             ))
         return hits
 

@@ -87,6 +87,11 @@ def get_trace_reader() -> TraceRepository:
     return TraceRepository()
 
 
+def get_asset_signer(request: Request):
+    """Ký URL ảnh tài liệu (D-014); None khi CHAT_SOURCES_ENABLED tắt hoặc thiếu cấu hình Supabase."""
+    return getattr(request.app.state, "chatbot_asset_signer", None)
+
+
 def get_turn_lease() -> SessionTurnLease:
     return SessionTurnLease(ChatTurnLeaseRepository(), settings.chat_turn_lease_s)
 
