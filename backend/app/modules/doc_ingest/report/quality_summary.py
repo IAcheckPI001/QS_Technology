@@ -50,6 +50,7 @@ CAUSE_TEXT = {"ocr": "OCR chưa kiểm chứng", "table": "Cấu trúc bảng", 
 TABLE_CODES = frozenset({
     "column_count_mismatch", "unassigned_cell", "empty_table", "ambiguous_continuation", "header_demotion_unsure",
     "header_missing", "complex_header", "orphan_row", "table_crosscheck_mismatch", "column_type_inconsistent",
+    "table_patch_unmatched",
 })
 CODE_CAUSE = {"ocr_required": "ocr", "text_coverage_gap": "coverage", **{c: "table" for c in TABLE_CODES}}
 _PAGE_ID = re.compile(r":p(\d+)$")        # cùng quy ước với `build/fields.review_index`
