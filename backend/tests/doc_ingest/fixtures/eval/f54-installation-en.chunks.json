@@ -1,0 +1,164 @@
+{
+ "schema_version": 1,
+ "doc_id": "f54-installation-en",
+ "verified": false,
+ "labeled_by": "Claude (nháp 2026-11-25)",
+ "method": "Soạn theo cấu trúc tiêu đề mục của PDF (mỗi mục đánh số là một đơn vị; hình đi kèm tiêu đề; ghi chú dưới hình thuộc đơn vị của mục; nhóm dòng bảng cổng không gán nhãn, do CQ-01/CQ-02 kiểm). Không soạn từ chunk builder. Đối chiếu ảnh trang F86 tr.6-7, 10-11, 15, 17 và F54 tr.7-9. Nháp, cần team xác nhận (verified=false).",
+ "pages": [
+  {
+   "page": 1,
+   "expected_chunks": [
+    {
+     "chunk_type": "overview",
+     "start": "Milling Controller",
+     "end": "Date: 25-04-2024",
+     "note": "bìa"
+    }
+   ]
+  },
+  {
+   "page": 4,
+   "expected_chunks": [
+    {
+     "chunk_type": "dimension",
+     "start": "1.1 DIMENSION",
+     "end": "1.1 DIMENSION",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "page": 5,
+   "expected_chunks": [
+    {
+     "chunk_type": "overview",
+     "start": "1.2 INSTALLATION DIAGRAM",
+     "end": "Ăng-ten Wi-Fi 2.4GHz",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "page": 7,
+   "expected_chunks": [
+    {
+     "chunk_type": "wiring",
+     "start": "2.1 CONNECTION DIAGRAM",
+     "end": "2.1 CONNECTION DIAGRAM",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "page": 11,
+   "expected_chunks": [
+    {
+     "chunk_type": "wiring",
+     "start": "2.2 LOW INPUT CONNECTION DIAGRAM",
+     "end": "2.2 LOW INPUT CONNECTION DIAGRAM",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "page": 12,
+   "expected_chunks": [
+    {
+     "chunk_type": "wiring",
+     "start": "2.3 HIGH INPUT CONNECTION DIAGRAM",
+     "end": "2.3 HIGH INPUT CONNECTION DIAGRAM",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "page": 13,
+   "expected_chunks": [
+    {
+     "chunk_type": "wiring",
+     "start": "2.4 LOW OUTPUT CONNECTION DIAGRAM",
+     "end": "2.4 LOW OUTPUT CONNECTION DIAGRAM",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "page": 14,
+   "expected_chunks": [
+    {
+     "chunk_type": "wiring",
+     "start": "2.5 PULSE, SERVO MOTOR DIRECTIONAL CONTROL",
+     "end": "2.5 PULSE, SERVO MOTOR DIRECTIONAL CONTROL",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "page": 15,
+   "expected_chunks": [
+    {
+     "chunk_type": "wiring",
+     "start": "2.6 ENCODER FEEDBACK FROM SERVO DIAGRAM",
+     "end": "2.6 ENCODER FEEDBACK FROM SERVO DIAGRAM",
+     "note": ""
+    },
+    {
+     "chunk_type": "wiring",
+     "start": "2.7 INVERTER CONNECTION DIAGRAM BY ANALOG INPUT",
+     "end": "2.7 INVERTER CONNECTION DIAGRAM BY ANALOG INPUT",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "page": 16,
+   "expected_chunks": [
+    {
+     "chunk_type": "wiring",
+     "start": "2.8.1 DIFFERENTIAL OUTPUT HANDWHEEL",
+     "end": "2.8.1 DIFFERENTIAL OUTPUT HANDWHEEL",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "page": 17,
+   "expected_chunks": [
+    {
+     "chunk_type": "wiring",
+     "start": "2.8.2 NPN OUTPUT HANDWHEEL",
+     "end": "2.8.2 NPN OUTPUT HANDWHEEL",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "page": 18,
+   "expected_chunks": [
+    {
+     "chunk_type": "wiring",
+     "start": "2.8.3 PNP OUTPUT HANDWHEEL",
+     "end": "2.8.3 PNP OUTPUT HANDWHEEL",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "page": 19,
+   "expected_chunks": [
+    {
+     "chunk_type": "wiring",
+     "start": "2.9 RS485, I/O-LINK CONNECTION",
+     "end": "2.9 RS485, I/O-LINK CONNECTION",
+     "note": ""
+    },
+    {
+     "chunk_type": "wiring",
+     "start": "2.10 POWER CONNECTION",
+     "end": "2.10 POWER CONNECTION",
+     "note": ""
+    }
+   ]
+  }
+ ]
+}

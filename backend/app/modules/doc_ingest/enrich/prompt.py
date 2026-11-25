@@ -22,7 +22,7 @@ from app.modules.doc_ingest.enrich.checks import FAQ_CHARS, FAQ_MAX, FAQ_MIN, KE
 from app.modules.doc_ingest.schemas.chunk import DraftChunk
 from app.modules.doc_ingest.schemas.profile import GlossaryTerm
 
-PROMPT_VERSION = "v4"
+PROMPT_VERSION = "v5"
 
 _BASE = f"""Bạn viết lớp tìm kiếm tiếng Việt cho tài liệu kỹ thuật bộ điều khiển CNC của QS Technology.
 Người dùng (kỹ thuật viên, khách hàng) hỏi bằng tiếng Việt; đoạn tài liệu thường bằng tiếng Anh. Đọc MỘT đoạn tài liệu
@@ -43,7 +43,10 @@ Quy tắc bắt buộc:
 2. Giữ NGUYÊN VĂN mã kỹ thuật, tên nút, tên màn hình (#12010, X41, CN3, M1942, PUL1+, G54, GO TO LINE…).
 3. Viết tiếng Việt có dấu, tự nhiên, ngắn gọn.
 4. Đoạn là một phần của bảng tham số: tóm tắt nói phần bảng tham số gì; câu hỏi hỏi về mã/giá trị có trong phần đó.
-5. Chỉ trả JSON."""
+5. Đoạn chỉ có một dòng tiêu đề/caption ngắn (không có thân văn bản, giá trị hay bảng): câu hỏi chỉ hỏi đây là sơ đồ/hình
+   nào hoặc cách đấu/nối nào theo ĐÚNG tiêu đề; KHÔNG hỏi giá trị, điện áp, thông số, chức năng, tác dụng hay ý nghĩa
+   vì đoạn không chứa các thông tin đó; tóm tắt chỉ diễn đạt lại tiêu đề.
+6. Chỉ trả JSON."""
 
 
 def _glossary_lines(glossary: Sequence[GlossaryTerm]) -> list[str]:
