@@ -1,0 +1,151 @@
+/* Dòng hoạt động AI (mock W1/W2 canvas v83): vòng trạng thái 16px, hiệu ứng 150/120/200 ms. */
+
+.card {
+    border: 1px solid #e8edf1;
+    border-radius: 12px;
+    background: #fff;
+    font-size: 13px;
+    color: #243744;
+}
+
+.inline {
+    margin: -2px -2px 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #eef1f4;
+    font-size: 13px;
+    color: #243744;
+}
+
+.legacy {
+    color: #5b6b76;
+    font-style: italic;
+}
+
+.summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 32px;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    font: inherit;
+    font-size: 12.5px;
+    color: #4a5a66;
+    text-align: left;
+    cursor: pointer;
+}
+
+.summary:hover { background: #f4f7f9; }
+.summary:focus-visible { outline: 2px solid #c27a0e; outline-offset: 1px; }
+.live { color: #243744; font-weight: 600; cursor: default; }
+.live:hover { background: none; }
+.summaryText { min-width: 0; }
+
+.spin {
+    flex: none;
+    width: 11px;
+    height: 11px;
+    box-sizing: border-box;
+    border: 2px solid #f3d9a6;
+    border-top-color: #c27a0e;
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+}
+
+.mark { flex: none; font-weight: 700; }
+.mark_ok { color: #1d7a4d; }
+.mark_warn { color: #c27a0e; }
+.mark_error { color: #b3261e; }
+.mark_muted { color: #8a96a0; }
+
+.chev { margin-left: auto; color: #8a96a0; transition: transform 0.2s ease; }
+.chevUp { transform: rotate(180deg); }
+
+.fold { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 0.2s ease; }
+.fold > div { min-height: 0; overflow: hidden; transition: opacity 0.2s ease; }
+.closed { grid-template-rows: 0fr; }
+.closed > div { opacity: 0; visibility: hidden; }
+
+.steps { margin: 0; padding: 2px 8px 8px; list-style: none; }
+
+.step {
+    position: relative;
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    gap: 8px;
+    padding: 5px 0;
+    animation: stepIn 0.15s ease-out both;
+}
+
+.step:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    left: 7px;
+    top: 23px;
+    bottom: -3px;
+    width: 2px;
+    background: #e8edf1;
+}
+
+.icon {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.running .icon { border: 2px solid #f3d9a6; border-top-color: #c27a0e; animation: spin 0.9s linear infinite; }
+.done .icon { background: #1d7a4d; animation: pop 0.12s ease-out both; }
+.warn .icon, .retry .icon { background: #c27a0e; animation: pop 0.12s ease-out both; }
+.error .icon { background: #b3261e; animation: pop 0.12s ease-out both; }
+.skipped .icon { background: #c9ced6; }
+
+.body { min-width: 0; }
+.label { font-weight: 600; line-height: 20px; }
+.skipped .label { color: #8a96a0; font-weight: 500; }
+.timer { margin-left: 2px; font-weight: 400; color: #8a96a0; }
+.detail { margin-top: 1px; font-size: 12px; line-height: 1.45; color: #5b6b76; }
+.warn .detail, .retry .detail, .slow { color: #7a4300; }
+.error .detail { color: #8a1c12; }
+.slow { margin-top: 2px; font-size: 12px; }
+.done .detail, .done .chips { animation: fadeIn 0.15s 0.05s ease-out both; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+
+.chip {
+    max-width: 100%;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: #1f4b5f;
+    background: #eef3f6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chip_model { color: #7a4300; background: #fff4e5; font-weight: 600; }
+.chip_table { color: #1f4b5f; background: #eaf2f7; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes stepIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes pop { from { transform: scale(0.8); } to { transform: scale(1); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .step, .done .icon, .warn .icon, .retry .icon, .error .icon, .done .detail, .done .chips { animation: none; }
+    .spin, .running .icon { animation: none; border-color: #c27a0e; }
+    .fold, .fold > div, .chev { transition: none; }
+}

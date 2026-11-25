@@ -1,6 +1,6 @@
 # Trạng thái luồng website-qa
 
-Cập nhật: 2026-11-25
+Cập nhật: 2026-11-26
 
 Ảnh chụp trạng thái hiện tại. Viết lại khi có thay đổi; lịch sử ở [LOG.md](LOG.md).
 
@@ -68,7 +68,7 @@ Kết quả đo (prompt `v1`, luật `r0`, gpt-4.1-mini, 3 lần mỗi câu; th�
 
 2026-11-19 (chuyển v2, worktree nhánh `claude/retrieval-v2-chat`, `DATABASE_URL` giả): `pytest tests\chatbot tests\api` → 594 passed; `pytest tests` → 1077 passed, 14 skipped, 1 failed (`test_f86_baseline_csv_unchanged`: worktree checkout CSV bằng CRLF do `core.autocrlf=true`, blob trong git đúng hash; không liên quan thay đổi); `check_ai_docs` đạt. Chưa smoke trên Supabase thật.
 2026-11-14, từ `backend/`: `pytest tests` → 1120 passed, 14 skipped; `pytest tests\doc_ingest` (venv ingest) → 376 passed; `scripts\check_ai_docs.py` → đạt.
-Chưa chạy lại đợt này (không đổi frontend): `npm test` widget-backend, `npm run build`, `npm run lint` (số 2026-11-11: 22 pass; build đạt; lint 429 lỗi sẵn có).
+2026-11-26 (WU-17 đợt 3A, chỉ frontend): `npm test` → 106 đạt; build đạt; lint toàn repo còn lỗi có sẵn (file widget 0). Widget có dòng hoạt động AI (chờ event `status` từ backend), giọng nói (Web Speech API), nút thêm ảnh sau `VITE_CHAT_IMAGE_INPUT` (chưa gửi ảnh lên máy chủ).
 
 ## Bước tiếp theo
 
