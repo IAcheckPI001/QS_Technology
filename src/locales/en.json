@@ -23,7 +23,18 @@
     "historyUnavailable": "Chat history could not be loaded. You can still start a new conversation.",
     "footerNote": "Responses may not always be accurate.",
     "source": "Source {{id}}",
-    "sourcePage": "p. {{pages}}"
+    "sourcePage": "p. {{pages}}",
+    "voice": "Speak your question",
+    "voiceStop": "Stop listening",
+    "listening": "Listening… say your question",
+    "voiceBlocked": "The browser is blocking the microphone. Allow microphone access to use voice input.",
+    "voiceError": "Could not hear you. Please try again.",
+    "addImage": "Add image",
+    "attachedImages": "Attached images",
+    "removeImage": "Remove image {{name}}",
+    "imageType": "Only JPG, PNG or WebP images are accepted.",
+    "imageSize": "Each image must be 5 MB or smaller.",
+    "imageCount": "Up to {{count}} images per message."
   },
   "service_home":{
     "titleContent": "Our service",

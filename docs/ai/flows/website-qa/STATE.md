@@ -1,6 +1,6 @@
 # Trạng thái luồng website-qa
 
-Cập nhật: 2026-11-25 (đối chiếu code, git và các báo cáo trong `data/retrieval_eval/`)
+Cập nhật: 2026-11-26 (đối chiếu code, git và các báo cáo trong `data/retrieval_eval/`)
 
 Ảnh chụp trạng thái hiện tại. Viết lại khi có thay đổi; lịch sử ở [LOG.md](LOG.md).
 
@@ -69,7 +69,7 @@ Kết quả đo (prompt `v1`, luật `r0`, gpt-4.1-mini, 3 lần mỗi câu; th�
 
 Eval tra cứu: số đo gần nhất 2026-11-16 (bảng R-1), chưa chạy lại sau khi chat chuyển v2 (11-19) và thêm `audience` (11-21). **Nhãn chunk của bộ cũ đã lệch DB sau khi nạp lại (đối chiếu 2026-11-25, chunk `expected` khớp: `sample_f54_f86` 0/24, `diverse_40` 3/84, `scope_f54` 0/23, `dual_source` 8/25; chỉ `catalog_f54_astro` 24/24)** → số đo cũ không tái lập, phải gắn nhãn lại. Kế hoạch đo mới (bản tối thiểu, không LLM-judge): [báo cáo](../../reports/website_qa_retrieval_eval_plan_2026-11-25.md) §9; GD0 (công cụ) xong 11-25 — smoke trên 3 câu chạy được, `pytest tests\chatbot tests\api` 700 đạt, 1 lỗi có sẵn `test_sources` (phụ thuộc `.env` cục bộ); GD1 (bộ vàng 60 câu, QS) chưa bắt đầu.
 2026-11-19 (chuyển v2, worktree nhánh `claude/retrieval-v2-chat`, `DATABASE_URL` giả): `pytest tests\chatbot tests\api` → 594 passed; `pytest tests` → 1077 passed, 14 skipped, 1 failed (`test_f86_baseline_csv_unchanged`: worktree checkout CSV bằng CRLF do `core.autocrlf=true`, blob trong git đúng hash; không liên quan thay đổi); `check_ai_docs` đạt. Chưa smoke trên Supabase thật.
-2026-11-25 (WU-17 đợt 1, frontend): `npm test` → 95 đạt; `npm run build` đạt; `npm run lint` toàn repo 185 lỗi có sẵn (file widget/Workspace 0). `npm test` của `widget-backend/` chưa chạy lại (không đổi).
+2026-11-26 (WU-17 đợt 3A, chỉ frontend): `npm test` → 106 đạt; build đạt; lint toàn repo còn lỗi có sẵn (file widget 0). Widget có dòng hoạt động AI (chờ event `status` từ backend), giọng nói (Web Speech API), nút thêm ảnh sau `VITE_CHAT_IMAGE_INPUT` (chưa gửi ảnh lên máy chủ).
 
 ## Bước tiếp theo
 

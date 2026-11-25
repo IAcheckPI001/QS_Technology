@@ -8,6 +8,39 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-26 · Widget: dòng hoạt động AI, nhập bằng giọng nói, nút thêm ảnh (giao diện, chờ backend) (WU-17 đợt 3A) · loại: thay đổi, quyết định
+
+- Quyết định (Toma 2026-11-26): làm giao diện trước; backend (`status`, nhận ảnh) Toma làm sau. Mock duyệt: canvas v83 (W1/W2).
+- Thay đổi (chỉ frontend, không thêm thư viện):
+  - `src/chatbot/activity/` (`activityModel.js`, `ActivityTimeline.jsx`, `Activity.module.css`): đọc event SSE `status`
+    (service `onStatus`), dịch mã bước sang câu vi/en theo ngôn ngữ câu hỏi (quy tắc dấu tiếng Việt), đúng trạng thái và
+    hiệu ứng của mock: Đang bắt đầu (≤1,5 s, sau đó về chữ cũ nếu backend chưa phát `status`), từng bước, bộ đếm >3 s, cảnh
+    báo >15 s, thu gọn khi có chữ đầu tiên, "✓ Đã xử lý N bước · x giây" bấm mở lại, cảnh báo/lỗi mở sẵn, reduced-motion.
+  - **Contract đề xuất** (chưa có backend; backend làm theo hoặc báo lệch): `event: status`, `data: {id, step, state, …}`;
+    `step` ∈ security, context, analysis, direct, catalog, retrieval, tool, compose, handoff, clarify; `state` ∈ running,
+    done, warn, retry, error, skipped; tuỳ bước: `count`, `docs[]`, `score` (cosine 0–1), `models[]`, `intent`, `target`,
+    `turns`, `tool` (crm_schema/crm_query/product_docs_ask), `entities[]` (tên nghiệp vụ), `rows`, `code` (mã lỗi tool).
+    Cùng `id` thì cập nhật dòng cũ. Không có chữ hiển thị trong event. Sau khi có backend: ghi vào `api_guidelines.md` (TR-06).
+  - Giọng nói: `useSpeechInput` (Web Speech API, vi-VN/en-US theo ngôn ngữ giao diện): chữ vào ô nhập, khách tự gửi; trình
+    duyệt không hỗ trợ thì ẩn nút; micro bị chặn thì báo. Chrome gửi âm thanh lên máy chủ Google để nhận dạng.
+  - Thêm ảnh: chọn ≤3 ảnh JPG/PNG/WebP ≤5 MB, xem trước, bỏ từng ảnh, ảnh hiện trong tin của khách. **Chưa gửi lên máy chủ**
+    (backend chưa nhận) nên sau cờ `VITE_CHAT_IMAGE_INPUT=true`, mặc định tắt (TR-16).
+  - Sửa lỗi có sẵn: lịch sử tải xong sau khi khách đã gửi tin thì ghi đè mất tin đó; nay ghép lịch sử vào trước.
+- Kiểm chứng: `npm test` → 15 file, 106 đạt (`activity.test.jsx`, `Chatbot.test.jsx` mới); eslint → chỉ lỗi có sẵn
+  `ChangeLanguage.jsx`; build đạt. Preview 5174 với luồng SSE giả có độ trễ: bước chạy → ✓ + chip → thu gọn "Đã xử lý 4
+  bước · 8,9 giây" → mở lại đủ chi tiết. Nút micro hiện (Chrome).
+- Chưa kiểm / mở tiếp: backend phát `status` (Toma); backend nhận ảnh + model đọc ảnh, thời hạn lưu ảnh, kênh nào bật (Toma);
+  chưa thử micro thật (cần quyền micro); dòng hoạt động không lưu khi tải lại. Nút ảnh đã xem trên preview với cờ bật
+  (cấu hình `frontend-worktree-images`). Commit `05cb1ea`.
+
+## 2026-11-25 · Mock dòng hoạt động AI của widget (WU-17 đợt 3A) · loại: quyết định, tài liệu
+
+- Quyết định (Toma 2026-11-25): thay "Preparing a reply…" bằng các bước xử lý dễ hiểu, trực quan; trả lời xong thu gọn
+  thành một dòng "Đã xử lý N bước · x giây", bấm để mở lại. Chữ do giao diện dịch từ mã bước + số đếm của event SSE
+  mới `status` (backend phát ở ranh giới stage/tool), không do LLM sinh; không gửi lập luận, prompt, giá trị dữ liệu CRM.
+- Mock: canvas version 81, bảng W1 (website: đang chạy tương tác, đã trả lời thu gọn/mở, không thấy tài liệu, tiếng Anh
+  so sánh 2 model) và W2 (CRM: tự sửa truy vấn, đã trả lời, lỗi quyền CRM + tra tài liệu).
+- Chưa chốt: hiện tên dữ liệu nghiệp vụ CRM đã đọc; kênh website đủ bước hay 3 bước. Chưa có code.
 ## 2026-11-25 · GD0 kế hoạch đánh giá: công cụ đo bước sinh, ngữ cảnh, bộ vàng · loại: thay đổi, đánh giá
 
 - Vấn đề: chưa đo được chunk đúng/nhiễu trong ngữ cảnh và chất lượng bước sinh (bịa, nhầm, thiếu dù có trích nguồn). Quyết định (Toma 2026-11-25): kế hoạch

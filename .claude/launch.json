@@ -14,6 +14,12 @@
       "port": 5174
     },
     {
+      "name": "frontend-worktree-images",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "set VITE_WORKSPACE_FIXTURES=auth&& set VITE_CHAT_IMAGE_INPUT=true&& npm run dev -- --config .claude/vite.worktree.config.js"],
+      "port": 5174
+    },
+    {
       "name": "mock-preview",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "mock-preview", "--port", "5175", "--strictPort"],
