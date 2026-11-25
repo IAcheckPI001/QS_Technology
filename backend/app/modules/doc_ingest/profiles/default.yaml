@@ -32,7 +32,7 @@ list_glyphs: ["o", "-", "•", "▪"]
 # T-20: tiêu đề khung hướng dẫn/ảnh minh họa và dòng model áp dụng (khớp toàn chuỗi): không tính là câu
 # khi quyết định picture có phải khung chữ.
 frame_label_patterns:
-  - '(?i)(description images?|instructions?|hình minh họa|hướng dẫn)\s*:?'
+  - '(?i)(description images?|instructions?|memo|hình minh họa|hướng dẫn)\s*:?'
   - '(?i)models?\s*:.*'
 # T-20: dòng model của khung. Tiêu đề khung + dòng model liền sau, hoặc dòng model ngay trên hình, mà Docling
 # để ngoài picture → chữ của hình (không vào text thân, không cắt chuỗi bước).

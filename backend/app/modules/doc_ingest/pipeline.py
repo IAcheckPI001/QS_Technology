@@ -158,7 +158,7 @@ def run_normalization(docs: list[dict[str, Any]], doc_id: str, profile: Profile,
     ocr = ocr_pages(s0) if s0 is not None else set()
     # T-20 cần biết trang nào có text layer; không có S0 thì không chạy.
     text_pages = {p.page for p in s0.pages if not p.ocr_applied} if s0 is not None else set()
-    frames = release_text_frames(read_items(docs, doc_id), text_pages, profile, rec)
+    frames = release_text_frames(read_items(docs, doc_id), text_pages, profile, rec, ocr)
     furniture = decide_furniture(frames.items, profile, rec, frames.frames)
     for element_id, frame_flags in frames.flags.items():
         furniture.flags.setdefault(element_id, []).extend(frame_flags)
