@@ -6,6 +6,18 @@ sang `LOG-archive-<ngày của mục mới nhất bị cắt>.md` và để lạ
 
 Sau khi thêm mục, viết lại [STATE.md](STATE.md).
 
+## 2026-11-25 · Độ khớp thang 10, ảnh của đoạn, lượt lỗi đọc mã lưu sẵn (WU-17 đợt 2, WU-11) · loại: thay đổi
+
+- Thay đổi: thẻ đoạn hiện `similarity × 10` ("7,4/10", thang tuyệt đối, Toma chốt 2026-11-25), thanh độ khớp theo cùng
+  thang, điểm RRF chuyển vào chú thích; lượt cũ không có `similarity` thì ẩn điểm; ô "Độ khớp cao nhất" theo similarity.
+  Ảnh của đoạn (`chunks[].images`, chỉ https) dưới nội dung. Lượt lỗi có `error` lưu sẵn: nhãn dưới lượt "Lỗi ở bước …"
+  (màu đỏ), khung nguồn nói nguyên nhân không cần trace; lượt cũ vẫn đọc trace. Backend: chat-platform LOG cùng ngày.
+- File: `RetrievalDocs.jsx`, `SourcePanel.jsx`, `ConversationDetailPage.jsx`, `sources.js` (`describeTurnError`,
+  `errorStepLabel`), `utils/format.js` (`formatSimilarity`), `strings.vi.js`, `detail.module.css`; test +2.
+- Kiểm chứng: `npm test` → 13 file, 97 đạt; eslint `src/components src/chatbot src/workspace` → 1 lỗi có sẵn
+  (`ChangeLanguage.jsx`, không sửa); `npm run build` đạt.
+- Chưa kiểm / mở tiếp: chưa xem trên dữ liệu thật (cần backend chạy code mới và ảnh F54 Installation trên bucket). Chưa commit.
+
 ## 2026-11-25 · Câu trả lời hiện Markdown, huy hiệu trích dẫn tròn bấm tới đoạn nguồn, lượt lỗi nói nguyên nhân (WU-17 đợt 1) · loại: thay đổi, quyết định
 
 - Vấn đề (đề xuất của Toma 2026-11-25): chi tiết hội thoại hiện câu trả lời như chữ thô (`### Cách sử dụng bộ điều

@@ -1,6 +1,6 @@
 # Trạng thái chat-platform
 
-Cập nhật: 2026-11-21
+Cập nhật: 2026-11-25
 
 Ảnh chụp trạng thái hiện tại. Viết lại khi có thay đổi; lịch sử ở [LOG.md](LOG.md).
 
@@ -12,7 +12,10 @@ Cập nhật: 2026-11-21
   và `/health/db` vẫn chưa có lần kiểm được ghi lại.
 - Các GET `/chatbot/...` của Support Workspace **chưa có xác thực hay ownership**.
 - `Idempotency-Key` mới được lưu, chưa chống xử lý trùng.
-- SQL `doc_chunks_v2.sql` thêm cột `audience` và tham số `p_audiences` (D-014, 2026-11-21): **áp tay trên Supabase trước khi deploy code mới**, chưa áp.
+- SQL `doc_chunks_v2.sql` thêm cột `audience` và tham số `p_audiences` (D-014, 2026-11-21): đã áp trên Supabase dev (xác nhận 2026-11-25, website-qa STATE); môi trường khác áp tay trước khi deploy.
+- **WU-17 đợt 2 (2026-11-25, chưa commit, chưa kiểm Supabase thật):** lượt lưu `similarity`, tham chiếu ảnh `assets` và `error`
+  trong snapshot; `/history` trả `error` + `cited_sources` (ảnh ký mới mỗi lần đọc), `/retrieval` trả `similarity`, `images`,
+  `error`; SSE `done` có `history_id`.
 
 ## Độ chín từng phần
 

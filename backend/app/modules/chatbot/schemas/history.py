@@ -51,6 +51,40 @@ class TurnUsageInfo(BaseModel):
     unpriced_models: list[str] = Field(default_factory=list)
 
 
+class SourceImage(BaseModel):
+    """Ảnh của đoạn nguồn: URL ký ngắn hạn (ASSET_URL_TTL_S) cấp lúc trả response, không lưu."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    url: str
+    page: int | None = None
+    printed_page: int | None = None
+
+
+class SourceItem(BaseModel):
+    """Nguồn được câu trả lời trích dẫn (`[S#]`), dùng cho event SSE `sources` và lịch sử (WU-17)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source_id: str
+    title: str
+    doc_id: str
+    pages: str | None = None
+    images: list[SourceImage] = []
+
+
+class TurnError(BaseModel):
+    """Lỗi của lượt `status=error` (WU-17 đợt 2): chỉ mã định danh, không chứa nội dung."""
+
+    # Bước lỗi: context, analysis, retrieval, compose, agent; None khi không xác định.
+    stage: str | None = None
+    # Mã nghiệp vụ của lỗi (vd. `analysis_provider_error`) hoặc tên lớp lỗi.
+    code: str | None = None
+    # Mã của nhà cung cấp AI (vd. `invalid_api_key`, `insufficient_quota`) và HTTP status nếu có.
+    provider_code: str | None = None
+    http_status: int | None = None
+
+
 class ChatHistoryItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -81,6 +115,11 @@ class ChatHistoryItem(BaseModel):
     turn_number: int | None = None
     # Có dòng chat_traces cho lượt này (mở được "Xem diễn biến xử lý").
     has_trace: bool | None = None
+    # WU-17 đợt 2: lỗi của lượt (lượt ghi từ 2026-11-25); None với lượt không lỗi hoặc bản ghi cũ.
+    error: TurnError | None = None
+    # Nguồn được trích dẫn kèm ảnh (URL ký mới mỗi lần đọc); rỗng khi lượt ghi trước 2026-11-25 không
+    # lưu tiêu đề/ảnh, hoặc khi CHAT_SOURCES_ENABLED tắt (không có ảnh).
+    cited_sources: list[SourceItem] = Field(default_factory=list)
 
 
 # Bộ lọc trạng thái hội thoại: trạng thái lượt mới nhất, hoặc `handoff` = phiên có chuyển nhân viên.
@@ -168,6 +207,11 @@ class ChunkResult(BaseModel):
     section_path: list[str] = Field(default_factory=list)
     # S1, S2…: khớp trích dẫn [S1] trong câu trả lời.
     source_id: str | None = None
+    # Độ giống ngữ nghĩa (cosine 0–1) của chunk con khớp tốt nhất; giao diện hiện ×10. `score` là điểm
+    # xếp hạng gộp (RRF, ~0,03), không dùng làm độ khớp. None với lượt ghi trước 2026-11-25.
+    similarity: float | None = None
+    # Ảnh của đoạn, URL ký mới mỗi lần đọc (chỉ khi CHAT_SOURCES_ENABLED bật).
+    images: list[SourceImage] = Field(default_factory=list)
 
 
 class RetrievalTask(BaseModel):
@@ -211,6 +255,8 @@ class RetrievalSnapshotResponse(BaseModel):
     invalid_citations: list[str] = Field(default_factory=list)
     # Lượt agent: lý do kết thúc vòng lặp (answered, limit, plateau, ambiguous, budget, no_answer).
     final_reason: str | None = None
+    # Lỗi của lượt (WU-17 đợt 2).
+    error: TurnError | None = None
 
 
 class ChatHistoryResponse(BaseModel):

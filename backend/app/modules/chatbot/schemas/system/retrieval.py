@@ -159,6 +159,8 @@ class ChunkHit(SystemModel):
     control_interface: list[str] = Field(default_factory=list)
     spec_attributes: list[str] = Field(default_factory=list)
     score: float
+    # Cosine của chunk con khớp tốt nhất (vector_score), để hiện độ khớp; `score` là điểm xếp hạng gộp.
+    similarity: float | None = None
     source_id: SourceId | None = None   # ExecutionStage gán sau khi mọi task chạy xong
 
 

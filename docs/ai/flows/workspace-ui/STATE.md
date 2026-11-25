@@ -51,8 +51,7 @@ Kiểm duyệt giao diện bằng `playwright-cli` (1440×900 và 375×812) trư
 | WU-7 | Thấp | Chi tiết hội thoại vẫn tải mọi lượt (`/history` không `limit`); chuyển sang phân trang cần đầu trang từ `/conversations/{id}` |
 | WU-8 | Thấp | Bundle JS ~500 kB (Vite cảnh báo); tách code theo route ở GĐ 6, khi bỏ bản cũ |
 | WU-9 | Thấp | Điện thoại: màn chi tiết và diễn biến chưa ẩn thanh dưới như mẫu mục 17 |
-| WU-11 | Thấp | Độ khớp là điểm fused (dữ liệu thật ~0,03), thanh gần như rỗng; hướng: lưu `vector_score` (cosine), hiện ×10 (WU-17 đợt 2; thang tuyệt đối hay tương đối chờ Toma) |
-| WU-17 | Trung bình | Đề xuất nguồn 2026-11-25 còn: đợt 2 (ảnh theo lượt ký lại khi đọc, `vector_score`, mã lỗi vào lượt, `done.history_id`); đợt 3 (dòng hoạt động AI, cửa sổ PDF, liên kết từ CRM, chờ B1 và đồng bộ CRM). Nhãn dưới lượt lỗi vẫn "Không có nguồn"; chưa kiểm sheet điện thoại |
+| WU-17 | Trung bình | Đợt 2 (2026-11-25, chưa commit, chưa kiểm dữ liệu thật): độ khớp ×10 (WU-11 đóng về code), ảnh theo lượt ký lại khi đọc, mã lỗi trong lượt, `done.history_id`. Còn đợt 3 (dòng hoạt động AI, cửa sổ PDF, liên kết từ CRM; chờ B1 và đồng bộ CRM); chưa kiểm sheet điện thoại |
 | WU-12 | Thấp | Lượt ghi trước B5 không có tên tài liệu/mục trên thẻ đoạn |
 | WU-13 | Thấp | Lỗi công cụ CRM đã có câu dễ hiểu và kết luận; mã HTTP cụ thể (vd 404) chỉ có ở màn Diễn biến khi lượt có trace |
 | WU-14 | Thấp | Bộ lọc Model sản phẩm: 7 mục khai báo tạm ở `status.js` (Q16 muốn lấy từ registry, B8); lượt cũ lưu `ASTRO_10S`/`ASTRO_10I` nên không khớp mã `10S`/`10i` |

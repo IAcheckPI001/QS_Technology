@@ -151,7 +151,11 @@ def stream_chat(
             if sources:
                 yield sse_event("sources", {"items": [item.model_dump(mode="json") for item in sources]})
             set_outcome(request, "ok")
-            yield sse_event("done", {"request_id": request_id, "session_id": session_id})
+            # history_id (WU-17 đợt 2): mã lượt vừa ghi, để client mở đúng lượt ở Workspace (`?turn=`).
+            yield sse_event(
+                "done",
+                {"request_id": request_id, "session_id": session_id, "history_id": inbound.message.message_id},
+            )
         except SecurityBlockedError as error:
             logger.info(
                 "Chat security event status=blocked request_id=%s session_id=%s "

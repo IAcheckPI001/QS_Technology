@@ -38,7 +38,13 @@ function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
                 const restoredMessages = history.messages.flatMap((item) => {
                     const entries = [{ id: `${item.id}-query`, role: 'user', content: item.query_origin }];
                     if (item.answer) {
-                        entries.push({ id: `${item.id}-answer`, role: 'assistant', content: item.answer });
+                        // cited_sources (WU-17 đợt 2): tiêu đề, trang và ảnh ký mới của nguồn đã trích dẫn.
+                        entries.push({
+                            id: `${item.id}-answer`,
+                            role: 'assistant',
+                            content: item.answer,
+                            sources: Array.isArray(item.cited_sources) ? item.cited_sources : undefined,
+                        });
                     }
                     return entries;
                 });

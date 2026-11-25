@@ -10,6 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.config import settings
 from app.modules.chatbot.dependencies import (
+    get_asset_signer,
     get_conversation_repository,
     get_history_repository,
     get_trace_reader,
@@ -45,6 +46,7 @@ from app.modules.chatbot.services.conversation_views import (
     conversation_summary,
 )
 from app.modules.chatbot.services.turn_sources import history_item, retrieval_view
+from app.modules.chatbot.sources import attach_chunk_images, attach_history_sources
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["chatbot-workspace"])
@@ -84,6 +86,7 @@ async def get_chat_history(
     limit: int | None = Query(default=None, ge=1, le=100),
     cursor: str | None = Query(default=None, max_length=200),
     repository: HistoryRepository = Depends(get_history_repository),
+    signer=Depends(get_asset_signer),
 ) -> ChatHistoryResponse | JSONResponse:
     """Không có `limit`: mọi lượt như cũ. Có `limit`: trang `limit` lượt mới nhất, `cursor` tới lượt cũ hơn (19.7)."""
     try:
@@ -110,16 +113,13 @@ async def get_chat_history(
     if not history and before is None:
         return _session_not_found()
 
-    return ChatHistoryResponse(
-        session_id=session_id,
-        messages=[
-            history_item(
-                item, settings.usd_to_vnd_rate, turn_number=first_number + index, has_trace=item.id in traced,
-            )
-            for index, item in enumerate(history)
-        ],
-        next_cursor=next_cursor,
-    )
+    messages = [
+        history_item(item, settings.usd_to_vnd_rate, turn_number=first_number + index, has_trace=item.id in traced)
+        for index, item in enumerate(history)
+    ]
+    # Nguồn được trích dẫn kèm ảnh: URL ký mới mỗi lần đọc (WU-17 đợt 2).
+    messages = await attach_history_sources(messages, history, signer, max_images=settings.source_images_max)
+    return ChatHistoryResponse(session_id=session_id, messages=messages, next_cursor=next_cursor)
 
 
 def _filters(
@@ -281,6 +281,7 @@ async def get_retrieval_snapshot(
     session_id: UUID,
     history_id: UUID | None = Query(default=None),
     repository: HistoryRepository = Depends(get_history_repository),
+    signer=Depends(get_asset_signer),
 ) -> RetrievalSnapshotResponse | JSONResponse:
     """Nguồn câu trả lời của lượt `history_id`; không gửi thì lượt mới nhất có chunk (hành vi cũ)."""
     try:
@@ -315,7 +316,8 @@ async def get_retrieval_snapshot(
                 }
             },
         )
-    return retrieval_view(session_id, row)
+    return await attach_chunk_images(
+        retrieval_view(session_id, row), row, signer, max_images=settings.source_images_max)
 
 
 @router.get("/chatbot/sessions/{session_id}/trace", response_model=ChatTraceResponse)

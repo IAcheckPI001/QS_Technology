@@ -9,6 +9,7 @@ import anyio
 
 from app.core.config import settings
 from app.core.tracing import current_trace, set_root, span
+from app.modules.chatbot.services.turn_errors import turn_error
 from app.modules.chatbot.services.turn_sources import turn_flags
 from app.modules.chatbot.services.turn_usage import USAGE_SOURCE_ESTIMATE, TurnUsage, usage_from_trace
 from app.util.token_counter import count_tokens
@@ -234,7 +235,7 @@ class ChatbotService:
                         session_id,
                         update_conversation_state(state),
                     )
-            except Exception:
+            except Exception as error:
                 answer = "".join(answer_parts)
                 set_root(history_status="error")
                 with span("history.write", "db", history_status="error"):
@@ -248,7 +249,7 @@ class ChatbotService:
                         channel=channel,
                         **turn_ids,
                         normalized_query=_normalized_query(state),
-                        **self._turn_record(state, message, answer),
+                        **self._turn_record(state, message, answer, error=error),
                     )
                 finalized = True
                 raise
@@ -372,6 +373,10 @@ class ChatbotService:
                     "section_title": getattr(hit, "section_title", None),
                     "section_path": list(getattr(hit, "section_path", None) or []),
                     "source_id": getattr(hit, "source_id", None),
+                    # WU-17 đợt 2: độ giống cosine (hiện ×10) và tham chiếu ảnh (bucket/path/trang, không phải URL);
+                    # URL ký được cấp lại mỗi lần đọc lượt.
+                    "similarity": getattr(hit, "similarity", None),
+                    "assets": [asset.model_dump(mode="json") for asset in getattr(hit, "assets", None) or []],
                 }
                 for rank, hit in enumerate(hits, start=1)
             ],
@@ -456,11 +461,16 @@ class ChatbotService:
         message: str,
         answer: str,
         conversation_state: dict | None = None,
+        error: BaseException | None = None,
     ) -> dict:
         """Snapshot tra cứu (kèm chi tiết usage), các cột token/chi phí và cờ B2 cho một dòng
-        chat_history. `conversation_state` chỉ có ở lượt completed và cũng được ghi vào dòng."""
+        chat_history. `conversation_state` chỉ có ở lượt completed và cũng được ghi vào dòng.
+        `error`: lượt lỗi ghi mã lỗi vào snapshot (WU-17 đợt 2), lượt chưa có state vẫn có snapshot."""
         usage = self._usage(message, answer)
         snapshot = self._retrieval_snapshot(state) if state is not None else None
+        if error is not None:
+            snapshot = snapshot if snapshot is not None else {"query": message, "chunks": []}
+            snapshot["error"] = turn_error(error)
         if snapshot is not None:
             snapshot["usage"] = usage.detail()
         record = {"retrieval_snapshot": snapshot, **usage.columns(), **turn_flags(snapshot, conversation_state)}

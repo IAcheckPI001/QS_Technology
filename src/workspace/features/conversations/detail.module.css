@@ -151,3 +151,7 @@
   .ask, .answer { max-width: 100%; }
   .link { min-height: 44px; }
 }
+.chunkImages { display: flex; flex-wrap: wrap; gap: 8px; }
+.chunkImages a { display: block; border-radius: 8px; }
+.chunkImages a:focus-visible { outline: 2px solid var(--ws-focus); outline-offset: 2px; }
+.chunkImages img { display: block; width: 132px; height: 96px; object-fit: contain; border: 1px solid var(--ws-border); border-radius: 8px; background: var(--ws-surface); }

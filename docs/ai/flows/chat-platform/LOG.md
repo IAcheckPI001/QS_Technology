@@ -7,6 +7,34 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-07 (nguyên văn từ `current-state.md` và `architecture.md`, gồm Finding
 status, API gateway, service key, lease, tracing): [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-25 · Lượt lưu độ khớp, tham chiếu ảnh và mã lỗi; ảnh ký lại khi đọc; `done.history_id` (WU-17 đợt 2) · loại: thay đổi, quyết định
+
+- Vấn đề: ảnh nguồn mất sau tải lại (URL ký 15 phút không lưu), độ khớp hiện điểm RRF ~0,03, lượt lỗi chỉ biết nguyên nhân
+  khi có trace, client CRM không biết mã lượt để mở Workspace (đề xuất của Toma, workspace-ui LOG 2026-11-25).
+- Quyết định: độ khớp = cosine × 10, thang tuyệt đối (Toma duyệt 2026-11-25). Lượt lưu tham chiếu ảnh, không lưu URL.
+- Thay đổi (chỉ thêm khoá, không cần SQL: `retrieval_snapshot` là jsonb):
+  - `ChunkHit.similarity` = cosine lớn nhất của chunk con (`retriever.py`); snapshot chunk thêm `similarity`, `assets`.
+  - Lượt `error`: `snapshot.error = {stage, code, provider_code, http_status}` (`services/turn_errors.py`, chỉ định danh,
+    duyệt chuỗi `__cause__`; lượt lỗi chưa có state vẫn có snapshot tối thiểu).
+  - `GET /history`: mỗi lượt có `error`, `cited_sources` (dựng từ snapshot, ảnh ký mới, một lần gọi Storage cho cả trang);
+    `GET /retrieval`: `chunks[].similarity`, `chunks[].images`, `error`. Ký ở `sources.py` (`attach_history_sources`,
+    `attach_chunk_images`), router chỉ gọi; signer qua `dependencies.get_asset_signer` (None khi cờ tắt → không ảnh).
+  - SSE `done` thêm `history_id` (= `message_id`); widget-backend giữ nguyên (chỉ gỡ `session_id`).
+  - `api_guidelines.md` cập nhật (TR-06). Test: `tests/chatbot/test_sources.py` +4.
+- Kiểm chứng: `pytest tests` (DATABASE_URL giả) → 1221 passed, 14 skipped, 1 failed có sẵn (`test_f86_baseline_csv_unchanged`,
+  CSV CRLF trong worktree); `widget-backend` `npm test` → 22 pass.
+- Ảnh hưởng contract: có, chỉ thêm khoá (`done.history_id`, `/history` `error`/`cited_sources`, `/retrieval` `similarity`/
+  `images`/`error`); client cũ không đổi.
+- Kiểm thật (2026-11-25, backend chạy từ worktree + Supabase dev, `CHAT_SOURCES_ENABLED=true`): Toma chạy
+  `publish-assets --apply` F54 Installation `crm-1.4-a` → 16 ảnh `published` (bucket `doc-assets`). Lượt website
+  `bd147866-…` (phiên `ed3e05c2-…`): `done` có `history_id`; `/history` có `cited_sources` (S1, tr. 11); `/retrieval`
+  5 đoạn có `similarity` 0,57–0,75 (RRF 0,019–0,034), ảnh ký mới cho đoạn có ảnh (S2: 2, S5: 3, tải được); Workspace
+  hiện "7,0/10"… và ảnh. Đoạn trúng chủ yếu từ `f54_operation_v02` (bản thử cũ, bucket `f54-docs`); đoạn của
+  `f54-installation-en` (S4) không có ảnh trong DB.
+- Chưa kiểm / mở tiếp: chưa thấy ảnh `doc-assets` trong lượt thật (chunk CRM trúng không mang `assets`; kiểm cột `assets`
+  của 847 chunk CRM đã nạp); chưa kiểm `error` trên lượt lỗi thật. Lượt ghi trước 2026-11-25 không có similarity/ảnh/mã
+  lỗi. Chưa commit.
+
 ## 2026-11-21 · SQL `doc_chunks_v2`: cột `audience`, tham số `p_audiences` (D-014) · loại: thay đổi
 
 - Vấn đề: cần chặn chunk nội bộ khỏi kênh website ở lớp dữ liệu (chi tiết và quyết định: website-qa LOG 2026-11-21, D-014).

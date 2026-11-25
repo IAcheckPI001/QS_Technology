@@ -86,6 +86,13 @@ export function formatScore(value) {
   return Number(value).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+/** Độ khớp thang 10 (WU-11): độ giống cosine 0–1 × 10, một chữ số thập phân ("7,4/10"); thiếu → "—". */
+export function formatSimilarity(value) {
+  if (value === null || value === undefined) return '—';
+  const score = Math.min(Math.max(Number(value), 0), 1) * 10;
+  return `${score.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}/10`;
+}
+
 /** Giờ hỏi = created_at − latency_ms (FRONTEND_REQUIREMENTS 19.2 W3); thiếu latency → null. */
 export function askedAt(turn) {
   if (!turn || turn.latency_ms === null || turn.latency_ms === undefined) return null;

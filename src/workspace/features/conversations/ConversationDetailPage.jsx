@@ -22,7 +22,7 @@ import { S } from '../../strings.vi.js';
 import { askedAt, formatDuration, formatFullDateTime, formatNumber, formatTime, formatUsd, formatVnd, sameDay } from '../../utils/format.js';
 import RetrievalDocs from './RetrievalDocs.jsx';
 import SourcePanel from './SourcePanel.jsx';
-import { citationTitle, sourceKind, sourceLabel, sourceTone } from './sources.js';
+import { citationTitle, errorStepLabel, sourceKind, sourceLabel, sourceTone } from './sources.js';
 import { channelLabel, statusLabel, statusNote, statusTone } from './status.js';
 import styles from './detail.module.css';
 
@@ -344,11 +344,11 @@ function Turn({ turn, no, sessionId, from, phone, perTurn, focused, query, selec
         {perTurn && kind && (
           <button
             type="button"
-            className={`${styles.link} ${styles.srcLabel} ${styles[`srcLabel_${sourceTone(kind)}`] || ''}`}
+            className={`${styles.link} ${styles.srcLabel} ${styles[`srcLabel_${turn.status === 'error' && turn.error ? 'danger' : sourceTone(kind)}`] || ''}`}
             aria-pressed={phone ? undefined : selected}
             onClick={onPick}
           >
-            {sourceLabel(kind, turn.sources)}
+            {turn.status === 'error' && turn.error ? S.conv.src.errorLabel(errorStepLabel(turn.error.stage)) : sourceLabel(kind, turn.sources)}
             {selected && !phone ? S.conv.src.viewing : ''}
           </button>
         )}
