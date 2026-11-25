@@ -1,6 +1,6 @@
 # Trạng thái luồng website-qa
 
-Cập nhật: 2026-11-21
+Cập nhật: 2026-11-25
 
 Ảnh chụp trạng thái hiện tại. Viết lại khi có thay đổi; lịch sử ở [LOG.md](LOG.md).
 
@@ -10,7 +10,7 @@ Cập nhật: 2026-11-21
 - **Chat đã chuyển hẳn sang `doc_chunks_v2`** (D-009 bước 6, 2026-11-19, nhánh `claude/retrieval-v2-chat`): `main.py` dựng `DocChunkV2Repository(MatchV2Options(approved_only=RETRIEVAL_APPROVED_ONLY))` cho cả luồng website lẫn tool `product_docs_ask`; `DocChunkRepository` đã xoá, bảng cũ `doc_chunks` chỉ giữ để đối chiếu. Coverage `technical_docs` nạp từ DB lúc khởi động.
 - **Cảnh báo:** mọi chunk v2 (F54 296, F86 Installation 23, catalog 37) đang `draft`. `RETRIEVAL_APPROVED_ONLY` mặc định `true` → chat **không tìm thấy tài liệu nào** cho tới khi chunk được duyệt `approved`. Dev/staging đặt `RETRIEVAL_APPROVED_ONLY=false`.
 - Đang làm **R-1**: tối ưu bước phân tích (intent, mô tả, model LLM) và định tuyến tra cứu. Kế hoạch 4 giai đoạn A–D đã duyệt; A và phần code của B đã xong. OpenAI hết credit nên eval routing hiện có thể dùng tạm `100milionseek.top` với `HMS_API_KEY`; chỉ là provider eval, không dùng production.
-- **Đối tượng xem (D-014, 2026-11-21, chưa merge, chưa áp SQL):** website chỉ tra chunk `audience='public'`, kênh CRM cả `internal`; `RetrievalRequest.audiences` do `ExecutionStage` đặt theo kênh, mặc định `public`. **Phải áp `backend/sql/doc_chunks_v2.sql` trên Supabase trước khi deploy.** Prompt trả lời có `<answer_format>` (chưa đo). **Giai đoạn B:** event SSE `sources` (nguồn trích dẫn + ảnh, URL ký, bucket private `doc-assets`) sau cờ `CHAT_SOURCES_ENABLED` mặc định tắt; widget hiện chip nguồn và ảnh. Chưa chạy frontend test/build, chưa thử Supabase thật, chưa đẩy ảnh nào.
+- **Đối tượng xem (D-014, 2026-11-21, chưa merge, chưa áp SQL):** website chỉ tra chunk `audience='public'`, kênh CRM cả `internal`; `RetrievalRequest.audiences` do `ExecutionStage` đặt theo kênh, mặc định `public`. **Phải áp `backend/sql/doc_chunks_v2.sql` trên Supabase trước khi deploy.** Prompt trả lời có `<answer_format>` (chưa đo). **Giai đoạn B:** event SSE `sources` (nguồn trích dẫn + ảnh, URL ký, bucket private `doc-assets`) sau cờ `CHAT_SOURCES_ENABLED` mặc định tắt; widget hiện chip nguồn và ảnh. **Widget (2026-11-25, WU-17 đợt 1, chưa commit):** câu trả lời render GFM (bảng) qua `src/components/Markdown.jsx` + `remark-gfm`, `[S#]` là huy hiệu tròn có chú thích "tiêu đề · trang"; lịch sử tải lại chưa có nguồn/ảnh. Chưa chạy frontend test/build, chưa thử Supabase thật, chưa đẩy ảnh nào.
 - Production không đổi hành vi trong R-1: mặc định prompt `v1`, mô tả intent `v1`, luật định tuyến `r0`.
 - Handoff là scaffold; chưa gửi nguồn/ảnh qua SSE; số `[S#]` đánh lại mỗi lượt. Thay đổi từ catalog tới R-1 **chưa commit**.
 

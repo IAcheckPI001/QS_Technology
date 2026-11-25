@@ -6,6 +6,34 @@ sang `LOG-archive-<ngày của mục mới nhất bị cắt>.md` và để lạ
 
 Sau khi thêm mục, viết lại [STATE.md](STATE.md).
 
+## 2026-11-25 · Câu trả lời hiện Markdown, huy hiệu trích dẫn tròn bấm tới đoạn nguồn, lượt lỗi nói nguyên nhân (WU-17 đợt 1) · loại: thay đổi, quyết định
+
+- Vấn đề (đề xuất của Toma 2026-11-25): chi tiết hội thoại hiện câu trả lời như chữ thô (`### Cách sử dụng bộ điều
+  khiển F86`); `[S1]` là chữ, không dẫn tới đoạn nguồn; lượt lỗi ("Kích thước của F54") chỉ ghi "Lượt này không có nguồn";
+  widget không hiện bảng vì `react-markdown` thiếu GFM dù prompt (`prompts/answer.py`) yêu cầu bảng.
+- Quyết định (Toma duyệt 2026-11-25, chọn "Làm đợt 1"): chia 3 đợt. Đợt 1 chỉ frontend (mục này). Đợt 2 backend nhỏ: ảnh
+  lưu theo lượt và ký lại khi đọc, `vector_score` cho thang 1–10 (WU-11), mã lỗi ghi vào lượt, `history_id` trong `done`.
+  Đợt 3 vẽ mock trước: dòng hoạt động AI (event `status`), cửa sổ PDF (chờ đồng bộ CRM), liên kết từ chat CRM (chờ B1).
+  Thêm dependency `remark-gfm` ^4.0.1 (TR-08, duyệt cùng đợt 1).
+- Thay đổi:
+  - `src/components/Markdown.jsx` (+ `.module.css`, `markdownCitations.js`) dùng chung widget và Workspace: GFM (bảng
+    cuộn ngang trong khung, danh sách, trích dẫn, code), không render HTML thô, link chỉ http(s)/mailto mở tab mới, ảnh
+    markdown chỉ hiện chữ; `[S#]` → huy hiệu tròn xám (bỏ qua trong code).
+  - Chi tiết hội thoại: câu trả lời và nội dung đoạn hiện Markdown (thu gọn 3 dòng bằng `max-height` + mờ dần); bấm huy
+    hiệu → chọn lượt đó, khung "Nguồn câu trả lời" mở và cuộn tới đoạn có `source_id` (viền nổi); di chuột hiện "tài liệu ·
+    tr. N" khi đoạn đã tải; dòng nguồn của đoạn thêm trang (`page_label` bỏ chữ "page").
+  - Lượt lỗi: khung nguồn đọc trace của lượt (`describeTrace`, cùng câu với màn Diễn biến) → "Lượt này thất bại ở bước …"
+    + lời giải thích nhà cung cấp + mã lỗi; lượt `has_trace=false` hoặc không có trace thì nói rõ không rõ nguyên nhân.
+  - File: `features/conversations/{ConversationDetailPage,SourcePanel,RetrievalDocs}.jsx`, `sources.js`, `detail.module.css`,
+    `strings.vi.js`; test `src/components/Markdown.test.jsx`, `conversations.test.jsx` (+3 ca). Widget: mục website-qa cùng ngày.
+- Kiểm chứng: `npm test` → 13 file, 95 test đạt; `npx eslint` các file đã sửa → 0; `npm run build` đạt. Preview 5174 +
+  backend thật: hội thoại "Okay, vậy F86…" lượt 40 hiện tiêu đề/danh sách, bấm ⑨ cuộn tới đoạn #4 (S9) đã mở; "Kích thước
+  của F54" hiện "thất bại ở bước Phân tích câu hỏi · khóa API OpenAI không hợp lệ · `invalid_api_key`".
+- Ảnh hưởng contract/API: không (chỉ đọc `/retrieval`, `/trace`, `has_trace` sẵn có).
+- Chưa kiểm / mở tiếp: nhãn dưới lượt lỗi vẫn ghi "Không có nguồn" (bấm mới thấy nguyên nhân); gợi ý huy hiệu ở Workspace
+  là `title` của trình duyệt, chỉ có tên tài liệu với lượt đang xem; chưa kiểm điện thoại (sheet); `npm run lint` toàn repo
+  185 lỗi có sẵn ở trang cũ, script skill impeccable, `mock-preview` (WU-1). Chưa commit.
+
 ## 2026-11-18 · Sidebar: khối tài khoản sát đáy; cỡ chữ gợi ý trên điện thoại; merge và push · loại: thay đổi
 
 - Vấn đề: Toma tự chỉnh CSS ở checkout chính (`.account { margin-top: 312px }`, khoảng cách menu 8px,

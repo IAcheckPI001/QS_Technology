@@ -9,6 +9,9 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { ChevronLeft, FileSearch, MessageSquareOff } from 'lucide-react';
+import Markdown from '../../../components/Markdown.jsx';
+import mdStyles from '../../../components/Markdown.module.css';
+import { citationNumber } from '../../../components/markdownCitations.js';
 import { conversationsApi, TURN_PAGE_SIZE } from '../../api/conversations.js';
 import Highlight from '../../components/Highlight.jsx';
 import Modal from '../../components/Modal.jsx';
@@ -19,7 +22,7 @@ import { S } from '../../strings.vi.js';
 import { askedAt, formatDuration, formatFullDateTime, formatNumber, formatTime, formatUsd, formatVnd, sameDay } from '../../utils/format.js';
 import RetrievalDocs from './RetrievalDocs.jsx';
 import SourcePanel from './SourcePanel.jsx';
-import { sourceKind, sourceLabel, sourceTone } from './sources.js';
+import { citationTitle, sourceKind, sourceLabel, sourceTone } from './sources.js';
 import { channelLabel, statusLabel, statusNote, statusTone } from './status.js';
 import styles from './detail.module.css';
 
@@ -98,6 +101,8 @@ function Detail({ sessionId, turns, backTo, from, focusId, query }) {
   const [tech, setTech] = useState({});
   const [sheetOpen, setSheetOpen] = useState(false);
   const [pickedId, setPickedId] = useState(focusId);
+  // Huy hiệu trích dẫn vừa bấm: { turnId, id: 'S1', n } (n tăng mỗi lần bấm để bấm lại vẫn cuộn).
+  const [cite, setCite] = useState(null);
   const scrollRef = useRef(null);
   const anchorRef = useRef(null);
   const docsRef = useRef(null);
@@ -161,9 +166,19 @@ function Detail({ sessionId, turns, backTo, from, focusId, query }) {
 
   const pick = (turnId) => {
     setPickedId(turnId);
+    setCite(null);
     if (phone) setSheetOpen(true);
     else if (docsRef.current) docsRef.current.scrollTop = 0;
   };
+
+  // Bấm huy hiệu [S1] trong câu trả lời: chọn lượt đó và cuộn khung nguồn tới đoạn S1.
+  const openCitation = (turnId, id) => {
+    setPickedId(turnId);
+    setCite((prev) => ({ turnId, id, n: (prev?.n || 0) + 1 }));
+    if (phone) setSheetOpen(true);
+  };
+  const panelChunks = perTurn && data && data.history_id === panelTurnId ? data.chunks || [] : [];
+  const focus = cite && cite.turnId === panelTurnId ? cite : null;
 
   const timeRange = first
     ? sameDay(first.created_at, last.created_at)
@@ -174,7 +189,18 @@ function Detail({ sessionId, turns, backTo, from, focusId, query }) {
   let panelBody;
   if (source.error) panelBody = <ErrorBanner error={source.error} onRetry={source.reload} />;
   else if (source.loading || (perTurn && data && data.history_id !== selectedId)) panelBody = <SkeletonBlock lines={4} />;
-  else if (perTurn && data) panelBody = <SourcePanel data={data} answer={panelTurn?.answer} traceTo={traceLink(sessionId, data.history_id)} />;
+  else if (perTurn && data) {
+    panelBody = (
+      <SourcePanel
+        data={data}
+        answer={panelTurn?.answer}
+        traceTo={traceLink(sessionId, data.history_id)}
+        sessionId={sessionId}
+        hasTrace={panelTurn?.has_trace}
+        focus={focus}
+      />
+    );
+  }
   else if (!perTurn && legacyCount > 0) panelBody = <RetrievalDocs key={data.history_id} snapshot={data} />;
   else panelBody = <EmptyState icon={FileSearch} title={S.conv.docsEmptyTitle} body={S.conv.docsEmptyBody} />;
 
@@ -235,6 +261,9 @@ function Detail({ sessionId, turns, backTo, from, focusId, query }) {
                 onToggleTech={() => setTech((prev) => ({ ...prev, [turn.id]: !prev[turn.id] }))}
                 onPick={() => pick(turn.id)}
                 onOpenSheet={() => setSheetOpen(true)}
+                chunks={turn.id === panelTurnId ? panelChunks : null}
+                activeCite={focus && turn.id === panelTurnId ? focus.id : null}
+                onCite={perTurn ? (id) => openCitation(turn.id, id) : null}
               />
             ))}
           </div>
@@ -263,7 +292,28 @@ function Detail({ sessionId, turns, backTo, from, focusId, query }) {
   );
 }
 
-function Turn({ turn, no, sessionId, from, phone, perTurn, focused, query, selected, legacyCount, techOpen, onToggleTech, onPick, onOpenSheet }) {
+/** Huy hiệu tròn của [S1]: bấm được khi lượt có nguồn theo lượt (B5); gợi ý tên tài liệu khi đã tải đoạn. */
+function Citation({ id, chunks, active, onCite }) {
+  const chunk = (chunks || []).find((item) => item.source_id === id);
+  const title = citationTitle(id, chunk);
+  if (!onCite) {
+    return <span className={mdStyles.cite} title={title} aria-label={title}>{citationNumber(id)}</span>;
+  }
+  return (
+    <button
+      type="button"
+      className={mdStyles.cite}
+      title={title}
+      aria-label={chunk ? S.conv.src.citeLabel(id, title) : title}
+      data-active={active || undefined}
+      onClick={() => onCite(id)}
+    >
+      {citationNumber(id)}
+    </button>
+  );
+}
+
+function Turn({ turn, no, sessionId, from, phone, perTurn, focused, query, selected, legacyCount, techOpen, onToggleTech, onPick, onOpenSheet, chunks, activeCite, onCite }) {
   const asked = askedAt(turn);
   const kind = perTurn ? sourceKind(turn.sources, turn.status) : null;
   const picked = selected && !phone && (perTurn || legacyCount > 0);
@@ -276,7 +326,15 @@ function Turn({ turn, no, sessionId, from, phone, perTurn, focused, query, selec
       </div>
       <div className={styles.answer}>
         <span className={styles.who}>{turn.answer ? S.conv.botAnswered(formatTime(turn.created_at)) : S.conv.botNoAnswer}</span>
-        {turn.answer && <div className={styles.answerBubble}>{turn.answer}</div>}
+        {turn.answer && (
+          <Markdown
+            text={turn.answer}
+            className={styles.answerBubble}
+            renderCitation={(id) => (
+              <Citation key={id} id={id} chunks={chunks} active={activeCite === id} onCite={onCite} />
+            )}
+          />
+        )}
       </div>
       <div className={styles.statusRow}>
         <Badge tone={statusTone(turn.status)}>{statusLabel(turn.status)}</Badge>

@@ -8,6 +8,23 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-25 · Widget hiện bảng Markdown và huy hiệu trích dẫn tròn có chú thích (WU-17 đợt 1) · loại: thay đổi
+
+- Vấn đề: prompt trả lời (`prompts/answer.py`) yêu cầu bảng cho thông số/đấu dây nhưng widget dùng `react-markdown`
+  không có GFM nên bảng hiện thành chữ `| … |`; `[S1]` là chữ thô, nguồn chỉ có ở danh sách cuối câu trả lời.
+- Thay đổi: widget dùng component chung `src/components/Markdown.jsx` (thêm dependency `remark-gfm` ^4.0.1, Toma duyệt
+  2026-11-25): bảng cuộn ngang trong khung, bong bóng có bảng dùng hết bề ngang; không render HTML thô; link chỉ http(s).
+  `[S#]` → huy hiệu tròn xám; di chuột, chạm hoặc Tab tới thì hiện "tiêu đề · tr. N" lấy từ event `sources` (chú thích gắn
+  vào `body` để khung bảng không cắt). Danh sách nguồn cuối câu trả lời dùng cùng số tròn. Chuỗi `chatbot.source`,
+  `chatbot.sourcePage` (vi/en). File: `src/chatbot/{Chatbot,SourceList}.jsx`, `Chatbot.module.css`, `src/locales/*.json`;
+  test `src/chatbot/SourceList.test.jsx`. Mục đầy đủ: [workspace-ui LOG](../workspace-ui/LOG.md) cùng ngày.
+- Kiểm chứng: `npm test` → 95 đạt; eslint file đã sửa → 0; `npm run build` đạt. Preview 5174 + backend thật (kênh website,
+  một lượt thật "EtherCAT F54"): huy hiệu ②③ và danh sách nguồn có trang; bảng kiểm bằng luồng SSE giả trong trình duyệt.
+- Ảnh hưởng contract/API: không (đọc event `sources` sẵn có).
+- Chưa kiểm / mở tiếp: lịch sử tải lại không có nguồn nên huy hiệu chỉ có số, ảnh mất sau tải lại (WU-17 đợt 2: lưu tham chiếu
+  ảnh theo lượt, ký lại khi đọc); "Preparing a reply…" chưa thay bằng dòng hoạt động (đợt 3, event `status`); `npm test`
+  của `widget-backend/` không chạy (không đổi). Chưa commit.
+
 ## 2026-11-21 · Event SSE `sources`: nguồn trích dẫn kèm ảnh có URL ký (D-014, giai đoạn B) · loại: thay đổi
 
 - Vấn đề: ảnh của chunk chỉ là metadata `bucket/path`; chat không trả ảnh, người dùng không thấy hình trong khung chat.

@@ -21,7 +21,9 @@
     "messageLabel": "Your message",
     "sendError": "Your message could not be sent. Please try again.",
     "historyUnavailable": "Chat history could not be loaded. You can still start a new conversation.",
-    "footerNote": "Responses may not always be accurate."
+    "footerNote": "Responses may not always be accurate.",
+    "source": "Source {{id}}",
+    "sourcePage": "p. {{pages}}"
   },
   "service_home":{
     "titleContent": "Our service",

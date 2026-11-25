@@ -317,7 +317,7 @@ describe('Nguồn câu trả lời theo lượt (B5, Q28)', () => {
     })[hid]);
     renderAt('/conversations/s1');
 
-    const label = async (no) => within(await screen.findByRole('article', { name: `Lượt ${no}` })).getAllByRole('button')[0].textContent;
+    const label = async (no) => srcButton(await screen.findByRole('article', { name: `Lượt ${no}` })).textContent;
     expect(await label(1)).toBe('Tài liệu đã dùng (2)');
     expect(await label(2)).toBe('Dữ liệu CRM (3 lần gọi) · có lỗi');
     expect(await label(3)).toBe('Không có nguồn');
@@ -329,18 +329,95 @@ describe('Nguồn câu trả lời theo lượt (B5, Q28)', () => {
     expect(await screen.findByText('Chatbot trả lời trực tiếp, không cần tra cứu')).toBeTruthy();
     expect(conversationsApi.retrievalForTurn).toHaveBeenCalledWith('s1', 'h6', expect.anything());
 
-    fireEvent.click(within(screen.getByRole('article', { name: 'Lượt 2' })).getAllByRole('button')[0]);
+    fireEvent.click(srcButton(screen.getByRole('article', { name: 'Lượt 2' })));
     expect(await screen.findByRole('heading', { name: 'Nguồn câu trả lời · lượt 2' })).toBeTruthy();
     expect(await screen.findByText('Đọc cấu trúc dữ liệu CRM')).toBeTruthy();
     expect(screen.getByText('2 lần: 1 thành công, 1 lỗi')).toBeTruthy();
     expect(screen.getByText('CRM không có bảng dữ liệu AI muốn đọc.')).toBeTruthy();
     expect(screen.getByText('Câu trả lời có số liệu từ CRM.')).toBeTruthy();
 
-    fireEvent.click(within(screen.getByRole('article', { name: 'Lượt 1' })).getAllByRole('button')[0]);
+    fireEvent.click(srcButton(screen.getByRole('article', { name: 'Lượt 1' })));
     expect(await screen.findByText('Được trích dẫn [S1]')).toBeTruthy();
     expect(screen.getByText('f54_operation_v02 · 2.3 Homing')).toBeTruthy();
   });
+
+  it('câu trả lời hiện Markdown (tiêu đề, bảng), không còn cú pháp thô', async () => {
+    conversationsApi.history.mockResolvedValue({
+      session_id: 's1',
+      messages: [turn(1, { answer: '### Cách sử dụng bộ điều khiển F86\n\n| Thông số | F86 |\n|---|---|\n| Số trục | 6 |', sources: src('direct', 'not_applicable') })],
+    });
+    conversationsApi.retrievalForTurn.mockResolvedValue({ history_id: 'h1', turn_status: 'completed', retrieval_status: 'not_applicable', sources: src('direct', 'not_applicable'), chunks: [] });
+    renderAt('/conversations/s1');
+    const article = await screen.findByRole('article', { name: 'Lượt 1' });
+    expect(within(article).getByRole('heading', { level: 3, name: 'Cách sử dụng bộ điều khiển F86' })).toBeTruthy();
+    expect(within(article).getByRole('cell', { name: '6' })).toBeTruthy();
+    expect(article.textContent).not.toContain('###');
+  });
+
+  it('bấm huy hiệu [S2] ở lượt cũ: chọn lượt đó, mở và đánh dấu đoạn S2; gợi ý tên tài liệu và trang', async () => {
+    conversationsApi.history.mockResolvedValue({
+      session_id: 's1',
+      messages: [
+        turn(1, { answer: 'Homing dùng G28 [S2].', sources: src('documents', 'ok', { chunk_count: 2 }) }),
+        turn(2, { sources: src('direct', 'not_applicable') }),
+      ],
+    });
+    const chunk = (rank, sid, extra = {}) => ({ rank, score: 0.03, content: `Nội dung ${sid}`, scopes: [], source_id: sid, chunk_id: `c${rank}`, doc_title: 'F54 Operation Guide', ...extra });
+    conversationsApi.retrievalForTurn.mockImplementation(async (sid, hid) => ({
+      h1: { history_id: 'h1', turn_status: 'completed', retrieval_status: 'ok', sources: src('documents', 'ok', { chunk_count: 2 }), chunks: [chunk(1, 'S1'), chunk(2, 'S2', { page_start: 41, page_end: 42 })] },
+      h2: { history_id: 'h2', turn_status: 'completed', retrieval_status: 'not_applicable', sources: src('direct', 'not_applicable'), chunks: [] },
+    })[hid]);
+    renderAt('/conversations/s1');
+    expect(await screen.findByRole('heading', { name: 'Nguồn câu trả lời · lượt 2' })).toBeTruthy();
+
+    const badge = within(screen.getByRole('article', { name: 'Lượt 1' })).getByRole('button', { name: /^Nguồn S2/ });
+    expect(badge.textContent).toBe('2');
+    fireEvent.click(badge);
+    expect(await screen.findByRole('heading', { name: 'Nguồn câu trả lời · lượt 1' })).toBeTruthy();
+    const target = await screen.findByRole('article', { name: '#2 · S2' });
+    await waitFor(() => expect(within(target).getByRole('button', { name: 'Thu gọn' }).getAttribute('aria-expanded')).toBe('true'));
+    expect(target.className).toMatch(/chunkFocus/);
+    expect(within(screen.getByRole('article', { name: '#1 · S1' })).getByRole('button', { name: 'Xem đầy đủ nội dung' })).toBeTruthy();
+    expect(within(target).getByText('F54 Operation Guide · tr. 41–42')).toBeTruthy();
+    const after = within(screen.getByRole('article', { name: 'Lượt 1' })).getByRole('button', { name: /^Nguồn S2/ });
+    expect(after.getAttribute('title')).toBe('F54 Operation Guide · tr. 41–42');
+  });
+
+  it('lượt lỗi: khung nguồn nói nguyên nhân từ diễn biến; lượt không lưu diễn biến thì nói không rõ', async () => {
+    conversationsApi.history.mockResolvedValue({
+      session_id: 's1',
+      messages: [
+        turn(1, { status: 'error', answer: null, has_trace: true, sources: src('direct', 'not_applicable') }),
+        turn(2, { status: 'error', answer: null, has_trace: false, sources: src('direct', 'not_applicable') }),
+      ],
+    });
+    conversationsApi.retrievalForTurn.mockImplementation(async (sid, hid) => ({ history_id: hid, turn_status: 'error', retrieval_status: 'not_applicable', sources: src('direct', 'not_applicable'), chunks: [] }));
+    conversationsApi.trace.mockReset().mockResolvedValue({
+      session_id: 's1', history_id: 'h1', channel: 'website', outcome: 'answer_error', duration_ms: 900, created_at: '2026-11-18T01:00:00Z', summary: {},
+      spans: [
+        { span_id: '1', parent_id: null, name: 'chat.request', kind: 'server', start_ms: 0, duration_ms: 900, status: 'error', attributes: {} },
+        { span_id: '2', parent_id: '1', name: 'stage.analysis', kind: 'stage', start_ms: 5, duration_ms: 800, status: 'error', attributes: {} },
+        { span_id: '3', parent_id: '2', name: 'llm.analysis', kind: 'client', start_ms: 6, duration_ms: 700, status: 'error', attributes: { provider_error_code: 'insufficient_quota' } },
+      ],
+    });
+    renderAt('/conversations/s1');
+
+    expect(await screen.findByText('Lượt này bị lỗi nên không có nguồn')).toBeTruthy();
+    expect(screen.getByText(/không lưu diễn biến xử lý/)).toBeTruthy();
+    expect(conversationsApi.trace).not.toHaveBeenCalled();
+
+    fireEvent.click(srcButton(screen.getByRole('article', { name: 'Lượt 1' })));
+    expect(await screen.findByText('Lượt này thất bại ở bước “Phân tích câu hỏi”.')).toBeTruthy();
+    expect(screen.getByText(/hết hạn mức \(hết credit\)/)).toBeTruthy();
+    expect(screen.getByText('insufficient_quota')).toBeTruthy();
+    expect(conversationsApi.trace).toHaveBeenCalledWith('s1', 'h1', expect.anything());
+  });
 });
+
+/** Nút nhãn nguồn dưới lượt (không phải huy hiệu trích dẫn trong câu trả lời). */
+function srcButton(article) {
+  return within(article).getAllByRole('button').find((button) => !(button.getAttribute('aria-label') || '').startsWith('Nguồn '));
+}
 
 describe('Diễn biến xử lý', () => {
   it('không có trace là trạng thái rỗng, không phải lỗi', async () => {
