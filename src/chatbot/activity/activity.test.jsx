@@ -71,13 +71,13 @@ describe('ActivityTimeline', () => {
 
     it('đang chạy: thẻ mở, tiêu đề là bước hiện tại', () => {
         const live = applyStatus(steps.slice(0, 2), { id: 'r', step: 'retrieval', state: 'running', target: 'F54' }, Date.now());
-        render(<ActivityTimeline activity={{ steps: live, phase: 'live', lang: 'vi', startedAt: Date.now() }} fallbackText="Đang soạn câu trả lời…" />);
+        render(<ActivityTimeline activity={{ steps: live, phase: 'live', lang: 'vi', startedAt: Date.now() }} />);
         expect(screen.getAllByText('Đang tìm trong tài liệu F54…')).toHaveLength(2); // tiêu đề + dòng bước
         expect(screen.queryByRole('button')).toBeNull();
     });
 
     it('xong: thu gọn một dòng, bấm để mở lại', () => {
-        render(<ActivityTimeline activity={{ steps, phase: 'done', lang: 'vi', startedAt: 0, endedAt: 6200 }} fallbackText="" />);
+        render(<ActivityTimeline activity={{ steps, phase: 'done', lang: 'vi', startedAt: 0, endedAt: 6200 }} />);
         const toggle = screen.getByRole('button', { name: /Đã xử lý 4 bước · 6,2 giây/ });
         expect(toggle.getAttribute('aria-expanded')).toBe('false');
         fireEvent.click(toggle);
@@ -87,10 +87,19 @@ describe('ActivityTimeline', () => {
 
     it('xong có cảnh báo thì mở sẵn; chưa có event nào thì hiện "Đang bắt đầu…"', () => {
         const warn = applyStatus(steps, { id: 'r', step: 'retrieval', state: 'warn', count: 0 }, 5000);
-        const { unmount } = render(<ActivityTimeline activity={{ steps: warn, phase: 'done', lang: 'vi', startedAt: 0, endedAt: 4100 }} fallbackText="" />);
+        const { unmount } = render(<ActivityTimeline activity={{ steps: warn, phase: 'done', lang: 'vi', startedAt: 0, endedAt: 4100 }} />);
         expect(screen.getByRole('button', { name: /không thấy tài liệu/ }).getAttribute('aria-expanded')).toBe('true');
         unmount();
-        render(<ActivityTimeline activity={{ steps: [], phase: 'live', lang: 'vi', startedAt: Date.now() }} fallbackText="Đang soạn câu trả lời…" />);
+        render(<ActivityTimeline activity={{ steps: [], phase: 'live', lang: 'vi', startedAt: Date.now() }} />);
         expect(screen.getByText('Đang bắt đầu…')).toBeTruthy();
+    });
+
+    it('backend chưa phát status: sau 1,5 giây hiện chữ chờ theo ngôn ngữ câu hỏi, không theo ngôn ngữ giao diện', () => {
+        const old = Date.now() - 2000;
+        const { unmount } = render(<ActivityTimeline activity={{ steps: [], phase: 'live', lang: 'vi', startedAt: old }} />);
+        expect(screen.getByText('Đang soạn câu trả lời…')).toBeTruthy();
+        unmount();
+        render(<ActivityTimeline activity={{ steps: [], phase: 'live', lang: 'en', startedAt: old }} />);
+        expect(screen.getByText('Preparing a reply…')).toBeTruthy();
     });
 });

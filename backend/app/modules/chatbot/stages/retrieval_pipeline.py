@@ -49,6 +49,11 @@ class RetrievalPipeline:
                     sub_queries=len(state.analysis.sub_queries),
                     intents=[sub_query.intent for sub_query in state.analysis.sub_queries],
                     routes=[sub_query.route.value for sub_query in state.analysis.sub_queries],
+                    # Mã model nhận ra (F54…), cho dòng hoạt động; không phải nội dung câu hỏi.
+                    product_models=list(dict.fromkeys(
+                        model for sub_query in state.analysis.sub_queries
+                        for model in sub_query.entities.product_models
+                    )),
                 )
         if self._catalog_stage is not None:
             with span("stage.catalog_lookup", "stage") as catalog_span:

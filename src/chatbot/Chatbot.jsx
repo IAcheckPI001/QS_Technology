@@ -245,7 +245,7 @@ function Chatbot({ closeWinChatbot, hidden = false, onSendingChange }) {
                         {message.role === 'assistant' ? (
                             <>
                                 {message.activity && (
-                                    <ActivityTimeline activity={message.activity} fallbackText={t('chatbot.thinking')} />
+                                    <ActivityTimeline activity={message.activity} />
                                 )}
                                 {message.content ? (
                                     <>

@@ -1,22 +1,25 @@
 """SSE transport và ánh xạ lỗi dùng chung cho các route chat."""
 
+import asyncio
 import json
 import logging
 from collections.abc import AsyncIterator, Awaitable, Callable
-from contextlib import aclosing
+from contextlib import aclosing, suppress
 from uuid import UUID
 
 import anyio
 from fastapi import Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from app.core.tracing import STATUS_OK, Trace, activate, span
+from app.core.config import settings
+from app.core.tracing import STATUS_OK, Trace, activate, listen, span
 from app.modules.chatbot.agent import AgentError
 from app.modules.chatbot.analysis.analyzer import AnalysisError
 from app.modules.chatbot.repositories.trace_repository import TraceRepository
 from app.modules.chatbot.schemas.inbound import InboundRequest
 from app.modules.chatbot.schemas.security.principal import PrincipalContext, RequestContext
 from app.modules.chatbot.services import ChatbotService
+from app.modules.chatbot.services.status_events import StatusEmitter
 from app.modules.chatbot.stages.answer_composer import AnswerCompositionError
 from app.modules.chatbot.stages.context_loader import ContextBudgetError, ContextConfigurationError
 from app.modules.chatbot.stages.execution_stage import ExecutionError
@@ -87,6 +90,7 @@ def stream_chat(
     on_finish: Callable[[], Awaitable[None]] | None = None,
     trace: Trace | None = None,
     trace_store: TraceRepository | None = None,
+    status_enabled: bool | None = None,
 ) -> StreamingResponse:
     """on_finish chạy khi stream kết thúc vì bất kỳ lý do gì (xong, lỗi, client ngắt).
 
@@ -95,6 +99,7 @@ def stream_chat(
     """
     request_id = request_context.request_id
     session_id = inbound.session.session_id
+    status_events = settings.chat_status_events_enabled if status_enabled is None else status_enabled
 
     def error_event(code: str, message: str) -> str:
         set_outcome(request, code)
@@ -133,19 +138,60 @@ def stream_chat(
         except Exception:
             logger.exception("failed to save chat trace trace_id=%s", finished.trace_id)
 
-    async def _events() -> AsyncIterator[str]:
-        try:
+    async def _replies() -> AsyncIterator[tuple[str, object]]:
+        """("delta", chunk) từ stream_reply; cờ CHAT_STATUS_EVENTS_ENABLED bật thì xen ("status", event)."""
+        if not status_events:
             # aclosing: khi client ngắt và generator này bị đóng, stream_reply cũng
             # được đóng ngay (không chờ GC) để kịp ghi lượt status='cancelled'.
-            deltas = 0
             async with aclosing(service.stream_reply(inbound, principal, request_context)) as replies:
                 async for chunk in replies:
+                    yield "delta", chunk
+            return
+        # stream_reply chạy trong task riêng (thừa hưởng trace và bộ nghe span qua contextvars); bước xử lý và chữ
+        # trả lời cùng đi qua một hàng đợi nên pipeline không phải chờ client đọc event.
+        queue: asyncio.Queue[tuple[str, object]] = asyncio.Queue()
+
+        async def pump() -> None:
+            try:
+                async with aclosing(service.stream_reply(inbound, principal, request_context)) as replies:
+                    async for chunk in replies:
+                        queue.put_nowait(("delta", chunk))
+                queue.put_nowait(("end", None))
+            except asyncio.CancelledError:
+                raise
+            except BaseException as error:   # chuyển lỗi về luồng SSE để ánh xạ mã lỗi như cũ
+                queue.put_nowait(("raise", error))
+
+        with listen(StatusEmitter(lambda event: queue.put_nowait(("status", event)))):
+            task = asyncio.create_task(pump())
+        try:
+            while True:
+                kind, payload = await queue.get()
+                if kind == "end":
+                    return
+                if kind == "raise":
+                    raise payload  # type: ignore[misc]
+                yield kind, payload
+        finally:
+            if not task.done():
+                task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await task
+
+    async def _events() -> AsyncIterator[str]:
+        try:
+            deltas = 0
+            async with aclosing(_replies()) as replies:
+                async for kind, payload in replies:
+                    if kind == "status":
+                        yield sse_event("status", payload)  # type: ignore[arg-type]
+                        continue
                     deltas += 1
                     if trace is not None:
                         if deltas == 1:
                             trace.root.set(first_delta_ms=round(trace.duration_ms))
                         trace.root.set(deltas=deltas)
-                    yield sse_event("delta", {"text": chunk})
+                    yield sse_event("delta", {"text": payload})
             # D-014 giai đoạn B: nguồn đã trích dẫn kèm ảnh (URL ký), chỉ khi tính năng bật và có trích dẫn.
             sources = getattr(service, "turn_sources", None)
             if sources:

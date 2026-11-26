@@ -222,7 +222,9 @@ class ChatbotService:
                     direct_code = select_direct_response_code(state.plan, language)
                     if direct_code is not None:
                         set_root(direct_response=direct_code)
-                        answer_parts.append(get_direct_response(direct_code, language))
+                        # Span ngắn cho dòng hoạt động: trả lời cố định (chào hỏi, hỏi lại, chuyển nhân viên…).
+                        with span("stage.direct", "stage", code=direct_code):
+                            answer_parts.append(get_direct_response(direct_code, language))
                         yield answer_parts[0]
                     else:
                         with span("stage.compose", "stage"):

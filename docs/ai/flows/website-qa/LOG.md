@@ -8,6 +8,27 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-26 · Backend phát event `status` từ mốc span; kiểm thật trên widget (WU-17 đợt 3A) · loại: thay đổi, kiểm chứng
+
+- Thay đổi (sau cờ `CHAT_STATUS_EVENTS_ENABLED`, mặc định tắt):
+  - `core/tracing.py`: `listen()` + bộ nghe gọi ở mốc mở/đóng mọi `span()` (cả span rời/bị bỏ vì max_spans; lỗi bộ nghe
+    chỉ log). `services/status_events.py`: `StatusEmitter` ánh xạ span có sẵn → event; pipeline lồng trong tool gộp vào
+    dòng của tool. Đổi/thêm bước chỉ sửa bảng ánh xạ.
+  - Span/thuộc tính mới (metadata): `task.retrieve` mỗi tác vụ tra cứu (`hits`, `best_similarity`, `doc_ids`, `target`;
+    `no_docs` cho tác vụ không có tài liệu), `stage.analysis.product_models`, `tool.*.repairable`, `stage.direct.code`.
+  - `routers/sse.py`: cờ bật thì `stream_reply` chạy trong task riêng, delta và status cùng một hàng đợi (lỗi chuyển về
+    luồng SSE, ánh xạ mã lỗi như cũ; client ngắt thì huỷ task). Cờ tắt: như cũ.
+  - Widget: chữ chờ (khi backend chưa phát `status`) theo ngôn ngữ câu hỏi ("Đang soạn câu trả lời…" / "Preparing a reply…").
+  - Contract: `api_guidelines.md` (event `status`); cờ: `deploy-rules.md`. Test: `tests/chatbot/test_status_events.py` (4).
+- Kiểm chứng: `pytest tests` → 1253 passed, 14 skipped, 1 lỗi có sẵn (`test_f86_baseline_csv_unchanged`, CSV CRLF).
+  Kiểm thật (Playwright, frontend 5173 + backend worktree, cờ bật, Supabase dev): câu EtherCAT F54 → security, context
+  (1,6 s), analysis (5,1 s, `guide.configuration`, F54), 2 tra cứu song song (5 đoạn, cosine 0,72/0,65, `f54-operation-en`,
+  `f54-installation-en`), compose, delta đầu ở 11,2 s, `sources` có 3 ảnh `doc-assets`, tóm tắt "Đã xử lý 6 bước · 15,7 giây";
+  "Xin chào" → analysis `other.chitchat` → direct, "Đã xử lý 4 bước · 2,6 giây".
+- Chưa kiểm / mở tiếp: kênh CRM trên CRM thật; hai ý con cùng model hiện hai dòng cùng nhãn "Tìm trong tài liệu F54";
+  chip tài liệu là mã (`f54-operation-en`), chưa có tên hiển thị; tên nghiệp vụ bảng CRM chưa có (hiện "Lấy dữ liệu từ CRM").
+  Chưa commit.
+
 ## 2026-11-26 · Widget: dòng hoạt động AI, nhập bằng giọng nói, nút thêm ảnh (giao diện, chờ backend) (WU-17 đợt 3A) · loại: thay đổi, quyết định
 
 - Quyết định (Toma 2026-11-26): làm giao diện trước; backend (`status`, nhận ảnh) Toma làm sau. Mock duyệt: canvas v83 (W1/W2).
