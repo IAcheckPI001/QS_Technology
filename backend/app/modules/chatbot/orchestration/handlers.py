@@ -9,6 +9,7 @@ scheduler marks it `handler_not_configured`.
 import logging
 from collections.abc import Sequence
 
+from app.core.tracing import span
 from app.modules.chatbot.retrieval import Retriever
 from app.modules.chatbot.retrieval.audience import DEFAULT_AUDIENCES
 from app.modules.chatbot.schemas.system import (
@@ -28,6 +29,12 @@ from app.modules.chatbot.schemas.system import (
 from .scheduler import TaskHandler
 
 logger = logging.getLogger(__name__)
+
+
+def _target(models: Sequence[str]) -> str | None:
+    """Model của lần tra cứu cho dòng hoạt động ("F54"); nhiều model ghép bằng "/"."""
+    names = [str(model) for model in models if model][:3]
+    return "/".join(names) if names else None
 
 
 def build_retrieval_requests(
@@ -95,6 +102,9 @@ def build_task_handlers(
     async def handle_no_docs(task: ExecutionTask) -> NormalizedTaskResult:
         sub_query = sub_query_for(task)
         models = sub_query.unsupported_models or sub_query.entities.product_models
+        # Span cho dòng hoạt động (event `status`): tra cứu không có tài liệu cho model này.
+        with span("task.retrieve", "internal", task_id=task.task_id, target=_target(models), no_docs=True, hits=0):
+            pass
         return completed(task, unsupported_models=",".join(models))
 
     async def handle_handoff(task: ExecutionTask) -> NormalizedTaskResult:
@@ -105,8 +115,17 @@ def build_task_handlers(
         assert retriever is not None
         sub_query = sub_query_for(task)
         try:
-            targets, fallback_targets = build_retrieval_requests(task.task_id, sub_query, audiences)
-            result = await retriever.search(targets, fallback_targets)
+            # Span mỗi lần tra cứu (WU-17 đợt 3A): chỉ số đếm, mã tài liệu, độ giống; không có câu hỏi hay nội dung.
+            with span("task.retrieve", "internal", task_id=task.task_id,
+                      target=_target(sub_query.entities.product_models)) as retrieve_span:
+                targets, fallback_targets = build_retrieval_requests(task.task_id, sub_query, audiences)
+                result = await retriever.search(targets, fallback_targets)
+                similarities = [hit.similarity for hit in result.hits if hit.similarity is not None]
+                retrieve_span.set(
+                    hits=len(result.hits),
+                    best_similarity=round(max(similarities), 4) if similarities else None,
+                    doc_ids=list(dict.fromkeys(hit.doc_id for hit in result.hits))[:3],
+                )
         except Exception:
             logger.exception("retrieval failed for task %s", task.task_id)
             return NormalizedTaskResult(

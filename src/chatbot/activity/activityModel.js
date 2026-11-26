@@ -34,6 +34,7 @@ export function applyStatus(steps, event, now = Date.now()) {
 const L = {
     vi: {
         starting: 'Đang bắt đầu…',
+        thinking: 'Đang soạn câu trả lời…',
         answering: (n) => `Đang trả lời · ${n} bước`,
         processed: (n, s) => `Đã xử lý ${n} bước · ${s} giây`,
         stopped: (n) => `Đã dừng sau ${n} bước`,
@@ -92,6 +93,7 @@ const L = {
     },
     en: {
         starting: 'Getting started…',
+        thinking: 'Preparing a reply…',
         answering: (n) => `Answering · ${n} steps`,
         processed: (n, s) => `Processed ${n} steps · ${s} s`,
         stopped: (n) => `Stopped after ${n} steps`,

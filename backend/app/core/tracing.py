@@ -14,8 +14,9 @@ không ghi vào đâu: code nghiệp vụ không phải kiểm tra trace có t�
 """
 
 import asyncio
+import logging
 import re
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field
@@ -299,6 +300,31 @@ class Trace:
 _trace_var: ContextVar[Trace | None] = ContextVar("trace", default=None)
 _span_var: ContextVar[Span | None] = ContextVar("trace_span", default=None)
 
+# Bộ nghe mốc mở/đóng span (vd. event SSE `status`, WU-17 đợt 3A). Gọi đồng bộ, phải nhanh và không ném lỗi;
+# nhận cả span rời (không có trace) và span bị bỏ vì vượt max_spans. Không có bộ nghe thì không tốn gì.
+SpanListener = Callable[[Literal["start", "end"], Span], None]
+_listener_var: ContextVar[SpanListener | None] = ContextVar("trace_span_listener", default=None)
+
+
+@contextmanager
+def listen(listener: SpanListener | None) -> Iterator[None]:
+    """Đăng ký bộ nghe span cho context hiện tại (task con tạo sau đó thừa hưởng)."""
+    previous = _listener_var.get()
+    _listener_var.set(listener)
+    try:
+        yield
+    finally:
+        _listener_var.set(previous)
+
+
+def _notify(listener: SpanListener | None, phase: Literal["start", "end"], current: Span) -> None:
+    if listener is None:
+        return
+    try:
+        listener(phase, current)
+    except Exception:  # bộ nghe lỗi không được làm hỏng lượt chat
+        logging.getLogger(__name__).exception("span listener failed span=%s", current.name)
+
 
 def current_trace() -> Trace | None:
     return _trace_var.get()
@@ -354,6 +380,8 @@ def span(name: str, kind: SpanKind = "internal", **attributes: object) -> Iterat
     current.set(**attributes)
     if opened is not None:
         _span_var.set(opened)
+    listener = _listener_var.get()
+    _notify(listener, "start", current)
     try:
         yield current
     except (asyncio.CancelledError, GeneratorExit):
@@ -370,3 +398,4 @@ def span(name: str, kind: SpanKind = "internal", **attributes: object) -> Iterat
         if opened is not None and trace is not None:
             trace.end_span(opened)
             _span_var.set(parent)
+        _notify(listener, "end", current)

@@ -549,6 +549,9 @@ class AgentRunner:
             if not outcome.ok:
                 tool_span.fail(outcome.error_code or "tool_failed")
                 _set_error_detail(tool_span, outcome)
+                # Lỗi AI tự sửa được ở lần gọi sau (dòng hoạt động hiện "đang thử lại").
+                spec = self._registry.get(outcome.name)
+                tool_span.set(repairable=spec is not None and outcome.error_code in spec.repairable_errors)
         self._record_tool(state, step, outcome, executed=True)
         return outcome
 

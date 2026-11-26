@@ -578,6 +578,9 @@ data: {"text":"..."}
 event: sources
 data: {"items":[{"source_id":"S1","title":"...","doc_id":"...","pages":"23","images":[{"url":"https://...","page":23,"printed_page":24}]}]}
 
+event: status
+data: {"id":"retrieval:task-retrieve-q1","step":"retrieval","state":"done","target":"F54","count":4,"score":0.75,"docs":["f54-installation-en"]}
+
 event: done
 data: {"request_id":"...", "session_id":"...", "history_id":"..."}
 
@@ -591,6 +594,21 @@ data: {"code":"...", "message":"...", "request_id":"..."}
 hạn sau `ASSET_URL_TTL_S`, mặc định 900 giây), không lưu vào lịch sử; mỗi nguồn tối đa `SOURCE_IMAGES_MAX` ảnh (mặc định
 3), `images` rỗng khi ký lỗi. `pages` là chuỗi ("23" hoặc "23-25"), có thể `null`. Client cũ bỏ qua event lạ nên tương thích
 ngược; widget-backend chuyển tiếp nguyên văn.
+
+`status` (WU-17 đợt 3A, 2026-11-26): bước xử lý của lượt cho dòng hoạt động AI của widget, **chỉ phát khi
+`CHAT_STATUS_EVENTS_ENABLED=true`** (mặc định tắt). Có thể đến nhiều lần, trước và xen giữa `delta`. Mỗi event là
+`{"id","step","state", …}`; cùng `id` thì cập nhật dòng cũ (tra cứu song song và tool song song có `id` riêng).
+- `step`: `security` | `context` | `analysis` | `retrieval` | `direct` | `handoff` | `tool` | `compose`
+  (`catalog`, `clarify` dành sẵn, chưa phát).
+- `state`: `running` | `done` | `warn` (tra cứu không thấy đoạn nào) | `retry` (lỗi tool AI tự sửa được) | `error` | `skipped`.
+- Trường tuỳ bước (chỉ định danh và số đếm): `turns` (context), `intent`, `models[]` (analysis), `target` (model),
+  `count`, `score` (cosine 0–1), `docs[]` (mã tài liệu) (retrieval), `tool` (`crm_schema`/`crm_query`/`product_docs_ask`),
+  `rows` (số dòng CRM), `count` (số nguồn của `product_docs_ask`), `code` (mã lỗi, vd `request_blocked`,
+  `retrieval_error`, mã lỗi tool).
+- Không có câu chữ hiển thị, câu hỏi, nội dung tài liệu hay giá trị dữ liệu CRM; widget tự dịch theo ngôn ngữ câu hỏi.
+- Nguồn: `services/status_events.py` ánh xạ mốc mở/đóng span của tracing (`core.tracing.listen`); bước lồng trong
+  tool (pipeline của `product_docs_ask`) gộp vào dòng của tool. Client cũ bỏ qua event lạ; widget-backend chuyển
+  tiếp nguyên văn.
 
 `done.history_id` (WU-17 đợt 2, 2026-11-25): mã lượt vừa ghi (= `message.message_id` của request, = `id` của lượt
 trong `/history`), để client mở đúng lượt ở Workspace (`/conversations/{session_id}?turn={history_id}`). Chỉ thêm

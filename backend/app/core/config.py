@@ -46,6 +46,8 @@ class Settings(BaseSettings):
     supabase_url: str = Field(default="", alias="SUPABASE_URL")
     supabase_service_role_key: str = Field(default="", alias="SUPABASE_SERVICE_ROLE_KEY", repr=False)
     asset_url_ttl_s: int = Field(default=900, ge=60, le=3600, alias="ASSET_URL_TTL_S")
+    # WU-17 đợt 3A: event SSE `status` (bước xử lý, chỉ mã + số đếm) cho dòng hoạt động AI của widget.
+    chat_status_events_enabled: bool = Field(default=False, alias="CHAT_STATUS_EVENTS_ENABLED")
     source_images_max: int = Field(default=3, ge=0, le=10, alias="SOURCE_IMAGES_MAX")
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")

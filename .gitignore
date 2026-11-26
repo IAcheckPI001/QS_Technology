@@ -128,3 +128,6 @@ data/checkpoints/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Ảnh chụp, log của Playwright MCP
+.playwright-mcp/

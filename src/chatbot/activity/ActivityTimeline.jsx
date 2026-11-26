@@ -1,5 +1,6 @@
 // Dòng hoạt động AI trong bong bóng trả lời (mock W1/W2). Trạng thái và hiệu ứng: canvas v83, ghi chú W1.
-// - live: thẻ mở, tiêu đề là bước đang chạy (aria-live). Chưa có event nào trong 1,5 giây: chữ cũ `fallbackText`.
+// - live: thẻ mở, tiêu đề là bước đang chạy (aria-live). Chưa có event nào trong 1,5 giây (backend chưa phát `status`):
+//   chữ chờ "Đang soạn câu trả lời…" theo ngôn ngữ câu hỏi (vi/en), giống ngôn ngữ của dòng hoạt động.
 // - answering (có chữ đầu tiên) / done / stopped: thu gọn thành một dòng, bấm để mở lại.
 // - done có cảnh báo/lỗi, hoặc error: để mở sẵn.
 
@@ -23,7 +24,7 @@ function useNow(active) {
 
 const ICON = { done: '✓', warn: '!', retry: '↻', error: '!', skipped: '–' };
 
-export default function ActivityTimeline({ activity, fallbackText }) {
+export default function ActivityTimeline({ activity }) {
     const { steps = [], phase = 'live', lang = 'en', startedAt, endedAt } = activity || {};
     const S = strings(lang);
     const listId = useId();
@@ -35,7 +36,7 @@ export default function ActivityTimeline({ activity, fallbackText }) {
 
     if (phase === 'live' && steps.length === 0) {
         if (now - (startedAt ?? now) >= FALLBACK_AFTER_MS) {
-            return <span className={styles.legacy}>{fallbackText}</span>;
+            return <span className={styles.legacy}>{S.thinking}</span>;
         }
         return (
             <div className={styles.card} role="status" aria-live="polite">
