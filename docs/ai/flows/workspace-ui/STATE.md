@@ -15,7 +15,9 @@ Cập nhật: 2026-11-25
   sáng và "Khớp ở lượt N", phân trang ở máy chủ; Chi tiết mở đúng lượt khớp; nguồn câu trả lời theo lượt;
   chi phí thật. Đã kiểm duyệt bằng playwright-cli với dữ liệu thật.
 - Đã có trên `feature/deploy_ai_service` (merge `7599b30`, Toma push). Workspace mới ở `/`, bản cũ ở `/legacy`.
-  Tài liệu, Khóa AI, Tài khoản còn là trang "đang xây dựng".
+  Khóa AI, Tài khoản còn là trang "đang xây dựng".
+- **Tài liệu & chunk phần đọc (2026-11-26, chưa commit):** mock 5 v4 trên B6 (cờ `WORKSPACE_DOCUMENTS_API_ENABLED`),
+  đã kiểm Playwright ở 1440 và 375; duyệt/sửa đoạn chờ B1.
 - **WU-17 đợt 1 (2026-11-25, chưa commit):** câu trả lời và đoạn nguồn hiện Markdown (`src/components/Markdown.jsx`,
   dùng chung với widget, thêm `remark-gfm`); `[S#]` là huy hiệu tròn, bấm thì cuộn khung nguồn tới đoạn; lượt lỗi nói
   nguyên nhân từ trace. Đợt 2 (backend) và đợt 3 (vẽ mock trước) chưa làm.

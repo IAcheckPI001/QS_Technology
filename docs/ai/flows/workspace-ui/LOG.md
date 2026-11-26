@@ -6,6 +6,30 @@ sang `LOG-archive-<ngày của mục mới nhất bị cắt>.md` và để lạ
 
 Sau khi thêm mục, viết lại [STATE.md](STATE.md).
 
+## 2026-11-26 · Tài liệu & chunk: cửa sổ xem hình, bố cục theo thiết bị · loại: thay đổi, kiểm chứng
+
+- Thay đổi: `ImageViewer.jsx` (mock 5b/5 v4): bấm ảnh của đoạn mở cửa sổ, ‹ › và phím ← → chuyển hình trong đoạn, Esc
+  đóng, "Mở trang này trong PDF"; chú thích lấy từ dòng "Figure N." (`figureCaptions`). Khung chuyển "Đoạn kiến thức | PDF"
+  từ ≤1100px (1024 trước đó PDF chỉ rộng 326px); điện thoại bỏ cuộn lồng trong khung đoạn, tab xếp 2×2, lề thẻ 10px;
+  đoạn không có nội dung không còn hiện ô trống. Test +1.
+- Kiểm Playwright ở 320, 375, 414, 768, 1024, 1280, 1440, 1920: không tràn ngang; khoảng cách khung 12px, giữa thẻ 12px;
+  cửa sổ hình mở/chuyển/đóng, focus vào nút Đóng, nhảy PDF `#page=11` (F54 Installation).
+- Kiểm chứng: `vitest src/workspace` 99 đạt; eslint thư mục documents sạch; build đạt.
+- Mở: API chỉ ký tối đa `SOURCE_IMAGES_MAX` (3) ảnh mỗi đoạn, đoạn nhiều hình hơn chỉ xem được 3. Chưa commit.
+
+## 2026-11-26 · Tài liệu & chunk phần đọc trên B6, kiểm bằng Playwright · loại: thay đổi, kiểm chứng
+
+- Thay đổi: trang `/documents` và `/documents/:docId` (mock 5 v4) đọc `GET /workspace/documents…`; `src/workspace/api/documents.js`,
+  `features/documents/` (DocumentsPage, FolderTree, ChunkPane, documentModel, CSS, test 6). Backend: chat-platform cùng ngày.
+- Kiểm Playwright (dữ liệu thật, 66 tài liệu): bố cục 1440 không tràn, chữ h1 20px, thân đoạn 14px; nút Thư mục, bấm đoạn
+  → PDF `#page=N`, tab Có hình, tìm không dấu, Mục lục lọc/bỏ lọc, tải thêm 20 → 40 không trùng, không lỗi console.
+- Sửa sau kiểm: dịch thêm loại đoạn `overview`, `dimension`, `alarm` (loại lạ hiện "Nội dung"); nút "Xem đầy đủ" cao 28px;
+  placeholder ngắn "Tìm trong tài liệu"; tab rỗng có câu riêng ("Chưa có đoạn nào được duyệt"); điện thoại (≤900px): chuyển
+  khung "Đoạn kiến thức | PDF", bấm đoạn sang PDF, ô tìm 16px, nút và tab 44px. Đã kiểm lại ở 375 và 1440.
+- Kiểm chứng: `vitest src/workspace` 98 đạt; eslint thư mục documents sạch (`npm run lint` còn 185 lỗi có sẵn ở `src/pages`,
+  `src/auth`… không sửa); `npm run build` đạt.
+- Chưa làm: duyệt/sửa đoạn (cần B1). Chưa commit.
+
 ## 2026-11-25 · Độ khớp thang 10, ảnh của đoạn, lượt lỗi đọc mã lưu sẵn (WU-17 đợt 2, WU-11) · loại: thay đổi
 
 - Thay đổi: thẻ đoạn hiện `similarity × 10` ("7,4/10", thang tuyệt đối, Toma chốt 2026-11-25), thanh độ khớp theo cùng

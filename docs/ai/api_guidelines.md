@@ -205,6 +205,32 @@ lượt `conversation_state.mode != "bot"`), `total_tokens` và `total_cost_vnd`
 (`cost_usd × USD_TO_VND_RATE`) tính trên toàn bảng, không theo bộ lọc.
 Database lỗi trả `503 database_unavailable`.
 
+### `GET /workspace/documents` (B6 phần đọc, 2026-11-26)
+
+Chỉ mount khi `WORKSPACE_DOCUMENTS_API_ENABLED=true` (mặc định tắt, chưa có xác thực, TR-16). Dữ liệu: bảng
+`crm_documents` (đồng bộ tay từ sổ `crm_sources.lock.json` + cây CRM bằng `chunking_loader.sync_crm_documents`) ghép
+số đoạn từ `doc_chunks_v2` (chỉ chunk `is_active`, không phải chunk cha, phiên bản nạp mới nhất của mỗi `doc_id`).
+Database lỗi → `503 database_unavailable`; `doc_id` không có trong `crm_documents` → `404 document_not_found`.
+
+- `GET /workspace/documents` → `{branches[], document_count, synced_at}`; `branches[] = {name, used_by_chatbot,
+  document_count, folders[{name, documents[]}]}`; mỗi tài liệu `{crm_id, doc_id, name, model, document_type, language,
+  version, file_size, crm_updated_at, on_crm, status, chunk_count, approved_count, pending_count}`. `status`:
+  `live` (mọi đoạn đã duyệt) | `review` (có đoạn chờ duyệt) | `work` (đã tải PDF, chưa có đoạn) | `idle` (chưa đưa
+  vào chatbot, `doc_id` null). Nhánh `used_by_chatbot` lên đầu.
+- `GET /workspace/documents/{doc_id}` → tài liệu trên kèm `branch`, `folder`, `connection_types`, `doc_title`,
+  `doc_version` (bản đang dùng trong `doc_chunks_v2`), `page_count`, `image_chunk_count`.
+- `GET /workspace/documents/{doc_id}/outline` → `{doc_id, total, nodes[{title, path[], chunk_count, children[]}]}` từ
+  `section_path`; đoạn mất cấp PART (T-07) gom dưới "Chưa xác định mục".
+- `GET /workspace/documents/{doc_id}/chunks?offset=0&limit=20` (limit 1–100) → `{doc_id, total, offset, limit,
+  items[]}` theo `chunk_index`. Lọc: `status=draft|approved`, `has_images=true`, `q` (≤ 200 ký tự, không phân biệt
+  hoa thường và dấu, trên tiêu đề + nội dung + tóm tắt), `section` lặp lại = đường dẫn mục. Mỗi đoạn `{id, chunk_key,
+  chunk_index, chunk_type, section_path, section_title, page_start, page_end, printed_page_start, printed_page_end,
+  content, summary_vi, keywords, review_status, image_count, images[{url, page, printed_page}]}`; `images` ký URL mới
+  (tối đa `SOURCE_IMAGES_MAX`, chỉ khi `CHAT_SOURCES_ENABLED`), không trả `assets` thô.
+- `GET /workspace/documents/{doc_id}/pdf?mode=view|download` → `307` tới link `view_pdf_url`/`download_pdf_url` của
+  CRM, xin mới mỗi lần (cây CRM cache `CRM_DOCS_CACHE_S`), không lưu URL ký. CRM lỗi → `502 crm_unavailable`; tài
+  liệu không còn trên CRM → `404 pdf_not_found`.
+
 ### `GET /chatbot/sessions/{session_id}/retrieval`
 
 Query tùy chọn `history_id` (UUID, B5 2026-11-18): trả nguồn câu trả lời của đúng lượt đó.

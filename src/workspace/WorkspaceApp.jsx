@@ -11,6 +11,7 @@ import AppShell from './layout/AppShell.jsx';
 import ChangePasswordPage from './features/auth/ChangePasswordPage.jsx';
 import ConversationDetailPage from './features/conversations/ConversationDetailPage.jsx';
 import ConversationsPage from './features/conversations/ConversationsPage.jsx';
+import DocumentsPage from './features/documents/DocumentsPage.jsx';
 import TracePage from './features/conversations/TracePage.jsx';
 import LoginPage from './features/auth/LoginPage.jsx';
 import ResetPasswordPage from './features/auth/ResetPasswordPage.jsx';
@@ -37,7 +38,8 @@ export default function WorkspaceApp() {
                 <Route path="conversations" element={guarded(PERMISSIONS.conversationsRead, <ConversationsPage />)} />
                 <Route path="conversations/:sessionId" element={guarded(PERMISSIONS.conversationsRead, <ConversationDetailPage />)} />
                 <Route path="conversations/:sessionId/turns/:historyId/trace" element={guarded(PERMISSIONS.conversationsRead, <TracePage />)} />
-                <Route path="documents/*" element={guarded(PERMISSIONS.chunksRead, <PlaceholderPage title={S.nav.documents} phase={5} />)} />
+                <Route path="documents" element={guarded(PERMISSIONS.chunksRead, <DocumentsPage />)} />
+                <Route path="documents/:docId" element={guarded(PERMISSIONS.chunksRead, <DocumentsPage />)} />
                 <Route path="keys" element={guarded(PERMISSIONS.serviceKeysManage, <PlaceholderPage title={S.nav.keys} phase={3} />)} />
                 <Route path="users" element={guarded(PERMISSIONS.usersManage, <PlaceholderPage title={S.nav.users} phase={4} />)} />
                 <Route path="*" element={<NotFoundPage />} />
