@@ -106,6 +106,10 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
             await privacy_provider.close()
         if asset_signer is not None:
             await asset_signer.close()
+        # Tạo lười ở route /workspace/documents/{doc_id}/pdf (chỉ khi cờ bật và có người bấm xem PDF).
+        crm_document_tree = getattr(application.state, "crm_document_tree", None)
+        if crm_document_tree is not None:
+            await crm_document_tree.close()
 
 def create_app() -> FastAPI:
     app = FastAPI(title="QS Chatbot API", version="0.2.0", lifespan=lifespan)

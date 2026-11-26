@@ -117,6 +117,13 @@ class Settings(BaseSettings):
     learning_api_enabled: bool = Field(default=False, alias="LEARNING_API_ENABLED")
     # B2: GET /chatbot/conversations/metrics và /chatbot/conversations/{id} (chưa có xác thực, TR-16).
     workspace_conversation_api_enabled: bool = Field(default=False, alias="WORKSPACE_CONVERSATION_API_ENABLED")
+    # B6 phần đọc (2026-11-26): /workspace/documents (cây tài liệu CRM, mục lục, đoạn, link PDF). Chưa xác thực → tắt.
+    workspace_documents_api_enabled: bool = Field(default=False, alias="WORKSPACE_DOCUMENTS_API_ENABLED")
+    # Cây tài liệu công khai của CRM (không có "/" cuối) để xin link xem/tải PDF mới khi bấm; cache theo giây.
+    crm_docs_tree_url: str = Field(
+        default="https://erp.qstcnc.com/api/v1/public/company-docs/website-tree", alias="CRM_DOCS_TREE_URL")
+    crm_docs_base_url: str = Field(default="https://erp.qstcnc.com", alias="CRM_DOCS_BASE_URL")
+    crm_docs_cache_s: float = Field(default=300.0, ge=0, le=3600, alias="CRM_DOCS_CACHE_S")
     cors_origins: list[str] = Field(
         default_factory=lambda: [
             "http://localhost:5173",

@@ -4,6 +4,7 @@ from app.api.v1.health import router as health_router
 from app.core.config import Settings, settings
 from app.modules.chatbot.routers import router as chatbot_router
 from app.modules.chatbot.routers.workspace import conversation_router
+from app.modules.documents.router import router as documents_router
 from app.modules.learning_ai.router import router as learning_router
 
 
@@ -16,6 +17,8 @@ def build_api_router(config: Settings) -> APIRouter:
         router.include_router(learning_router)
     if config.workspace_conversation_api_enabled:
         router.include_router(conversation_router)
+    if config.workspace_documents_api_enabled:
+        router.include_router(documents_router)
     return router
 
 

@@ -1,0 +1,153 @@
+/* Tài liệu & chunk (mock 5 v4): trang vừa khít màn hình; thư mục, PDF, đoạn kiến thức tự cuộn. */
+
+.page { height: 100vh; height: 100dvh; display: flex; flex-direction: column; gap: 12px; padding: 16px 24px 20px; box-sizing: border-box; }
+
+/* Thanh trên: nút Thư mục (icon thư mục + mũi tên), đường dẫn, tên tài liệu, nút PDF. */
+.top { flex: none; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px; }
+.folderBtn { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px 0 12px; border: 1px solid var(--ws-border-strong); border-radius: 8px; background: var(--ws-surface); font: inherit; font-size: 13px; font-weight: 600; color: var(--ws-text-muted); cursor: pointer; }
+.folderBtn:hover, .folderBtnOn { background: var(--ws-selected); border-color: var(--ws-selected-border); color: var(--ws-brand-strong); }
+.folderBtn:focus-visible, .linkBtn:focus-visible, .trow:focus-visible, .tdoc:focus-visible, .tab:focus-visible, .outlineRow:focus-visible, .iconBtn:focus-visible, .link:focus-visible { outline: 2px solid var(--ws-focus); outline-offset: 2px; }
+.arrow { transition: transform 0.15s ease; }
+.folderBtnOn .arrow { transform: rotate(180deg); }
+.titleBlock { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 4px; }
+.crumbs { font-size: 12.5px; color: var(--ws-text-muted); }
+.crumbs a { color: var(--ws-brand); text-decoration: none; }
+.crumbs a:hover { text-decoration: underline; }
+.titleRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.title { margin: 0; font-size: 20px; font-weight: 700; color: var(--ws-text); }
+.meta { font-size: 13px; color: var(--ws-text-muted); }
+.actions { flex: none; display: flex; flex-wrap: wrap; gap: 8px; }
+.linkBtn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border: 1px solid var(--ws-border-strong); border-radius: 8px; background: var(--ws-surface); color: var(--ws-text); font-size: 13px; font-weight: 500; text-decoration: none; }
+.linkBtn:hover { background: var(--ws-hover); }
+
+.body { flex: 1; min-height: 0; display: flex; gap: 12px; }
+.placeholder { flex: 1; align-self: flex-start; padding: 8px; }
+
+/* Ngăn thư mục: đẩy nội dung, không đè. */
+.drawer { flex: none; width: 290px; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--ws-border); border-radius: var(--ws-radius-lg); background: var(--ws-surface); animation: slideIn 0.18s ease-out; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+.drawerHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 14px 8px 16px; font-size: 15px; }
+.drawerHead span { font-size: 12px; color: var(--ws-text-faint); }
+.drawerBody { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 10px; }
+.drawerFoot { flex: none; display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; border-top: 1px solid var(--ws-hover); font-size: 12px; color: var(--ws-text-muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.tree { list-style: none; margin: 0; padding: 0; }
+.trow, .tdoc { display: flex; align-items: center; gap: 7px; width: 100%; box-sizing: border-box; min-height: 34px; padding: 0 8px; border: 0; border-radius: 8px; background: none; font: inherit; font-size: 13.5px; color: var(--ws-text); text-align: left; text-decoration: none; cursor: pointer; }
+.trow:hover, .tdoc:hover { background: var(--ws-hover); }
+.strong { font-weight: 600; }
+.muted { color: var(--ws-text-faint); }
+.tdoc { color: var(--ws-text-muted); }
+.tdocOn { background: var(--ws-selected); color: var(--ws-brand-strong); font-weight: 600; box-shadow: inset 3px 0 0 var(--ws-accent); }
+span.tdoc { cursor: default; }
+span.tdoc:hover { background: none; }
+.tlabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tcount { flex: none; font-size: 12px; color: var(--ws-text-faint); font-weight: 400; }
+.tnote { padding: 2px 8px 6px; font-size: 12px; color: var(--ws-text-faint); }
+.folderIcon { color: #b7894f; flex: none; }
+.folderIconMuted { color: #a8afbb; flex: none; }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.pendingDot, .countDot { flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: #c27a0e; color: #fff; font-size: 11px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+
+/* PDF */
+.pdfPane { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--ws-border); border-radius: var(--ws-radius-lg); background: #e9ebef; overflow: hidden; }
+.paneHead { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; background: var(--ws-surface); border-bottom: 1px solid var(--ws-border); font-size: 13px; }
+.pdf { flex: 1; min-height: 0; width: 100%; border: 0; background: #e9ebef; }
+.pdfHint { flex: none; margin: 0; padding: 8px 14px; background: var(--ws-surface); border-top: 1px solid var(--ws-border); font-size: 12px; color: var(--ws-text-muted); }
+
+/* Đoạn kiến thức */
+.chunkPane { flex: 1.2 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--ws-border); border-radius: var(--ws-radius-lg); background: var(--ws-bg); overflow: hidden; }
+.chunkTools { flex: none; display: flex; flex-direction: column; gap: 10px; padding: 12px 16px; background: var(--ws-surface); border-bottom: 1px solid var(--ws-border); }
+.searchRow { display: flex; gap: 8px; align-items: center; }
+.search { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px; border: 1px solid var(--ws-border-strong); border-radius: 8px; background: var(--ws-surface); color: var(--ws-text-faint); }
+.search:focus-within { outline: 2px solid var(--ws-focus); outline-offset: 1px; }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: inherit; font-size: 14px; color: var(--ws-text); }
+.tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.tab { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid transparent; border-radius: 8px; background: transparent; font: inherit; font-size: 13px; color: var(--ws-text-muted); cursor: pointer; }
+.tab:hover { background: var(--ws-hover); }
+.tabOn { background: var(--ws-surface); border-color: var(--ws-border-strong); color: var(--ws-text); font-weight: 600; }
+.chunkCount { margin-left: auto; font-size: 12.5px; color: var(--ws-text-faint); font-variant-numeric: tabular-nums; }
+.sectionChip { display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; padding: 3px 6px 3px 10px; border-radius: 999px; background: var(--ws-selected); color: var(--ws-brand-strong); font-size: 12.5px; }
+.sectionChip button { display: inline-flex; border: 0; background: none; color: inherit; cursor: pointer; padding: 2px; border-radius: 50%; }
+.readOnly { margin: 0; font-size: 12px; color: var(--ws-text-faint); }
+.chunkScroll { position: relative; flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.chunkScroll > * { flex-shrink: 0; }
+.chunk { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border: 1px solid var(--ws-border); border-radius: 12px; background: var(--ws-surface); cursor: pointer; }
+.chunk:hover { border-color: var(--ws-border-strong); }
+.chunkOn { border: 2px solid var(--ws-brand); padding: 13px 15px; box-shadow: 0 4px 14px rgba(92, 56, 16, 0.12); }
+.chunkHead { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.chunkTitles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.chunkTitles strong { font-size: 15px; color: var(--ws-text); overflow-wrap: anywhere; }
+.chunkParent { font-size: 12px; color: var(--ws-text-muted); }
+.chunkMeta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--ws-text-muted); }
+.chunkBody { font-size: 14px; line-height: 1.6; color: var(--ws-text); background: #fafbfc; border: 1px solid var(--ws-hover); border-radius: 8px; padding: 10px 12px; --md-rule: var(--ws-border); }
+.clamp { max-height: 8em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 65%, transparent); mask-image: linear-gradient(#000 65%, transparent); }
+.link { align-self: flex-start; min-height: 28px; border: 0; background: none; padding: 2px 4px; font: inherit; font-size: 13px; font-weight: 600; color: var(--ws-brand); cursor: pointer; border-radius: 4px; }
+.chunkImages { display: flex; flex-wrap: wrap; gap: 8px; }
+.thumb { display: block; padding: 0; border: 0; background: none; border-radius: 8px; cursor: zoom-in; }
+.thumb:hover img { border-color: var(--ws-brand); }
+.chunkImages img { display: block; width: 132px; height: 96px; object-fit: contain; border: 1px solid var(--ws-border); border-radius: 8px; background: var(--ws-surface); }
+.ai { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 8px; background: #f7f3ee; font-size: 13px; color: var(--ws-text); }
+.aiLabel { font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em; color: var(--ws-brand); text-transform: uppercase; }
+.keywords { display: flex; flex-wrap: wrap; gap: 4px; }
+.keywords span { padding: 1px 8px; border-radius: 999px; background: var(--ws-surface); border: 1px solid var(--ws-border); font-size: 12px; color: var(--ws-text-muted); }
+.more { align-self: center; }
+
+/* Mục lục: đè lên danh sách đoạn. */
+.outline { position: absolute; inset: 0; z-index: 5; overflow-y: auto; padding: 10px 10px 16px; background: var(--ws-surface); }
+.outlineHead { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 10px; font-size: 15px; }
+.iconBtn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid var(--ws-border-strong); border-radius: 8px; background: var(--ws-surface); cursor: pointer; }
+.outlineList { list-style: none; margin: 0; padding: 0; }
+.outlineRow { display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; min-height: 34px; padding: 0 10px; border: 0; border-radius: 8px; background: none; font: inherit; font-size: 13px; color: var(--ws-text); text-align: left; cursor: pointer; }
+.outlineRow:hover { background: var(--ws-hover); }
+.outlineOn { background: var(--ws-selected); color: var(--ws-brand-strong); font-weight: 600; box-shadow: inset 3px 0 0 var(--ws-accent); }
+
+/* Cửa sổ xem hình */
+.viewer { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; background: rgba(15, 18, 24, 0.94); color: #fff; }
+.viewerHead { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 20px; }
+.viewerTitles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.viewerTitles strong { font-size: 15px; }
+.viewerTitles span { font-size: 12.5px; color: #c9ced6; }
+.viewerActions { display: flex; gap: 8px; }
+.viewerBtn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 8px; background: rgba(255, 255, 255, 0.08); color: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+.viewerBtn:hover, .viewerNav:hover { background: rgba(255, 255, 255, 0.18); }
+.viewerStage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 0 20px; }
+.viewerNav { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 50%; background: rgba(255, 255, 255, 0.08); color: #fff; cursor: pointer; }
+.viewerFigure { flex: 1; max-width: 1100px; height: 100%; margin: 0; display: flex; align-items: center; justify-content: center; }
+.viewerFigure img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; background: #fff; }
+.viewerHint { flex: none; margin: 0; padding: 10px 20px 16px; text-align: center; font-size: 12.5px; color: #c9ced6; }
+
+.paneSwitch { display: none; }
+
+@media (max-width: 1100px) {
+  .page { height: auto; }
+  .body { flex-direction: column; }
+  .drawer { width: auto; max-height: 60vh; }
+  .pdfPane { flex: none; height: 60vh; }
+  .chunkPane { flex: none; max-height: 85vh; }
+  .paneSwitch { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--ws-border); border-radius: 10px; background: var(--ws-surface); }
+  .paneSwitch > button { flex: 1; justify-content: center; }
+  .chunkPane { max-height: none; overflow: visible; }
+  .chunkScroll { overflow: visible; }
+  .pdfPane { height: 75vh; }
+  .paneOff { display: none; }
+  .search input { font-size: 16px; }
+  .tab, .link, .linkBtn, .outlineRow { min-height: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer { animation: none; }
+  .arrow { transition: none; }
+}
+
+@media (max-width: 600px) {
+  .chunkTools { padding: 12px; }
+  .chunkScroll { padding: 12px 10px 16px; }
+  .chunk { padding: 14px 12px; }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; }
+  .tab { justify-content: center; padding: 0 8px; }
+  .chunkCount { grid-column: 1 / -1; text-align: right; }
+  .viewerHead { padding: 10px 12px; }
+  .viewerStage { gap: 6px; padding: 0 6px; }
+  .viewerNav { width: 44px; height: 44px; }
+}
