@@ -43,11 +43,20 @@ def decide(metrics: Mapping[str, object], thresholds: Thresholds) -> PageProfile
     return PageProfile(**metrics, text_layer=text_layer, ocr=text_layer != "ok")  # type: ignore[arg-type]
 
 
+def mark_hybrid(pages: Sequence[PageProfile], thresholds: Thresholds) -> list[PageProfile]:
+    """Trang lai trong tài liệu quét: trang `ok` có ít chữ và nhiều bitmap, trong tài liệu mà đa số trang cần OCR, thì
+    phần lớn nội dung nằm trong ảnh (text layer chỉ giữ một phần dán vào) → `hybrid`, cần OCR."""
+    if not pages or sum(1 for p in pages if p.ocr) / len(pages) < thresholds.hybrid_doc_ocr_share:
+        return list(pages)
+    return [p.model_copy(update={"text_layer": "hybrid", "ocr": True})
+            if (p.text_layer == "ok" and p.bitmap_area_ratio >= thresholds.hybrid_bitmap_min
+                and p.text_chars <= thresholds.hybrid_text_max_chars) else p for p in pages]
+
+
 def build_profile(measured: Sequence[Mapping[str, object]], thresholds: Thresholds,
                   ocr_mode: OcrMode) -> DocumentProfile:
     pages = []
-    for metrics in measured:
-        page = decide(metrics, thresholds)
+    for page in mark_hybrid([decide(metrics, thresholds) for metrics in measured], thresholds):
         applied = ocr_mode == "force" or (ocr_mode == "auto" and page.ocr)
         config = {"do_ocr": applied, **(OCR_ENGINE if applied else {})}
         pages.append(page.model_copy(update={"ocr_applied": applied, "docling_config": config}))
@@ -68,6 +77,8 @@ def s0_review(profile: DocumentProfile, doc_id: str, rec: Recorder) -> None:
         else:
             how = "OCR not applied (--ocr off): page content is missing"
         reason = f"text layer {page.text_layer} ({page.text_chars} chars)" if page.ocr else "OCR forced"
+        if page.text_layer == "hybrid":
+            reason += f"; {page.bitmap_area_ratio:.0%} raster on a page of an OCR-dominated document"
         if page.ocr and page.hash_damaged:
             reason += f"; {page.hash_damaged}/{page.hash_codes} '#' codes lack digits (damaged text layer)"
         rec.add_review(target, "ocr_required", f"{reason}; {how}", target=target,

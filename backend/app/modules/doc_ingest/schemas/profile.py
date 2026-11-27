@@ -44,6 +44,13 @@ class Thresholds(StrictModel):
     # I-59: Docling nhận cả cột chữ bên cạnh ảnh chụp màn hình làm con của picture → T-20 trả cột đó về văn bản thân
     figure_column_gap: float = 24.0        # khoảng trắng dọc tối thiểu (pt) giữa cột trong ảnh và cột chữ
     figure_column_min_sentences: int = 2   # cột chữ cần ≥ ngần này câu/nhãn bước mới được trả về thân
+    # Giai đoạn 1b (2026-11-25): trang lai trong tài liệu quét. Tài liệu có ≥ `hybrid_doc_ocr_share` trang cần OCR; trang có
+    # text layer "ok" nhưng bitmap phủ ≥ `hybrid_bitmap_min` và chỉ ≤ `hybrid_text_max_chars` ký tự (vd. 10iV tr.96: chỉ
+    # phần "Notes" là chữ thật, tiêu đề 3.10, đoạn dẫn và bảng là ảnh) cũng bị ép OCR.
+    heading_garbled_pt_per_char: float = 25.0  # T-22: tiêu đề trang OCR có vùng chữ rộng ≥ ngần này pt mỗi ký tự (kèm chuỗi khoảng trắng)
+    hybrid_doc_ocr_share: float = 0.7
+    hybrid_bitmap_min: float = 0.10
+    hybrid_text_max_chars: int = 700
 
 
 class Vocabulary(StrictModel):

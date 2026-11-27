@@ -22,6 +22,8 @@ ReviewCode = Literal[
     "complex_header",
     "orphan_row",
     "table_patch_unmatched",
+    "text_patch_unmatched",
+    "heading_garbled",
     "ocr_required",
     "furniture_reclassified",
     "furniture_unconfirmed",

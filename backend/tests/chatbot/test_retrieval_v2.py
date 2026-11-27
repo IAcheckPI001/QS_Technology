@@ -187,6 +187,20 @@ def test_eval_gold_fields_and_context_precision(tmp_path: Path) -> None:
         ev.load_cases(bad)
 
 
+def test_threshold_analysis() -> None:
+    ev = _eval_module()
+    mk = lambda cands: ev.CaseResult("c", "core:base", None, None, False, 0, None, None, cands=cands)  # noqa: E731
+    rows = [mk([(0.7, 0.05, False), (0.6, 0.04, True), (0.5, 0.03, False), (0.3, 0.02, True)]),
+            mk([(0.4, 0.05, True), (0.3, 0.04, False)]), mk([])]
+    grid = {(g["t"], g["k"]): g for g in ev.threshold_analysis(rows, "core:base", (0.25, 0.45, 0.65), (2, 6))}
+    assert grid[(0.25, 6)]["n"] == 2 and grid[(0.25, 6)]["recall"] == 1.0
+    assert grid[(0.25, 2)] == {"t": 0.25, "k": 2, "n": 2, "recall": 1.0, "precision": 0.5, "noise": 1.0, "chunks": 2.0, "empty": 0.0}
+    # ngưỡng 0,45: câu 1 giữ [sai, đúng, sai], câu 2 hết chunk (0,4 < 0,45); câu không có ứng viên bị bỏ khỏi mẫu
+    assert grid[(0.45, 6)] == {"t": 0.45, "k": 6, "n": 2, "recall": 0.5, "precision": 0.333, "noise": 1.0, "chunks": 1.5, "empty": 0.5}
+    assert grid[(0.65, 6)]["recall"] == 0.0 and grid[(0.65, 6)]["empty"] == 0.5 and grid[(0.65, 2)]["precision"] == 0.0
+    assert any("Ngưỡng" in line for line in ev.render_threshold(rows, ["core:base"]))
+
+
 def test_eval_routing(tmp_path: Path) -> None:
     from types import SimpleNamespace as NS
 

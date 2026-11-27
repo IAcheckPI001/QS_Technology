@@ -240,6 +240,11 @@ class Assembler:
             # I-44: khung chữ (T-20 `text_frame`) chỉ lặp lại chữ đã tách vào `content` → không là asset
             if e.normalized_type not in VISUAL or "text_frame" in e.flags:
                 continue
+            # Ảnh lồng trong phần tử khác (biểu tượng phím trong ô bảng phím, 6AH tr.11/14, 10iV tr.14): T-14 chỉ render ảnh
+            # cấp ngoài, nên ảnh lồng không có file → không phải asset (trước đây thành asset không có file, làm
+            # `publish-assets` báo "chưa render").
+            if e.image is None and e.parent_element_id in self.by_id:
+                continue
             local = e.image.original_path if e.image is not None else None
             missing = missing or local is None or not (self.run.run_dir / local).is_file()
             assets.append(ChunkAsset(bucket=self.manifest.storage_bucket,

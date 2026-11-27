@@ -239,6 +239,22 @@ def test_step_restart_splits_procedures_and_moves_lead_and_diagram(tmp_path: Pat
     assert [a.element_id for a in second.assets] == [pic2]
 
 
+def test_nested_picture_without_image_is_not_a_separate_asset(tmp_path: Path) -> None:
+    """6AH tr.11/14, 10iV tr.14: biểu tượng phím là picture lồng trong bảng (hoặc ảnh khác); T-14 chỉ render ảnh cấp ngoài,
+    nên ảnh lồng không có file và không được liệt kê thành asset; ảnh cấp ngoài khác vẫn là asset."""
+    doc = Doc()
+    path = ("2.1 Keys",)
+    doc.add("heading", "2.1 Keys", path=path)
+    outer = doc.add("picture", path=path, image=True)
+    doc.add("picture", path=path, owner=outer)            # ảnh lồng trong ảnh: không có `image`
+    holder = doc.add("text", "Key table", path=path)
+    doc.add("picture", path=path, owner=holder)           # ảnh lồng trong phần tử khác (ô bảng)
+    other = doc.add("picture", path=path, image=True)     # ảnh cấp ngoài thứ hai
+    doc.add("text", "Press the key to jog the axis.", path=path)
+    [chunk] = [c for c in leaves(build(doc, tmp_path))]
+    assert [a.element_id for a in chunk.assets] == [outer, other] and all(a.local_path for a in chunk.assets)
+
+
 def _case_doc(cases: int, words: bool = True, long_case: int | None = None) -> tuple[Doc, dict[int, str]]:
     """Khối "Gear ratio calculation:" + công thức + n ví dụ, mỗi ví dụ mở bằng ảnh và "Case n:" (F54 mục 2.6.4.7)."""
     doc = Doc()

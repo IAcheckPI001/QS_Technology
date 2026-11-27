@@ -8,7 +8,12 @@ Nhãn tiếng Việt do người biên soạn đặt (`vi`) không vào `content
 Ranh giới chunk theo mục trên trang PDF (đều `standalone`):
 - trang riêng model: phần trên (`overview`) và "THÔNG SỐ KỸ THUẬT (SPECIFICATIONS)" (`spec`);
 - khối "QS - <MODEL> CONTROLLER" (trang tóm tắt) + khối "MODEL: <MODEL>" (trang trọn bộ) (`overview`);
-- bảng chọn "MOTION CONTROLLER – Selection table": mỗi nhóm hàng của mỗi trang một chunk (`table`).
+- bảng chọn "MOTION CONTROLLER – Selection table": mỗi nhóm hàng của mỗi trang một chunk (`table`, nhiều model, giữ làm
+  chunk so sánh/liệt kê);
+- phương án C (2026-11-25, docs/ai/reports/catalog_rechunk_proposal_2026-11-25.md): thêm **lát theo model** của bảng chọn
+  (5 lát/model, `product_models` một model, nối tiếp ở cuối nên chunk_key C0000–C0036 giữ nguyên); chunk trọn bộ chỉ giữ dòng
+  riêng của trang tóm tắt (cả hai trang ở cờ `source_pages:`); `embed_text` có dòng "Tóm tắt" đổi ký hiệu ✓/✗/Option
+  thành chữ (không đổi `content`).
 """
 
 from __future__ import annotations
@@ -16,6 +21,7 @@ from __future__ import annotations
 import hashlib
 import html
 import json
+import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -47,6 +53,23 @@ IFACE_LABEL = {"pulse_train": "Pulse Train", "ethercat": "EtherCAT", "mechatroli
 # Tiêu đề cột con của bảng chọn như in.
 IFACE_COLUMN = {"pulse_train": "Pulse Train (Standard)", "ethercat": "EtherCAT (Optional)",
                 "mechatrolink": "Mechatrolink MII/MIII (Optional)"}
+# Phương án C (kế hoạch chia lại catalog 2026-11-25): lát bảng chọn theo model, mỗi lát gồm các nhóm hàng cùng chủ đề.
+# Tên lát là nhãn của người biên soạn (chỉ vào `section_path`, không vào `content`).
+MODEL_SLICES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("Tổng quát", ("General",)),
+    ("Phần cứng", ("Hardware Specification",)),
+    ("Bù và đa trục", ("Compensation", "Multi axis control mode (Optional)")),
+    ("Vận hành và quản lý dao", ("Operation", "Tool Manager")),
+    ("Điều khiển và lập trình", ("Control", "Builder Supp")),
+)
+# Tên nhóm hàng hiển thị ở `section_path`/tiêu đề (nội dung giữ đúng chữ in "Builder Supp").
+GROUP_DISPLAY = {"Builder Supp": "Builder Support"}
+# Ký hiệu của bảng → chữ, chỉ cho câu "Tóm tắt" trong `embed_text`.
+SYMBOL_WORD = {"✓": "có", "✗": "không", "(Option)": "tùy chọn"}
+# Dòng của khối "QS - <MODEL> CONTROLLER" lặp lại trang riêng model (kích thước, màn hình, trục, giao tiếp, I/O,
+# PLC/Macro, open/closed loop): bỏ khỏi chunk trọn bộ, chỉ giữ dòng chỉ có ở trang tóm tắt.
+_SUMMARY_DUPLICATE_PREFIX = ("Dimension:", "Monitor size:", "Control interface:", "I/O integrated:", "PLC, Macro integrated")
+_SUMMARY_DUPLICATE_REGEX = re.compile(r"^(Max \d+ axis|(Open|Closed) loop control( system)?)$")
 # key thông số → `spec_attributes` (từ vựng registry chatbot, qua registry_snapshot).
 SPEC_ATTRIBUTE = {
     "dimension": "dimension", "monitor_size": "monitor_size", "monitor": "monitor_size", "axis_control": "max_axis",
@@ -77,6 +100,9 @@ class _Draft:
     keywords_vi: list[str]
     decisions: list[CuratedDecision]
     extraction: str = "text_layer"
+    # Chỉ cho `embed_text` (tìm kiếm), không vào `content`: câu "Tóm tắt" sinh máy từ giá trị đã duyệt + nhãn `vi`.
+    facts: list[str] = field(default_factory=list)
+    flags: list[str] = field(default_factory=list)
 
 
 # ----------------------------------------------------------------------------- hiển thị giá trị
@@ -212,7 +238,10 @@ def _product_drafts(sheet: ProductSheet, skipped: list[str]) -> list[_Draft]:
     lines = []
     pages = []
     if sp.verified:
-        lines += ["QS MOTION CONTROLLER", sp.heading, *_bullets(sp.items)]
+        # Phương án C: bỏ dòng đã có ở chunk tổng quan (trang riêng model); chỉ giữ dòng riêng của trang tóm tắt.
+        unique = [item for item in sp.items if not item.startswith(_SUMMARY_DUPLICATE_PREFIX)
+                  and not _SUMMARY_DUPLICATE_REGEX.match(item)]
+        lines += ["QS MOTION CONTROLLER", sp.heading, *_bullets(unique)]
         pages.append(sp.page)
     else:
         skipped.append(f"{sheet.model}/summary_page")
@@ -223,8 +252,12 @@ def _product_drafts(sheet: ProductSheet, skipped: list[str]) -> list[_Draft]:
     else:
         skipped.append(f"{sheet.model}/system_package")
     if lines:
-        drafts.append(_Draft("overview", ["MOTION CONTROLLER", sp.heading], sorted(pages), [sheet.model],
-                             list(sheet.control_interface), "\n".join(lines), list(sheet.spec_attributes), [], []))
+        # Chunk ghép hai trang rời nhau (tóm tắt p4–5, trọn bộ p19–21): `page_start/end` = trang trọn bộ (nếu có),
+        # cả hai trang ghi ở cờ `source_pages:` thay vì dải `min–max` dễ hiểu nhầm là mọi trang giữa.
+        shown = [pkg.page] if pkg.verified else sorted(pages)
+        drafts.append(_Draft("overview", ["MOTION CONTROLLER", sp.heading, "Trọn bộ hệ thống và tùy chọn"], shown,
+                             [sheet.model], list(sheet.control_interface), "\n".join(lines), list(sheet.spec_attributes),
+                             [], [], flags=["source_pages:" + ",".join(str(p) for p in sorted(pages))]))
     return drafts
 
 
@@ -273,6 +306,7 @@ def _matrix_drafts(matrix: SelectionMatrix, skipped: list[str]) -> list[_Draft]:
             lines = ["MOTION CONTROLLER", "Selection table", group, header,
                      "|" + "---|" * (len(columns) + 1)]
             vi: list[str] = []
+            facts: list[str] = []
             decisions: list[CuratedDecision] = []
             attrs: list[str] = []
             for row in rows:
@@ -282,6 +316,11 @@ def _matrix_drafts(matrix: SelectionMatrix, skipped: list[str]) -> list[_Draft]:
                 cells = [_matrix_cell(matrix, row, ms) for ms in columns.values()]
                 lines.append(f"| {row.en} | " + " | ".join(cells) + " |")
                 vi.append(row.vi)
+                # Câu "Tóm tắt" chỉ để đổi ký hiệu (✓ ✗ Option) thành chữ: hàng toàn chữ/số đã tự đọc được, bỏ để
+                # bảng lớn không vượt ngân sách embed (lát theo model giữ mọi hàng).
+                if any(symbol in cell for cell in cells for symbol in SYMBOL_WORD):
+                    facts.append(f"{row.vi} ({row.en}): " + "; ".join(
+                        f"{column} {_words(cell)}" for column, cell in zip(columns, cells)))
                 if (a := SPEC_ATTRIBUTE.get(row.key)) is not None and a not in attrs:
                     attrs.append(a)
                 for model, ov in row.override.items():
@@ -290,26 +329,84 @@ def _matrix_drafts(matrix: SelectionMatrix, skipped: list[str]) -> list[_Draft]:
                                                          value=_cell(matrix.value(row, model)),
                                                          page_value=_scalar(ov.table_value)))
             if len(lines) > 5:
-                drafts.append(_Draft("table", ["MOTION CONTROLLER", "Selection table", group], [page], models,
-                                     interfaces, "\n".join(lines), attrs, vi, decisions, extraction="mixed"))
+                # `content` giữ nguyên chữ in; `section_path` duy nhất giữa hai bảng (trang 6 và 7) và sửa nhãn cụt.
+                path = ["MOTION CONTROLLER", f"Selection table ({', '.join(models)})", GROUP_DISPLAY.get(group, group)]
+                drafts.append(_Draft("table", path, [page], models, interfaces, "\n".join(lines), attrs, vi, decisions,
+                                     extraction="mixed", facts=facts))
+    return drafts
+
+
+def _words(text: str) -> str:
+    """Ký hiệu của bảng → chữ (chỉ cho câu "Tóm tắt" của `embed_text`; không đụng `content`)."""
+    for symbol, word in SYMBOL_WORD.items():
+        text = text.replace(symbol, word)
+    return text
+
+
+def _slice_drafts(matrix: SelectionMatrix, skipped: list[str]) -> list[_Draft]:
+    """Lát bảng chọn theo model (phương án C): đúng các hàng như in, chỉ cột của model đó, gom theo chủ đề.
+
+    `content` bám PDF (nhóm hàng như in; cột model giữ tên in, vd. "ASTRO 6AV/H" cho cả 6AV và 6AH); `product_models`
+    đúng một model nên bộ lọc theo model của tìm kiếm thu hẹp được. Chữ "Tóm tắt" chỉ vào `embed_text`."""
+    groups: dict[str, list[MatrixRow]] = {}
+    for row in matrix.rows:
+        groups.setdefault(row.group, []).append(row)
+    drafts: list[_Draft] = []
+    for model, meta in matrix.models.items():
+        shared = [m for m, x in matrix.models.items() if x.column == meta.column]
+        for label, names in MODEL_SLICES:
+            lines = ["MOTION CONTROLLER", "Selection table"]
+            vi: list[str] = []
+            facts: list[str] = [f"(cột in chung cho {' và '.join(shared)})"] if len(shared) > 1 else []
+            decisions: list[CuratedDecision] = []
+            attrs: list[str] = []
+            rows_in_slice = 0
+            for group in names:
+                rows = [r for r in groups.get(group, []) if r.verified]
+                skipped += [f"matrix/{r.key}" for r in groups.get(group, []) if not r.verified and f"matrix/{r.key}" not in skipped]
+                if not rows:
+                    continue
+                lines += [group, f"| Specification | {meta.column} |", "|" + "---|" * 2]
+                for row in rows:
+                    cell = _cell(matrix.value(row, model))
+                    lines.append(f"| {row.en} | {cell} |")
+                    vi.append(row.vi)
+                    facts.append(f"{row.vi} ({row.en}): {_words(cell)}")
+                    if (a := SPEC_ATTRIBUTE.get(row.key)) is not None and a not in attrs:
+                        attrs.append(a)
+                    if (ov := row.override.get(model)) is not None:
+                        decisions.append(CuratedDecision(code=ov.decision, key=row.key, model=model, value=cell,
+                                                         page_value=_scalar(ov.table_value)))
+                    rows_in_slice += 1
+            if rows_in_slice:
+                drafts.append(_Draft("table", ["MOTION CONTROLLER", "Selection table", model, label], [meta.page], [model],
+                                     list(meta.interfaces), "\n".join(lines), attrs, vi, decisions,
+                                     extraction="mixed", facts=facts))
     return drafts
 
 
 # ----------------------------------------------------------------------------- lắp DraftChunk
-def _embed(models: Sequence[str], path: Sequence[str], keywords: Sequence[str], content: str) -> str:
+def _embed(models: Sequence[str], path: Sequence[str], keywords: Sequence[str], content: str,
+           facts: Sequence[str] = ()) -> str:
     head = [f"{', '.join(models)} · {DOC_TITLE} · {' › '.join(path)}"]
     if keywords:
         head.append(f"Từ khóa: {', '.join(keywords)}")
+    if facts:
+        head.append(f"Tóm tắt: {'; '.join(facts)}")
     head.append("---")
     return "\n".join(head + [content])
 
 
 def build_chunks(products: Sequence[ProductSheet], matrix: SelectionMatrix, doc_version: str,
-                 counter: Callable[[str], int] | None = None, vi_keywords: bool = False) -> CuratedBuild:
+                 counter: Callable[[str], int] | None = None, vi_keywords: bool = False,
+                 model_slices: bool = True) -> CuratedBuild:
     skipped: list[str] = []
     ordered = sorted(products, key=lambda p: p.heading.page)
     display = {p.model: [p.model, p.heading.title] for p in ordered}
-    drafts = [d for sheet in ordered for d in _product_drafts(sheet, skipped)] + _matrix_drafts(matrix, skipped)
+    # Thứ tự cố định: chunk trang model rồi bảng gốc giữ chunk_key C0000–C0036 như bản trước (verdict theo chunk_key);
+    # lát theo model nối tiếp ở cuối.
+    drafts = ([d for sheet in ordered for d in _product_drafts(sheet, skipped)] + _matrix_drafts(matrix, skipped)
+              + (_slice_drafts(matrix, skipped) if model_slices else []))
     result = CuratedBuild(chunks=[], unverified=skipped)
     for index, d in enumerate(drafts):
         key = f"{DOC_ID}:C{index:04d}"
@@ -319,9 +416,9 @@ def build_chunks(products: Sequence[ProductSheet], matrix: SelectionMatrix, doc_
             keywords = _merge(keywords, vi)
         elif vi:
             result.proposed_keywords_vi[key] = vi
-        embed = _embed(d.models, d.section_path, keywords, d.content)
+        embed = _embed(d.models, d.section_path, keywords, d.content, d.facts)
         tokens = counter(embed) if counter else None
-        flags = ["curated"]
+        flags = ["curated", *d.flags]
         if tokens is not None and tokens > EMBED_MAX_TOKENS:
             flags.append("embed_over_budget")
             result.over_budget.append(key)

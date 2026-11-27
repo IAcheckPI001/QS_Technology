@@ -120,6 +120,8 @@ data/generation_eval/
 data/gold_candidates/
 # Checkpoint cục bộ (bản sao file + hướng dẫn khôi phục) trước các thay đổi thử nghiệm
 data/checkpoints/
+# Sao lưu DB cục bộ (dump doc_chunks_v2, nặng, không commit)
+data/db_backup/
 .venv-ingest/
 
 # Playwright

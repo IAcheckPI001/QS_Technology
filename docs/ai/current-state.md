@@ -1,6 +1,6 @@
 # Trạng thái toàn dự án
 
-Cập nhật: 2026-11-19
+Cập nhật: 2026-11-26
 
 Bảng tổng, mỗi luồng một dòng. Chi tiết, vấn đề mở và bước tiếp theo nằm ở `STATE.md` của
 từng luồng; lịch sử ở `LOG.md`. File này không chứa lịch sử; cập nhật dòng của luồng khi
@@ -9,11 +9,11 @@ STATE của luồng đổi trạng thái tổng.
 | Luồng | Trạng thái | Chưa kiểm trên hệ thống thật | Chi tiết |
 |---|---|---|---|
 | chat-platform | Service key, session, lease, history, trace có code và test; API Workspace B2/B3/B5 (bảng tóm tắt `chat_conversations`, tìm không dấu, phân trang, nguồn theo lượt, chi phí thật) đã kiểm với Supabase thật, có trên `feature/deploy_ai_service` (D-011–D-013); GET Support Workspace chưa xác thực; `Idempotency-Key` chưa chống trùng | `/health/db`, lease trên khóa dòng | [STATE](flows/chat-platform/STATE.md) |
-| workspace-ui | GĐ 0–2: khung app, đăng nhập (dữ liệu giả, chờ B1), Lịch sử/Chi tiết/Diễn biến hội thoại trên B2/B3/B5 (đã kiểm dữ liệu thật); câu trả lời Markdown + huy hiệu trích dẫn bấm tới nguồn, cả widget (WU-17 đợt 1, 2026-11-25, chưa commit); kiểm duyệt bằng playwright-cli; có trên `feature/deploy_ai_service`; GĐ 3–5 chờ B7, B1, B6 | Đăng nhập thật (B1) | [STATE](flows/workspace-ui/STATE.md) |
+| workspace-ui | GĐ 0–2: khung app, đăng nhập (dữ liệu giả, chờ B1), Lịch sử/Chi tiết/Diễn biến hội thoại trên B2/B3/B5 (đã kiểm dữ liệu thật); câu trả lời Markdown + huy hiệu trích dẫn bấm tới nguồn, cả widget (WU-17 đợt 1, 2026-11-25, merge `a1de8e9`); kiểm duyệt bằng playwright-cli; có trên `feature/deploy_ai_service`; GĐ 3–5 chờ B7, B1, B6 | Đăng nhập thật (B1) | [STATE](flows/workspace-ui/STATE.md) |
 | website-qa | Chạy trọn luồng; chat tra cứu trên `doc_chunks_v2` từ 2026-11-19 (D-009 bước 6; mọi chunk còn `draft`, production mặc định `RETRIEVAL_APPROVED_ONLY=true` nên chưa có tài liệu). Đang làm R-1 (tối ưu bước phân tích + định tuyến, [kế hoạch](reports/p3_r1_routing_plan.md)): công cụ đo và luật định tuyến `r1`/`r2` đã có code (chỉ eval dùng, production giữ `r0`), **chưa đo được vì OpenAI hết credit (2026-11-14)**; handoff là scaffold; chưa có SSE nguồn/ảnh | Tra cứu v2 trong lượt thật (chờ credit OpenAI); số đo luật định tuyến | [STATE](flows/website-qa/STATE.md) |
 | crm-agent | Thử nghiệm; tool CRM (`crm_schema`/`crm_query`) sau `CRM_REPORT_ENABLED` (mặc định tắt); eval gpt-4.1-mini 78/81. Đã dọn 2026-11-16 (D-010). Đợt 0 và Đợt 1 bước 1 (so sánh 1 lần gọi, ép tra nguồn) đã merge, kiểm thật 2026-11-20; câu so sánh theo D-014 tạm (cắt cột đạt C1–C7, chọn bảng chung còn sai). Đợt 1 bước 2 (C1–C3), bước 3 (gói A: `facts`, lịch sử theo lượt, D-015) và sửa LC-2/4/7 đã merge (`0561487`); kiểm thật 7 câu CRM 5/7; trần token lượt môi trường kiểm thử 30000; lỗi mở: nhãn facts (LC-8), nghĩa "hộp tin nhắn chờ" (LC-6); còn mở: nghĩa "khách" của phiếu (r1); chưa phân quyền tool | Eval lại sau Đợt 0/1 (G1); chốt D-014; audit log trên server thật | [STATE](flows/crm-agent/STATE.md) |
 | learning | Tới hết bước privacy sau `LEARNING_API_ENABLED`, chưa xác thực; segment/extract, job, index chưa nối | Supabase, Ollama | [STATE](flows/learning/STATE.md) |
-| doc-ingest | PDF → chunk nháp → `doc_chunks_v2` (draft): F54 296, F86 Installation 23, catalog 7 bộ điều khiển 37 chunk (`curated/`, chờ verdict); cổng 2c v4 không đạt (chờ prompt v5). crm-sync giai đoạn 1 (2026-11-19, chưa merge): lấy 11 PDF từ kho tài liệu CRM, 10 tài liệu bộ điều khiển → 847 chunk nháp có vị trí trong PDF, chưa duyệt; bản Operation là ảnh scan (I-51) | Nạp chunk CRM vào DB (giai đoạn 2) | [STATE](flows/doc-ingest/STATE.md) |
+| doc-ingest | PDF → chunk nháp → `doc_chunks_v2` (draft). DB 2026-11-26: 983 active, 0 approved = 911 chunk CRM của 10 tài liệu (run `crm-1.2/1.4/1.6`, verdict model 596 ok / 307 fix / 8 pending, chưa người xác nhận) + 72 chunk catalog phương án C. T-15b, T-21, T-20b đã push; S0 trang lai + T-22 staged chờ duyệt. Chưa có cổng "tìm được" (I-61): chunk đạt chưa bảo đảm tra cứu tốt | Nạp theo sổ nguồn (giai đoạn 2); `approved` (I-53) | [STATE](flows/doc-ingest/STATE.md) |
 
 ## Kiểm thử toàn repo gần nhất
 

@@ -7,16 +7,26 @@ from pathlib import Path
 
 import yaml
 
-from app.modules.doc_ingest.schemas.table_patch import CellPatch, TablePatchFile
+from app.modules.doc_ingest.schemas.table_patch import CellPatch, TablePatchFile, TextPatch
 
 PATCHES_DIR = Path(__file__).resolve().parent / "table_patches"
 
 
-def load_patches(doc_id: str, patches_dir: Path = PATCHES_DIR) -> list[CellPatch]:
+def _load(doc_id: str, patches_dir: Path) -> TablePatchFile | None:
     path = patches_dir / f"{doc_id}.yaml"
     if not path.exists():
-        return []
+        return None
     data = TablePatchFile.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))
     if data.doc_id != doc_id:
         raise ValueError(f"{path.name}: doc_id {data.doc_id!r} khác tên file {doc_id!r}")
-    return data.patches
+    return data
+
+
+def load_patches(doc_id: str, patches_dir: Path = PATCHES_DIR) -> list[CellPatch]:
+    data = _load(doc_id, patches_dir)
+    return data.patches if data else []
+
+
+def load_text_patches(doc_id: str, patches_dir: Path = PATCHES_DIR) -> list[TextPatch]:
+    data = _load(doc_id, patches_dir)
+    return data.text_patches if data else []

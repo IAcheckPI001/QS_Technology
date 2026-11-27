@@ -143,7 +143,11 @@ def content_issues(chunks: Iterable, pages: Mapping[int, str]) -> list[str]:
     allowed = {"yes", "no", "option", "pulse", "train", "ethercat", "mii", "miii", "mechatrolink", "-", "·"}
     for chunk in chunks:
         words = {m.casefold() for m in chunk.product_models}   # nhãn model trong ô gộp (vd. cột ASTRO 6AV/H)
-        for page in range(chunk.page_start, chunk.page_end + 1):
+        numbers = set(range(chunk.page_start, chunk.page_end + 1))
+        for flag in getattr(chunk, "flags", []):               # chunk ghép trang rời nhau (trang tóm tắt + trang trọn bộ)
+            if flag.startswith("source_pages:"):
+                numbers |= {int(p) for p in flag.split(":", 1)[1].split(",") if p.strip().isdigit()}
+        for page in sorted(numbers):
             words |= set(_WORD.findall(pages.get(page, "")))
         for d in chunk.curated_decisions:
             words |= set(_WORD.findall(norm(f"{d.model or ''} {d.value}")))

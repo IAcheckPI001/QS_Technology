@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from app.modules.doc_ingest.normalize.recorder import Recorder
 from app.modules.doc_ingest.normalize.table_patches import apply_patches
 from app.modules.doc_ingest.schemas.table_patch import CellPatch, TablePatchFile
-from app.modules.doc_ingest.table_patch_io import PATCHES_DIR, load_patches
+from app.modules.doc_ingest.table_patch_io import PATCHES_DIR, load_patches, load_text_patches
 from tests.doc_ingest.f54 import run_docs
 from tests.doc_ingest.synthetic import SynPage
 
@@ -76,8 +76,10 @@ def test_load_patches_missing_file_and_doc_id_mismatch(tmp_path) -> None:
 
 def test_shipped_patch_files_are_valid() -> None:
     names = sorted(p.stem for p in PATCHES_DIR.glob("*.yaml"))
-    assert names == ["f54-installation-en", "f86-installation-en"]
-    assert [len(load_patches(n)) for n in names] == [4, 9]
+    assert names == ["10iv-operation-en", "6ave-operation-en", "f54-installation-en", "f86-installation-en",
+                     "f86-operation-en"]
+    assert [len(load_patches(n)) for n in names] == [0, 0, 4, 9, 0]
+    assert [len(load_text_patches(n)) for n in names] == [1, 1, 0, 0, 1]
     for name in names:
-        patches = load_patches(name)
+        patches = [*load_patches(name), *load_text_patches(name)]
         assert all(p.evidence and p.reason for p in patches) and len({p.patch_id for p in patches}) == len(patches)

@@ -75,6 +75,6 @@ Kiểm duyệt giao diện bằng `playwright-cli` (1440×900 và 375×812) trư
 
 ## Bước tiếp theo
 
-1. Toma: commit đợt 1; chốt thang điểm (WU-11), ai mở Workspace từ CRM, mock dòng hoạt động AI; rồi làm WU-17 đợt 2.
+1. Toma: chốt thang điểm (WU-11), ai mở Workspace từ CRM, mock dòng hoạt động AI; rồi làm WU-17 đợt 2.
 2. B8 registry model (WU-14), phân trang chi tiết (WU-7).
 3. GĐ 3/4/5 khi có B7, B1, B6.

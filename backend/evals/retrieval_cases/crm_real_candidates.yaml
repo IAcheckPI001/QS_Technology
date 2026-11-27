@@ -1,0 +1,203 @@
+# 16 câu khách hàng hỏi thật, lấy từ dữ liệu CRM (Toma chắt lọc, 2026-11-25). Ứng viên cho bộ vàng v1 (kế hoạch §9, GD1).
+# TRẠNG THÁI: CHƯA duyệt. Nhãn dưới đây là ĐỀ XUẤT của Claude để QS xem lại, không phải nhãn đã chốt:
+#   - expected_intent, expected_route, expected_domain: đề xuất; QS sửa nếu khác ý nghiệp vụ.
+#   - Câu gắn tag `can_gan_nhan_chunk`: có thể trả lời bằng tài liệu hiện có (xem `tim_thay_trong_tai_lieu`) nhưng CHƯA có chunk đúng
+#     và fact vàng → chưa dùng được cho đo tra cứu/sinh câu trả lời. Khi QS gắn nhãn xong thì chuyển câu sang gold_v1.yaml.
+#   - Câu `expect_abstain: true`: đã tìm từ khóa trong doc_chunks_v2 (2026-11-25) và KHÔNG thấy nội dung liên quan.
+#   - Câu chỉ chấm định tuyến (báo giá, mua bán, hợp tác): không có chunk đúng; đúng là chuyển người (route handoff).
+# Ẩn danh: số điện thoại, địa chỉ web, tên công ty của khách đã thay bằng <sdt>, <url>, <công ty>. Mô tả nguyên văn đã giữ sai chính tả/viết tắt của khách.
+# Chia split theo cụm: RC01 và RC04 cùng ý (đổi thông số về home) nên cùng `dev` để không rò rỉ giữa dev và test.
+# Công cụ: evals/run_retrieval_eval.py --cases evals\retrieval_cases\crm_real_candidates.yaml --mode routing
+source_runs: []
+cases:
+  - id: RC01
+    question: "Mình muốn thay đổi thông số máy khi về home.nó giật, muốn nó về nhẹ nhàng hơn"
+    source: real
+    split: dev
+    domain: technical_docs
+    models: []
+    tags: ["khach_hang", "khong_model", "mo_ho", "cau_hinh", "can_gan_nhan_chunk", "trung_y:RC04"]
+    expected_intent: ["guide.configuration", "troubleshoot.error"]
+    expected_route: clarify          # không nêu model → hỏi lại (đề xuất)
+    tim_thay_trong_tai_lieu: "homing, home offset, decelerat, return to home có trong tài liệu vận hành mọi model"
+    expected: []
+  - id: RC02
+    question: "Chào QS, nhờ team kiểm tra giúp vấn đề không nạp được ảnh logo khởi động. File bootSplash.png này trước đây đã nạp thành công và hiển thị bình thường trên một bộ F86 khác. Tuy nhiên, hiện nay dùng đúng file đó lại không nạp được vào bộ điều khiển đang sử dụng. Nếu có hướng dẫn hoặc thay đổi nào khác xin tài liệu hoặc được hỗ trợ thực hiện."
+    source: real
+    split: dev
+    domain: technical_docs
+    models: ["F86"]
+    tags: ["khach_hang", "su_co", "ngoai_tai_lieu"]
+    expected_intent: ["troubleshoot.error", "guide.configuration"]
+    expect_abstain: true             # không thấy bootsplash/logo/splash trong tài liệu → nên nói không có và chuyển người
+    expected: []
+  - id: RC03
+    question: "muốn muốn bạn hướng dẫn cách vận hành F54"
+    source: real
+    split: test
+    domain: technical_docs
+    models: ["F54"]
+    tags: ["khach_hang", "van_hanh", "rong", "can_gan_nhan_chunk"]
+    expected_intent: ["guide.operation"]
+    tim_thay_trong_tai_lieu: "f54-operation-en (9 chunk khớp 'operation'); câu quá rộng, QS quyết nên trả tổng quan hay hỏi lại"
+    expected: []
+  - id: RC04
+    question: "Mình muốn thay đổi thông số khi về home và các giới hạn cung tròn vad giới hạn tốc độ, nó  gần đến cảm biến k từ từ ý .về rung cả máy, muốn nhờ bên kỹ thuật xem thử để nó mượt mà hơn ạ"
+    source: real
+    split: dev
+    domain: technical_docs
+    models: []
+    tags: ["khach_hang", "khong_model", "mo_ho", "cau_hinh", "nhieu_y", "can_gan_nhan_chunk", "trung_y:RC01"]
+    expected_intent: ["guide.configuration", "troubleshoot.error"]
+    expected_route: clarify
+    tim_thay_trong_tai_lieu: "soft limit, decelerat, homing có trong tài liệu; 'giới hạn cung tròn' chưa rõ nghĩa → QS giải thích"
+    expected: []
+  - id: RC05
+    question: |-
+      Tôi đang tìm hiểu và có ý định sử dụng bộ điều khiển QS Astro 6V cho dự án chế tạo máy phay CNC. Qua tìm hiểu, tôi được biết Astro 6V là dòng controller chạy EtherCAT, hỗ trợ tối đa 6 trục, tích hợp FPGA và có các tính năng nâng cao. Tôi có một số câu hỏi kỹ thuật cần được Quý Công ty giải đáp để có thể đánh giá khả năng tích hợp với hệ thống hiện tại của tôi.
+
+      1. Về Spindle Drive:
+      Hiện tại tôi đang sử dụng hệ thống truyền động trục chính với các thông tin cụ thể như sau:
+      Spindle Motor: Yaskawa USAJKM-30-MN31 (5.5/3.7 kW, 12.000/10.000 rpm, 37/28 A, 200V)
+      Inverter: Yaskawa VS-626M5 (200V Class, 3-phase, 15 kW)
+      Converter: Yaskawa VS-656MR5 (200V Class, 3-phase, 11 kW)
+      Các thiết bị này hiện đang nhận tín hiệu điều khiển analog (0-10V) hoặc pulse train. Khi chuyển sang bộ điều khiển QS Astro 6V (EtherCAT), tôi có bắt buộc phải thay spindle drive sang loại hỗ trợ EtherCAT hay không? Hay controller vẫn có thể điều khiển spindle qua tín hiệu analog/pulse thông qua module I/O mở rộng? Tôi muốn hiểu rõ yêu cầu kỹ thuật này để có phương án phù hợp.
+
+      2. Về Motor thay dao (ATC):
+      Motor thay dao của tôi hiện đang dùng mặt bích 120mm, đi kèm một drive riêng và được điều khiển thông qua PLC (không qua controller CNC). Câu hỏi của tôi là:
+      Tôi có nên chuyển motor thay dao này sang chạy trực tiếp bằng EtherCAT thông qua controller QS Astro 6V không?
+      Nếu giữ nguyên drive cũ và điều khiển qua PLC, controller QS Astro 6V có hỗ trợ giao tiếp với PLC bên ngoài để phối hợp thay dao không? (Ví dụ qua I/O, Modbus TCP, hoặc EtherCAT master-slave?)
+
+      3. Về việc gửi drive Inovance để test và link với controller:
+      Tôi đang sử dụng servo drive Inovance SV660NS012I (EtherCAT) cho các trục XYZ. Để đảm bảo khả năng tương thích và được hỗ trợ tốt nhất, tôi có cần gửi drive Inovance đến Quý Công ty để test và link với bộ điều khiển QS Astro 6V không? Nếu có, quy trình gửi mẫu và thời gian test dự kiến là bao lâu? Chi phí test (nếu có) là bao nhiêu?
+
+      4. Về tài liệu và hỗ trợ kỹ thuật:
+      Quý Công ty có thể cung cấp cho tôi:
+      Tài liệu kỹ thuật (datasheet, manual) của QS Astro 6V bằng tiếng Việt hoặc tiếng Anh?
+      Danh sách các dòng servo drive EtherCAT đã được test và tương thích chính thức với Astro 6V?
+      Chính sách hỗ trợ kỹ thuật (qua điện thoại, remote, hoặc onsite) trong quá trình tích hợp?
+    source: real
+    split: test
+    domain: product_catalog
+    models: []                       # khách viết "Astro 6V"; registry có 6AV/6AH → QS xác nhận có phải 6AV/6AH không (kiểm tra trích thực thể)
+    tags: ["khach_hang", "nhieu_y", "dai", "sai_ten_model", "tu_van_truoc_ban", "can_gan_nhan_chunk"]
+    expected_intent: ["lookup.product_info", "lookup.product_catalog", "handoff.human"]
+    expected_route: clarify          # tên model "6V" không khớp registry (đề xuất; QS quyết hỏi lại hay đoán 6AV)
+    tim_thay_trong_tai_lieu: "catalog có ATC (9 chunk), pulse train (27), PLC (25); KHÔNG thấy Inovance/SV660/Modbus/danh sách drive tương thích; chính sách hỗ trợ/chi phí test cần người"
+    expected: []
+  - id: RC06
+    question: "I want to buy un cnc retrofit kit fot a milling machine  , with controleur, 4 driveurs, 4 motors 2 kw   (3axes X Y Z , and a 4th axe in option possible) and the spindel complete withe the motor 5 kw 8000 tr/min , with all cables , and equipements necessary to make a good retrofit Mpg, I/O card, Resistance  etc I want also load programme with a usb key The range of the axes is around 500 mm X, Y, Z What do you advice with a good price?"
+    source: real
+    split: dev
+    domain: product_catalog
+    models: []
+    tags: ["khach_hang", "bao_gia", "mua_bo_kit", "da_ngon_ngu", "nhieu_y", "sai_chinh_ta"]
+    expected_intent: ["handoff.human", "lookup.product_catalog"]
+    expected_route: handoff          # tư vấn cấu hình và giá trọn bộ → nhân viên (đề xuất)
+    expected: []
+  - id: RC07
+    question: "Mình muốn xin báo giá của bộ điểu khiển F54"
+    source: real
+    split: dev
+    domain: product_catalog
+    models: ["F54"]
+    tags: ["khach_hang", "bao_gia"]
+    expected_intent: ["handoff.human"]
+    expected_route: handoff
+    expected: []
+  - id: RC08
+    question: "Good afternoon, could you please provide instructions for installing this sensor on a milling machine with a SOLEX VM1370S CNC control system and a Fanuc oi-MF Plus stand? I would like it to work in conjunction with the HEXAGON IRP 60.00 sensor."
+    source: real
+    split: dev
+    domain: technical_docs
+    models: []
+    tags: ["khach_hang", "ngoai_tai_lieu", "he_thong_khac", "da_ngon_ngu"]
+    expected_intent: ["other.out_of_scope", "guide.installation"]
+    expected_route: handoff          # hãng/điều khiển khác (Solex, Fanuc, Hexagon), không có trong tài liệu → nên nói không có và chuyển người (đề xuất)
+    expect_abstain: true
+    expected: []
+  - id: RC09
+    question: "Nhận báo giá máy QSM-215"
+    source: real
+    split: test
+    domain: product_catalog
+    models: []
+    tags: ["khach_hang", "bao_gia", "may_hoan_chinh"]
+    expected_intent: ["handoff.human"]
+    expected_route: handoff
+    expected: []
+  - id: RC10
+    question: "Hello QS Technology team, We’re evaluating CNC controllers for a 5-axis milling machine we’re developing at <công ty>. We’re interested in your Astro 10i and would like to speak with your technical sales team. Could you confirm which configuration supports simultaneous 5-axis machining with RTCP, which EtherCAT servo drives are compatible, and what tools are available for custom PLC logic and machine integration?"
+    source: real
+    split: dev
+    domain: product_catalog
+    models: ["10i"]
+    tags: ["khach_hang", "nhieu_y", "tu_van_truoc_ban", "da_ngon_ngu", "can_gan_nhan_chunk"]
+    expected_intent: ["lookup.product_info", "lookup.product_catalog", "handoff.human"]
+    expected_route: retrieve
+    expected_domain: ["product_catalog", "technical_docs"]
+    tim_thay_trong_tai_lieu: "catalog có RTCP (8 chunk); chưa thấy danh sách drive EtherCAT tương thích; phần gặp kinh doanh kỹ thuật cần người; model 10i là tên tạm trong registry"
+    expected: []
+  - id: RC11
+    question: "Dear sir we need 5 and 9 axis cnc for our customer gold jewelry works, would you please provide us with quote and information on my whatsapp <sdt>"
+    source: real
+    split: test
+    domain: product_catalog
+    models: []
+    tags: ["khach_hang", "bao_gia", "da_ngon_ngu", "co_lien_he"]
+    expected_intent: ["handoff.human"]
+    expected_route: handoff
+    expected: []
+  - id: RC12
+    question: "Hello Dear,\nWe are a company that develops CAM software for machine tools, specifically for MCT and CNC systems (<url>). We would like to localize your \"MICRO DNC2\" software into Korean and sell it in the Korean market. Is this possible? If so, could you please provide the retail price for MICRO DNC2, as well as the price at which we would be able to procure it?"
+    source: real
+    split: test
+    domain: company_info
+    models: []
+    tags: ["khach_hang", "doi_tac", "ngoai_tai_lieu", "da_ngon_ngu"]
+    expected_intent: ["handoff.human", "other.out_of_scope"]
+    expected_route: handoff          # hợp tác phân phối/bản địa hóa phần mềm → bộ phận kinh doanh (đề xuất)
+    expect_abstain: true             # không thấy "MICRO DNC2" trong tài liệu
+    expected: []
+  - id: RC13
+    question: "Dịch vụ quan tâm: Bộ điều khiển xin báo giá đầu dò tâm cnc"
+    source: real
+    split: test
+    domain: product_catalog
+    models: []
+    tags: ["khach_hang", "bao_gia", "phu_kien"]
+    expected_intent: ["handoff.human", "lookup.product_catalog"]
+    expected_route: handoff
+    expected: []
+  - id: RC14
+    question: "BÁO GIÁ GIÙM MÌNH BỘ QS F54 CHO MÁY PHAY 4 TRỤC.\nBỘ NÀY CÓ HỔ TRỢ TÍNH NĂNG THAY DAO TỰ ĐỘNG KHÔNG?\nCẢM ƠN."
+    source: real
+    split: test
+    domain: product_catalog
+    models: ["F54"]
+    tags: ["khach_hang", "bao_gia", "nhieu_y", "viet_hoa", "can_gan_nhan_chunk"]
+    expected_intent: ["handoff.human", "lookup.product_info", "lookup.product_catalog"]
+    expected_route: retrieve         # phần "có hỗ trợ thay dao tự động không" trả lời được; phần báo giá chuyển người
+    expected_domain: ["product_catalog", "technical_docs"]
+    tim_thay_trong_tai_lieu: "catalog có ATC/tool change (9 và 7 chunk), f54-operation-en có 'thay dao' (2 chunk)"
+    expected: []
+  - id: RC15
+    question: "Mình cần báo giá của máy CNC Router : \nQSM-R4020"
+    source: real
+    split: test
+    domain: product_catalog
+    models: []
+    tags: ["khach_hang", "bao_gia", "may_hoan_chinh"]
+    expected_intent: ["handoff.human"]
+    expected_route: handoff
+    expected: []
+  - id: RC16
+    question: "please can i have an estimate on the bundle???"
+    source: real
+    split: test
+    domain: product_catalog
+    models: []
+    tags: ["khach_hang", "bao_gia", "mo_ho", "thieu_ngu_canh", "da_ngon_ngu"]
+    expected_intent: ["handoff.human", "lookup.product_catalog"]
+    expected_route: clarify          # không biết "bundle" nào (đề xuất: hỏi lại hoặc chuyển người)
+    expected: []

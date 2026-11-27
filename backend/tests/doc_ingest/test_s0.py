@@ -40,6 +40,28 @@ def test_ocr_mode_controls_which_pages_are_ocr() -> None:
     assert auto.pages[0].docling_config["engine"] == "rapidocr" and auto.pages[1].docling_config == {"do_ocr": False}
 
 
+def _hybrid_metrics(page: int, chars: int, bitmap: float) -> dict:
+    return {**metrics(page, chars), "bitmap_area_ratio": bitmap}
+
+
+def test_hybrid_page_in_a_scanned_document_is_forced_to_ocr() -> None:
+    """10iV trang 96: text layer chỉ có phần "Notes" (321 ký tự), 18% bitmap; 4/5 trang còn lại là bản quét."""
+    measured = [_hybrid_metrics(i, 0, 0.5) for i in range(1, 5)] + [_hybrid_metrics(5, 321, 0.18)]
+    prof = build_profile(measured, DEFAULT.thresholds, "auto")
+    assert prof.pages[4].text_layer == "hybrid" and prof.pages[4].ocr_applied
+    assert ocr_pages(prof) == {1, 2, 3, 4, 5}
+    assert prof.pages[4].docling_config["engine"] == "rapidocr"
+
+
+def test_hybrid_rule_needs_scanned_majority_low_text_and_bitmap() -> None:
+    mostly_text = [_hybrid_metrics(i, 900, 0.05) for i in range(1, 5)] + [_hybrid_metrics(5, 321, 0.18)]
+    assert ocr_pages(build_profile(mostly_text, DEFAULT.thresholds, "auto")) == set()       # tài liệu text layer
+    scanned = [_hybrid_metrics(i, 0, 0.5) for i in range(1, 5)]
+    for page in (_hybrid_metrics(5, 321, 0.05), _hybrid_metrics(5, 900, 0.18)):             # ít bitmap / nhiều chữ
+        assert ocr_pages(build_profile(scanned + [page], DEFAULT.thresholds, "auto")) == {1, 2, 3, 4}
+    assert ocr_pages(build_profile(scanned + [_hybrid_metrics(5, 321, 0.18)], DEFAULT.thresholds, "off")) == set()
+
+
 def _run(mode: str):
     page = SynPage(3).text("caption", "Figure 1-3. Front view", 100)
     s0 = build_profile([metrics(3, 0)], DEFAULT.thresholds, mode)

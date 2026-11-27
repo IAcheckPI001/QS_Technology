@@ -178,7 +178,8 @@ def _gold(items: list[dict[str, Any]] | None) -> frozenset[GoldKey]:
 
 
 SPLITS = ("dev", "test")
-SOURCES = ("staff", "real", "legacy")      # nguồn câu hỏi: nhân viên QS viết mới, log thật ẩn danh, bộ đã có
+# nguồn câu hỏi: nhân viên QS viết mới, log thật ẩn danh, bộ đã có, bản nháp Claude soạn từ chunk (chờ QS duyệt)
+SOURCES = ("staff", "real", "legacy", "draft")
 
 
 def _domains(value: str | list[str] | None) -> str | None:
@@ -266,6 +267,8 @@ class CaseResult:
     run: int = 1                       # lần chạy bước phân tích (--repeat); core luôn 1
     context_total: int = 0             # số chunk con đưa vào ngữ cảnh LLM (`hits[].matched_chunk_ids`)
     context_gold: int = 0              # trong đó số chunk đúng (mong đợi hoặc chấp nhận)
+    # Mọi ứng viên theo thứ tự hàm tìm trả về: (vector, fused, là chunk đúng) — để phân tích ngưỡng/top-k ngoại tuyến.
+    cands: list[tuple[float, float, bool]] = field(default_factory=list)
 
 
 def score_case(case: Case, variant: str, candidates: list[Candidate], hit_ids: set[int],
@@ -303,6 +306,8 @@ def score_case(case: Case, variant: str, candidates: list[Candidate], hit_ids: s
                       None if expected_vector is None else round(expected_vector, 3),
                       None if best_wrong is None else round(best_wrong, 3), top,
                       expected_scopes=expected_scopes, context_total=len(hit_ids),
+                      cands=[(round(c.vector, 4), round(c.fused, 5),
+                              bool(index.get(c.chunk_id) and index[c.chunk_id].gold_key in case.gold)) for c in candidates],
                       context_gold=sum(1 for i in hit_ids if index.get(i) and index[i].gold_key in case.gold))
 
 
@@ -448,6 +453,56 @@ def summarize_context(results: list[CaseResult]) -> dict[str, float]:
     return {"ctx_precision": round(sum(r.context_gold / r.context_total for r in rows) / n, 3),
             "nhieu": round(sum(r.context_total - r.context_gold for r in rows) / n, 2),
             "ctx_chunks": round(sum(r.context_total for r in rows) / n, 2)}
+
+
+THRESHOLDS = (0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60)
+TOP_KS = (3, 4, 5, 6, 8)
+
+
+def threshold_analysis(results: list[CaseResult], variant: str, thresholds: tuple[float, ...] = THRESHOLDS,
+                       top_ks: tuple[int, ...] = TOP_KS) -> list[dict[str, float]]:
+    """Ngưỡng `min_similarity` × `top_k` phân tích ngoại tuyến trên các ứng viên đã có (không truy vấn thêm): giữ ứng viên
+    có vector ≥ ngưỡng theo thứ tự fused, lấy k đầu. `recall` = tỉ lệ câu còn ít nhất một chunk đúng; `precision` = chunk
+    đúng ÷ chunk giữ (câu còn chunk); `noise`/`chunks` = chunk sai/chunk giữ trung bình mỗi câu; `empty` = tỉ lệ câu hết
+    chunk (route no_hits). Mức chunk con, chưa gộp chunk cha và chưa áp `max_context_parents` nên chỉ là xấp xỉ."""
+    rows = [r for r in results if r.variant == variant and r.cands]
+    n = len(rows) or 1
+    out = []
+    for t in thresholds:
+        for k in top_ks:
+            kept = [[g for v, _, g in r.cands if v >= t][:k] for r in rows]
+            nonempty = [ks for ks in kept if ks]
+            out.append({"t": t, "k": k, "n": len(rows), "recall": round(sum(any(ks) for ks in kept) / n, 3),
+                        "precision": round(sum(sum(ks) / len(ks) for ks in nonempty) / (len(nonempty) or 1), 3),
+                        "noise": round(sum(len(ks) - sum(ks) for ks in kept) / n, 2),
+                        "chunks": round(sum(len(ks) for ks in kept) / n, 2),
+                        "empty": round(1 - len(nonempty) / n, 3)})
+    return out
+
+
+def render_threshold(results: list[CaseResult], variants: list[str]) -> list[str]:
+    lines: list[str] = []
+    for v in (x for x in ("core:base", "web2:base", "web1:base") if x in variants):
+        grid = threshold_analysis(results, v)
+        if not grid or not grid[0]["n"]:
+            continue
+        rows = [r for r in results if r.variant == v and r.cands]
+        gold = [r.expected_vector for r in rows if r.expected_vector is not None]
+        wrong = [r.best_wrong_vector for r in rows if r.best_wrong_vector is not None]
+        separated = sum(1 for r in rows if r.expected_vector is not None and (r.best_wrong_vector or 0) < r.expected_vector)
+        lines += ["", f"## Ngưỡng `min_similarity` và `top_k` ({v}, {grid[0]['n']} câu, phân tích ngoại tuyến)", "",
+                  f"Vector của chunk mong đợi: nhỏ nhất {min(gold, default=0)}, trung vị {percentile(gold, 50)}; vector cao nhất của chunk sai: "
+                  f"trung vị {percentile(wrong, 50)}, lớn nhất {max(wrong, default=0)}; câu mà chunk mong đợi cao hơn mọi chunk sai: "
+                  f"{separated}/{len(rows)}. Nếu hai khoảng điểm chồng nhau thì ngưỡng cosine không tách được đúng/sai.", "",
+                  "Theo ngưỡng (k = 6, như production):", "",
+                  "| ngưỡng | recall | precision | chunk sai/câu | chunk/câu | hết chunk |", "|---|---|---|---|---|---|"]
+        lines += [f"| {g['t']} | {g['recall']} | {g['precision']} | {g['noise']} | {g['chunks']} | {g['empty']} |"
+                  for g in grid if g["k"] == 6]
+        lines += ["", "Theo `top_k` (ngưỡng 0,25 như production):", "",
+                  "| k | recall | precision | chunk sai/câu | chunk/câu |", "|---|---|---|---|---|"]
+        lines += [f"| {g['k']} | {g['recall']} | {g['precision']} | {g['noise']} | {g['chunks']} |"
+                  for g in grid if g["t"] == 0.25]
+    return lines
 
 
 # ----------------------------------------------------------------------------- chạy trên DB thật
@@ -881,6 +936,7 @@ def render(cases: list[Case], results: list[CaseResult], meta: dict[str, Any],
             lines.append(f"| {tag} | {n} | " + " | ".join(cells) + " |")
     if not results:
         return "\n".join(lines)
+    lines += render_threshold(results, variants)
     lines += ["", "## Hạng của chunk đúng theo câu (`-` = không có trong ứng viên qua ngưỡng)", "",
               "| Câu | Câu hỏi | " + " | ".join(variants) + " |", "|---|---|" + "---|" * len(variants)]
     for c in cases:

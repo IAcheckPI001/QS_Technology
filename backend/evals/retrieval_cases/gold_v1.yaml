@@ -1,10 +1,14 @@
 # Bộ vàng v1 (60 câu: dev 35 / test 25) + bộ bẫy cho bước sinh (15 câu) — kế hoạch §9 của
-# docs/ai/reports/website_qa_retrieval_eval_plan_2026-11-25.md. CHƯA có câu nào: nhân viên QS viết và gắn nhãn (GD1).
+# docs/ai/reports/website_qa_retrieval_eval_plan_2026-11-25.md. ĐANG xây (GD1): G101–G118 là
+# BẢN NHÁP do Claude soạn 2026-11-25 từ nội dung chunk tài liệu kỹ thuật (source: draft), mỗi fact đã kiểm có trong chunk đúng; QS phải duyệt câu hỏi,
+# chunk đúng/chấp nhận và fact trước khi coi là bộ vàng, và viết thêm câu `staff`/`real` để đủ 60 câu. Câu soạn từ chunk dễ hơn câu khách thật
+# (cùng từ vựng với tài liệu): báo điểm riêng theo `source`, không dùng một mình để chốt tham số.
 # Công cụ: evals/run_retrieval_eval.py (tra cứu, định tuyến), evals/run_generation_eval.py (sinh câu trả lời).
 #
 # Mỗi câu (ngoài các trường của sample_f54_f86.yaml: id, question, domain, models, tags, expected_intent, expected,
 # acceptable, scopes, expected_route, expected_domain, split):
-#   source:        staff (nhân viên QS viết, không xem tài liệu) | real (log thật đã ẩn danh) | legacy (bộ đã có)
+#   source:        staff (nhân viên QS viết, không xem tài liệu) | real (log thật đã ẩn danh) | legacy (bộ đã có) |
+#                  draft (Claude soạn từ chunk, chờ QS duyệt)
 #   facts:         1–4 fact vàng ngắn kiểm được trong câu trả lời: chuỗi con ("220 x 140 x 30", so khớp bỏ khoảng trắng,
 #                  × = x, dấu phẩy thập phân = chấm) hoặc regex bắt đầu bằng "re:" (vd "re:cổng\s+CN1")
 #   expect_abstain: true nếu câu trả lời đúng là "không có trong tài liệu" (không có expected, không có facts)
@@ -32,4 +36,464 @@
 #     tags: ["gia_handoff"]
 #     expect_abstain: true
 #     expected_intent: ["handoff.human"]
-cases: []
+cases:
+- id: G101
+  question: Tốc độ về home của các trục F54 chỉnh ở tham số nào? Mặc định bao nhiêu?
+  source: draft
+  split: dev
+  domain: technical_docs
+  models:
+  - F54
+  tags:
+  - cau_hinh
+  - thong_so
+  - home
+  expected_intent:
+  - guide.configuration
+  - lookup.product_info
+  facts:
+  - re:#12090
+  - re:2\s?000
+  - re:#12100
+  expected:
+  - chunk_key: f54-operation-en:B0141
+    content_hash: 70c9be118322db938378437c2b70e5b53e79071c5bc4cbb1ceba52748121cc44
+    section_path:
+    - CHAPTER 4.
+    note: 'CHAPTER 4. (phần 2/3) | #8090 - #8097 | Axis dir signal delay (0.1us) '
+  acceptable: []
+- id: G102
+  question: F54 chạy cung tròn bị rung gần cảm biến, tham số giới hạn tốc độ theo bán kính cung tròn nằm ở đâu?
+  source: draft
+  split: dev
+  domain: technical_docs
+  models:
+  - F54
+  tags:
+  - cau_hinh
+  - loi
+  - cung_tron
+  expected_intent:
+  - guide.configuration
+  - troubleshoot.error
+  facts:
+  - re:#8150
+  - re:#8151
+  expected:
+  - chunk_key: f54-operation-en:B0140
+    content_hash: 060489ed3fa0a30a72ce39587d3eadb8d67773f80d1a8904adabf8ce35cae1fb
+    section_path:
+    - CHAPTER 4.
+    note: '| #8090 - #8097 | Axis dir signal delay (0.1us) | 200 | |---|---|---| '
+  acceptable:
+  - chunk_key: f54-operation-en:B0138
+    content_hash: b793954a3c9d6606401fc6e39ade5b84b82e026052fcea16339f999b29d946d6
+    section_path:
+    - CHAPTER 4.
+    note: 'CHAPTER 4. PARAMETER INSTRUCTIONS | #0000 - #0007 | Axis enable(AX.ENA'
+- id: G103
+  question: Các kiểu về home của trục trên F54 gồm những loại nào?
+  source: draft
+  split: test
+  domain: technical_docs
+  models:
+  - F54
+  tags:
+  - cau_hinh
+  - home
+  expected_intent:
+  - guide.configuration
+  - lookup.product_info
+  facts:
+  - re:#4020
+  - re:DOG\s*on
+  - INDEX
+  expected:
+  - chunk_key: f54-operation-en:B0139
+    content_hash: 295d03f5dfc8965b08556dbc9228b0aa041c54634717875e766c11c1779fb9a0
+    section_path:
+    - CHAPTER 4.
+    note: 'PARAMETER INSTRUCTIONS (phần 2/2) | #4020 - #4027 | Axis homing type |'
+  acceptable: []
+- id: G104
+  question: Muốn đổi chiều về home của trục F54 thì chỉnh tham số nào?
+  source: draft
+  split: dev
+  domain: technical_docs
+  models:
+  - F54
+  tags:
+  - cau_hinh
+  - home
+  expected_intent:
+  - guide.configuration
+  facts:
+  - re:#0024
+  - Reverse
+  expected:
+  - chunk_key: f54-operation-en:B0138
+    content_hash: b793954a3c9d6606401fc6e39ade5b84b82e026052fcea16339f999b29d946d6
+    section_path:
+    - CHAPTER 4.
+    note: 'CHAPTER 4. PARAMETER INSTRUCTIONS | #0000 - #0007 | Axis enable(AX.ENA'
+  acceptable: []
+- id: G105
+  question: Công tắc home trục X của F54 đấu vào chân nào?
+  source: draft
+  split: dev
+  domain: technical_docs
+  models:
+  - F54
+  tags:
+  - dau_noi
+  - thong_so
+  expected_intent:
+  - guide.installation
+  - lookup.product_info
+  facts:
+  - X40
+  expected:
+  - chunk_key: f54-operation-en:B0033
+    content_hash: 972091213ddbb004f7aa5ef4342bea5be38adae4cfa42116e15fa5d6734861d0
+    section_path:
+    - CHAPTER 2.
+    - 2.9 REFERENCE CONNECTION PORT
+    - 2.9.2 INPUT SIGNAL
+    note: '2.9.2 INPUT SIGNAL | DESCRIPTION | TERMINAL | |---|---| | Home switch '
+  acceptable: []
+- id: G106
+  question: Nút dừng khẩn cấp của F54 đấu vào chân nào?
+  source: draft
+  split: test
+  domain: technical_docs
+  models:
+  - F54
+  tags:
+  - dau_noi
+  - an_toan
+  expected_intent:
+  - guide.installation
+  - lookup.product_info
+  facts:
+  - X50
+  expected:
+  - chunk_key: f54-operation-en:B0033
+    content_hash: 972091213ddbb004f7aa5ef4342bea5be38adae4cfa42116e15fa5d6734861d0
+    section_path:
+    - CHAPTER 2.
+    - 2.9 REFERENCE CONNECTION PORT
+    - 2.9.2 INPUT SIGNAL
+    note: '2.9.2 INPUT SIGNAL | DESCRIPTION | TERMINAL | |---|---| | Home switch '
+  acceptable: []
+- id: G107
+  question: Quy trình đo chiều dài dao tự động trên F54 gồm mấy giai đoạn? Sai lệch bao nhiêu thì báo lỗi?
+  source: draft
+  split: dev
+  domain: technical_docs
+  models:
+  - F54
+  tags:
+  - van_hanh
+  - quy_trinh
+  expected_intent:
+  - guide.operation
+  - guide.configuration
+  facts:
+  - re:#14012
+  - re:\b10\b
+  expected:
+  - chunk_key: f54-operation-en:B0134
+    content_hash: fc6daf7ff0c4770a2921dca7752111d322a9400f383970fa703470e6f78284dd
+    section_path:
+    - CHAPTER 3.
+    - 3.12 TOOL LENGTH MEASUREMENT SENSOR
+    note: '3.12 TOOL LENGTH MEASUREMENT SENSOR Stage 1: When M1o0 is called the c'
+  acceptable: []
+- id: G108
+  question: Cách nạp dữ liệu PLC vào Astro 10i bằng USB như thế nào?
+  source: draft
+  split: dev
+  domain: technical_docs
+  models:
+  - 10i
+  tags:
+  - van_hanh
+  - quy_trinh
+  - usb
+  expected_intent:
+  - guide.operation
+  - guide.configuration
+  facts:
+  - DATA I/O
+  - PLC DATA
+  - CONFIRM
+  expected:
+  - chunk_key: 10iv-operation-en:B0103
+    content_hash: 852bac95a9263f7db513beaa9e6c4709a145260f76cded79abefc2e3a154ad94
+    section_path:
+    - CHAPTER 3.
+    - 3.9 PLC PAGE
+    - 3.9.2 IMPORT PLC DATA
+    note: 'Astro 10i Step 1: Press SYSTEM button. Step 2: Login and enter user pa'
+  acceptable:
+  - chunk_key: 10iv-operation-en:B0102
+    content_hash: bdddf76a3806d778b813d637fca808eba2cdebd5d53df4aef4a753603cdb010b
+    section_path:
+    - CHAPTER 3.
+    - 3.9 PLC PAGE
+    - 3.9.2 IMPORT PLC DATA
+    note: 'Astro 10i Step 1: Press SYSTEM button. Step 2: Login and enter user pa'
+- id: G109
+  question: Astro 10i lưu lịch sử lỗi ra USB bằng cách nào?
+  source: draft
+  split: test
+  domain: technical_docs
+  models:
+  - 10i
+  tags:
+  - van_hanh
+  - loi
+  - usb
+  expected_intent:
+  - guide.operation
+  - troubleshoot.error
+  facts:
+  - Backup
+  - USB
+  expected:
+  - chunk_key: 10iv-operation-en:B0086
+    content_hash: d26ecb1d8a4a92226e07a2d7214bbdb9d0fca9220376ed4f9539d2c97af119e7
+    section_path:
+    - CHAPTER 3.
+    - 3.6 MAINTENANCE PAGE
+    note: 3.6 MAINTENANCE PAGE Operators can monitor the error log, error notifi
+  acceptable:
+  - chunk_key: 10iv-operation-en:B0087
+    content_hash: 414058f0a93883841eae6b28ffaa87e0ee1516eaead2f15bc12a38f8a02be7af
+    section_path:
+    - CHAPTER 3.
+    - 3.6 MAINTENANCE PAGE
+    note: 3.6 MAINTENANCE PAGE Operators can monitor the error log, error notifi
+- id: G110
+  question: Cách nạp PLC vào F86 bằng USB?
+  source: draft
+  split: dev
+  domain: technical_docs
+  models:
+  - F86
+  tags:
+  - van_hanh
+  - quy_trinh
+  - usb
+  expected_intent:
+  - guide.operation
+  - guide.configuration
+  facts:
+  - DATA I/O
+  - UPDATE
+  - CONFIRM
+  expected:
+  - chunk_key: f86-operation-en:B0103
+    content_hash: d571b94a69df6250c6bc1fc7c394da2128ac43cd5e7f885c0593b18a7df3e124
+    section_path:
+    - CHAPTER 3.
+    - 3.9 PLC PAGE
+    - 3.9.2 IMPORT PLC DATA
+    note: 'Step 1: Press SYSTEM button. Step 2: Login and enter user password "1 '
+  acceptable: []
+- id: G111
+  question: F86 có mô phỏng đường chạy dao không, bấm nút nào?
+  source: draft
+  split: test
+  domain: technical_docs
+  models:
+  - F86
+  tags:
+  - van_hanh
+  - mo_phong
+  expected_intent:
+  - guide.operation
+  - lookup.product_info
+  facts:
+  - SIMULATOR
+  - AUTO SCALE
+  expected:
+  - chunk_key: f86-operation-en:B0074
+    content_hash: 68a709f2b42ee8c4b0d493365e896b4fd56ed41de1e8f97e8c40ce191dcaedc9
+    section_path:
+    - CHAPTER 3.
+    - 3.5 MONITOR PAGE
+    - 3.5.1 TOOLPATH SIMULATION
+    note: '3.5.1 TOOLPATH SIMULATION Memo Model: F86 Step 1: After executed the p'
+  acceptable: []
+- id: G112
+  question: Cổng CN3 trên F86 dùng để điều khiển biến tần analog trục chính như thế nào?
+  source: draft
+  split: test
+  domain: technical_docs
+  models:
+  - F86
+  tags:
+  - dau_noi
+  - analog
+  - truc_chinh
+  expected_intent:
+  - guide.installation
+  facts:
+  - DA.V
+  - CN3
+  - re:0\s*-\s*10\s*V
+  expected:
+  - chunk_key: f86-installation-en:B0003
+    content_hash: 98b97b1e56e05c58df4ebc7f7e93c3f69105d7b1b797190129a5903447c21170
+    section_path:
+    - PART 2
+    - 2.1 CONNECTION DIAGRAM
+    note: PORT TABLE | PORT | PINS | DESCRIPTION | |---|---|---| | BAT | | CR203
+  acceptable: []
+- id: G113
+  question: Sơ đồ đấu tín hiệu analog 0-10V từ F54 sang biến tần INVT?
+  source: draft
+  split: dev
+  domain: technical_docs
+  models:
+  - F54
+  tags:
+  - dau_noi
+  - analog
+  - thong_tin_trong_anh
+  expected_intent:
+  - guide.installation
+  facts:
+  - re:0\s*-\s*10\s*V
+  - INVT
+  expected:
+  - chunk_key: f54-operation-en:B0019
+    content_hash: 107e4250002a8cc83ac0a323a95f6b6a85eba03c7012170fd73edcad42f1298e
+    section_path:
+    - CHAPTER 2.
+    - 2.5 CONNECT ANALOG SIGNAL TO INVERTER
+    - 2.5.1 CONNECT ANALOG SIGNAL TO INVERTER USING O-1OV (INVT brand)
+    note: 2.5.1 CONNECT ANALOG SIGNAL TO INVERTER USING O-1OV (INVT brand) Figur
+  acceptable: []
+- id: G114
+  question: Cổng CN1 của 6AVE cấp nguồn bao nhiêu V?
+  source: draft
+  split: dev
+  domain: technical_docs
+  models:
+  - 6AVE
+  tags:
+  - dau_noi
+  - thong_so
+  expected_intent:
+  - guide.installation
+  - lookup.product_info
+  facts:
+  - 24V
+  - CN1
+  expected:
+  - chunk_key: 6ave-installation-vi:B0003
+    content_hash: 0cac25ba8a1118ae8be4653fbece319e236b02478251cc8420c3314e099f6db6
+    section_path:
+    - PART 2
+    - 2.1 CÁC CỔNG KẾT NỐI TRÊN BỘ ĐIỀU KHIỂN
+    note: BẢNG CHÚ THÍCH | TÊN CỔNG | CHÂN KẾT NỐI | CHÚ THÍCH | |---|---|---| |
+  acceptable: []
+- id: G115
+  question: Bộ 6AVE hết pin CR2032 thì dữ liệu nào bị mất và báo lỗi gì?
+  source: draft
+  split: dev
+  domain: technical_docs
+  models:
+  - 6AVE
+  tags:
+  - bao_tri
+  - loi
+  expected_intent:
+  - troubleshoot.error
+  - guide.installation
+  facts:
+  - CR2032
+  - Battery Alarm
+  - Offset
+  expected:
+  - chunk_key: 6ave-installation-vi:B0003
+    content_hash: 0cac25ba8a1118ae8be4653fbece319e236b02478251cc8420c3314e099f6db6
+    section_path:
+    - PART 2
+    - 2.1 CÁC CỔNG KẾT NỐI TRÊN BỘ ĐIỀU KHIỂN
+    note: BẢNG CHÚ THÍCH | TÊN CỔNG | CHÂN KẾT NỐI | CHÚ THÍCH | |---|---|---| |
+  acceptable: []
+- id: G116
+  question: F10T lấy tâm phôi nhanh theo 4 điểm như thế nào?
+  source: draft
+  split: dev
+  domain: technical_docs
+  models:
+  - F10T
+  tags:
+  - van_hanh
+  - quy_trinh
+  - du_lieu_loi
+  expected_intent:
+  - guide.operation
+  facts:
+  - MIDDLE FUNCTION
+  - PX1
+  expected:
+  - chunk_key: f10t-operation-vi:B0076
+    content_hash: f88a621605986ba34d5c5593f385ac1a3cf4ff76d85ee6ddc3bd0016a6fc5fe6
+    section_path:
+    - 3 TI) G G H G G G RO
+    - 3.4 MÀN HINH OFFSET
+    - 3.4.3 LÃY TÂM NHANH THEO DANG PHÔI
+    note: 3.4.3 LÃY TÂM NHANH THEO DANG PHÔI Lây tâm theo 4 đim ca phôi gia công
+  acceptable: []
+- id: G117
+  question: Astro 10i hỗ trợ bao nhiêu hệ tọa độ phôi mở rộng?
+  source: draft
+  split: test
+  domain: technical_docs
+  models:
+  - 10i
+  tags:
+  - thong_so
+  - toa_do
+  expected_intent:
+  - lookup.product_info
+  - guide.operation
+  facts:
+  - re:\b18\b
+  - G59.1
+  expected:
+  - chunk_key: 10iv-operation-en:B0061
+    content_hash: 1a47c347e5075cda06d0f5e7e68a045fbc2f066c0b12c2810c3ed49741e66ddb
+    section_path:
+    - CHAPTER 3.
+    - 3.4 OFFSET PAGE
+    note: 3.4 OFFSET PAGE Here is the place for the users establish working valu
+  acceptable: []
+- id: G118
+  question: Tham số hướng về home của Astro 10i là gì, giá trị nào là chiều đảo?
+  source: draft
+  split: dev
+  domain: technical_docs
+  models:
+  - 10i
+  tags:
+  - cau_hinh
+  - home
+  - du_lieu_loi
+  expected_intent:
+  - guide.configuration
+  facts:
+  - AX.HDR
+  - Reverse
+  expected:
+  - chunk_key: 10iv-operation-en:B0114
+    content_hash: f40e78ce80bec58837a6624d18ff9f8613e7fdd125269a42dafb71574f6dfa10
+    section_path:
+    - CHAPTER 4.
+    note: 'CHAPTER 4. PARAMETER INSTRUCTIONS | # - # 7 | Axis enable(AX.ENA) | :D'
+  acceptable: []

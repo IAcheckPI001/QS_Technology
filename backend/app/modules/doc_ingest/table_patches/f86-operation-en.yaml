@@ -1,0 +1,12 @@
+# Vá chữ (T-22): tiêu đề mục 3.4.2 bị OCR đọc hỏng thành "ES    S    EM" nên chunk gắn nhầm mục 3.4.1.
+# Bằng chứng: OCR lại vùng tiêu đề (y 30-60 pt) ở 2x và 3x cho cùng kết quả, trùng tiêu đề 3.4.2 đã đối chiếu ảnh ở 10iV tr.71.
+schema_version: 1
+doc_id: f86-operation-en
+text_patches:
+  - patch_id: F86OP-T01
+    page: 58
+    find: "ES S EM"
+    replace: "3.4.2 ASSIGN MACHINE, AUXILIARY COORDINATES TO SPECIFIED COORDINATE SYSTEM"
+    reason: "Tiêu đề 3.4.2 bị OCR đọc hỏng, chunk Step 1-2 gắn nhầm mục 3.4.1"
+    evidence: "OCR lại vùng tiêu đề tr.58 ở 2x và 3x trùng nhau; cùng tiêu đề với 10iV tr.71 (đã đối chiếu ảnh)"
+    status: proposed

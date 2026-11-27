@@ -26,9 +26,10 @@ from app.modules.doc_ingest.normalize.pages import decide_furniture, printed_pag
 from app.modules.doc_ingest.normalize.recorder import Recorder
 from app.modules.doc_ingest.normalize.sections import assign_sections, fix_figures_above_heading
 from app.modules.doc_ingest.normalize.table_patches import apply_patches
+from app.modules.doc_ingest.normalize.text_patches import apply_text_patches, flag_garbled_headings
 from app.modules.doc_ingest.normalize.tables import TableRun, build_logical_tables
 from app.modules.doc_ingest.profile import profile_hash
-from app.modules.doc_ingest.table_patch_io import load_patches
+from app.modules.doc_ingest.table_patch_io import load_patches, load_text_patches
 from app.modules.doc_ingest.review.approval import content_hash, table_unit_payload
 from app.modules.doc_ingest.schemas.normalized import (
     ImageInfo, LogicalTable, NormalizedElement, PrintedPage, ValidationResult,
@@ -158,7 +159,9 @@ def run_normalization(docs: list[dict[str, Any]], doc_id: str, profile: Profile,
     ocr = ocr_pages(s0) if s0 is not None else set()
     # T-20 cần biết trang nào có text layer; không có S0 thì không chạy.
     text_pages = {p.page for p in s0.pages if not p.ocr_applied} if s0 is not None else set()
-    frames = release_text_frames(read_items(docs, doc_id), text_pages, profile, rec, ocr)
+    raw_items = apply_text_patches(read_items(docs, doc_id), load_text_patches(doc_id), rec)   # T-22
+    flag_garbled_headings(raw_items, ocr, profile.thresholds.heading_garbled_pt_per_char, rec)
+    frames = release_text_frames(raw_items, text_pages, profile, rec, ocr)
     furniture = decide_furniture(frames.items, profile, rec, frames.frames)
     for element_id, frame_flags in frames.flags.items():
         furniture.flags.setdefault(element_id, []).extend(frame_flags)

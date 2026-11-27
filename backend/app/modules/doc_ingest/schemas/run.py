@@ -31,7 +31,7 @@ class PageProfile(StrictModel):
     page_label: str | None = None
     hash_codes: int = 0             # I-55: số token `#` trong text layer
     hash_damaged: int = 0           # I-55: số token `#` có < 3 chữ số (font nhúng mất glyph)
-    text_layer: Literal["ok", "missing", "poor"]
+    text_layer: Literal["ok", "missing", "poor", "hybrid"]
     ocr: bool                       # S0 đề nghị OCR
     ocr_applied: bool = False       # Docling thực sự chạy OCR cho trang này
     docling_config: dict[str, object] = Field(default_factory=dict)

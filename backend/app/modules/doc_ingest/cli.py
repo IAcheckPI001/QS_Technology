@@ -127,6 +127,8 @@ def _parser() -> argparse.ArgumentParser:
     cb.add_argument("--run-id", help="mặc định: curated-YYYYmmdd-HHMMSS")
     cb.add_argument("--vi-keywords", action="store_true",
                     help="đưa nhãn tiếng Việt do người biên soạn đặt vào keywords (mặc định chỉ đề xuất trong báo cáo)")
+    cb.add_argument("--no-slices", action="store_true",
+                    help="không sinh 35 lát bảng theo model (phương án C); chỉ 37 chunk theo mục in trên trang (biến thể đo B)")
     cp = sub.add_parser("crm-plan", help="so cây tài liệu CRM với sổ nguồn → data/crm_sync/<ts>/plan.md (không tải file)")
     cp.add_argument("--config", type=Path, help="mặc định: sources/crm/crm.yaml")
     cp.add_argument("--lock", type=Path, help="mặc định: sources/crm/crm_sources.lock.json")
@@ -293,7 +295,8 @@ def cmd_curated_build(args: argparse.Namespace) -> Path:
     counter, method = token_counter()
     if counter is None:
         raise SystemExit("venv này không có tiktoken: chạy bằng venv chính (.\\venv\\Scripts\\python.exe)")
-    result = build_chunks(products, matrix, args.doc_version, counter, args.vi_keywords)
+    result = build_chunks(products, matrix, args.doc_version, counter, args.vi_keywords,
+                          model_slices=not args.no_slices)
     issues = ck.content_issues(result.chunks, pages)
     run_id = args.run_id or datetime.now().strftime("curated-%Y%m%d-%H%M%S")
     out_dir = args.out / "qs_catalog" / run_id

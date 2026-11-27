@@ -21,6 +21,8 @@ REVIEW_POLICY: dict[ReviewCode, tuple[bool, Blocks]] = {
     "complex_header": (True, "chunk"),
     "orphan_row": (True, "chunk"),
     "table_patch_unmatched": (True, "chunk"),
+    "text_patch_unmatched": (True, "chunk"),
+    "heading_garbled": (True, "chunk"),
     "ocr_required": (True, "chunk"),
     "furniture_reclassified": (False, "none"),
     "furniture_unconfirmed": (False, "none"),

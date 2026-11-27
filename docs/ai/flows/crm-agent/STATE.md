@@ -1,6 +1,6 @@
 # Trạng thái luồng crm-agent
 
-Cập nhật: 2026-11-20
+Cập nhật: 2026-11-25 (đối chiếu code và git; nội dung kiểm thử vẫn là của 2026-11-20)
 
 Ảnh chụp trạng thái hiện tại. Viết lại khi có thay đổi; lịch sử ở [LOG.md](LOG.md). Tổng hợp ngày 2026-11-20
 (luồng xử lý, quyết định, kết quả kiểm thử): [báo cáo](../../reports/crm_agent_status_2026-11-20.md).
@@ -9,12 +9,15 @@ Cập nhật: 2026-11-20
 
 - **Thử nghiệm.** Mặc định `CRM_REPORT_ENABLED=false`, agent chỉ có `product_docs_ask`; bật thì có thêm
   `crm_schema` + `crm_query` (phương án C, D-005; phương án A đã xoá, D-010).
-- `feature/deploy_ai_service` (`0561487`, chưa push) có Đợt 0 và Đợt 1 bước 1–3: so sánh 1 lần gọi (E), ép tra
+- Nhánh triển khai chính là `feature/deploy_ai_service` (HEAD `846b5fe`, đã push, trùng `origin`; `master` còn ở
+  `0d6070e`, cách 64 commit). Nhánh có Đợt 0 và Đợt 1 bước 1–3: so sánh 1 lần gọi (E), ép tra
   nguồn (D), dừng sớm + `final_reason` (C1–C3), `facts` của phiên + lịch sử theo lượt (A), cùng các sửa LC-2 (thử
   lại khi LLM hết giờ), LC-4 (kiểm cột trước CRM, ép sửa), LC-7 (trần token lượt, chỉ dẫn bước chốt).
 - Kiểm thật 7 câu CRM: 1/7 → 5/7 có số liệu đúng (09:19 → 09:57 UTC). Chưa chạy lại sau LC-7: tunnel CRM offline.
 - Môi trường kiểm thử của Toma: `AGENT_MODEL=gpt-4.1-mini`, `AGENT_TURN_INPUT_BUDGET=30000` (mặc định code 40000),
   so sánh 3 + 2 chunk (mặc định code 2 + 4, D-014 tạm). Trần token sẽ tinh chỉnh tiếp khi kiểm thử.
+- Từ `4602e94` (2026-11-21) tool `product_docs_ask` tra cả chunk `internal` trên kênh CRM (`retrieval/audience.py`);
+  cần áp `backend/sql/doc_chunks_v2.sql` trên Supabase (chưa có xác nhận đã áp).
 - Dữ liệu CRM (kể cả liên hệ khách hàng) đi tới nhà cung cấp LLM khi bật tool CRM.
 
 ## Độ chín từng phần

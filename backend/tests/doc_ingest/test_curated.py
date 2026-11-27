@@ -38,9 +38,12 @@ def test_curated_data_loads_and_is_reviewed(products, matrix):
 def test_build_chunks_follow_pdf_sections(products, matrix):
     result = build_chunks(products, matrix, "2026-11-14")
     chunks = result.chunks
-    assert len(chunks) == 37 and result.unverified == []
-    assert Counter(c.chunk_type for c in chunks) == {"overview": 14, "spec": 7, "table": 16}
-    assert len({c.chunk_key for c in chunks}) == 37 and all(c.chunk_key.startswith(f"{DOC_ID}:C") for c in chunks)
+    # Phương án C: 37 chunk theo mục in trên trang + 35 lát bảng theo model (7 model × 5 lát) nối tiếp ở cuối.
+    assert len(chunks) == 72 and result.unverified == []
+    assert Counter(c.chunk_type for c in chunks) == {"overview": 14, "spec": 7, "table": 51}
+    assert len({c.chunk_key for c in chunks}) == 72 and all(c.chunk_key.startswith(f"{DOC_ID}:C") for c in chunks)
+    assert [c.chunk_key for c in chunks][:37] == [f"{DOC_ID}:C{i:04d}" for i in range(37)]
+    assert len({tuple(c.section_path) for c in chunks}) == 72      # section_path duy nhất (hai bảng không còn trùng tên)
     assert all(c.source == "manual" and c.domain == "product_catalog" and c.scopes == [] for c in chunks)
     rows, errors = export_rows(chunks, ApprovalContext(gate_2b_final=False))
     assert errors == [] and {r["review_status"] for r in rows} == {"draft"}
@@ -80,6 +83,98 @@ def test_selection_table_keeps_printed_columns(products, matrix):
                  and c.section_path[-1] == "Multi axis control mode (Optional)")
     assert "| RTCP | ✗ | (Option) | (Option) | (Option) |" in multi.content     # 10S: C-09
     assert {(d.code, d.model) for d in multi.curated_decisions} == {("C-09", "10S")}
+
+
+def _table_rows(content: str) -> dict[str, list[str]]:
+    """Hàng bảng markdown → {nhãn: [ô theo cột]} (bỏ dòng tiêu đề và phân cách)."""
+    rows: dict[str, list[str]] = {}
+    for line in content.split("\n"):
+        if line.startswith("| ") and not line.startswith("| Specification") and not line.startswith("|---"):
+            cells = [c.strip() for c in line.strip("|").split("|")]
+            rows[cells[0]] = cells[1:]
+    return rows
+
+
+def _header(content: str) -> list[str]:
+    line = next(x for x in content.split("\n") if x.startswith("| Specification"))
+    return [c.strip() for c in line.strip("|").split("|")][1:]
+
+
+def test_model_slices_are_faithful_column_extracts(products, matrix):
+    chunks = build_chunks(products, matrix, "2026-11-14").chunks
+    slices = [c for c in chunks if len(c.section_path) == 4]
+    assert len(slices) == 35 and all(len(c.product_models) == 1 and c.chunk_type == "table" for c in slices)
+    assert [c.chunk_key for c in slices][0] == f"{DOC_ID}:C0037"
+    assert Counter(c.product_models[0] for c in slices) == {m: 5 for m in MODELS}
+    tables = [c for c in chunks if c.chunk_type == "table" and len(c.section_path) == 3]
+    assert len(tables) == 16
+    seen_rows = 0
+    for chunk in slices:
+        model = chunk.product_models[0]
+        column = matrix.models[model].column
+        assert _header(chunk.content) == [column]
+        for label, cells in _table_rows(chunk.content).items():
+            # cùng nhãn hàng ở bảng gốc cùng trang: ô của cột model phải giống hệt
+            original = next(t for t in tables if t.page_start == chunk.page_start and label in _table_rows(t.content))
+            expected = _table_rows(original.content)[label][_header(original.content).index(column)]
+            if f"{model}: " in expected:      # ô gộp theo model của cột dùng chung (hàng Dimension của 6AV/6AH)
+                expected = next(p.split(": ", 1)[1] for p in expected.split("; ") if p.startswith(f"{model}: "))
+            assert cells == [expected], (model, label)
+            seen_rows += 1
+    assert seen_rows == 43 * len(MODELS)                   # mọi hàng của mọi model có đúng một lát
+
+
+def test_slice_search_text_has_words_not_symbols_and_content_stays_printed(products, matrix):
+    chunks = build_chunks(products, matrix, "2026-11-14").chunks
+    f54 = next(c for c in chunks if c.section_path == ["MOTION CONTROLLER", "Selection table", "F54", "Vận hành và quản lý dao"])
+    assert "| Tool-life management | ✗ |" in f54.content and "có" not in f54.content.lower().replace("coordinate", "")
+    assert "Tóm tắt:" in f54.embed_text and "Quản lý tuổi thọ dao (Tool-life management): không" in f54.embed_text
+    assert "✗" not in f54.embed_text.split("---")[0]
+    six = next(c for c in chunks if c.section_path[-2:] == ["6AH", "Phần cứng"])
+    assert "(cột in chung cho 6AV và 6AH)" in six.embed_text and "| Specification | ASTRO 6AV/H |" in six.content
+    general_table = next(c for c in chunks if c.section_path[-1] == "General" and c.page_start == 6)
+    assert "Tóm tắt:" not in general_table.embed_text          # hàng toàn chữ/số không cần đổi ký hiệu
+    tool = next(c for c in chunks if c.section_path[-1] == "Tool Manager")
+    assert "F54 không" in tool.embed_text and tool.section_path[1].startswith("Selection table (F54, F86, F10T, 10S)")
+    assert any(c.section_path[-1] == "Builder Support" for c in chunks) and not any(c.section_path[-1] == "Builder Supp" for c in chunks)
+    assert "| Intergrate PLC |" in next(c for c in chunks if c.section_path[-1] == "Builder Support").content   # chữ in giữ nguyên
+
+
+def test_slice_decisions_and_attributes(products, matrix):
+    chunks = build_chunks(products, matrix, "2026-11-14").chunks
+    multi = next(c for c in chunks if c.section_path[-2:] == ["10S", "Bù và đa trục"])
+    assert {(d.code, d.key) for d in multi.curated_decisions} == {("C-09", "dwo"), ("C-09", "twp"), ("C-09", "rtcp")}
+    assert "| RTCP | (Option) |" in multi.content and "rtcp" in multi.spec_attributes
+    general = next(c for c in chunks if c.section_path[-2:] == ["F54", "Tổng quát"])
+    assert {"dimension", "max_axis", "spindle", "look_ahead"} <= set(general.spec_attributes)
+
+
+def test_summary_chunk_keeps_only_unique_lines_and_pages(products, matrix):
+    chunks = build_chunks(products, matrix, "2026-11-14").chunks
+    f54 = next(c for c in chunks if c.section_path[-1] == "Trọn bộ hệ thống và tùy chọn" and c.product_models == ["F54"])
+    assert not any(line.startswith(("- Dimension:", "- Monitor size:", "- Control interface:", "- I/O integrated:")) for line in f54.content.split("\n"))
+    assert "- Max 4 axis" not in f54.content and "- Open loop control" not in f54.content
+    assert "MODEL: F54" in f54.content and "- Servo drive" in f54.content
+    assert f54.page_start == f54.page_end == 19 and "source_pages:4,19" in f54.flags
+    ten_i = next(c for c in chunks if c.section_path[-1] == "Trọn bộ hệ thống và tùy chọn" and c.product_models == ["10i"])
+    assert "- High speed RTCP (Option)" in ten_i.content and "- Premium anodized aluminum keys" in ten_i.content
+
+
+def test_without_slices_keeps_the_first_37_chunks_identical(products, matrix):
+    """Biến thể B (`--no-slices`): đúng 37 chunk đầu của phương án C, không có lát theo model."""
+    full = build_chunks(products, matrix, "2026-11-14").chunks
+    plain = build_chunks(products, matrix, "2026-11-14", model_slices=False).chunks
+    assert len(plain) == 37 and not any(len(c.section_path) == 4 for c in plain)
+    assert [(c.chunk_key, c.content_hash, c.embed_text) for c in plain] == [
+        (c.chunk_key, c.content_hash, c.embed_text) for c in full[:37]]
+
+
+def test_unchanged_chunks_keep_hash_and_key(products, matrix):
+    """Chunk trang riêng model không đổi `content` → hash cũ còn nguyên (verdict `ok` giữ được)."""
+    chunks = build_chunks(products, matrix, "2026-11-14").chunks
+    assert chunks[0].chunk_key == f"{DOC_ID}:C0000"
+    assert chunks[0].content_hash == "7472976e81fa3a1fa210bd9c8b4f63a71d731d22829411780d3e59f7c7aa358b"
+    assert chunks[1].content_hash == "61cc763933282baacf4cd987adafcd24d823bbe194a8486a64b6a2f0634e83fb"
 
 
 def test_unverified_values_are_left_out(products, matrix):

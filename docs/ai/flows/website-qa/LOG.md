@@ -8,6 +8,10 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-26 · Kho tra cứu thật: 983 chunk active, chunk "đạt" chưa bảo đảm tìm được (doc-ingest I-61) · loại: đánh giá
+- Supabase (chỉ đọc): `doc_chunks_v2` 983 active, 0 approved (911 CRM + 72 catalog phương án C); số "1.203 dòng" trong STATE cũ đã hết đúng. 14 lượt website từ 2026-11-25 10:00 UTC, tra cứu chỉ trúng catalog và F54; trace không ghi id chunk trong ngữ cảnh → lượt thật không dùng để đo được.
+- Ảnh hưởng: cổng chất lượng chunk của doc-ingest không đo khả năng được tìm thấy; đề xuất câu vàng theo tài liệu (GD1) làm cổng trước khi mở `approved`, và điền `retrieved_chunk_ids`. Mục đầy đủ: [doc-ingest LOG 2026-11-26](../doc-ingest/LOG.md), [báo cáo](../../reports/chunk_pass_vs_retrieval_2026-11-26.md).
+
 ## 2026-11-26 · Backend phát event `status` từ mốc span; kiểm thật trên widget (WU-17 đợt 3A) · loại: thay đổi, kiểm chứng
 
 - Thay đổi (sau cờ `CHAT_STATUS_EVENTS_ENABLED`, mặc định tắt):
@@ -62,6 +66,96 @@ tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 - Mock: canvas version 81, bảng W1 (website: đang chạy tương tác, đã trả lời thu gọn/mở, không thấy tài liệu, tiếng Anh
   so sánh 2 model) và W2 (CRM: tự sửa truy vấn, đã trả lời, lỗi quyền CRM + tra tài liệu).
 - Chưa chốt: hiện tên dữ liệu nghiệp vụ CRM đã đọc; kênh website đủ bước hay 3 bước. Chưa có code.
+
+## 2026-11-25 · Bộ vàng tài liệu kỹ thuật (bản nháp 18 câu) và baseline dev: tài liệu kỹ thuật kém hơn catalog rõ rệt · loại: đánh giá, thay đổi
+
+- Thêm `scripts/find_chunks.py` (tìm chunk theo từ khóa/doc/model/id, in sẵn mục `expected` YAML; test `test_find_chunks.py`) và 18 câu `G101`–`G118` vào `evals/retrieval_cases/gold_v1.yaml`
+  (`source: draft`, nguồn mới trong `SOURCES`): Claude soạn từ nội dung chunk tài liệu kỹ thuật (F54, F86, 6AVE, F10T, Astro 10i), mỗi fact đã kiểm có trong chunk đúng, dev 12 / test 6. **Chưa QS duyệt;** câu soạn từ
+  chunk dễ hơn câu khách thật; chỉ là phần của bộ vàng 60 câu, còn thiếu 24 câu `staff` và 18 câu `real`/`legacy` (xem `crm_real_candidates.yaml`).
+- Baseline dev (12 câu, pipeline thật `gpt-4o-mini`, `r0`, 2 lần; `20261125-182039-gold-dev-baseline`): web1:base recall@1 0,25, recall@5 0,42, MRR 0,335, chunk đúng nằm trong ngữ cảnh LLM 0,5, ctx_precision 0,13, khoảng 5,3 chunk
+  không đúng trên 6 chunk/lượt; web2:base recall@5 0,5, MRR 0,41. Định tuyến đúng cả ba 0,667 (web1) / 0,75 (web2). **Kém catalog rõ rệt** (catalog recall@5 ≈ 1,0, ctx_precision 0,4–0,46) → điểm nghẽn thật nằm ở tài liệu kỹ thuật, không phải catalog.
+- Bước sinh dev (12 câu × oracle/real, kiểm tự động; `20261125-182256-gold-dev-baseline`): fact recall oracle 0,75 / real 0,71; 7 và 6 câu bị cờ; 4 câu thiếu fact; 3 câu abstain lệch; trung bình real đưa 4,1 chunk, 0,5 chunk đúng.
+- **Nguyên nhân cụ thể tìm thấy (mỗi điểm là một câu hoặc một truy vấn DB, chưa phải tần suất):**
+  1. **Tên model lệch kho tài liệu:** tài liệu `10iv-operation-en` gắn `product_models=['10iV']`; người dùng nói "Astro 10i" → bước phân tích ra `10i` (chỉ catalog) → route `no_docs`, bot trả "chưa có tài liệu" cho G108, G118 dù tài liệu có (hỏi: 10i và 10iV có phải cùng một sản phẩm không?).
+  2. **Intent `lookup.product_info` chỉ tìm catalog (R-1a):** G114 (6AVE, CN1 cấp nguồn) ra `no_docs`, trong khi `6ave-installation-vi` có cổng CN1.
+  3. **Nhận nhầm hãng khác là model:** G113 ("biến tần INVT") bị coi là model lạ `unknown_product_model`, câu bị giữ, bot hỏi "mã model biến tần INVT" ở lượt đầu.
+  4. **Chữ trong tài liệu bị hỏng khi trích:** `10iv-operation-en` có 7/16 chunk bảng/tham số mất chữ số (`# - # 7` thay cho `#0000 - #0007`; G118 không thể trả lời đúng); `f10t-operation-vi` có ít nhất 49/147 chunk mất dấu tiếng Việt
+     (`Buc 1`, `Chn vào nút`; G116 không tìm ra chunk đúng ở top). Đây là lỗi doc-ingest.
+  5. **Câu quy trình dài xếp rất thấp:** G107 (đo chiều dài dao, chunk nhiều giai đoạn) hạng 29 hoặc không thấy; G102 (giới hạn tốc độ cung tròn) hạng 6–9.
+- Hạn chế của công cụ phát hiện qua bộ này: (a) fact tiếng Anh bị dịch (G104 oracle: câu trả lời đúng "AX.HDR từ 0 sang 1" nhưng thiếu `#0024` và từ "Reverse" bị dịch) → fact nên là mã/số, không là từ tiếng Anh; (b) nhãn chunk quá chặt
+  (G116 real trả lời đúng từ chunk khác); (c) chỉ 12 câu dev nên chưa dùng để quyết tham số.
+- Chưa làm: QS duyệt/viết thêm câu; sửa 4 vấn đề trên (chưa đổi code production); phần test (6 câu) chưa chạy (đóng băng). Chưa commit.
+
+## 2026-11-25 · Thí nghiệm tách nhánh vector/FTS/hybrid; đính chính mục "nguyên nhân gốc rễ" · loại: đánh giá, đính chính
+
+- Thí nghiệm (27 câu có nhãn hợp lệ: `catalog_f54_astro` 20 + `dual_source` 7; chế độ core như production gồm lọc `model_filter`; câu Việt và bản dịch tiếng Anh): hạng của chunk đúng nếu chỉ dùng nhánh vector, chỉ nhánh FTS, hoặc hybrid.
+  Câu Việt: vector-only R@1 0,667, R@6 0,963, MRR 0,791; FTS-only R@1 0,519, R@6 0,704, MRR 0,609, không tìm ra chunk đúng ở 7/27 câu; hybrid R@1 0,704, R@6 0,963, MRR 0,794. Hybrid xấu hơn vector-only ở K03, K15, tốt hơn ở K11, K12, K18.
+  Bản dịch tiếng Anh: vector-only R@1 0,593, FTS-only 0,519, hybrid 0,667 (thấp hơn câu Việt 0,704).
+- **Đính chính:** (1) mục "Nguyên nhân gốc rễ" ngay dưới ghi FTS "gần như vô tác dụng với câu Việt" và "cộng điểm tên model" — sai/chưa kiểm: trên catalog song ngữ FTS tìm đúng ở 20/27 câu (R@1 0,52) và câu hỏi đã được làm sạch tên model
+  (`fts_clean`); hybrid ≈ vector-only (chênh ±2–3 câu, trong nhiễu). (2) Sau lọc `model_filter` mỗi câu catalog chỉ còn khoảng 13 ứng viên (FTS khoảng 7), nên recall cao (R@20 = 1,0) và `ctx_precision` ≈ 0,4 phần lớn do cấu trúc:
+  top-6 chiếm khoảng một nửa số chunk của model đó, các chunk còn lại cùng model/gần nghĩa, không phải do hàm tìm kiếm sai. Khuyến nghị đổi `top_k` ở mục "Đo thăm dò" phải đo lại trên kho đủ tài liệu và nhãn nhiều chunk chấp nhận. (3) Dịch sang tiếng Anh không cho cải thiện nhất quán
+  (hai cách đo ra chiều ngược nhau) → không phải nguyên nhân chủ yếu trên catalog.
+- Kết luận cập nhật: hàm tìm kiếm không phải điểm nghẽn trên catalog (chunk đúng luôn nằm trong ứng viên, vector-only đã đạt R@6 0,96, hybrid không thêm đáng kể); chunk đúng không ở hạng 1 chủ yếu do chunk anh em cùng model chứa nội dung chồng lấn
+  (3 chunk gần trùng/model + bảng nhiều model) và nhãn quá chặt. Vấn đề tìm kiếm thật (kho 948 chunk, câu không nêu model, tài liệu kỹ thuật tiếng Anh) vẫn chưa đo vì nhãn cũ lệch DB.
+
+## 2026-11-25 · Nguyên nhân gốc rễ chunk đúng xếp thấp / nhiễu: hàm tìm hay nội dung chunk · loại: đánh giá
+
+- Mẫu: `catalog_f54_astro` (20 câu, chunk catalog), chưa đo được tài liệu kỹ thuật (nhãn cũ lệch DB). Kết quả thăm dò, không đủ để đổi cấu hình.
+- Tần suất/vị trí (core:base): chunk đúng (mong đợi hoặc chấp nhận) ở hạng 1: 13/20; trong top 5: 18/20; hạng 6 và 9 ở K06, K19. Chunk **mong đợi** (đúng nhất) ở hạng 1 chỉ 8/20. web2:base: hạng 1 14/20.
+- Trong 7 câu có chunk đúng không ở hạng 1: 2 câu chunk thắng cũng chứa đáp án (K15 điện áp nguồn, K19 hệ tọa độ: nhãn quá chặt); 2 câu chunk thắng không chứa đáp án (K10 tuổi thọ dao: đáp án chỉ ở bảng
+  "Selection table › Tool Manager"; K16 Mechatrolink: chunk F54/F10T không có từ khóa này); 3 câu chưa kiểm (K03, K06, K09).
+- **Nội dung chunk:** (1) catalog chia 3 chunk gần trùng nhau cho mỗi model (tổng quan, thông số, trang "CONTROLLER") + chunk bảng chọn model nhiều cột (F54|F86|F10T|10S); thông tin của một model nằm ở cột
+  của bảng chung, `embed_text` pha 4 tên model; (2) tài liệu lắp đặt/vận hành: 8–10% chunk dưới 80 ký tự, riêng lắp đặt `f54-installation-en` 13/17, `6ave-installation-vi` 18/35, `f86-installation-en` 12/23 là chunk
+  ngắn và gần như tất cả có ảnh đính kèm (thông tin đấu nối nằm trong ảnh, không có chữ) → tra cứu trả về chunk tiêu đề và bước sinh không có gì để dựa vào (xem H13, RC02).
+- **Hàm tìm kiếm:** kênh FTS (`to_tsvector('simple', embed_text)`) chỉ khớp tên model/mã/chữ trùng: 34/100 chunk trong top 5 không có hạng FTS; chunk đúng của K10 không có hạng FTS. Câu Việt, nội dung 699/948 chunk tiếng Anh,
+  nên hybrid thực chất là vector + cộng điểm tên model. Cosine của `text-embedding-3-small` giữa câu Việt và chunk dao động 0,4–0,65 nên `min_similarity` không tách được. Dịch câu hỏi sang tiếng Anh: recall@1 0,65 → 0,70,
+  MRR 0,747 → 0,793 nhưng vector của chunk đúng giảm (trung vị 0,54 → 0,49); K10 và K19 tốt hơn, K15 xấu hơn → ngôn ngữ không phải nguyên nhân chủ yếu trên catalog song ngữ (chưa kiểm trên tài liệu tiếng Anh).
+- Kết luận tạm: nguyên nhân chủ yếu nằm ở **cấu trúc/nội dung chunk** (bảng nhiều model, chunk trùng, thông tin trong ảnh); hàm tìm kiếm (FTS vô tác dụng với câu Việt, RRF chỉ theo hạng, ngưỡng cosine không có tác dụng) làm trầm trọng
+  thêm nhưng không phải gốc. Chưa làm thí nghiệm tách vector-only/FTS-only và chưa đo tài liệu kỹ thuật.
+
+## 2026-11-25 · Prompt sinh câu trả lời (`prompts/answer.py`): tuân thủ quy tắc và câu ngoài tài liệu · loại: đánh giá
+
+- Đo mức tuân thủ các quy tắc ghi trong prompt bằng kiểm tự động trên 54 câu trả lời (27 câu × oracle/real, `gpt-4o-mini`) và 3 câu ngoài tài liệu (RC02, RC08, RC12). Chỉ là mẫu nhỏ,
+  chưa chấm tay đúng/sai nội dung; prompt trả lời chưa có hằng số phiên bản (`PROMPT_VERSION` thuộc bước phân tích) nên chưa A/B được.
+- **Quy tắc "không thêm câu mời chào ở cuối" bị vi phạm:** câu kết kiểu "Nếu bạn cần…/xin vui lòng…" ở 14/27 câu real và 4/27 câu oracle (regex trên câu cuối; có thể báo nhầm vài câu).
+- **Trích dẫn:** câu chứa số/mã không có `[S#]` thật sự thiếu ở vài câu (K05 oracle, H15 oracle, K07 real in đậm cả câu); phần lớn câu "không có [S#]" chỉ là câu dẫn ("như sau:"). Không có `[S#]` sai mã, không có câu
+  hoàn toàn không trích. Không dùng tiêu đề `#`; bảng chỉ dùng ở 4/27 câu (K05, K06, K09, K16), đúng loại câu so sánh/thông số.
+- **Quy tắc grounding/"chưa đề cập" thất bại khi ngữ cảnh có chunk không liên quan:** RC02 (bootSplash F86, tài liệu không có nội dung này): oracle (ngữ cảnh rỗng) nói đúng "chưa có tài liệu";
+  real (7 chunk F86 không liên quan, điểm vượt ngưỡng 0,25) viết 4 bước khắc phục — hai bước đầu không có nguồn, hai bước sau trích `[S6]`, `[S7]` (trang chẩn đoán/bảo trì) cho điều chúng không nói → bịa quy trình
+  và trích sai chỗ, đúng loại lỗi mà `<grounding>` cấm. H13 oracle: chunk chỉ có tiêu đề "2.8 POWER CONNECTION" nhưng câu trả lời nêu "24V [S1]".
+- RC08 và RC12: định tuyến ra `clarify` (hỏi model, liệt kê F54, F86… dù khách dùng hãng khác) và `handoff`; câu trả lời không bịa nhưng RC08 hỏi model thay vì nói không có tài liệu về hệ thống khác.
+- Hệ quả: lỗi bịa xảy ra khi retrieval trả chunk không liên quan; `min_similarity` 0,25 không chặn được (điểm chunk không liên quan vẫn 0,45–0,65). Hướng sửa cần đo trước khi áp dụng, chưa đổi code:
+  nhắc rõ hơn/đưa ví dụ trong prompt cho "đoạn không trả lời thì không liệt kê bước", gỡ câu mời chào bằng hậu xử lý, chunk chỉ-có-tiêu-đề ở doc-ingest, và đo lại bằng bộ vàng có câu bẫy.
+
+## 2026-11-25 · Đo thăm dò ngưỡng min_similarity, top_k và bước sinh trên các câu có nhãn còn hợp lệ · loại: đánh giá, thay đổi
+
+- Phạm vi: chỉ 27 câu có nhãn chunk còn khớp DB (`catalog_f54_astro` 20 câu, `dual_source` 7 câu H13–H15, HC1–HC4). Các bộ cũ khác không dùng được: `section_path` cũ không còn trong DB
+  (khớp theo `section_path` bỏ `content_hash`: `sample_f54_f86` 0/23, `diverse_40` 0/81, `scope_f54` 0/23, `dual_source` 0/17 chunk không khớp nguyên vẹn) → không map lại tự động được.
+  **Là số thăm dò (dev, 20+7 câu, 1–2 lần, nhãn legacy), không đủ để đổi mặc định production.** Chạy: `run_retrieval_eval.py --mode all --repeat 2` (`20261125-173941-expl-catalog`,
+  `20261125-174214-expl-dual`) và `run_generation_eval.py` (`data/generation_eval/20261125-174527-expl-gen-catalog`, `20261125-174628-expl-gen-dual`).
+- Thêm vào `run_retrieval_eval.py`: `threshold_analysis`/`render_threshold` (phân tích `min_similarity` × `top_k` ngoại tuyến trên các ứng viên đã có, không truy vấn thêm; mức chunk con, chưa gộp cha) + test.
+- Kết quả `catalog_f54_astro` (20 câu × 2 lần, `gpt-4o-mini`, `r0`): định tuyến đúng cả ba 1,0 cả hai lượt, ổn định 1,0; `web1:base` recall@5 1,0, MRR 0,749, `mong_doi@1` 0,35, ctx_precision 0,465,
+  2,75 chunk sai trên 5,15 chunk/lượt; `web2:base` recall@5 0,95, MRR 0,785, ctx_precision 0,455. `dual_source` (7 câu): domain đúng 0,571 (H13, H14, H15 chỉ tìm catalog thay vì cả hai nguồn), recall@5 web 0,857; H14 không có chunk đúng trong ứng viên.
+- **`min_similarity` không tách được đúng/sai:** vector chunk mong đợi trung vị 0,545 (nhỏ nhất 0,422); vector cao nhất của chunk sai trung vị 0,579 (lớn nhất 0,655); chunk mong đợi cao hơn mọi chunk sai chỉ 16/40.
+  Ngưỡng 0,25–0,40 không lọc gì (recall 1,0, precision 0,39 ở k=6); từ 0,45 recall giảm 0,9 → 0,7 (0,50) → 0,45 (0,60) trong khi precision chỉ tăng tới 0,55. **`top_k` là đòn bẩy:** k=6 recall 1,0/precision 0,39; k=5 0,95/0,45; k=4 0,9/0,51; k=3 0,8/0,62.
+  Lưu ý: precision thấp một phần vì mỗi câu chỉ có 1–3 chunk đúng được gắn nhãn, chunk "sai" có thể vẫn liên quan (cùng model); chưa kết luận bỏ hẳn ngưỡng hay đổi `top_k`.
+- Bước sinh (27 câu × oracle/real, 1 lần, kiểm tự động, chưa chấm tay): cả hai chế độ không có câu "không biết" nhầm và không thiếu trích dẫn; tỉ lệ chunk được trích trên chunk đưa vào: oracle 0,97, real 0,36 (chunk thừa trong ngữ cảnh không được dùng).
+  Kiểm tự động chỉ cờ 1/54: H13 oracle — chunk đúng chỉ có tiêu đề "2.8 POWER CONNECTION" (nội dung bảng/hình không có trong chunk) mà câu trả lời nêu "24V [S1]" → nghi nói ngoài chunk; xác nhận bằng chunk chỉ-có-tiêu-đề (doc-ingest) chứ không phải lỗi prompt.
+  Chưa có fact vàng nên không đo fact recall; câu trả lời đúng/sai về nội dung cần người chấm (`grading.csv`).
+- Chưa làm: chấm tay `grading.csv`, `facts` cho bộ này, so `top_k` 4/5 trên bộ vàng đầy đủ; chưa đổi code production. Chưa commit.
+
+## 2026-11-25 · 16 câu khách hàng thật từ CRM làm ứng viên bộ vàng; định tuyến thử · loại: đánh giá, thay đổi
+
+- Toma chắt lọc 16 câu khách hỏi thật từ CRM. Thêm `evals/retrieval_cases/crm_real_candidates.yaml` (`source: real`, đã ẩn danh số điện thoại, địa chỉ web, tên
+  công ty khách) và `tests/chatbot/test_crm_real_candidates.py` (hợp lệ + không còn thông tin cá nhân). Nhãn intent/route/domain là **đề xuất của Claude, chưa QS duyệt**;
+  chưa có chunk đúng và fact vàng nên 7 câu gắn `can_gan_nhan_chunk` chưa dùng được cho đo tra cứu/sinh. Tìm từ khóa trong `doc_chunks_v2`: không thấy bootsplash/logo,
+  Fanuc/Solex/Hexagon, Inovance/SV660, Modbus, MICRO DNC2 → 3 câu `expect_abstain` (RC02, RC08, RC12); homing/decelerat/soft limit, ATC/thay dao, RTCP có trong tài liệu.
+- Định tuyến thử (`--mode routing`, `gpt-4o-mini`, `r0`, 1 lần, `20261125-172605-crm-real-routing`): theo nhãn đề xuất, đúng cả ba 7/16 (web1), 9/16 (web2); chưa phải số đo
+  tin cậy (1 lần, nhãn chưa duyệt). **Điểm đáng xem:** câu báo giá/mua bán ngắn bị xếp `other.chitchat` → route `chitchat` ở 5/16 câu web1 (RC06 bộ kit retrofit, RC09 QSM-215,
+  RC11 máy 5/9 trục, RC13 đầu dò tâm, RC15 QSM-R4020), 3/16 ở web2 (RC13, RC15 đổi sang handoff giữa hai lượt → không ổn định); bên `handoff` kỳ vọng. RC10 (Astro 10i, hỏi
+  RTCP/drive + muốn gặp kinh doanh) ra cả 3 sub-query `handoff.human`, không tra tài liệu; RC04 ra `retrieve` dù không có model.
+- Chưa làm: QS duyệt nhãn đề xuất, gắn chunk/fact vàng cho các câu `can_gan_nhan_chunk`, chạy `--repeat 3`; chưa tìm nguyên nhân (prompt hay mô tả intent) và chưa đổi code production. Chưa commit.
+
 ## 2026-11-25 · GD0 kế hoạch đánh giá: công cụ đo bước sinh, ngữ cảnh, bộ vàng · loại: thay đổi, đánh giá
 
 - Vấn đề: chưa đo được chunk đúng/nhiễu trong ngữ cảnh và chất lượng bước sinh (bịa, nhầm, thiếu dù có trích nguồn). Quyết định (Toma 2026-11-25): kế hoạch

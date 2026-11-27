@@ -27,14 +27,30 @@ class CellPatch(StrictModel):
     verified_by: str = ""                      # người xác nhận khi status = verified
 
 
+class TextPatch(StrictModel):
+    """T-22 (Giai đoạn 1b, 2026-11-25): thay nguyên văn MỘT dòng chữ của Docling (thường là tiêu đề bị OCR hỏng, vd.
+    `ES    S    EM` thay cho `3.4.2 ASSIGN MACHINE…`) trước khi dựng mục và chunk. Dòng cần sửa xác định bằng (trang,
+    nội dung dòng đã gộp khoảng trắng) và phải là dòng duy nhất khớp trên trang."""
+
+    patch_id: str
+    page: int                                  # pdf_page_index
+    find: str = Field(min_length=1)            # nội dung dòng hiện tại (gộp khoảng trắng)
+    replace: str = Field(min_length=1)
+    reason: str
+    evidence: str                              # vd. "re-OCR vùng tiêu đề 3x + ảnh trang PDF"
+    status: Literal["proposed", "verified"] = "proposed"
+    verified_by: str = ""
+
+
 class TablePatchFile(StrictModel):
     schema_version: Literal[1] = 1
     doc_id: str
-    patches: list[CellPatch]
+    patches: list[CellPatch] = Field(default_factory=list)
+    text_patches: list[TextPatch] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _unique_ids(self) -> "TablePatchFile":
-        ids = [p.patch_id for p in self.patches]
+        ids = [p.patch_id for p in [*self.patches, *self.text_patches]]
         if len(ids) != len(set(ids)):
             raise ValueError("patch_id trùng nhau")
         return self

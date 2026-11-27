@@ -1,0 +1,12 @@
+# Vá chữ (T-22): tiêu đề mục 3.4.2 bị OCR đọc hỏng thành "ES    S    EM" nên chunk gắn nhầm mục 3.4.1.
+# Bằng chứng: OCR lại vùng tiêu đề (y 30-60 pt) ở 2x và 3x cho cùng kết quả; ảnh trang tr.71 (in "PAGE 69") đối chiếu bằng mắt.
+schema_version: 1
+doc_id: 10iv-operation-en
+text_patches:
+  - patch_id: 10IV-T01
+    page: 71
+    find: "ES S EM"
+    replace: "3.4.2 ASSIGN MACHINE, AUXILIARY COORDINATES TO SPECIFIED COORDINATE SYSTEM"
+    reason: "Tiêu đề 3.4.2 bị OCR đọc hỏng, chunk Step 1-2 gắn nhầm mục 3.4.1"
+    evidence: "PDF tr.71: tiêu đề in '3.4.2 ASSIGN MACHINE, AUXILIARY COORDINATES TO SPECIFIED COORDINATE SYSTEM'; OCR lại 2x và 3x trùng nhau"
+    status: proposed
