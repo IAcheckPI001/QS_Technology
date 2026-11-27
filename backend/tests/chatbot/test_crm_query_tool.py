@@ -689,6 +689,17 @@ def test_queries_without_relation_problems_load_no_extra_schema():
     assert api.gets() == ["/api/v1/reports/tables/customers"]   # chỉ bảng gốc (404 ở CRM giả, bị bỏ qua)
 
 
+def test_long_column_descriptions_are_kept_whole_up_to_the_limit():
+    live = LiveTable(
+        columns={"code": "text", "notes": "text"}, relations={},
+        column_descriptions={"code": "x" * 285, "notes": "y" * 400},
+    )
+    described = describe_table("customers", live)
+    code, notes = described.columns
+    assert code.endswith(" — " + "x" * 285)            # mô tả dài nhất của CRM không bị cắt
+    assert notes.endswith("…") and len(notes.split(" — ", 1)[1]) == 300
+
+
 def test_schema_rejects_blocked_tables_and_bad_paths():
     with pytest.raises(ValueError):
         RawQuery.model_validate({"dataset": "keygen_history", "mode": "list", "select": ["id"]})
@@ -1052,7 +1063,7 @@ def test_schema_carries_crm_descriptions_relations_and_deleted_at_meaning():
     assert "is_current:bool — True only for the present owner." in table.columns
     assert "id:uuid" in table.columns                                  # cột hiển nhiên: bỏ mô tả
     owner = next(column for column in table.columns if column.startswith("owner_customer_id"))
-    assert owner.endswith("…") and len(owner) < 200
+    assert owner.endswith("…") and len(owner.split(" — ", 1)[1]) == 300
     assert "owner_customer_id->customers" in table.relations
     assert "transferred_from_ownership_id->product_ownerships (1-1) (có thể trống)" in table.relations
     assert "KẾT THÚC" in table.deleted_at and "is_null" in table.deleted_at

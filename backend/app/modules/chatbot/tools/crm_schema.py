@@ -50,7 +50,8 @@ PEOPLE_TABLE = "auth_users"
 MAX_REFERENCED_BY = 12
 # Cột hiển nhiên: bỏ mô tả để tiết kiệm token.
 PLAIN_COLUMNS = frozenset({"id", "created_at", "updated_at"})
-MAX_COLUMN_NOTE_CHARS = 160
+# SCH-3 (2026-11-27): 160 cắt 14 mô tả CRM (dài nhất 285); nâng lên 300 chỉ thêm ~100 token cho cả 116 bảng.
+MAX_COLUMN_NOTE_CHARS = 300
 DELETED_AT_NOTES: Mapping[str, str] = {
     "deleted": "CRM đã tự loại dòng xoá mềm (deleted_at khác null): không cần lọc deleted_at.",
     "ended": (

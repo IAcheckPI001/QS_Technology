@@ -57,7 +57,6 @@ Cập nhật: 2026-11-27 (thêm đo schema sống CRM; kết quả kiểm thử 
 | – | `CRM_REPORT_ENABLED` đặt tên theo phương án A; `CRM_CHAT_FLOW` mặc định `agent` (D-006) | Xem lại trước production |
 | SCH-1 | Index tĩnh lệch 21 bảng; khoá ngoại mới bị báo thiếu | Code + test fake; kiểm CRM dev 2026-11-27: `purchase_orders.org_id` qua được (code cũ chặn nhầm), query trả 0 dòng nên chưa thấy giá trị |
 | SCH-2 | Cột `*_id`/`*_by` không khóa ngoại thiếu hint bảng đích; không vào `person_filter` | Chờ Toma/CRM: `customer_id` của `support_waiting_messages` trỏ đâu |
-| SCH-3 | `crm_schema` cắt mô tả cột ở 160 ký tự (14 mô tả dài hơn, tối đa 285) | Đề xuất ~300; đo token |
 | – | CRM: `is_current`, `date_range` theo ngày UTC, token không làm mới | Chờ CRM |
 
 ## Kết quả kiểm gần nhất

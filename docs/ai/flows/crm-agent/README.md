@@ -176,7 +176,7 @@ Có hai tầng giám sát:
   - Argument không validate được ghi qua hook `ToolSpec.on_invalid_args`.
 - `crm_schema` trả cho mỗi bảng (`TableDescription`):
   - `description`: mô tả bảng của CRM, lấy từ `GET /reports/datasets` (cache cùng TTL; lỗi thì bỏ trống, không làm hỏng tool).
-  - `columns`: `tên:kiểu[=giá trị hợp lệ] — mô tả của CRM` (bỏ mô tả của `id`, `created_at`, `updated_at`; cắt 160 ký tự).
+  - `columns`: `tên:kiểu[=giá trị hợp lệ] — mô tả của CRM` (bỏ mô tả của `id`, `created_at`, `updated_at`; cắt 300 ký tự).
   - `relations`: `fk->bảng`, thêm `(1-1)` khi CRM báo `one_to_one`, `(có thể trống)` khi khoá ngoại `nullable` (join giữ dòng con, cột của cha trống).
   - `referenced_by`: các bảng con trỏ tới bảng này (theo `referenced_by` của CRM, thiếu thì theo index tĩnh), tối đa 12. Join chỉ đi từ con lên cha, nên ví dụ họ tên nằm ở `user_profiles` thì phải lấy `user_profiles` làm dataset.
   - `deleted_at`: theo `deleted_at_meaning` của CRM. `deleted`: CRM tự loại dòng xoá mềm, kể cả dòng con qua khoá ngoại bắt buộc. `ended` (`product_ownerships`, `product_agents`, `product_user_access`): lúc kết thúc, CRM không lọc.

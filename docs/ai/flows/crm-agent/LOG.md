@@ -7,6 +7,20 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Các mục 2026-11-10 đến 2026-11-19: [LOG-archive-2026-11-19.md](LOG-archive-2026-11-19.md).
 
+## 2026-11-27 · `crm_schema` không còn cắt mô tả cột của CRM: trần 160 → 300 ký tự (SCH-3) · loại: thay đổi
+
+- Vấn đề: trần 160 ký tự cắt 14 mô tả của CRM (dài nhất 285), ví dụ `product_ownerships.deleted_at`, `stock_movements.type`,
+  `customer_logs.action`; phần bị cắt thường là nghĩa các giá trị của cột.
+- Thay đổi (Toma yêu cầu thực hiện SCH-3, 2026-11-27): `MAX_COLUMN_NOTE_CHARS` 160 → 300 (`tools/crm_schema.py`). Đo offline
+  trên schema sống đã lưu (tiktoken o200k, `describe_table`): cả 116 bảng 35952 → 36054 token (+102, +0,3%); 4 bảng
+  hay dùng 3203 → 3212; một call 4 bảng nặng nhất 3624 → 3633. Không đổi `referenced_by` (giữ 12) vì chú thích của
+  `auth_users` đã hướng dẫn lấy bảng con làm bảng gốc.
+- File: `tools/crm_schema.py`; test: `test_crm_query_tool.py` (thêm 1, sửa 1 test cũ đang giả định trần 160); README mục
+  `crm_schema`.
+- Kiểm chứng: `pytest tests` → 1309 passed, 14 skipped, 7 failed có sẵn (cùng 7 lỗi như mục SCH-1). Chưa đo token một lượt
+  agent thật; mức tăng ≤ ~10 token/call nên không đụng trần lượt 30000.
+- Chưa kiểm / mở tiếp: SCH-2 chờ Toma/CRM xác nhận `customer_id`.
+
 ## 2026-11-27 · SCH-1 kiểm trên CRM dev: code cũ chặn nhầm `purchase_orders.org_id`, code mới qua được · loại: kiểm chứng
 
 - Kiểm chứng (token của Toma, chỉ đọc): gọi tool `crm_query` thật, cache rỗng, `purchase_orders` select

@@ -69,7 +69,7 @@ trong `TABLE_GROUPS`.
   (hiện chưa chắc; không tự đoán). Đổi `hints.py` là đổi chính sách hướng dẫn dữ liệu, cần người duyệt (rule flow).
 - Test: `test_crm_schema_tool.py` kiểm note có trong output; eval lại 1–2 câu LC-5/LC-6 sau khi có xác nhận.
 
-### SCH-3 · Giảm cắt thông tin trong `crm_schema`
+### SCH-3 · Giảm cắt thông tin trong `crm_schema` (đã làm 2026-11-27: trần 300, +~100 token cho cả 116 bảng; xem LOG)
 - Việc: `MAX_COLUMN_NOTE_CHARS` 160 → 300 (mô tả dài nhất 285) hoặc cắt theo câu; chỉ ảnh hưởng 14 mô tả.
   `MAX_REFERENCED_BY` giữ 12, bổ sung cho `auth_users` (109 bảng con) một dòng chỉ dẫn "nhiều bảng con; lấy bảng
   con làm bảng gốc" nếu `note` hiện tại chưa nói.
