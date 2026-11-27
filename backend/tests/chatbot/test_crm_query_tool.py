@@ -618,6 +618,77 @@ def test_tool_rejects_name_on_uuid_column_before_crm():
     assert api.requests == []
 
 
+def _live_with(name: str, column: str, target: str) -> dict:
+    """Schema sống của `name` có thêm khoá ngoại `column` → `target` mà index tĩnh chưa có (SCH-1)."""
+    table = _live_table(name)
+    table["columns"].append({"name": column, "type": "uuid"})
+    table["relations"] = [*(table["relations"] or []), {"name": column, "table": target}]
+    return table
+
+
+def test_relation_added_on_the_root_table_by_crm_is_loaded_before_rejecting():
+    assert "partner_id" not in TABLES["customers"].relations
+    api = FakeCrmApi(
+        [{"rows": [{"code": "KH1", "partner_id__name": "Đại lý A"}]}, {"rows": [{"count": 1}]}],
+        tables={"customers": _live_with("customers", "partner_id", "organizations")},
+    )
+    registry, _ = _tools(api)
+    outcome = _invoke(registry, "crm_query", {"dataset": "customers", "select": ["code", "partner_id.name"]})
+
+    assert outcome.ok, outcome.error_detail
+    assert outcome.output.rows == [{"code": "KH1", "partner_id.name": "Đại lý A"}]
+    assert api.gets() == ["/api/v1/reports/tables/customers"]
+    assert api.bodies()[0]["select"] == ["code", "partner_id.name"]
+
+
+def test_relation_added_on_a_joined_table_is_followed_through_live_schemas():
+    assert "maker_org_id" not in TABLES["product_items"].relations
+    api = FakeCrmApi(
+        [{"rows": [{"product_item_id__maker_org_id__name": "Hãng X"}]}, {"rows": [{"count": 1}]}],
+        tables={
+            "support_cases": _live_table("support_cases"),
+            "product_items": _live_with("product_items", "maker_org_id", "organizations"),
+        },
+    )
+    registry, cache = _tools(api)
+    outcome = _invoke(registry, "crm_query", {
+        "dataset": "support_cases", "select": ["product_item_id.maker_org_id.name"],
+    })
+
+    assert outcome.ok, outcome.error_detail
+    assert sorted(api.gets()) == [
+        "/api/v1/reports/tables/product_items", "/api/v1/reports/tables/support_cases",
+    ]
+    assert cache.cached("product_items") is not None
+
+
+def test_relation_unknown_to_both_schemas_is_still_rejected_before_any_query():
+    api = FakeCrmApi(tables={"customers": _live_table("customers")})
+    registry, _ = _tools(api)
+    outcome = _invoke(registry, "crm_query", {"dataset": "customers", "select": ["code", "partner_id.name"]})
+
+    assert outcome.error_code == "tool_invalid_args" and "has no relation partner_id" in outcome.error_detail
+    assert api.bodies() == []
+
+
+def test_failed_schema_load_keeps_the_original_rejection():
+    api = FakeCrmApi()          # GET schema bảng trả 404
+    registry, cache = _tools(api)
+    outcome = _invoke(registry, "crm_query", {"dataset": "customers", "select": ["code", "partner_id.name"]})
+
+    assert outcome.error_code == "tool_invalid_args" and "has no relation partner_id" in outcome.error_detail
+    assert api.bodies() == [] and cache.cached("customers") is None
+
+
+def test_queries_without_relation_problems_load_no_extra_schema():
+    api = FakeCrmApi([{"rows": [{"code": "KH1"}]}, {"rows": [{"count": 1}]}])
+    registry, _ = _tools(api)
+    outcome = _invoke(registry, "crm_query", {"dataset": "customers", "select": ["code", "assigned_sales_id.username"]})
+
+    assert outcome.ok, outcome.error_detail
+    assert api.gets() == ["/api/v1/reports/tables/customers"]   # chỉ bảng gốc (404 ở CRM giả, bị bỏ qua)
+
+
 def test_schema_rejects_blocked_tables_and_bad_paths():
     with pytest.raises(ValueError):
         RawQuery.model_validate({"dataset": "keygen_history", "mode": "list", "select": ["id"]})

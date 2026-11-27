@@ -169,7 +169,7 @@ Có hai tầng giám sát:
 
   Root span có `crm_query_attempts`, `crm_query_outcomes`. Muốn tìm lượt phải sửa query hoặc ra rỗng thì lọc `chat_traces` theo hai trường này.
 
-  Span `tool.crm_schema` có `tables`, `cache_hits`.
+  Span `tool.crm_schema` có `tables`, `cache_hits`; `tool.crm_query` có `path_schemas` khi tải schema sống dọc đường dẫn vì index tĩnh thiếu khoá ngoại (SCH-1, tối đa 6 bảng, biên dịch lại một lần).
 - **Audit, sau `CRM_QUERY_AUDIT_LOG`** (`reporting/raw/audit.py`): mỗi lần gọi `crm_query` sinh một dòng JSON `QueryAuditRecord` vào logger `app.crm_query.audit`.
   - Các trường: `trace_id`, `request_id`, `tool_call_id`, `attempt`, `phase` (`invalid_args`/`rejected`/`sent`), `outcome`, `arguments` (hoặc `arguments_raw` khi không validate được), `body`/`count_body` gửi CRM, `ignored`, khoảng ngày, lỗi, `returned`/`total`, `latency_ms`.
   - Không ghi `rows`, câu hỏi hay câu trả lời. Câu hỏi tra theo `request_id` trong `chat_history`.

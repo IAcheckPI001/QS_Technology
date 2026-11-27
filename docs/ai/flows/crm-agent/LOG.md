@@ -7,6 +7,56 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-10 (nguyên văn từ `current-state.md` và `architecture.md`):
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Các mục 2026-11-10 đến 2026-11-19: [LOG-archive-2026-11-19.md](LOG-archive-2026-11-19.md).
 
+## 2026-11-27 · SCH-1 kiểm trên CRM dev: code cũ chặn nhầm `purchase_orders.org_id`, code mới qua được · loại: kiểm chứng
+
+- Kiểm chứng (token của Toma, chỉ đọc): gọi tool `crm_query` thật, cache rỗng, `purchase_orders` select
+  `code, status, org_id.name`, limit 1. Code cũ (bỏ SCH-1): `tool_invalid_args` "purchase_orders has no relation org_id",
+  không có lần gọi CRM nào. Code mới: `ok`, tải schema sống của `purchase_orders` (1 lần), CRM chấp nhận query
+  (không 400).
+- Giới hạn: query trả 0 dòng với token này (total 0), nên chưa thấy giá trị `org_id.name`; không in dữ liệu.
+  Chưa thử qua bảng join thứ hai trên CRM thật (đã có test fake).
+
+## 2026-11-27 · `crm_query` tải schema sống dọc đường dẫn khi index tĩnh thiếu khoá ngoại (SCH-1) · loại: thay đổi
+
+- Vấn đề: `relation_target` rơi về index tĩnh với bảng chưa cache, nên khoá ngoại CRM mới thêm (21 bảng lệch, mục dưới)
+  bị `check_path` báo "has no relation" ngay ở lần biên dịch đầu, trước cả bước tải schema bảng gốc.
+- Thay đổi (Toma yêu cầu thực hiện SCH-1, 2026-11-27): khi lần biên dịch đầu báo "has no relation", `crm_query` đi từng
+  đoạn khoá ngoại của các đường dẫn, tải schema sống của bảng chưa cache (tối đa 6, không tải bảng bị chặn, lỗi tải
+  bỏ qua), rồi biên dịch lại đúng một lần; không tải được gì mới thì giữ lỗi cũ. Chỉ chạy ở nhánh lỗi nên query hợp lệ
+  không tốn thêm lần gọi CRM. Phương án sinh lại `schema_index.py` chưa làm (cần dump mới từ CRM). Chưa xử lý chiều ngược:
+  khoá ngoại đã bị CRM bỏ vẫn lọt qua `check_path`, CRM trả 400 → `crm_query_invalid`, sửa được như trước.
+- File: `tools/crm_query.py` (`load_path_schemas`, `query_paths`, `MAX_PATH_SCHEMA_LOADS`); test mới trong
+  `tests/chatbot/test_crm_query_tool.py` (5: khoá ngoại mới ở bảng gốc, ở bảng join, không có ở cả hai, tải lỗi, query
+  thường không tải thêm); `api_guidelines.md` và README (thuộc tính span `path_schemas`).
+- Kiểm chứng: `pytest tests\chatbot\test_crm_query_tool.py` → 88 passed; `pytest tests` → 1308 passed, 14 skipped, 7 failed
+  có sẵn (cùng 7 lỗi khi bỏ thay đổi này: `test_cancelled_turn`, `test_chat_routes`, `test_crm_agent_flow`, 3 test
+  `test_sources`, `test_documents_api`; baseline 1303 passed). Chưa kiểm trên CRM thật.
+- Ảnh hưởng contract/cấu hình: chỉ thêm thuộc tính trace `path_schemas`; không đổi route, SSE, biến môi trường.
+- Chưa kiểm / mở tiếp: thử một query qua khoá ngoại mới trên CRM dev (ví dụ `purchase_orders.org_id`,
+  `goods_receipts.supplier_id`) để xác nhận lỗi cũ có thật và cách mới qua được; chưa dedupe request schema song song;
+  SCH-2, SCH-3 chờ Toma duyệt.
+
+## 2026-11-27 · Schema sống của CRM: mô tả đủ 100%, nhưng index tĩnh lệch 21 bảng (không phải 13) và cột không khóa ngoại thiếu bảng đích (SCH-1…4) · loại: kiểm chứng, đánh giá
+
+- Vấn đề: chưa có số đo về chất lượng thông tin `crm_schema` đưa cho agent (mô tả bảng/cột, khóa ngoại), STATE chỉ
+  ghi "index tĩnh lệch 13 bảng" từ 2026-11-16.
+- Kiểm chứng: script đọc-only gọi `GET /reports/datasets` + `GET /reports/tables/{t}` cho 116 bảng truy vấn được trên
+  CRM dev, token của Toma (dán trong chat, dùng một lần qua biến môi trường, không lưu) → 116 ok, 0 lỗi; không gọi
+  `/reports/query`, không có dòng dữ liệu. Số đo và đánh giá đầy đủ: [báo cáo](../../reports/crm_schema_audit_2026-11-27.md).
+- Số đo chính: mô tả bảng 116/116; mô tả cột 926/927; 276 khóa ngoại sống (index tĩnh 253); lệch index 21 bảng
+  (19 lệch thật, tập trung Mua hàng/kho, Sản xuất); 45 cột `*_id`/`*_by` không khóa ngoại, chỉ 6 mô tả nêu tên bảng đích;
+  13/116 bảng có ghi chú trong `TABLE_NOTES`; 14 mô tả dài hơn trần cắt 160 ký tự.
+- Đính chính: mục 2026-11-16 và STATE ghi "13 bảng lệch"; số đo hôm nay là 21 (19 lệch thật). Mô tả của CRM tốt hơn
+  nhận định trước đó ("thiếu mô tả"): phần thiếu là tên bảng đích của cột không khóa ngoại và ghi chú nghiệp vụ.
+- Đề xuất (chờ Toma duyệt, chưa làm; chi tiết trong báo cáo): SCH-1 tải schema sống cho các bảng dọc đường dẫn
+  join (hiện `relation_target` rơi về index tĩnh với bảng đích chưa cache); SCH-2 hint bảng đích cho cột không khóa
+  ngoại, cần Toma/CRM xác nhận `customer_id` của `support_waiting_messages`/`product_item_recall_requests` trỏ
+  `customers` hay `auth_users`; SCH-3 nâng trần cắt mô tả cột 160 → ~300; SCH-4 đính chính số bảng lệch (đã làm).
+- File: `docs/ai/reports/crm_schema_audit_2026-11-27.md` (mới), `flows/crm-agent/{LOG,STATE}.md`,
+  `flows/crm-agent/crm-reporting-api-requests.md`, `docs/ai/current-state.md`. Không đổi code.
+- Chưa kiểm / mở tiếp: ảnh hưởng của lệch index lên query qua bảng đích (suy từ code, chưa tái hiện bằng query thật);
+  `person_filter` bỏ qua cột người không khóa ngoại (suy từ code); CRM production chưa đo; Toma duyệt SCH-1…3.
+
 ## 2026-11-20 · Tổng hợp ngày: Đợt 1 bước 1–3 và LC-2/4/7 đã merge; trần token lượt môi trường kiểm thử 30000 · loại: quyết định, tài liệu
 
 - Quyết định: Toma đặt `AGENT_TURN_INPUT_BUDGET=30000` ở môi trường kiểm thử (`.env.example` của Toma, chưa commit);

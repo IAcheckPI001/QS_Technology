@@ -1,6 +1,6 @@
 # Trạng thái luồng crm-agent
 
-Cập nhật: 2026-11-25 (đối chiếu code và git; nội dung kiểm thử vẫn là của 2026-11-20)
+Cập nhật: 2026-11-27 (thêm đo schema sống CRM; kết quả kiểm thử agent vẫn là của 2026-11-20)
 
 Ảnh chụp trạng thái hiện tại. Viết lại khi có thay đổi; lịch sử ở [LOG.md](LOG.md). Tổng hợp ngày 2026-11-20
 (luồng xử lý, quyết định, kết quả kiểm thử): [báo cáo](../../reports/crm_agent_status_2026-11-20.md).
@@ -19,6 +19,8 @@ Cập nhật: 2026-11-25 (đối chiếu code và git; nội dung kiểm thử v
 - Từ `4602e94` (2026-11-21) tool `product_docs_ask` tra cả chunk `internal` trên kênh CRM (`retrieval/audience.py`);
   cần áp `backend/sql/doc_chunks_v2.sql` trên Supabase (chưa có xác nhận đã áp).
 - Dữ liệu CRM (kể cả liên hệ khách hàng) đi tới nhà cung cấp LLM khi bật tool CRM.
+- Schema sống CRM dev (2026-11-27, [báo cáo](../../reports/crm_schema_audit_2026-11-27.md)): mô tả bảng 116/116, cột
+  926/927; index tĩnh lệch 21 bảng (19 lệch thật); 45 cột `*_id` không khóa ngoại, đa số mô tả thiếu bảng đích.
 
 ## Độ chín từng phần
 
@@ -53,7 +55,10 @@ Cập nhật: 2026-11-25 (đối chiếu code và git; nội dung kiểm thử v
 | – | Lượt tài liệu qua agent tốn ~3 lần pipeline ở câu so sánh | Chi phí |
 | – | `update_agent_conversation_state` không ghi `language`; `Prune` đếm token theo model chung | Lệch nhỏ |
 | – | `CRM_REPORT_ENABLED` đặt tên theo phương án A; `CRM_CHAT_FLOW` mặc định `agent` (D-006) | Xem lại trước production |
-| – | CRM: `is_current`, `date_range` theo ngày UTC, index tĩnh lệch 13 bảng, token không làm mới | Chờ CRM |
+| SCH-1 | Index tĩnh lệch 21 bảng; khoá ngoại mới bị báo thiếu | Code + test fake; kiểm CRM dev 2026-11-27: `purchase_orders.org_id` qua được (code cũ chặn nhầm), query trả 0 dòng nên chưa thấy giá trị |
+| SCH-2 | Cột `*_id`/`*_by` không khóa ngoại thiếu hint bảng đích; không vào `person_filter` | Chờ Toma/CRM: `customer_id` của `support_waiting_messages` trỏ đâu |
+| SCH-3 | `crm_schema` cắt mô tả cột ở 160 ký tự (14 mô tả dài hơn, tối đa 285) | Đề xuất ~300; đo token |
+| – | CRM: `is_current`, `date_range` theo ngày UTC, token không làm mới | Chờ CRM |
 
 ## Kết quả kiểm gần nhất
 
@@ -67,4 +72,5 @@ Cập nhật: 2026-11-25 (đối chiếu code và git; nội dung kiểm thử v
 1. Toma: bật lại tunnel CRM; agent chạy lại 7 câu với trần 30000, kiểm câu 5, 6 (LC-7).
 2. Toma quyết LC-8 và LC-6; agent làm LC-8, LC-5.
 3. Toma chạy `run_crm_agent_eval.py` (G1) và `run_retrieval_eval.py`.
-4. Sau đó: gói B, C4; CMP-1, CMP-2 rồi chốt D-014. Gửi CRM: `timezone`, mô tả `is_current`, dump schema mới.
+4. Toma duyệt SCH-2, SCH-3 (SCH-2 sau khi có câu trả lời về `customer_id`).
+5. Sau đó: gói B, C4; CMP-1, CMP-2 rồi chốt D-014. Gửi CRM: `timezone`, mô tả `is_current`, dump schema mới (21 bảng lệch).

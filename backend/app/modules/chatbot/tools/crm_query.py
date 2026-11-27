@@ -29,7 +29,12 @@ from app.modules.chatbot.reporting.raw.compile import (
     map_rows,
     map_totals,
 )
-from app.modules.chatbot.reporting.raw.policy import static_column_type, static_relation
+from app.modules.chatbot.reporting.raw.policy import (
+    column_blocked,
+    static_column_type,
+    static_relation,
+    table_blocked,
+)
 from app.modules.chatbot.reporting.raw.schema import CrmSchemaCache, compact_type
 from app.modules.chatbot.schemas.default import SystemModel
 from app.modules.chatbot.schemas.system import RunState, SessionEntity, SessionLookup, ToolMemory, ToolTurnState
@@ -56,6 +61,8 @@ logger = logging.getLogger(__name__)
 # chỉ chịu trần thử tổng (runner áp qua max_calls_per_turn).
 MAX_CRM_QUERIES_PER_TURN = 4
 MAX_QUERY_ATTEMPTS_PER_TURN = 6
+# SCH-1 (2026-11-27): tối đa số bảng tải schema sống dọc đường dẫn khi lần biên dịch đầu báo thiếu quan hệ.
+MAX_PATH_SCHEMA_LOADS = 6
 
 CRM_QUERY_DESCRIPTION = (
     "Đọc dữ liệu CRM/ERP (khách hàng, phiếu hỗ trợ, thiết bị, mua hàng, kho, sản xuất, dự án, nhân "
@@ -289,6 +296,31 @@ def build_crm_query_tool(
         live = cache.cached(table)
         return live.columns.keys() if live is not None else None
 
+    async def load_path_schemas(arguments: RawQuery, token: str) -> list[str]:
+        """Tải schema sống của các bảng dọc đường dẫn chưa có trong cache; trả tên bảng đã tải.
+
+        Index tĩnh có thể thiếu khoá ngoại mới của CRM (SCH-1): đi từng đoạn khoá ngoại, tải bảng hiện tại,
+        lấy bảng đích từ quan hệ sống. Không tải bảng bị chặn; lỗi tải bỏ qua (CRM tự kiểm ở /reports/query).
+        """
+        loaded: list[str] = []
+        for path in query_paths(arguments):
+            table = arguments.dataset
+            for segment in path.split(".")[:-1]:
+                if cache.cached(table) is None:
+                    if len(loaded) >= MAX_PATH_SCHEMA_LOADS:
+                        return loaded
+                    try:
+                        await cache.table(table, token)
+                    except Exception:    # noqa: BLE001
+                        logger.info("crm_query path schema load failed table=%s", table)
+                        break
+                    loaded.append(table)
+                target = relation_target(table, segment)
+                if target is None or column_blocked(table, segment) or table_blocked(target):
+                    break
+                table = target
+        return loaded
+
     def on_invalid_args(arguments_raw: str, detail: str, context: ToolContext) -> None:
         """Argument LLM gửi không validate được (không tới run): vẫn tính một lần thử."""
         attempt = _begin_attempt(context)
@@ -327,7 +359,18 @@ def build_crm_query_tool(
 
         try:
             # Lỗi hình dạng, bảng/cột bị chặn, sai kiểu giá trị: chặn trước, không gọi CRM lần nào.
-            compiled = compile_now(None)
+            try:
+                compiled = compile_now(None)
+            except RawQueryError as error:
+                # Thiếu quan hệ theo index tĩnh có thể do CRM đã thêm khoá ngoại (SCH-1): tải schema sống
+                # dọc đường dẫn rồi biên dịch lại một lần; không tải được gì mới thì giữ lỗi cũ.
+                if "has no relation" not in str(error):
+                    raise
+                loaded = await load_path_schemas(arguments, token)
+                if not loaded:
+                    raise
+                current_span().set(path_schemas=loaded)
+                compiled = compile_now(None)
             # Rồi kiểm tên cột theo schema sống của bảng gốc (cache dùng chung), kể cả khi LLM không
             # gọi crm_schema hoặc gọi song song (LC-4). Lỗi lấy schema không chặn query: CRM tự kiểm.
             if cache.cached(arguments.dataset) is None:
@@ -414,6 +457,17 @@ def build_crm_query_tool(
         # 400 của query do LLM dựng (cột/quan hệ sai): sửa được như tool_invalid_args.
         repairable_errors=frozenset({"tool_invalid_args", "crm_query_invalid"}),
     )
+
+
+def query_paths(query: RawQuery) -> list[str]:
+    """Mọi đường dẫn cột của query (select, dimensions, cột của metric, filters, date_range, order_by)."""
+    paths = [*query.select, *query.dimensions]
+    paths += [metric.split(":", 1)[1] for metric in query.metrics if ":" in metric]
+    paths += [item.field for item in query.filters]
+    if query.date_range is not None:
+        paths.append(query.date_range.field)
+    paths += [item.field for item in query.order_by]
+    return list(dict.fromkeys(path for path in paths if "." in path))
 
 
 def _output(

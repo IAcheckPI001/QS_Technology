@@ -367,7 +367,8 @@ trace mới nhất của phiên. Đọc `public.chat_traces`; chỉ có dữ li�
 - `tool.crm_query` có `attempt`, `credential_source` (`token` | `user_id`, không giá trị),
   hình dạng query (`dataset`, `mode`, `select`/`dimensions`/`metrics`, `filters` dạng
   `cột op`, `filter_value_counts`, `date_field`, `date_preset`, `limit`, `offset`),
-  `ignored`, `date_from`/`date_to` (ngày đã đổi ra), rồi `returned`, `total`, `has_more`;
+  `ignored`, `date_from`/`date_to` (ngày đã đổi ra), `path_schemas` (chỉ khi lần biên dịch đầu
+  báo thiếu quan hệ: bảng đã tải schema sống dọc đường dẫn, SCH-1), rồi `returned`, `total`, `has_more`;
   span con `query.fetch` (`queries`) → `http.crm_report`×N (`dataset`, `status_code`).
   Root span có `crm_query_attempts`, `crm_query_outcomes`. `tool.crm_schema` có `tables`,
   `cache_hits`. Chi tiết: [crm-agent README](flows/crm-agent/README.md) mục "Giám sát query".

@@ -18,7 +18,7 @@ Số liệu bên dưới đo ngày 2026-11-11; CRM hiện có 126 bảng. Nguồ
 | Q7 (phân quyền theo nhóm bảng) | Còn mở |
 | Q9 (làm mới token) | Còn mở |
 | Mô tả cột `is_current` mâu thuẫn luật có kỳ | Còn mở (mới, 2026-11-12) |
-| Dump schema mới (13 bảng lệch index tĩnh) | Còn mở |
+| Dump schema mới (21 bảng lệch index tĩnh, 19 lệch thật; đo 2026-11-27) | Còn mở |
 | Q4, Q5, Q8, §3.2, §3.3 | Chưa xác minh lại sau 2026-11-11 |
 
 ## 1. Bối cảnh
