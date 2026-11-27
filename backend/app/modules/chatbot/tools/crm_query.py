@@ -38,6 +38,7 @@ from app.modules.chatbot.schemas.system.raw_query import RawQuery
 
 from .base import (
     TOOL_CALL_LIMIT,
+    TRUNCATION_MARGIN_TOKENS,
     Progress,
     ToolArgumentError,
     ToolContext,
@@ -51,7 +52,6 @@ CRM_QUERY_TOOL_NAME = "crm_query"
 
 logger = logging.getLogger(__name__)
 
-_TRUNCATION_MARGIN_TOKENS = 32
 # Trần mỗi lượt (2026-11-12): 4 lần gửi CRM; lần bị compile/validate chặn không tốn lượt CRM nên
 # chỉ chịu trần thử tổng (runner áp qua max_calls_per_turn).
 MAX_CRM_QUERIES_PER_TURN = 4
@@ -129,7 +129,7 @@ class QueryOutput(ToolOutput):
         """Giữ phần mô tả; bỏ dòng cuối tới khi vừa budget."""
         payload = self.model_dump(mode="json")
         rows = payload["rows"]
-        budget = budget_tokens - _TRUNCATION_MARGIN_TOKENS
+        budget = budget_tokens - TRUNCATION_MARGIN_TOKENS
         kept = len(rows)
         while kept and count(_j({**payload, "rows": rows[:kept]})) > budget:
             kept -= 1

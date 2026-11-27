@@ -16,6 +16,8 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.chatbot.repositories.session_factory import SessionFactoryMixin
+
 from app.modules.chatbot.retrieval.fts_query import clean_fts_query
 from app.modules.chatbot.schemas.system import ChunkMatch, ChunkRecord
 
@@ -115,20 +117,13 @@ class MatchV2Options:
         return replace(self, **changes)
 
 
-class DocChunkV2Repository:
+class DocChunkV2Repository(SessionFactoryMixin):
     """Mỗi lời gọi mở session riêng (các task retrieve chạy song song)."""
 
     def __init__(self, options: MatchV2Options | None = None,
                  session_factory: Callable[[], AsyncSession] | None = None) -> None:
         self.options = options or MatchV2Options()
         self._session_factory = session_factory
-
-    def _session(self) -> AsyncSession:
-        if self._session_factory is None:
-            from app.db.session import AsyncSessionFactory
-
-            self._session_factory = AsyncSessionFactory
-        return self._session_factory()
 
     async def match(
         self,

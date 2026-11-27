@@ -8,9 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.tracing import Trace
 from app.db.models.trace import ChatTrace
+from app.modules.chatbot.repositories.session_factory import SessionFactoryMixin
 
 
-class TraceRepository:
+class TraceRepository(SessionFactoryMixin):
     """Mỗi thao tác mở session DB riêng và commit ngay.
 
     Trace được ghi sau khi stream kết thúc (kể cả khi lỗi hoặc client ngắt), lúc
@@ -20,13 +21,6 @@ class TraceRepository:
 
     def __init__(self, session_factory: Callable[[], AsyncSession] | None = None) -> None:
         self._session_factory = session_factory
-
-    def _session(self) -> AsyncSession:
-        if self._session_factory is None:
-            from app.db.session import AsyncSessionFactory
-
-            self._session_factory = AsyncSessionFactory
-        return self._session_factory()
 
     async def save(
         self,

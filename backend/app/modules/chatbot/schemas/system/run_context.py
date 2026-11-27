@@ -5,8 +5,6 @@
 
 from enum import StrEnum
 from typing import Literal
-from dataclasses import asdict
-from dataclasses import dataclass
 from pydantic import Field, model_validator, ConfigDict
 
 from .facts import SessionFacts

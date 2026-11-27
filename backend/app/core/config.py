@@ -51,9 +51,6 @@ class Settings(BaseSettings):
     source_images_max: int = Field(default=3, ge=0, le=10, alias="SOURCE_IMAGES_MAX")
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
-    gpt4o_mini_input_usd_per_million: float = Field(default=0.15, alias="GPT4O_MINI_INPUT_USD_PER_MILLION")
-    gpt4o_mini_output_usd_per_million: float = Field(default=0.60, alias="GPT4O_MINI_OUTPUT_USD_PER_MILLION")
-    embedding_input_usd_per_million: float = Field(default=0.02, alias="EMBEDDING_INPUT_USD_PER_MILLION")
     usd_to_vnd_rate: float = Field(default=26000, alias="USD_TO_VND_RATE")
     # Ghi đè bảng giá model (USD / 1 triệu token) dùng để tính chi phí thật của lượt (B3,
     # core/pricing.py), dạng JSON {"model": {"input": .., "cached_input": .., "output": ..}}.
@@ -74,8 +71,6 @@ class Settings(BaseSettings):
     agent_tool_output_tokens: int = Field(default=3000, alias="AGENT_TOOL_OUTPUT_TOKENS")
     agent_parallel_tools: int = Field(default=3, alias="AGENT_PARALLEL_TOOLS")
     agent_max_concurrent_runs: int = Field(default=8, alias="AGENT_MAX_CONCURRENT_RUNS")
-    # Không còn dùng từ Đợt 1 gói A (thay bằng AGENT_HISTORY_TURNS); giữ để .env cũ không lỗi.
-    agent_history_messages: int = Field(default=6, alias="AGENT_HISTORY_MESSAGES")
     # Số lượt (hỏi + đáp) gần nhất vòng lặp agent đưa vào prompt; 0 = không đưa lịch sử.
     agent_history_turns: int = Field(default=3, ge=0, alias="AGENT_HISTORY_TURNS")
     # Số lượt hoàn tất gần nhất ContextLoader đọc từ DB (dùng chung website và CRM); trước đây đọc cả phiên.

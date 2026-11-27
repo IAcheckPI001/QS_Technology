@@ -6,6 +6,10 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 
 Các mục tới 2026-11-09: [LOG-archive-2026-11-09.md](LOG-archive-2026-11-09.md).
 
+## 2026-11-27 · Metadata chunk so với tham số tìm kiếm: scope `maintenance`, tên model, `codes` chưa được dùng · loại: đánh giá
+- Ảnh hưởng tới doc-ingest từ đối chiếu của website-qa ([báo cáo](../../reports/chunk_vs_query_mapping_2026-11-27.md), [mục đầy đủ](../website-qa/LOG.md)): chỉ 1 chunk có scope `maintenance`; `product_models` tài liệu kỹ thuật (`6AVE`, `10iV`) khác catalog (`6AV`, `10i`); `applies_to_models` rỗng ở mọi chunk; `codes` có ở 457/786 chunk nhưng chat chưa dùng.
+- Chưa làm: gán scope `maintenance` qua `scope_rules`, chuẩn hoá tên model khi nạp — chờ Toma quyết cùng đề xuất phía website-qa.
+
 ## 2026-11-26 · Đối chiếu trạng thái (git + Supabase); chunk "đạt" chưa đồng nghĩa tra cứu tốt (I-61) · loại: đánh giá, kiểm chứng
 - Vấn đề: STATE lệch thực tế (ghi "chưa push", DB 971 dòng, còn 23 dòng `f86_installation_2024-04-25`); cần trả lời tiêu chí chunk đạt và quan hệ với hiệu quả tra cứu.
 - Kiểm chứng (chỉ đọc, không đổi code/DB): `git branch --contains` → T-15b `a0ce51a`, T-21 `c3b1177`, T-20b `aba3a6d` **đã có trên `origin/feature/deploy_ai_service`**; S0 trang lai, T-22, sửa asset lồng, catalog phương án C và `--no-slices` đang **staged, chưa commit**.

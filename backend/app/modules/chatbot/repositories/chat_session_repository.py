@@ -5,6 +5,8 @@ from uuid import UUID
 from sqlalchemy import func, or_, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.chatbot.repositories.session_factory import SessionFactoryMixin
+
 from app.db.models.session import ChatSession
 
 # Lease không bao giờ được treo tới statement_timeout: dòng bị khóa quá lâu nghĩa là
@@ -42,7 +44,7 @@ class ChatSessionRepository:
         return session
 
 
-class ChatTurnLeaseRepository:
+class ChatTurnLeaseRepository(SessionFactoryMixin):
     """Lease "đang có lượt chạy" của phiên.
 
     Mỗi thao tác mở session DB riêng và commit ngay: request khác phải thấy lease
@@ -54,13 +56,6 @@ class ChatTurnLeaseRepository:
 
     def __init__(self, session_factory: Callable[[], AsyncSession] | None = None) -> None:
         self._session_factory = session_factory
-
-    def _session(self) -> AsyncSession:
-        if self._session_factory is None:
-            from app.db.session import AsyncSessionFactory
-
-            self._session_factory = AsyncSessionFactory
-        return self._session_factory()
 
     async def acquire(self, session_id: UUID, ttl_s: int) -> bool:
         """Chiếm lease nếu phiên rảnh hoặc lease cũ đã hết hạn (một câu UPDATE nguyên tử)."""

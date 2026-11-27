@@ -36,7 +36,7 @@ from app.modules.chatbot.stages.answer_composer import serialize_turn
 from app.modules.chatbot.stages.catalog_lookup_stage import AWAITING_MODELS
 from app.modules.chatbot.stages.retrieval_pipeline import RetrievalPipeline
 
-from .base import Progress, ToolArgumentError, ToolContext, ToolOutput, ToolRejected, ToolSpec
+from .base import TRUNCATION_MARGIN_TOKENS, Progress, ToolArgumentError, ToolContext, ToolOutput, ToolRejected, ToolSpec
 
 PRODUCT_DOCS_TOOL_NAME = "product_docs_ask"
 
@@ -89,8 +89,6 @@ MAX_CITED_SOURCES = 10
 REGISTRY_MODELS: tuple[str, ...] = tuple(REGISTRY["product_models"])
 _SOURCE_ID = re.compile(r"^S[1-9][0-9]*$")
 
-# Biên an toàn cho các trường truncated/omitted_sources thêm vào sau khi cắt.
-_TRUNCATION_MARGIN_TOKENS = 32
 _MIN_SOURCE_TOKENS = 48
 _SENTENCE_END = re.compile(r"[.!?。…](?=\s)|\n")
 
@@ -177,7 +175,7 @@ class ProductDocsAskOutput(ToolOutput):
         payload = self.model_dump(mode="json", exclude_none=True)
         groups = payload.pop("sources", [])
         payload["sources"] = []
-        budget = budget_tokens - _TRUNCATION_MARGIN_TOKENS
+        budget = budget_tokens - TRUNCATION_MARGIN_TOKENS
         used = count(_j(payload))
         omitted = 0
         truncated = False

@@ -1,7 +1,7 @@
 
 import json
 
-from app.modules.chatbot.extraction.registry import MAX_SUB_QUERIES, REGISTRY as R, intent_descriptions
+from app.modules.chatbot.extraction.registry import REGISTRY as R, intent_descriptions
 
 
 def _render_intents(version: str | None = None) -> str:

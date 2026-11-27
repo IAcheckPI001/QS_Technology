@@ -15,6 +15,9 @@ from app.modules.chatbot.stages.execution_stage import SourceAllocator
 # áp trần riêng khác); call này không trừ trần chung của lượt.
 TOOL_CALL_LIMIT = "tool_call_limit"
 
+# Biên an toàn (token) cho các trường truncated/omitted_sources tool thêm vào sau khi cắt output.
+TRUNCATION_MARGIN_TOKENS = 32
+
 # Tín hiệu tiến độ của một output thành công (Đợt 1 gói C): ok = có dữ liệu dùng được; empty = không
 # có dữ liệu thỏa điều kiện; ambiguous = cần nhân viên chọn/làm rõ trước khi đi tiếp. Runner dùng
 # tín hiệu này để dừng sớm, không cần biết tool làm gì.

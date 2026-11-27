@@ -6,7 +6,7 @@ from app.modules.chatbot.schemas.system.security import (
     SecurityFinding,
     SecuritySeverity,
 )
-from app.util.normalize import NormalizedInput, normalize_for_detection
+from app.util.normalize import normalize_for_detection
 
 from .content_policy import ContentPolicy
 from .detectors import SecurityDetector

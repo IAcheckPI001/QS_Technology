@@ -2,7 +2,7 @@
 
 """RetrievalTrace – ghi lại mỗi lần search_doc được gọi."""
 
-from typing import Annotated, Literal
+from typing import Annotated
 
 from pydantic import ConfigDict, Field, model_validator
 

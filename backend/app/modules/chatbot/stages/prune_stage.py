@@ -3,10 +3,7 @@
 from collections.abc import Callable
 
 from app.util.token_counter import count_tokens
-from app.modules.chatbot.schemas.system import (
-    Conversation,
-    RunContext
-)
+from app.modules.chatbot.schemas.system import RunContext
 from app.modules.chatbot.stages.errors import ContextBudgetError, ContextConfigurationError
 
 class Prune:

@@ -8,6 +8,12 @@ Các mục tới 2026-10-29 (nguyên văn từ `current-state.md` và `architect
 [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md). Lịch sử session, service key, lease,
 tracing: [chat-platform/LOG.md](../chat-platform/LOG.md).
 
+## 2026-11-27 · Đối chiếu trường analysis ↔ cột chunk ↔ `match_doc_chunks_v2`: lọc cứng chỉ còn domain và model, nhánh mã tắt · loại: đánh giá
+- Chỉ đọc code (analysis, registry, retriever, repository, SQL) và phân bố metadata 858 chunk lá active trên Supabase. Không đổi code/DB. [Báo cáo](../../reports/chunk_vs_query_mapping_2026-11-27.md).
+- Phát hiện: (1) chỉ `domain` (từ intent) và `product_models` là lọc cứng, scope +0,003, spec +0,005; (2) tên model lệch giữa catalog và tài liệu kỹ thuật (`6AV`/`6AVE`, `10i`/`10iV`) → lọc ra 0 chunk kỹ thuật; (3) `troubleshoot.error` nhắm scope `maintenance` nhưng chỉ 1 chunk có scope này;
+  (4) 457/786 chunk kỹ thuật có `codes` nhưng production không truyền `p_codes` (nhánh mã chỉ eval dùng); (5) `chunk_type`, `applies_to_models` không được dùng; `control_interface` của chunk kỹ thuật gần như rỗng.
+- Chưa làm: 7 đề xuất trong báo cáo §4 chờ Toma quyết, mỗi mục cần đo trên bộ vàng.
+
 ## 2026-11-26 · Kho tra cứu thật: 983 chunk active, chunk "đạt" chưa bảo đảm tìm được (doc-ingest I-61) · loại: đánh giá
 - Supabase (chỉ đọc): `doc_chunks_v2` 983 active, 0 approved (911 CRM + 72 catalog phương án C); số "1.203 dòng" trong STATE cũ đã hết đúng. 14 lượt website từ 2026-11-25 10:00 UTC, tra cứu chỉ trúng catalog và F54; trace không ghi id chunk trong ngữ cảnh → lượt thật không dùng để đo được.
 - Ảnh hưởng: cổng chất lượng chunk của doc-ingest không đo khả năng được tìm thấy; đề xuất câu vàng theo tài liệu (GD1) làm cổng trước khi mở `approved`, và điền `retrieved_chunk_ids`. Mục đầy đủ: [doc-ingest LOG 2026-11-26](../doc-ingest/LOG.md), [báo cáo](../../reports/chunk_pass_vs_retrieval_2026-11-26.md).

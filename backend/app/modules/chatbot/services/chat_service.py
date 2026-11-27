@@ -8,6 +8,7 @@ from uuid import UUID
 import anyio
 
 from app.core.config import settings
+from app.core.pricing import cost_usd, price_for
 from app.core.tracing import current_trace, set_root, span
 from app.modules.chatbot.services.turn_errors import turn_error
 from app.modules.chatbot.services.turn_sources import turn_flags
@@ -449,10 +450,9 @@ class ChatbotService:
         # Ước tính từ câu hỏi và câu trả lời; chưa gồm prompt/context gửi LLM và embedding.
         input_tokens = count_tokens(message, self._provider.model)
         output_tokens = count_tokens(answer, self._provider.model)
-        cost = (
-            input_tokens * settings.gpt4o_mini_input_usd_per_million
-            + output_tokens * settings.gpt4o_mini_output_usd_per_million
-        ) / 1_000_000
+        # Giá theo model đang trả lời (core/pricing.py, có ghi đè LLM_PRICES_JSON); model lạ thì tính theo gpt-4o-mini.
+        price = price_for(self._provider.model, settings.llm_price_overrides) or price_for("gpt-4o-mini")
+        cost = cost_usd(price, input_tokens=input_tokens, output_tokens=output_tokens)
         return TurnUsage(
             source=USAGE_SOURCE_ESTIMATE, input_tokens=input_tokens, output_tokens=output_tokens, cost_usd=cost,
         )

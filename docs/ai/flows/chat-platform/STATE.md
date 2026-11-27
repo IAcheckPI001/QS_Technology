@@ -1,6 +1,6 @@
 # Trạng thái chat-platform
 
-Cập nhật: 2026-11-25
+Cập nhật: 2026-11-27
 
 Ảnh chụp trạng thái hiện tại. Viết lại khi có thay đổi; lịch sử ở [LOG.md](LOG.md).
 
@@ -16,6 +16,8 @@ Cập nhật: 2026-11-25
 - **WU-17 đợt 2 (2026-11-25, chưa commit, chưa kiểm Supabase thật):** lượt lưu `similarity`, tham chiếu ảnh `assets` và `error`
   trong snapshot; `/history` trả `error` + `cited_sources` (ảnh ký mới mỗi lần đọc), `/retrieval` trả `similarity`, `images`,
   `error`; SSE `done` có `history_id`.
+
+- **Dọn code (2026-11-27):** đã xóa file và setting chết, gom giá ước tính về `core/pricing.py`, mixin `_session()` cho repository, tách `pytest` sang `requirements-dev.txt` (LOG cùng ngày). Còn mở: router import repository và gọi trực tiếp, 5 chỗ khởi tạo client LLM, 3 chỗ gọi CRM bằng httpx, `repositories` import `services.conversation_filters` (cần quyết định thiết kế).
 
 ## Độ chín từng phần
 
@@ -44,6 +46,10 @@ Cập nhật: 2026-11-25
 | Thấp | `npm run lint` lỗi sẵn có: 139 lỗi trong `src/`, 290 lỗi do eslint quét `.claude/worktrees/` |
 
 ## Kết quả kiểm gần nhất
+
+2026-11-27 (nhánh `feature/deploy_ai_service`, sau dọn code): `pytest tests --ignore=tests\doc_ingest` → 863 passed, 7 failed;
+7 test này cũng fail trước khi sửa (`test_cancelled_turn`, `test_chat_routes`, `test_crm_agent_flow`, 3 trong `test_sources`,
+`test_documents_api`), chưa tìm nguyên nhân. `tests\doc_ingest` (venv ingest) → 454 passed.
 
 2026-11-20 (nhánh `claude/dot0-on-b3`): `pytest tests` → 1107 passed, 14 skipped, 1 failed có sẵn
 (CSV CRLF trong worktree). Lượt thật 2026-11-19 trên backend local (phiên `c999efd3…`) hoàn tất với

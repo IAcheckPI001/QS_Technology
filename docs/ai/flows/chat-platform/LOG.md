@@ -7,6 +7,16 @@ Mẫu mục: [../_template/LOG.md](../_template/LOG.md).
 Các mục tới 2026-11-07 (nguyên văn từ `current-state.md` và `architecture.md`, gồm Finding
 status, API gateway, service key, lease, tracing): [LOG-archive-2026-11-11.md](LOG-archive-2026-11-11.md).
 
+## 2026-11-27 · Dọn code thừa và trùng ở backend (kiểm duyệt toàn backend) · loại: thay đổi, đánh giá
+
+- Vấn đề: kiểm duyệt `backend/` thấy file không ai gọi, import và setting chết, cấu hình và code trùng giữa các tool crm-agent, repository và tính phí ước tính.
+- File xóa: `app/chunking/embedding_chunks.py`, `chunking_loader/import_chunk.py` (hỏng, thiếu `import os`), `chatbot/providers/100millionseek.py`, `chatbot/analysis/context_builder.py` (có `NameError`, bản sống là `AnalysisStage.build_context_analysis`), `util/uuid_generate.py`. Mỗi file đã grep: 0 tham chiếu trong `app`, `tests`, `scripts`, `evals`, docs đang dùng.
+- File sửa: bỏ setting `EMBEDDING_INPUT_USD_PER_MILLION`, `AGENT_HISTORY_MESSAGES`, `GPT4O_MINI_*_USD_PER_MILLION` (`Settings.extra="ignore"` nên `.env` cũ vẫn chạy); `ChatbotService._usage` ước tính chi phí qua `core/pricing.price_for/cost_usd` (model lạ tính như gpt-4o-mini; với model mặc định kết quả không đổi); `TRUNCATION_MARGIN_TOKENS` về `tools/base.py`; mixin `repositories/session_factory.py` thay 3 bản `_session()`; gỡ 6 import thừa; tách `pytest` sang `requirements-dev.txt`.
+- Test thêm: `tests/chatbot/test_normalize_code_parity.py` (30 ca, chặn `normalize_code` của chat và doc-ingest lệch nhau).
+- Kiểm chứng: `pytest tests --ignore=tests\doc_ingest` → 863 passed, 7 failed (cùng 7 test fail trước khi sửa: `test_cancelled_turn`, `test_chat_routes`, `test_crm_agent_flow`, 3 trong `test_sources`, `test_documents_api`); `tests\doc_ingest` (venv ingest) → 454 passed; `import app.main` chạy được.
+- Ảnh hưởng contract/API/schema: không. Biến môi trường bỏ đi chỉ bị bỏ qua.
+- Mở tiếp: chưa làm (cần quyết định thiết kế) — router import repository và gọi thẳng, 5 chỗ khởi tạo client LLM, 3 chỗ gọi CRM bằng httpx, `repositories` import `services.conversation_filters`; còn `stages/default.py` (được `security-stage-pipeline.md` nhắc như scaffold), `backend/eval/`, `load_csv.py`, `spike/`, manifest legacy, scaffold `review/approval.py`, `doc_chunks.sql` v1.
+
 ## 2026-11-25 · Lượt lưu độ khớp, tham chiếu ảnh và mã lỗi; ảnh ký lại khi đọc; `done.history_id` (WU-17 đợt 2) · loại: thay đổi, quyết định
 
 - Vấn đề: ảnh nguồn mất sau tải lại (URL ký 15 phút không lưu), độ khớp hiện điểm RRF ~0,03, lượt lỗi chỉ biết nguyên nhân
